@@ -1,6 +1,15 @@
 1.stun的ip地址和端口号
+客户端连接请求，服务端下发
 
-2.sdp消息示例(来自对webrtc的抓包)：
+设备端开始收集自己的ice，此处会阻塞
+2.
+服务端下发offer消息
+
+设备返回sdp消息(cJSON)和answer消息(收集candidate需要时间)
+设备设置远端candidate，建立p2p通道
+
+
+sdp消息示例(来自对webrtc的抓包)：
 {
 	"sdp" : "v=0
 	o=- 7990122081836181129 2 IN IP4 127.0.0.1
