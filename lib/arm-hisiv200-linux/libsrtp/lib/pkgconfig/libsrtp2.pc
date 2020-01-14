@@ -1,0 +1,11 @@
+prefix=/work/workspace/install/libsrtp
+exec_prefix=/work/workspace/install/libsrtp
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: libsrtp2
+Version: 2.3.0
+Description: Library for SRTP (Secure Realtime Transport Protocol)
+
+Libs: -L${libdir} -lsrtp2 
+Cflags: -I${includedir}
