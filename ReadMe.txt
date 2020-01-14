@@ -1,4 +1,8 @@
-﻿
+﻿lib目录是已经编译好的
+
+
+
+
 1.编译：
 	使用cmake进行编译，必须先安装cmake，安装后：
 	book@book-virtual-machine:/work/workspace/dhcp$ cmake .

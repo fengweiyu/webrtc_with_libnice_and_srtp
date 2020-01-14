@@ -1,0 +1,177 @@
+1.libstrp libsrtp-2.3.0
+./configure --prefix=/work/workspace/install --host=arm-hisiv200-linux
+./configure --host=arm-hisiv200-linux
+make
+make runtest
+
+
+2.libnice  参考
+
+Requirements
+------------
+
+ glib >= 2.44
+ pkg-config
+ gnutls >= 2.12.0 or OpenSSL
+ gupnp-igd >= 0.1.2 (optional)
+ gstreamer-0.10 >= 0.10.0 (optional)
+ gstreamer-1.0 (optional)
+ 
+2.1.准备：
+wget https://github.com/GNOME/glib/archive/2.48.0.tar.gz
+mv 2.48.0.tar.gz glib_2.48.0.tar.gz
+tar -xzf glib_2.48.0.tar.gz 
+
+wget https://github.com/libffi/libffi/archive/v3.2.1.tar.gz
+mv v3.2.1.tar.gz libffi_v3.2.1.tar.gz
+tar -xzf libffi_v3.2.1.tar.gz
+
+wget https://github.com/libnice/libnice/archive/0.1.16.tar.gz
+mv 0.1.16.tar.gz libnice_0.1.16.tar.gz
+tar -xzf libnice_0.1.16.tar.gz
+
+wget https://github.com/madler/zlib/archive/v1.2.11.tar.gz
+mv v1.2.11.tar.gz zlib_v1.2.11.tar.gz
+tar -xzf zlib_v1.2.11.tar.gz
+
+wget https://www.openssl.org/source/old/1.0.2/openssl-1.0.2j.tar.gz
+tar -xzf openssl-1.0.2j.tar.gz
+
+2.2.glib glib-glib-2-54
+ywf@ywf-pc:/work/workspace/webrtc_nice/glib-glib-2-54$ ./autogen.sh
+You don't have gtk-doc installed, and thus won't be able to generate the documentation.
+*** No autoreconf found, please install it ***
+sudo apt-get install gtk-doc-tools
+
+linux.cache
+glib_cv_long_long_format=ll
+glib_cv_stack_grows=no
+glib_cv_have_strlcpy=no
+glib_cv_have_qsort_r=yes
+glib_cv_va_val_copy=yes
+glib_cv_uscore=no
+glib_cv_rtldglobal_broken=no
+ac_cv_func_posix_getpwuid_r=yes
+ac_cv_func_posix_getgrgid_r=yes
+
+./configure --prefix=/work/workspace/install/glib --host=arm-hisiv200-linux CC=arm-hisiv200-linux-gcc --cache-file=linux.cache --enable-libmount=no --with-pcre=internal LIBFFI_CFLAGS=-I/work/workspace/install/libffi/lib/libffi-3.2.1/include
+ LIBFFI_LIBS="-L/work/workspace/install/libffi/lib/-lffi" ZLIB_CFLAGS=-I/work/workspace/install/zlib/include ZLIB_LIBS="-L/work/workspace/install/zlib/lib/-lz"
+
+2.2.1 zlib
+./configure --prefix=/work/workspace/install/zlib
+修改makefile gcc , ar,ranlib
+make
+make install
+
+2.2.2 libffi
+./autogen.sh
+./configure --prefix=/work/workspace/install/libffi --host=arm-hisiv200-linux CC=arm-hisiv200-linux-gcc
+make
+make install
+make[3]: *** [../doc/libffi.info] 错误 127
+make[3]:正在离开目录 `/work/workspace/webrtc_libnice/libffi-3.2.1/arm-hisiv200-linux-gnu'
+make[2]: *** [all-recursive] 错误 1
+make[2]:正在离开目录 `/work/workspace/webrtc_libnice/libffi-3.2.1/arm-hisiv200-linux-gnu'
+make[1]: *** [all] 错误 2
+make[1]:正在离开目录 `/work/workspace/webrtc_libnice/libffi-3.2.1/arm-hisiv200-linux-gnu'
+make: *** [all-all] 错误 2
+
+sudo apt-get install texinfo
+source /etc/profile
+还报错
+sudo apt-get install libtool
+sudo apt-get install libsysfs-dev
+source /etc/profile
+./autogen.sh
+./configure --prefix=/work/workspace/install/libffi --host=arm-hisiv200-linux CC=arm-hisiv200-linux-gcc
+make
+make install
+
+2.2.3 编译glib
+./autogen.sh
+./configure --prefix=/work/workspace/install/glib --host=arm-hisiv200-linux CC=/opt/hisi-linux/x86-arm/arm-hisiv200-linux/target/bin/arm-hisiv200-linux-gcc --cache-file=linux.cache --enable-libmount=no --with-pcre=internal LIBFFI_CFLAGS=-I/work/workspace/install/libffi/lib/libffi-3.2.1/include LIBFFI_LIBS="-L/work/workspace/install/libffi/lib/-lffi" ZLIB_CFLAGS=-I/work/workspace/install/zlib/include ZLIB_LIBS="-L/work/workspace/install/zlib/lib/-lz"
+make
+./.libs/libgobject-2.0.so: undefined reference to `ffi_type_pointer'
+./.libs/libgobject-2.0.so: undefined reference to `ffi_type_float'
+///////
+你该复制到哪里，你可以在你的交叉编译器目录下找以下libc.so.*，比如find /opt/freescale -name libc.so.*，看libc.so.*放哪你就放哪。
+find . -name libc.so.*
+sudo cp /work/workspace/install/zlib/lib/libz.so.1 /opt/hisi-linux/x86-arm/arm-hisiv200-linux/target/lib/
+sudo cp /work/workspace/install/libffi/lib/libffi.so.6 /opt/hisi-linux/x86-arm/arm-hisiv200-linux/target/lib/
+sudo cp /work/workspace/install/zlib/lib/libz.so /opt/hisi-linux/x86-arm/arm-hisiv200-linux/target/lib/
+sudo cp /work/workspace/install/libffi/lib/libffi.so /opt/hisi-linux/x86-arm/arm-hisiv200-linux/target/lib/
+sudo cp /work/workspace/install/zlib/lib/libz.so.1.* /opt/hisi-linux/x86-arm/arm-hisiv200-linux/target/lib/
+sudo cp /work/workspace/install/libffi/lib/libffi.so.6.* /opt/hisi-linux/x86-arm/arm-hisiv200-linux/target/lib/
+sudo cp /work/workspace/install/zlib/lib/libz.so.1 /usr/local/lib/
+sudo cp /work/workspace/install/libffi/lib/libffi.so.6 /usr/local/lib/
+sudo cp /work/workspace/install/zlib/lib/libz.so /opt/hisi-linux/x86-arm/arm-hisiv200-linux/arm-hisiv200-linux-gnueabi/lib/
+sudo cp /work/workspace/install/libffi/lib/libffi.so /opt/hisi-linux/x86-arm/arm-hisiv200-linux/arm-hisiv200-linux-gnueabi/lib/
+sudo cp /work/workspace/install/zlib/lib/libz.so.1.* /opt/hisi-linux/x86-arm/arm-hisiv200-linux/arm-hisiv200-linux-gnueabi/lib/
+sudo cp /work/workspace/install/libffi/lib/libffi.so.6.* /opt/hisi-linux/x86-arm/arm-hisiv200-linux/arm-hisiv200-linux-gnueabi/lib/
+
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/work/workspace/install/zlib/lib
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/work/workspace/install/libffi/lib
+export LD_LIBRARY_PATH=/work/workspace/install/libffi/lib
+*******
+sudo cp /work/workspace/install/zlib/lib/libz.so* /opt/hisi-linux/x86-arm/arm-hisiv200-linux/libc/lib/
+sudo cp /work/workspace/install/libffi/lib/libffi.so* /opt/hisi-linux/x86-arm/arm-hisiv200-linux/libc/lib/
+重新拷贝刚才的linux.cache文件
+./configure --prefix=/work/workspace/install/glib --host=arm-hisiv200-linux CC=/opt/hisi-linux/x86-arm/arm-hisiv200-linux/target/bin/arm-hisiv200-linux-gcc --cache-file=linux.cache --enable-libmount=no --with-pcre=internal LIBFFI_CFLAGS=-I/work/workspace/install/libffi/lib/libffi-3.2.1/include LIBFFI_LIBS="-L/work/workspace/install/libffi/lib/-lffi" ZLIB_CFLAGS=-I/work/workspace/install/zlib/include ZLIB_LIBS="-L/work/workspace/install/zlib/lib/-lz"
+//./configure --prefix=/work/workspace/install/glib --host=arm-hisiv200-linux CC=/opt/hisi-linux/x86-arm/arm-hisiv200-linux/target/bin/arm-hisiv200-linux-gcc LD=/opt/hisi-linux/x86-arm/arm-hisiv200-linux/target/bin/arm-hisiv200-linux-ld --cache-file=linux.cache --enable-libmount=no --with-pcre=internal LIBFFI_CFLAGS=-I/work/workspace/install/libffi/lib/libffi-3.2.1/include LIBFFI_LIBS="-L/work/workspace/install/libffi/lib/-lffi" ZLIB_CFLAGS=-I/work/workspace/install/zlib/include ZLIB_LIBS="-L/work/workspace/install/zlib/lib/-lz"
+./configure --prefix=/work/workspace/install/glib --host=arm-hisiv200-linux \
+CC=/opt/hisi-linux/x86-arm/arm-hisiv200-linux/target/bin/arm-hisiv200-linux-gcc \
+--cache-file=linux.cache --enable-libmount=no --with-pcre=internal --disable-selinux  --disable-xattr --disable-libelf \
+LIBFFI_CFLAGS=-I/work/workspace/install/libffi/lib/libffi-3.2.1/include LIBFFI_LIBS="-L/work/workspace/install/libffi/lib/ -lffi" LIBFFI_LDFLAGS=-L/work/workspace/install/libffi/lib \
+ZLIB_CFLAGS=-I/work/workspace/install/zlib/include ZLIB_LIBS="-L/work/workspace/install/zlib/lib/ -lz" ZLIB_LDFLAGS=-L/work/workspace/install/zlib/lib
+make 
+make install
+
+2.3.openssl
+./Configure shared --prefix=/work/workspace/install/openssl --cross-compile-prefix=arm-hisiv200-linux- linux-elf no-asm
+make 
+make install
+
+ 
+
+2.4.编译libnice
+
+./autogen.sh
+./configure --prefix=/work/workspace/install/libnice --host=arm-hisiv200-linux CC=arm-hisiv200-linux-gcc \
+AR=arm-hisiv200-linux-ar RANLIB=arm-hisiv200-linux-ranlib \
+GLIB_CFLAGS=-I/work/workspace/install/glib/include/glib-2.0 GLIB_LIBS="-L/work/workspace/install/glib/lib/ -lglib-2.0 -lgio-2.0 -lgmodule-2.0 -lgobject-2.0 -lgthread-2.0" \
+--disable-gupnp --with-openssl=/work/workspace/install/openssl --with-crypto-library=openssl
+make
+/work/workspace/install/glib/include/glib-2.0/glib/gtypes.h:32: fatal error: glibconfig.h: No such file or directory
+cp /work/workspace/install/glib/lib/glib-2.0/include/*.h /work/workspace/install/glib/include/glib-2.0
+
+make
+/bin/sh: 行 1: --fhead: 未找到命令
+
+sudo apt-get install libglib2.0-dev
+./configure --prefix=/work/workspace/install/libnice --host=arm-hisiv200-linux CC=arm-hisiv200-linux-gcc \
+AR=arm-hisiv200-linux-ar RANLIB=arm-hisiv200-linux-ranlib \
+GLIB_CFLAGS=-I/work/workspace/install/glib/include/glib-2.0 GLIB_LIBS="-L/work/workspace/install/glib/lib/ -lglib-2.0 -lgio-2.0 -lgmodule-2.0 -lgobject-2.0 -lgthread-2.0" \
+--disable-gupnp --with-openssl=/work/workspace/install/openssl --with-crypto-library=openssl
+make
+make install
+
+
+
+
+
+优化
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
