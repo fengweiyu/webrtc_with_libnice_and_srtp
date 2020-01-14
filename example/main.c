@@ -1,12 +1,15 @@
-/*
- *  Copyright 2012 The WebRTC Project Authors. All rights reserved.
- *
- *  Use of this source code is governed by a BSD-style license
- *  that can be found in the LICENSE file in the root of the source
- *  tree. An additional intellectual property rights grant can be found
- *  in the file PATENTS.  All contributing project authors may
- *  be found in the AUTHORS file in the root of the source tree.
- */
+/*****************************************************************************
+* Copyright (C) 2020-2025 Hanson Yu  All rights reserved.
+------------------------------------------------------------------------------
+* File Module           :       main.c
+* Description           : 	
+* Created               :       2020.01.13.
+* Author                :       Yu Weifeng
+* Function List         : 	
+* Last Modified         : 	
+* History               : 	
+******************************************************************************/
+
 #include "conductor.h"
 #include "peer_connection_client.h"
 
@@ -21,7 +24,7 @@
 -Return         : 
 * Modify Date     Version             Author           Modification
 * -----------------------------------------------
-* 2018/11/01      V1.0.0              Yu Weifeng       Created
+* 2020/01/01      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
 static void PrintUsage(char *i_strProcName)
 {
