@@ -1,9 +1,15 @@
+﻿rm install.tar.gz
+tar -czf install.tar.gz install
+
 1.libstrp libsrtp-2.3.0
-./configure --prefix=/work/workspace/install --host=arm-hisiv200-linux
-./configure --host=arm-hisiv200-linux
+wget https://github.com/cisco/libsrtp/archive/v2.3.0.tar.gz
+mv v2.3.0.tar.gz libsrtp_v2.3.0.tar.gz
+tar -xzf libsrtp_v2.3.0.tar.gz
+./configure --prefix=/work/workspace/install/libsrtp --host=arm-hisiv200-linux
+//./configure --host=arm-hisiv200-linux
 make
 make runtest
-
+make install
 
 2.libnice  参考
 
