@@ -459,9 +459,11 @@ static void LibniceComponentStateChanged(NiceAgent *agent, guint _stream_id,guin
 static void LibniceRecv(NiceAgent *agent, guint _stream_id, guint component_id,guint len, gchar *buf, gpointer data)
 {
 	if (len == 1 && buf[0] == '\0')
-		g_main_loop_quit (gloop);
+	{
+
+	}
 	printf("%.*s", len, buf);
-	fflush(stdout);
+	//fflush(stdout);
 }
 
 
