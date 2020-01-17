@@ -440,7 +440,7 @@ static void LibniceCandidateGatheringDone(NiceAgent *i_ptAgent, guint i_dwStream
 }
 
  static void LibniceNewSelectPair(NiceAgent *agent, guint _stream_id,guint component_id, gchar *lfoundation,gchar *rfoundation, gpointer data)
-{
+{//此处开始dtls握手
 	g_debug("SIGNAL: selected pair %s %s", lfoundation, rfoundation);
 }
 
@@ -459,7 +459,7 @@ static void LibniceComponentStateChanged(NiceAgent *agent, guint _stream_id,guin
 static void LibniceRecv(NiceAgent *agent, guint _stream_id, guint component_id,guint len, gchar *buf, gpointer data)
 {
 	if (len == 1 && buf[0] == '\0')
-	{
+	{//这里接收浏览器发出的报文(包括dtls协商报文)
 
 	}
 	printf("%.*s", len, buf);
