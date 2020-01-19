@@ -13,7 +13,8 @@ openssl版本1.1.0
 * Last Modified         : 	
 * History               : 	
 ******************************************************************************/
-#include <openssl/bio.h>
+#include "dtls_only_handshake.h"
+
 
 /* Duration for the self-generated certs: 1 year */
 #define DTLS_AUTOCERT_DURATION	60*60*24*365
@@ -41,6 +42,14 @@ DtlsOnlyHandshake::DtlsOnlyHandshake()
     m_acLocalFingerprint[160];
     m_ptDtlsBioFilterMethods = NULL;
     memset(&m_acLocalFingerprint,0,sizeof(m_acLocalFingerprint));
+
+    m_ptSsl = NULL;
+    m_ptReadBio = NULL;
+    m_ptWriteBio = NULL;
+    m_ptFilterBio = NULL;
+
+
+    
 }
 
 /*****************************************************************************
@@ -55,7 +64,18 @@ DtlsOnlyHandshake::DtlsOnlyHandshake()
 ******************************************************************************/
 DtlsOnlyHandshake::~DtlsOnlyHandshake()
 {
+    m_iShakeEndFlag = 0;
 
+    /* Destroy DTLS stack and free resources */
+    if(m_ptSsl != NULL) 
+    {
+        SSL_free(m_ptSsl);
+        m_ptSsl = NULL;
+    }
+    /* BIOs are destroyed by SSL_free */
+    m_ptReadBio = NULL;
+    m_ptWriteBio = NULL;
+    m_ptFilterBio = NULL;
 }
 
 
@@ -128,14 +148,106 @@ int DtlsOnlyHandshake::Init()
     }
 	return 0;
 }
+/*****************************************************************************
+-Fuction        : Create
+-Description    : 创建ssl
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+int DtlsOnlyHandshake::Create()
+{
+    int iRet = -1;
+    
+    m_ptSsl = SSL_new(m_ptSslCtx);
+    if(!m_ptSsl) 
+    {
+        printf("[%I64u]     Error creating DTLS session! (%s)\n", ERR_reason_error_string(ERR_get_error()));        
+        return iRet;
+    }
+    SSL_set_ex_data(m_ptSsl, 0, this);
+    SSL_set_info_callback(m_ptSsl, Callback);
 
-static int DtlsOnlyHandshake::VerifyCallback(int i_iPreverifyOk, X509_STORE_CTX *ctx) 
+    m_ptReadBio = BIO_new(BIO_s_mem());
+    if(!m_ptReadBio) 
+    {
+        printf(" Error creating read BIO! (%s)\n",  ERR_reason_error_string(ERR_get_error()));      
+        return iRet;
+    }
+    BIO_set_mem_eof_return(m_ptReadBio, -1);
+	m_ptWriteBio = BIO_new(BIO_s_mem());
+	if(!m_ptWriteBio) 
+    {
+		printf("Error creating write BIO! (%s)\n", ERR_reason_error_string(ERR_get_error()));		
+        return iRet;
+	}
+	BIO_set_mem_eof_return(m_ptWriteBio, -1);
+	/* The write BIO needs our custom filter, or fragmentation won't work */
+	m_ptFilterBio = BIO_new(m_ptDtlsBioFilterMethods);
+	if(!m_ptFilterBio) 
+    {
+		printf("Error creating filter BIO! (%s)\n", ERR_reason_error_string(ERR_get_error()));		
+		return iRet;
+	}
+	/* Chain filter and write BIOs */
+	BIO_push(m_ptFilterBio, m_ptWriteBio);
+	/* Set the filter as the BIO to use for outgoing data */
+	SSL_set_bio(m_ptSsl, m_ptReadBio, m_ptFilterBio);
+	
+    SSL_set_connect_state(m_ptSsl);
+	/* https://code.google.com/p/chromium/issues/detail?id=406458
+	 * Specify an ECDH group for ECDHE ciphers, otherwise they cannot be
+	 * negotiated when acting as the server. Use NIST's P-256 which is
+	 * commonly supported.
+	 */
+	EC_KEY* ecdh = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
+	if(ecdh == NULL) 
+    {
+		printf("Error creating ECDH group! (%s)\n", ERR_reason_error_string(ERR_get_error()));		
+        return iRet;
+	}
+	SSL_set_options(m_ptSsl, SSL_OP_SINGLE_ECDH_USE);
+	SSL_set_tmp_ecdh(m_ptSsl, ecdh);
+	EC_KEY_free(ecdh);
+
+    m_iShakeEndFlag=0;
+    iRet=0;
+    return iRet;
+}
+/*****************************************************************************
+-Fuction        : Handshake
+-Description    : 创建ssl
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+void DtlsOnlyHandshake::Handshake() 
+{
+	if(m_ptSsl == NULL) {return;}
+    
+    if(DTLS_STATE_CREATED == m_dtls_state)
+    {
+        m_dtls_state = DTLS_STATE_TRYING;
+    }
+	SSL_do_handshake(m_ptSsl);
+	fd_bridge();
+}
+
+
+
+int DtlsOnlyHandshake::VerifyCallback(int i_iPreverifyOk, X509_STORE_CTX *ctx) 
 {
     /* We just use the verify_callback to request a certificate from the client */
     return 1;
 }
 
-static int DtlsOnlyHandshake::GenerateKeys(X509 ** i_pptCertificate, EVP_PKEY ** i_pptPrivateKey) 
+int DtlsOnlyHandshake::GenerateKeys(X509 ** i_pptCertificate, EVP_PKEY ** i_pptPrivateKey) 
 {
     static const int num_bits = 2048;
     BIGNUM* bne = NULL;
@@ -252,23 +364,23 @@ error:
     return -1;
 }
 
-static int DtlsOnlyHandshake::BioFilterInit(void) 
+int DtlsOnlyHandshake::BioFilterInit(void) 
 {
     m_ptDtlsBioFilterMethods = BIO_meth_new(BIO_TYPE_FILTER | BIO_get_new_index(), "janus filter");
     if(!m_ptDtlsBioFilterMethods)
         return -1;
-    BIO_meth_set_write(m_ptDtlsBioFilterMethods, dtls_bio_filter_write);
-    BIO_meth_set_ctrl(m_ptDtlsBioFilterMethods, dtls_bio_filter_ctrl);
-    BIO_meth_set_create(m_ptDtlsBioFilterMethods, dtls_bio_filter_new);
-    BIO_meth_set_destroy(m_ptDtlsBioFilterMethods, dtls_bio_filter_free);
+    BIO_meth_set_write(m_ptDtlsBioFilterMethods, BioFilterWrite);
+    BIO_meth_set_ctrl(m_ptDtlsBioFilterMethods, BioFilterCrtl);
+    BIO_meth_set_create(m_ptDtlsBioFilterMethods, BioFilterNew);
+    BIO_meth_set_destroy(m_ptDtlsBioFilterMethods, BioFilterFree);
 
     return 0;
 }
 
-int dtls_bio_filter_new(BIO *bio) 
+int DtlsOnlyHandshake::BioFilterNew(BIO *bio) 
 {
     /* Create a filter state struct */
-    dtls_bio_filter *filter = new dtls_bio_filter();//(dtls_bio_filter *)g_malloc0(sizeof(dtls_bio_filter));
+    BioFilter *filter = new BioFilter();//(dtls_bio_filter *)g_malloc0(sizeof(dtls_bio_filter));
     //filter->packets = NULL;
     //mutex_init(&filter->mutex);
 
@@ -278,12 +390,12 @@ int dtls_bio_filter_new(BIO *bio)
     return 1;
 }
 
-int dtls_bio_filter_free(BIO *bio) 
+int DtlsOnlyHandshake::BioFilterFree(BIO *bio) 
 {
     if(bio == NULL)
         return 0;
     
-    dtls_bio_filter *filter = (dtls_bio_filter *)BIO_get_data(bio);
+    BioFilter *filter = (BioFilter *)BIO_get_data(bio);
 
     if(filter != NULL) 
     {
@@ -300,7 +412,7 @@ int dtls_bio_filter_free(BIO *bio)
     return 1;
 }
 
-int dtls_bio_filter_write(BIO *bio, const char *in, int inl) {
+int DtlsOnlyHandshake::BioFilterWrite(BIO *bio, const char *in, int inl) {
     printf("dtls_bio_filter_write: %p, %d\n", in, inl);
 
     long ret = BIO_write(BIO_next(bio), in, inl);
@@ -308,7 +420,7 @@ int dtls_bio_filter_write(BIO *bio, const char *in, int inl) {
     printf("  -- %ld\n", ret);
 
     /* Keep track of the packet, as we'll advertize them one by one after a pending check */
-    dtls_bio_filter *filter = (dtls_bio_filter *)BIO_get_data(bio);
+    BioFilter *filter = (BioFilter *)BIO_get_data(bio);
 
     if(filter != NULL)
     {
@@ -320,7 +432,8 @@ int dtls_bio_filter_write(BIO *bio, const char *in, int inl) {
     return ret;
 }
 
-long dtls_bio_filter_ctrl(BIO *bio, int cmd, long num, void *ptr) {
+long DtlsOnlyHandshake::BioFilterCrtl(BIO *bio, int cmd, long num, void *ptr) 
+{
     switch(cmd) 
     {
     case BIO_CTRL_FLUSH:
@@ -328,14 +441,14 @@ long dtls_bio_filter_ctrl(BIO *bio, int cmd, long num, void *ptr) {
         return 1;
     case BIO_CTRL_DGRAM_QUERY_MTU:
         /* Let's force the MTU that was configured */
-        printf("Advertizing MTU: %d\n", mtu);
-        return mtu;
+        printf("Advertizing MTU: %d\n", 1472);
+        return 1472;
     case BIO_CTRL_WPENDING:
         return 0L;
     case BIO_CTRL_PENDING: 
         {
             /* We only advertize one packet at a time, as they may be fragmented */
-            dtls_bio_filter *filter = (dtls_bio_filter *)BIO_get_data(bio);
+            BioFilter *filter = (BioFilter *)BIO_get_data(bio);
 
             if(filter == NULL) {return 0;}
 
@@ -359,5 +472,44 @@ long dtls_bio_filter_ctrl(BIO *bio, int cmd, long num, void *ptr) {
         printf("dtls_bio_filter_ctrl: %d\n", cmd);
     }
     return 0;
+}
+void DtlsOnlyHandshake::Callback(const SSL *ssl, int where, int ret) 
+{
+    /* We only care about alerts */
+    if (!(where & SSL_CB_ALERT)) 
+    {
+        return;
+    }
+    printf("......................................dtls error from callback.........................\r\n");
+}
+/*****************************************************************************
+-Fuction        : BioFilter
+-Description    : 
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+BioFilter::BioFilter()
+{
+
+
+}
+
+/*****************************************************************************
+-Fuction        : ~BioFilter
+-Description    : 
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+BioFilter::~BioFilter()
+{
+    packets.clear();
 }
 

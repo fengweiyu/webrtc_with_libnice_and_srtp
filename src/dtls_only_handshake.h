@@ -13,6 +13,30 @@
 #define DTLS_ONLY_HANDSHAKE_H
 
 
+#include <list>
+#include <openssl/bio.h>
+
+
+/*****************************************************************************
+-Class          : BioFilter
+-Description    : BioFilter
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/11      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+class BioFilter
+{
+public:
+	BioFilter();
+	~BioFilter();
+	std::list < int > packets;    
+private:
+
+	boost::mutex mutex;
+
+
+
+};
 
 
 /*****************************************************************************
@@ -28,16 +52,35 @@ public:
 	DtlsOnlyHandshake();
 	~DtlsOnlyHandshake();
 	int Init();
-
+    void Handshake();
 
 private:
-     SSL_CTX * m_ptSslCtx = NULL;
-     X509 * m_ptSslCert = NULL;
-     EVP_PKEY * m_ptSslKey = NULL;
-     char m_acLocalFingerprint[160];
-     BIO_METHOD * m_ptDtlsBioFilterMethods = NULL;
+    int BioFilterInit(void);
+    int GenerateKeys(X509 ** i_pptCertificate, EVP_PKEY ** i_pptPrivateKey);
+    int VerifyCallback(int i_iPreverifyOk, X509_STORE_CTX *ctx);
+
+    static void Callback(const SSL *ssl, int where, int ret);
+    static int BioFilterNew(BIO *bio);
+    static int BioFilterFree(BIO *bio);
+    static int BioFilterWrite(BIO *bio);
+    static int BioFilterCrtl(BIO *bio);
+
+	SSL_CTX * m_ptSslCtx;
+	X509 * m_ptSslCert;
+	EVP_PKEY * m_ptSslKey;
+	char m_acLocalFingerprint[160];
+	BIO_METHOD * m_ptDtlsBioFilterMethods;
+
+    SSL *m_ptSsl;
+    BIO *m_ptReadBio;//ssl读取数据io,调用ssl_read前需往这个io写数据
+    BIO *m_ptWriteBio;//ssl发送数据出口io,需实现将这个io的数据读取来然后通过其他接口发走
+    BIO *m_ptFilterBio;//(fix MTU fragmentation on outgoing DTLS data, if required)
+
+	int m_iShakeEndFlag;//协商结束标记,0未结束,1结束
 
 
+
+	
 };
 
 
