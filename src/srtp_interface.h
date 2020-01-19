@@ -12,6 +12,9 @@
 #ifndef SRTP_INTERFACE_H
 #define SRTP_INTERFACE_H
 
+#include "srtp.h"
+
+
 typedef enum SrtpSsrcType
 {
     SRTP_SSRC_UNDEFINED = 0,   /**< Indicates an undefined SSRC type.    */
@@ -26,58 +29,30 @@ typedef enum SrtpSsrcType
 
 
 
-
-
-
 /*****************************************************************************
--Fuction        : SrtpInit
--Description    : v
--Input          : 
--Output         : 
--Return         : 
+-Class          : Srtp
+-Description    : Srtp
 * Modify Date     Version             Author           Modification
 * -----------------------------------------------
-* 2020/01/13      V1.0.0              Yu Weifeng       Created
+* 2020/01/11      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int SrtpInit();
+class Srtp
+{
+public:
+	Srtp();
+	~Srtp();
+    int Create(char *i_acKey,int i_iKeyLen,E_SrtpSsrcType i_eSrtpSsrcType);
+    int ProtectRtp(char * i_acRtpData,int i_iDataLen);
+    int Shutdown();
 
 
-/*****************************************************************************
--Fuction        : SrtpCreate
--Description    : SrtpCreate
--Input          : 
--Output         : 
--Return         : 
-* Modify Date     Version             Author           Modification
-* -----------------------------------------------
-* 2020/01/13      V1.0.0              Yu Weifeng       Created
-******************************************************************************/
-int SrtpCreate(char *i_acKey,int i_iKeyLen,E_SrtpSsrcType i_eSrtpSsrcType);
 
+    
+private:
+    srtp_t m_tSrtp;
 
-/*****************************************************************************
--Fuction        : SrtpProtectRtp
--Description    : SrtpProtectRtp
--Input          : 
--Output         : 
--Return         : 
-* Modify Date     Version             Author           Modification
-* -----------------------------------------------
-* 2020/01/13      V1.0.0              Yu Weifeng       Created
-******************************************************************************/
-int SrtpProtectRtp(char * i_acRtpData,int i_iDataLen);
+};
 
-/*****************************************************************************
--Fuction        : SrtpShutdown
--Description    : SrtpShutdown
--Input          : 
--Output         : 
--Return         : 
-* Modify Date     Version             Author           Modification
-* -----------------------------------------------
-* 2020/01/13      V1.0.0              Yu Weifeng       Created
-******************************************************************************/
-int SrtpShutdown();
 
 
 

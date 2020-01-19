@@ -1,7 +1,7 @@
 /*****************************************************************************
 * Copyright (C) 2020-2025 Hanson Yu  All rights reserved.
 ------------------------------------------------------------------------------
-* File Module           :       libnice_interface.c
+* File Module           :       libnice_interface.cpp
 * Description           : 	
 * Created               :       2020.01.13.
 * Author                :       Yu Weifeng
@@ -13,24 +13,31 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <ctype.h>
-#include <agent.h>
 
-#include <gio/gnetworking.h>
 
-static void LibniceCandidateGatheringDone(NiceAgent *i_ptAgent, guint i_dwStreamID,gpointer pData);
-static void LibniceNewSelectPair(NiceAgent *agent, guint _stream_id,guint component_id, gchar *lfoundation,gchar *rfoundation, gpointer data);
-static void LibniceComponentStateChanged(NiceAgent *agent, guint _stream_id,guint component_id, guint state,gpointer data);
-static void LibniceRecv(NiceAgent *agent, guint _stream_id, guint component_id,guint len, gchar *buf, gpointer data);
+int Libnice::m_iLibniceSendReadyFlag = 0;//0不可发送,1准备好通道可以发送
+/*****************************************************************************
+-Fuction        : LibniceInit
+-Description    : LibniceInit
+-Input          : i_iControlling 感觉不必要
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+Libnice::Libnice(char * i_strStunAddr,unsigned int i_dwStunPort,int i_iControlling)
+{
+    m_ptAgent=NULL;
+    m_pRemoteCandidatesList = NULL;
+    m_dwStreamID=0;//
+    m_iLibniceSendReadyFlag =0
+	memset(&m_tLibniceDepData,0,sizeof(T_LibniceDepData));
+	snprintf(m_tLibniceDepData.strStunAddr,sizeof(m_tLibniceDepData.strStunAddr),"%s",i_strStunAddr);
+	m_tLibniceDepData.dwStunPort = i_dwStunPort;
+	m_tLibniceDepData.iControlling = i_iControlling;
 
-static T_LocalCandidate g_tLocalCandidate;
-static const char *g_astrCandidateTypeName[] = {"host", "srflx", "prflx", "relay"};
-static NiceAgent *g_ptAgent=NULL;
-static GSList *g_pRemoteCandidatesList = NULL;
-static unsigned int g_dwStreamID=0;//
-static int g_iLibniceSendReadyFlag =0;//0不可发送,1准备好通道可以发送
-static T_LibniceDepData g_tLibniceDepData = {0};
-
+}
 
 /*****************************************************************************
 -Fuction        : LibniceInit
@@ -42,21 +49,10 @@ static T_LibniceDepData g_tLibniceDepData = {0};
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int LibniceInit(char * i_strStunAddr,unsigned int i_dwStunPort,int i_iControlling)
+Libnice::~Libnice()
 {
-	int iRet = -1;
-    if i_strStunAddr == NULL) 
-    {
-		printf("LibniceInit i_strStunAddr null \r\n");
-		return iRet;
-    }
-	memset(&g_tLibniceDepData,0,sizeof(T_LibniceDepData));
-	snprintf(g_tLibniceDepData.strStunAddr,sizeof(g_tLibniceDepData.strStunAddr),"%s",i_strStunAddr);
-	g_tLibniceDepData.dwStunPort = i_dwStunPort;
-	g_tLibniceDepData.iControlling = i_iControlling;
 
-	iRet = 0;
-	return iRet;
+
 }
 
 
@@ -70,47 +66,47 @@ int LibniceInit(char * i_strStunAddr,unsigned int i_dwStunPort,int i_iControllin
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int LibniceProc()
+int Libnice::LibniceProc()
 {
 	int iRet = -1;
     static GMainLoop *ptLoop=NULL;//
     static GIOChannel* ptStdinIO=NULL;//
 
-    g_iLibniceSendReadyFlag = 0;
-    memset(&g_tLocalCandidate,0,sizeof(T_LocalCandidate));
+    m_iLibniceSendReadyFlag = 0;
+    memset(&m_tLocalCandidate,0,sizeof(T_LocalCandidate));
 	g_networking_init();//
 	ptLoop = g_main_loop_new(NULL, FALSE);//
 	ptStdinIO = g_io_channel_unix_new(fileno(stdin));//
 
 	// Create the nice agent
-	g_ptAgent = nice_agent_new(g_main_loop_get_context (ptLoop),NICE_COMPATIBILITY_RFC5245);
-	if (g_ptAgent == NULL)
+	m_ptAgent = nice_agent_new(g_main_loop_get_context (ptLoop),NICE_COMPATIBILITY_RFC5245);
+	if (m_ptAgent == NULL)
 		g_error("Failed to create agent");
 
 	// Set the STUN settings and controlling mode
-	if (strlen(g_tLibniceDepData.strStunAddr)>0) 
+	if (strlen(m_tLibniceDepData.strStunAddr)>0) 
 	{
-		g_object_set(g_ptAgent, "stun-server", g_tLibniceDepData.strStunAddr, NULL);
-		g_object_set(g_ptAgent, "stun-server-port", g_tLibniceDepData.dwStunPort, NULL);
+		g_object_set(m_ptAgent, "stun-server", m_tLibniceDepData.strStunAddr, NULL);
+		g_object_set(m_ptAgent, "stun-server-port", m_tLibniceDepData.dwStunPort, NULL);
 	}
-	g_object_set(g_ptAgent, "controlling-mode", g_tLibniceDepData.iControlling, NULL);
+	g_object_set(m_ptAgent, "controlling-mode", m_tLibniceDepData.iControlling, NULL);
 
 	// Connect to the signals
-	g_signal_connect(g_ptAgent, "candidate-gathering-done",G_CALLBACK(LibniceCandidateGatheringDone), NULL);
-	g_signal_connect(g_ptAgent, "new-selected-pair",G_CALLBACK(LibniceNewSelectPair), NULL);//
-	g_signal_connect(g_ptAgent, "component-state-changed",G_CALLBACK(LibniceComponentStateChanged), NULL);//
+	g_signal_connect(m_ptAgent, "candidate-gathering-done",G_CALLBACK(CandidateGatheringDone), NULL);
+	g_signal_connect(m_ptAgent, "new-selected-pair",G_CALLBACK(NewSelectPair), NULL);//
+	g_signal_connect(m_ptAgent, "component-state-changed",G_CALLBACK(ComponentStateChanged), NULL);//
 
 	// Create a new stream with one component
-	g_dwStreamID = nice_agent_add_stream(g_ptAgent, 1);//
-	if (g_dwStreamID == 0)
+	m_dwStreamID = nice_agent_add_stream(m_ptAgent, 1);//
+	if (m_dwStreamID == 0)
 		g_error("Failed to add stream");
 
 	// Attach to the component to receive the data
 	// Without this call, candidates cannot be gathered
-	nice_agent_attach_recv(g_ptAgent, g_dwStreamID, 1,g_main_loop_get_context (ptLoop), LibniceRecv, NULL);//
+	nice_agent_attach_recv(m_ptAgent, m_dwStreamID, 1,g_main_loop_get_context (ptLoop), Recv, NULL);//
 
 	// Start gathering local candidates
-	if (!nice_agent_gather_candidates(g_ptAgent, g_dwStreamID))
+	if (!nice_agent_gather_candidates(m_ptAgent, m_dwStreamID))
 		g_error("Failed to start candidate gathering");
 
 	g_debug("waiting for candidate-gathering-done signal...");
@@ -121,7 +117,7 @@ int LibniceProc()
     
 
 	g_main_loop_unref(ptLoop);//
-	g_object_unref(g_ptAgent);//
+	g_object_unref(m_ptAgent);//
 	g_io_channel_unref (ptStdinIO);//
 }
 /*****************************************************************************
@@ -134,14 +130,14 @@ int LibniceProc()
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int LibniceGetLocalCandidate(T_LocalCandidate * i_ptLocalCandidate)
+int Libnice::GetLocalCandidate(T_LocalCandidate * i_ptLocalCandidate)
 {
 	int iRet=-1;
-	while(g_tLocalCandidate.iGatheringDoneFlag == 0)
+	while(m_tLocalCandidate.iGatheringDoneFlag == 0)
 	{
 
 	}
-	memcpy(i_ptLocalCandidate,&g_tLocalCandidate,sizeof(T_LocalCandidate));
+	memcpy(i_ptLocalCandidate,&m_tLocalCandidate,sizeof(T_LocalCandidate));
 	return 0;
 }
 /*****************************************************************************
@@ -154,21 +150,21 @@ int LibniceGetLocalCandidate(T_LocalCandidate * i_ptLocalCandidate)
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int LibniceGetLocalSDP(char * i_strSDP,int i_iSdpLen)
+int Libnice::GetLocalSDP(char * i_strSDP,int i_iSdpLen)
 {
 	int iRet=-1;
 	char *strSDP = NULL;
-    if (i_strSDP == NULL || g_ptAgent == NULL || i_iSdpLen <= 0) 
+    if (i_strSDP == NULL || m_ptAgent == NULL || i_iSdpLen <= 0) 
     {
 		printf("LibniceGetLocalCandidate NULL\r\n");
 		return iRet;
     }
-	while(g_tLocalCandidate.iGatheringDoneFlag == 0)
+	while(m_tLocalCandidate.iGatheringDoneFlag == 0)
 	{
 
 	}
     // Candidate gathering is done. Send our local candidates on stdout
-    strSDP = nice_agent_generate_local_sdp (g_ptAgent);
+    strSDP = nice_agent_generate_local_sdp (m_ptAgent);
     if(NULL!=strSDP)
     {
 		snprintf(i_strSDP,i_iSdpLen,"%s",strSDP);
@@ -188,16 +184,16 @@ int LibniceGetLocalSDP(char * i_strSDP,int i_iSdpLen)
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int LibniceSetRemoteCredentials(char * i_strUfrag,char * i_strPasswd)
+int Libnice::SetRemoteCredentials(char * i_strUfrag,char * i_strPasswd)
 {
 	int iRet = -1;
-    if (i_strUfrag == NULL || i_strPasswd == NULL || g_ptAgent == NULL || g_dwStreamID == 0) 
+    if (i_strUfrag == NULL || i_strPasswd == NULL || m_ptAgent == NULL || m_dwStreamID == 0) 
     {
 		g_message("line must have at least ufrag, password, and one candidate");
 		return iRet;
     }
     
-    if (!nice_agent_set_remote_credentials(g_ptAgent, g_dwStreamID, i_strUfrag, i_strPasswd)) 
+    if (!nice_agent_set_remote_credentials(m_ptAgent, m_dwStreamID, i_strUfrag, i_strPasswd)) 
     {
 		g_message("failed to set remote credentials");
 		return iRet;
@@ -215,14 +211,14 @@ int LibniceSetRemoteCredentials(char * i_strUfrag,char * i_strPasswd)
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int LibniceSetRemoteCandidateToGlist(char * i_strCandidate)
+int Libnice::SetRemoteCandidateToGlist(char * i_strCandidate)
 {
 	int iRet = -1;
     NiceCandidate *ptCand = NULL;
     NiceCandidateType ntype;
     char **tokens = NULL;
     unsigned int i=0;
-	if(NULL == i_strCandidate || 0==g_dwStreamID)
+	if(NULL == i_strCandidate || 0==m_dwStreamID)
 	{
         g_message("line must have at least ufrag, password, and one candidate");
         return iRet;
@@ -235,22 +231,22 @@ int LibniceSetRemoteCandidateToGlist(char * i_strCandidate)
         g_strfreev(tokens);
         return iRet;
 	}
-	for (i = 0; i < G_N_ELEMENTS (g_astrCandidateTypeName); i++) 
+	for (i = 0; i < G_N_ELEMENTS (m_astrCandidateTypeName); i++) 
 	{
-		if (strcmp(tokens[4], g_astrCandidateTypeName[i]) == 0)
+		if (strcmp(tokens[4], m_astrCandidateTypeName[i]) == 0)
 		{
 			ntype = i;
 			break;
 		}
 	}
-	if (i == G_N_ELEMENTS (g_astrCandidateTypeName))
+	if (i == G_N_ELEMENTS (m_astrCandidateTypeName))
     {
         g_strfreev(tokens);
         return iRet;
     }    
 	ptCand = nice_candidate_new(ntype);
 	ptCand->component_id = 1;
-	ptCand->stream_id = g_dwStreamID;
+	ptCand->stream_id = m_dwStreamID;
 	ptCand->transport = NICE_CANDIDATE_TRANSPORT_UDP;
 	strncpy(ptCand->foundation, tokens[0], NICE_CANDIDATE_MAX_FOUNDATION);
 	ptCand->foundation[NICE_CANDIDATE_MAX_FOUNDATION - 1] = 0;
@@ -271,7 +267,7 @@ int LibniceSetRemoteCandidateToGlist(char * i_strCandidate)
         g_strfreev(tokens);
 	    return iRet;
 	}
-	g_pRemoteCandidatesList = g_slist_prepend(g_pRemoteCandidatesList, ptCand);
+	m_pRemoteCandidatesList = g_slist_prepend(m_pRemoteCandidatesList, ptCand);
     g_strfreev(tokens); 
     iRet=0;
     return iRet;
@@ -287,21 +283,21 @@ int LibniceSetRemoteCandidateToGlist(char * i_strCandidate)
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int LibniceSetRemoteCandidates()
+int Libnice::SetRemoteCandidates()
 {
 	int iRet = -1;
-    if (g_pRemoteCandidatesList == NULL) 
+    if (m_pRemoteCandidatesList == NULL) 
     {
-		printf("g_pRemoteCandidatesList null \r\n");
+		printf("m_pRemoteCandidatesList null \r\n");
 	    return iRet;
     }
-    if (g_ptAgent == NULL || g_dwStreamID == 0) 
+    if (m_ptAgent == NULL || m_dwStreamID == 0) 
     {
-		printf("g_ptAgent null \r\n");
+		printf("m_ptAgent null \r\n");
 		return iRet;
     }
 	// Note: this will trigger the start of negotiation.
-	if (nice_agent_set_remote_candidates(g_ptAgent, g_dwStreamID, 1,g_pRemoteCandidatesList) < 1) 
+	if (nice_agent_set_remote_candidates(m_ptAgent, m_dwStreamID, 1,m_pRemoteCandidatesList) < 1) 
 	{
 		g_message("failed to set remote candidates");
 	}
@@ -309,10 +305,10 @@ int LibniceSetRemoteCandidates()
 	{
 		iRet=0;
 	}
-	if (g_pRemoteCandidatesList != NULL)
+	if (m_pRemoteCandidatesList != NULL)
 	{
-		g_slist_free_full(g_pRemoteCandidatesList, (GDestroyNotify)&nice_candidate_free);
-		g_pRemoteCandidatesList =NULL;
+		g_slist_free_full(m_pRemoteCandidatesList, (GDestroyNotify)&nice_candidate_free);
+		m_pRemoteCandidatesList =NULL;
 	}
 	return iRet;
 }
@@ -327,17 +323,17 @@ int LibniceSetRemoteCandidates()
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int LibniceSetRemoteSDP(char * i_strSDP)
+int Libnice::SetRemoteSDP(char * i_strSDP)
 {
 	int iRet = -1;
-    if (g_ptAgent == NULL || i_strSDP == NULL) 
+    if (m_ptAgent == NULL || i_strSDP == NULL) 
     {
-		printf("LibniceSetRemoteSDP g_ptAgent null \r\n");
+		printf("LibniceSetRemoteSDP m_ptAgent null \r\n");
 		return iRet;
     }
 
 	// Parse remote candidate list and set it on the agent
-	if (nice_agent_parse_remote_sdp (g_ptAgent, i_strSDP) > 0) 
+	if (nice_agent_parse_remote_sdp (m_ptAgent, i_strSDP) > 0) 
 	{
 		iRet = 0;
 	} 
@@ -358,20 +354,20 @@ int LibniceSetRemoteSDP(char * i_strSDP)
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int LibniceSendData(char * i_acBuf,int i_iBufLen)
+int Libnice::SendData(char * i_acBuf,int i_iBufLen)
 {
 	int iRet = -1;
-    if g_ptAgent == NULL || g_dwStreamID == 0 || i_acBuf == NULL) 
+    if m_ptAgent == NULL || m_dwStreamID == 0 || i_acBuf == NULL) 
     {
-		printf("LibniceSendData g_ptAgent null \r\n");
+		printf("LibniceSendData m_ptAgent null \r\n");
 		return iRet;
     }
-    if g_iLibniceSendReadyFlag == 0) 
+    if m_iLibniceSendReadyFlag == 0) 
     {
 		printf("LibniceSendReady err \r\n");
 		return iRet;
     }
-    iRet = nice_agent_send(g_ptAgent, g_dwStreamID, 1, i_iBufLen, i_acBuf);
+    iRet = nice_agent_send(m_ptAgent, m_dwStreamID, 1, i_iBufLen, i_acBuf);
     return iRet;
 }
 
@@ -385,12 +381,12 @@ int LibniceSendData(char * i_acBuf,int i_iBufLen)
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int LibniceGetSendReadyFlag()
+int Libnice::GetSendReadyFlag()
 {
-    return g_iLibniceSendReadyFlag;
+    return m_iLibniceSendReadyFlag;
 }
 
-static void LibniceCandidateGatheringDone(NiceAgent *i_ptAgent, guint i_dwStreamID,gpointer pData)
+void Libnice::CandidateGatheringDone(NiceAgent *i_ptAgent, guint i_dwStreamID,gpointer pData)
 {
 	g_debug("SIGNAL candidate gathering done\n");
 
@@ -420,13 +416,13 @@ static void LibniceCandidateGatheringDone(NiceAgent *i_ptAgent, guint i_dwStream
 		// [raddr <connection-address>] [rport <port>]
 		// *(SP extension-att-name SP extension-att-value)
 		//"candidate:3442447574 1 udp 2122260223 192.168.0.170 54653 typ host generation 0 ufrag gX6M network-id 1"
-		snprintf(g_tLocalCandidate.strCandidateData,sizeof(g_tLocalCandidate.strCandidateData),
+		snprintf(m_tLocalCandidate.strCandidateData,sizeof(m_tLocalCandidate.strCandidateData),
 		"candidate:%s %u %s %u %s %u typ %s",
 		c->foundation,c->component_id,transport_name[c->transport],c->priority,
-		ipaddr,nice_address_get_port(&c->addr),g_astrCandidateTypeName[c->type]);
+		ipaddr,nice_address_get_port(&c->addr),m_astrCandidateTypeName[c->type]);
 	}
-	printf("%s ,%s %s", g_tLocalCandidate.strCandidateData,strLocalUfrag, strLocalPassword);
-	g_tLocalCandidate.iGatheringDoneFlag = 1;
+	printf("%s ,%s %s", m_tLocalCandidate.strCandidateData,strLocalUfrag, strLocalPassword);
+	m_tLocalCandidate.iGatheringDoneFlag = 1;
 	iRet = 0;
 
 	end:
@@ -439,12 +435,12 @@ static void LibniceCandidateGatheringDone(NiceAgent *i_ptAgent, guint i_dwStream
 	return iRet;
 }
 
- static void LibniceNewSelectPair(NiceAgent *agent, guint _stream_id,guint component_id, gchar *lfoundation,gchar *rfoundation, gpointer data)
+void Libnice::NewSelectPair(NiceAgent *agent, guint _stream_id,guint component_id, gchar *lfoundation,gchar *rfoundation, gpointer data)
 {//此处开始dtls握手
 	g_debug("SIGNAL: selected pair %s %s", lfoundation, rfoundation);
 }
 
-static void LibniceComponentStateChanged(NiceAgent *agent, guint _stream_id,guint component_id, guint state,gpointer data)
+void Libnice::ComponentStateChanged(NiceAgent *agent, guint _stream_id,guint component_id, guint state,gpointer data)
 {
 	static const gchar *state_name[] = {"disconnected", "gathering", "connecting","connected", "ready", "failed"};
     
@@ -452,11 +448,11 @@ static void LibniceComponentStateChanged(NiceAgent *agent, guint _stream_id,guin
 
 	if (state == NICE_COMPONENT_STATE_READY) 
 	{//协商成功
-        g_iLibniceSendReadyFlag = 1;
+        m_iLibniceSendReadyFlag = 1;
 	}
 }
 
-static void LibniceRecv(NiceAgent *agent, guint _stream_id, guint component_id,guint len, gchar *buf, gpointer data)
+void Libnice::Recv(NiceAgent *agent, guint _stream_id, guint component_id,guint len, gchar *buf, gpointer data)
 {
 	if (len == 1 && buf[0] == '\0')
 	{//这里接收浏览器发出的报文(包括dtls协商报文)

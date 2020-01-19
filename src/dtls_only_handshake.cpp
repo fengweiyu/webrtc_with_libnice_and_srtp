@@ -20,15 +20,44 @@ openssl°æ±¾1.1.0
 /* DTLS stuff */
 #define DTLS_CIPHERS	"ALL:NULL:eNULL:aNULL"
 
-static int DtlsVerifyCallback(int i_iPreverifyOk, X509_STORE_CTX *ctx); 
-static int DtlsGenerateKeys(X509 ** i_pptCertificate, EVP_PKEY ** i_pptPrivateKey);
-static int DtlsBioFilterInit(void);
 
-static SSL_CTX * g_ptSslCtx = NULL;
-static X509 * g_ptSslCert = NULL;
-static EVP_PKEY * g_ptSslKey = NULL;
-static char g_acLocalFingerprint[160];
-static BIO_METHOD * g_ptDtlsBioFilterMethods = NULL;
+
+
+/*****************************************************************************
+-Fuction        : DtlsOnlyHandshake
+-Description    : 
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+DtlsOnlyHandshake::DtlsOnlyHandshake()
+{
+    m_ptSslCtx = NULL;
+    m_ptSslCert = NULL;
+    m_ptSslKey = NULL;
+    m_acLocalFingerprint[160];
+    m_ptDtlsBioFilterMethods = NULL;
+    memset(&m_acLocalFingerprint,0,sizeof(m_acLocalFingerprint));
+}
+
+/*****************************************************************************
+-Fuction        : ~DtlsOnlyHandshake
+-Description    : 
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+DtlsOnlyHandshake::~DtlsOnlyHandshake()
+{
+
+}
+
 
 
 /*****************************************************************************
@@ -41,47 +70,47 @@ static BIO_METHOD * g_ptDtlsBioFilterMethods = NULL;
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int DtlsInit()
+int DtlsOnlyHandshake::Init()
 {
-    g_ptSslCtx = SSL_CTX_new(DTLS_method());
-    if(!g_ptSslCtx) 
+    m_ptSslCtx = SSL_CTX_new(DTLS_method());
+    if(!m_ptSslCtx) 
     {
         printf("Ops, error creating DTLS context?\n");
         return -1;
     }
-    SSL_CTX_set_verify(g_ptSslCtx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, DtlsVerifyCallback);
-    SSL_CTX_set_tlsext_use_srtp(g_ptSslCtx, "SRTP_AES128_CM_SHA1_80");	/* FIXME Should we support something else as well? */
+    SSL_CTX_set_verify(m_ptSslCtx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, VerifyCallback);
+    SSL_CTX_set_tlsext_use_srtp(m_ptSslCtx, "SRTP_AES128_CM_SHA1_80");	/* FIXME Should we support something else as well? */
 
-    if (DtlsGenerateKeys(&g_ptSslCert, &g_ptSslKey) != 0) 
+    if (GenerateKeys(&m_ptSslCert, &m_ptSslKey) != 0) 
     {
         printf("Error generating DTLS key/certificate\n");
         return -2;
     }
-    if(!SSL_CTX_use_certificate(g_ptSslCtx, g_ptSslCert)) 
+    if(!SSL_CTX_use_certificate(m_ptSslCtx, m_ptSslCert)) 
     {
         printf("Certificate error (%s)\n", ERR_reason_error_string(ERR_get_error()));
         return -4;
     }
-    if(!SSL_CTX_use_PrivateKey(g_ptSslCtx, g_ptSslKey)) 
+    if(!SSL_CTX_use_PrivateKey(m_ptSslCtx, m_ptSslKey)) 
     {
         printf("Certificate key error (%s)\n", ERR_reason_error_string(ERR_get_error()));
         return -5;
     }
-    if(!SSL_CTX_check_private_key(g_ptSslCtx)) 
+    if(!SSL_CTX_check_private_key(m_ptSslCtx)) 
     {
         printf("Certificate check error (%s)\n", ERR_reason_error_string(ERR_get_error()));
         return -6;
     }
-    SSL_CTX_set_read_ahead(g_ptSslCtx,1);
+    SSL_CTX_set_read_ahead(m_ptSslCtx,1);
     
     unsigned int size;
     unsigned char fingerprint[EVP_MAX_MD_SIZE];
-    if(X509_digest(g_ptSslCert, EVP_sha256(), (unsigned char *)fingerprint, &size) == 0) 
+    if(X509_digest(m_ptSslCert, EVP_sha256(), (unsigned char *)fingerprint, &size) == 0) 
     {
         printf("Error converting X509 structure (%s)\n", ERR_reason_error_string(ERR_get_error()));
         return -7;
     }
-    char *lfp = (char *)&g_acLocalFingerprint;
+    char *lfp = (char *)&m_acLocalFingerprint;
     unsigned int i = 0;
     for(i = 0; i < size; i++) 
     {
@@ -90,9 +119,9 @@ int DtlsInit()
     }
     *(lfp-1) = 0;
 
-    printf("Fingerprint of our certificate: %s\n", g_acLocalFingerprint);
-    SSL_CTX_set_cipher_list(g_ptSslCtx, DTLS_CIPHERS);
-    if(dtls_bio_filter_init() < 0) 
+    printf("Fingerprint of our certificate: %s\n", m_acLocalFingerprint);
+    SSL_CTX_set_cipher_list(m_ptSslCtx, DTLS_CIPHERS);
+    if(BioFilterInit() < 0) 
     {
         printf("Error initializing BIO filter\n");
         return -8;
@@ -100,13 +129,13 @@ int DtlsInit()
 	return 0;
 }
 
-static int DtlsVerifyCallback(int i_iPreverifyOk, X509_STORE_CTX *ctx) 
+static int DtlsOnlyHandshake::VerifyCallback(int i_iPreverifyOk, X509_STORE_CTX *ctx) 
 {
     /* We just use the verify_callback to request a certificate from the client */
     return 1;
 }
 
-static int DtlsGenerateKeys(X509 ** i_pptCertificate, EVP_PKEY ** i_pptPrivateKey) 
+static int DtlsOnlyHandshake::GenerateKeys(X509 ** i_pptCertificate, EVP_PKEY ** i_pptPrivateKey) 
 {
     static const int num_bits = 2048;
     BIGNUM* bne = NULL;
@@ -223,15 +252,15 @@ error:
     return -1;
 }
 
-static int DtlsBioFilterInit(void) 
+static int DtlsOnlyHandshake::BioFilterInit(void) 
 {
-    g_ptDtlsBioFilterMethods = BIO_meth_new(BIO_TYPE_FILTER | BIO_get_new_index(), "janus filter");
-    if(!g_ptDtlsBioFilterMethods)
+    m_ptDtlsBioFilterMethods = BIO_meth_new(BIO_TYPE_FILTER | BIO_get_new_index(), "janus filter");
+    if(!m_ptDtlsBioFilterMethods)
         return -1;
-    BIO_meth_set_write(g_ptDtlsBioFilterMethods, dtls_bio_filter_write);
-    BIO_meth_set_ctrl(g_ptDtlsBioFilterMethods, dtls_bio_filter_ctrl);
-    BIO_meth_set_create(g_ptDtlsBioFilterMethods, dtls_bio_filter_new);
-    BIO_meth_set_destroy(g_ptDtlsBioFilterMethods, dtls_bio_filter_free);
+    BIO_meth_set_write(m_ptDtlsBioFilterMethods, dtls_bio_filter_write);
+    BIO_meth_set_ctrl(m_ptDtlsBioFilterMethods, dtls_bio_filter_ctrl);
+    BIO_meth_set_create(m_ptDtlsBioFilterMethods, dtls_bio_filter_new);
+    BIO_meth_set_destroy(m_ptDtlsBioFilterMethods, dtls_bio_filter_free);
 
     return 0;
 }

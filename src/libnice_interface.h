@@ -1,7 +1,7 @@
 /*****************************************************************************
 * Copyright (C) 2020-2025 Hanson Yu  All rights reserved.
 ------------------------------------------------------------------------------
-* File Module           :       Libnice_interface.c
+* File Module           :       Libnice_interface.h
 * Description           : 	
 * Created               :       2020.01.13.
 * Author                :       Yu Weifeng
@@ -12,6 +12,10 @@
 #ifndef LIBNICE_INTERFACE_H
 #define LIBNICE_INTERFACE_H
 
+#include <ctype.h>
+#include <agent.h>
+
+#include <gio/gnetworking.h>
 
 typedef struct LocalCandidate
 {
@@ -27,125 +31,44 @@ typedef struct LibniceDepData
 }T_LibniceDepData;
 
 /*****************************************************************************
--Fuction        : LibniceInit
--Description    : LibniceInit
--Input          : i_iControlling 感觉不必要
--Output         : 
--Return         : 
+-Class          : Libnice
+-Description    : Libnice
 * Modify Date     Version             Author           Modification
 * -----------------------------------------------
-* 2020/01/13      V1.0.0              Yu Weifeng       Created
+* 2020/01/11      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int LibniceInit(char * i_strStunAddr,unsigned int i_dwStunPort,int i_iControlling);
+class Libnice
+{
+public:
+	Libnice(char * i_strStunAddr,unsigned int i_dwStunPort,int i_iControlling);
+	~Libnice();
+    int LibniceProc();
+    int GetLocalCandidate(T_LocalCandidate * i_ptLocalCandidate);
+    int GetLocalSDP(char * i_strSDP,int i_iSdpLen);
+    int SetRemoteCredentials(char * i_strUfrag,char * i_strPasswd);
+    int SetRemoteCandidateToGlist(char * i_strCandidate);
+    int SetRemoteCandidates();
+    int SetRemoteSDP(char * i_strSDP);
+    int GetSendReadyFlag();
+    int SendData(char * i_acBuf,int i_iBufLen);
 
-/*****************************************************************************
--Fuction        : LibniceProc
--Description    : 会阻塞,线程函数
--Input          : 
--Output         : 
--Return         : 
-* Modify Date     Version             Author           Modification
-* -----------------------------------------------
-* 2020/01/13      V1.0.0              Yu Weifeng       Created
-******************************************************************************/
-int LibniceProc();
+
+	static const char *m_astrCandidateTypeName[] = {"host", "srflx", "prflx", "relay"};
+    
+private:
+    static void CandidateGatheringDone(NiceAgent *i_ptAgent, guint i_dwStreamID,gpointer pData);
+    static void NewSelectPair(NiceAgent *agent, guint _stream_id,guint component_id, gchar *lfoundation,gchar *rfoundation, gpointer data);
+    static void ComponentStateChanged(NiceAgent *agent, guint _stream_id,guint component_id, guint state,gpointer data);
+    static void Recv(NiceAgent *agent, guint _stream_id, guint component_id,guint len, gchar *buf, gpointer data);
 
 
-/*****************************************************************************
--Fuction        : LibniceGetLocalCandidate
--Description    : LibniceGetLocalCandidate
--Input          : 
--Output         : 
--Return         : 
-* Modify Date     Version             Author           Modification
-* -----------------------------------------------
-* 2020/01/13      V1.0.0              Yu Weifeng       Created
-******************************************************************************/
-int LibniceGetLocalCandidate(T_LocalCandidate * i_ptLocalCandidate);
-
-/*****************************************************************************
--Fuction        : LibniceGetLocalSDP
--Description    : LibniceGetLocalSDP
--Input          : 
--Output         : 
--Return         : 
-* Modify Date     Version             Author           Modification
-* -----------------------------------------------
-* 2020/01/13      V1.0.0              Yu Weifeng       Created
-******************************************************************************/
-int LibniceGetLocalSDP(char * i_strSDP,int i_iSdpLen);
-
-/*****************************************************************************
--Fuction        : LibniceSetRemoteCredentials
--Description    : LibniceSetRemoteCredentials
--Input          : 
--Output         : 
--Return         : 
-* Modify Date     Version             Author           Modification
-* -----------------------------------------------
-* 2020/01/13      V1.0.0              Yu Weifeng       Created
-******************************************************************************/
-int LibniceSetRemoteCredentials(char * i_strUfrag,char * i_strPasswd);
-
-/*****************************************************************************
--Fuction        : LibniceSetRemoteCandidateToGlist
--Description    : LibniceSetRemoteCandidateToGlist
--Input          : 
--Output         : 
--Return         : 
-* Modify Date     Version             Author           Modification
-* -----------------------------------------------
-* 2020/01/13      V1.0.0              Yu Weifeng       Created
-******************************************************************************/
-int LibniceSetRemoteCandidateToGlist(char * i_strCandidate);
-
-/*****************************************************************************
--Fuction        : LibniceSetRemoteCandidates
--Description    : LibniceSetRemoteCandidates
--Input          : 
--Output         : 
--Return         : 
-* Modify Date     Version             Author           Modification
-* -----------------------------------------------
-* 2020/01/13      V1.0.0              Yu Weifeng       Created
-******************************************************************************/
-int LibniceSetRemoteCandidates();
-
-/*****************************************************************************
--Fuction        : LibniceSetRemoteSDP
--Description    : LibniceSetRemoteSDP
--Input          : 
--Output         : 
--Return         : 
-* Modify Date     Version             Author           Modification
-* -----------------------------------------------
-* 2020/01/13      V1.0.0              Yu Weifeng       Created
-******************************************************************************/
-int LibniceSetRemoteSDP(char * i_strSDP);
-
-/*****************************************************************************
--Fuction        : LibniceGetSendReadyFlag
--Description    : LibniceGetSendReadyFlag
--Input          : 
--Output         : 
--Return         : 
-* Modify Date     Version             Author           Modification
-* -----------------------------------------------
-* 2020/01/13      V1.0.0              Yu Weifeng       Created
-******************************************************************************/
-int LibniceGetSendReadyFlag();
-
-/*****************************************************************************
--Fuction        : LibniceSendData
--Description    : LibniceSendData
--Input          : 
--Output         : 
--Return         : 
-* Modify Date     Version             Author           Modification
-* -----------------------------------------------
-* 2020/01/13      V1.0.0              Yu Weifeng       Created
-******************************************************************************/
-int LibniceSendData(char * i_acBuf,int i_iBufLen);
+    T_LocalCandidate m_tLocalCandidate;
+    NiceAgent * m_ptAgent;
+    GSList * m_pRemoteCandidatesList;
+    unsigned int m_dwStreamID;//m_iLibniceSendReadyFlag被ComponentStateChanged调用
+    static int m_iLibniceSendReadyFlag;//0不可发送,1准备好通道可以发送
+    T_LibniceDepData m_tLibniceDepData;
+};
 
 
 

@@ -10,10 +10,8 @@
 * History               : 	
 ******************************************************************************/
 #include "srtp_interface.h"
-#include "srtp.h"
 
 
-static srtp_t g_tSrtp;
 /*****************************************************************************
 -Fuction        : SrtpInit
 -Description    : v
@@ -24,9 +22,9 @@ static srtp_t g_tSrtp;
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int SrtpInit()
+Srtp::Srtp()
 {	
-	memset(&g_tSrtp,0,sizeof(srtp_t));
+	memset(&m_tSrtp,0,sizeof(srtp_t));
     return srtp_init();
 }
 
@@ -41,7 +39,7 @@ int SrtpInit()
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int SrtpCreate(char *i_acKey,int i_iKeyLen,E_SrtpSsrcType i_eSrtpSsrcType)
+int Srtp::Create(char *i_acKey,int i_iKeyLen,E_SrtpSsrcType i_eSrtpSsrcType)
 {
 	int iRet=-1;
 	srtp_policy_t tPolicy;
@@ -65,8 +63,8 @@ int SrtpCreate(char *i_acKey,int i_iKeyLen,E_SrtpSsrcType i_eSrtpSsrcType)
     tPolicy.window_size = 128;//
     tPolicy.allow_repeat_tx = 0;//
     
-	memset(&g_tSrtp,0,sizeof(srtp_t));
-	iRet = srtp_create(&g_tSrtp, &tPolicy);
+	memset(&m_tSrtp,0,sizeof(srtp_t));
+	iRet = srtp_create(&m_tSrtp, &tPolicy);
 	return iRet;
 }
 
@@ -82,9 +80,9 @@ int SrtpCreate(char *i_acKey,int i_iKeyLen,E_SrtpSsrcType i_eSrtpSsrcType)
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int SrtpProtectRtp(char * i_acRtpData,int i_iDataLen)
+int Srtp::ProtectRtp(char * i_acRtpData,int i_iDataLen)
 {
-    return srtp_protect(g_tSrtp, i_acRtpData, &i_iDataLen);
+    return srtp_protect(m_tSrtp, i_acRtpData, &i_iDataLen);
 }
 
 
@@ -100,7 +98,7 @@ int SrtpProtectRtp(char * i_acRtpData,int i_iDataLen)
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int SrtpShutdown()
+int Srtp::Shutdown()
 {
     return srtp_shutdown();
 }

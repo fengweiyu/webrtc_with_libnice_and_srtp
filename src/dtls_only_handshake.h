@@ -15,5 +15,31 @@
 
 
 
+/*****************************************************************************
+-Class          : DtlsOnlyHandshake
+-Description    : DtlsOnlyHandshake
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/11      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+class DtlsOnlyHandshake
+{
+public:
+	DtlsOnlyHandshake();
+	~DtlsOnlyHandshake();
+	int Init();
+
+
+private:
+     SSL_CTX * m_ptSslCtx = NULL;
+     X509 * m_ptSslCert = NULL;
+     EVP_PKEY * m_ptSslKey = NULL;
+     char m_acLocalFingerprint[160];
+     BIO_METHOD * m_ptDtlsBioFilterMethods = NULL;
+
+
+};
+
+
 
 #endif
