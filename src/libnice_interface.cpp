@@ -37,6 +37,7 @@ Libnice::Libnice(char * i_strStunAddr,unsigned int i_dwStunPort,int i_iControlli
 	m_tLibniceDepData.dwStunPort = i_dwStunPort;
 	m_tLibniceDepData.iControlling = i_iControlling;
 
+    memset(&m_tLibniceCb,0,sizeof(T_LibniceCb));
 }
 
 /*****************************************************************************
@@ -53,6 +54,31 @@ Libnice::~Libnice()
 {
 
 
+}
+/*****************************************************************************
+-Fuction        : LibniceInit
+-Description    : LibniceInit
+-Input          : i_iControlling 感觉不必要
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+int Libnice::SetCallback(T_LibniceCb *i_ptLibniceCb)
+{
+	int iRet = -1;
+	if (NULL == i_ptLibniceCb)
+	{
+	    printf("SetCallback NULL \r\n");
+	}
+	else
+	{
+        memset(&m_tLibniceCb,0,sizeof(T_LibniceCb));
+        memcpy(&m_tLibniceCb,i_ptLibniceCb,sizeof(T_LibniceCb));
+        iRet = 0;
+	}
+	return iRet;
 }
 
 
@@ -133,12 +159,19 @@ int Libnice::LibniceProc()
 int Libnice::GetLocalCandidate(T_LocalCandidate * i_ptLocalCandidate)
 {
 	int iRet=-1;
-	while(m_tLocalCandidate.iGatheringDoneFlag == 0)
+    if (i_ptLocalCandidate == NULL) 
+    {
+		printf("GetLocalCandidate NULL\r\n");
+		return iRet;
+    }
+	if(m_tLocalCandidate.iGatheringDoneFlag == 0)
 	{
-
+		printf("GetLocalCandidate err\r\n");
+		return iRet;
 	}
 	memcpy(i_ptLocalCandidate,&m_tLocalCandidate,sizeof(T_LocalCandidate));
-	return 0;
+	iRet = 0;
+	return iRet;
 }
 /*****************************************************************************
 -Fuction        : LibniceGetLocalSDP
@@ -159,9 +192,10 @@ int Libnice::GetLocalSDP(char * i_strSDP,int i_iSdpLen)
 		printf("LibniceGetLocalCandidate NULL\r\n");
 		return iRet;
     }
-	while(m_tLocalCandidate.iGatheringDoneFlag == 0)
+	if(m_tLocalCandidate.iGatheringDoneFlag == 0)
 	{
-
+		printf("GetLocalSDP err\r\n");
+		return iRet;
 	}
     // Candidate gathering is done. Send our local candidates on stdout
     strSDP = nice_agent_generate_local_sdp (m_ptAgent);
@@ -438,6 +472,11 @@ void Libnice::CandidateGatheringDone(NiceAgent *i_ptAgent, guint i_dwStreamID,gp
 void Libnice::NewSelectPair(NiceAgent *agent, guint _stream_id,guint component_id, gchar *lfoundation,gchar *rfoundation, gpointer data)
 {//此处开始dtls握手
 	g_debug("SIGNAL: selected pair %s %s", lfoundation, rfoundation);
+	if (NULL != m_tLibniceCb.Handshake)
+	{//这里接收浏览器发出的报文(包括dtls协商报文)
+         m_tLibniceCb.Handshake();
+	}
+	
 }
 
 void Libnice::ComponentStateChanged(NiceAgent *agent, guint _stream_id,guint component_id, guint state,gpointer data)
@@ -454,9 +493,9 @@ void Libnice::ComponentStateChanged(NiceAgent *agent, guint _stream_id,guint com
 
 void Libnice::Recv(NiceAgent *agent, guint _stream_id, guint component_id,guint len, gchar *buf, gpointer data)
 {
-	if (len == 1 && buf[0] == '\0')
+	if (NULL != m_tLibniceCb.HandleRecvData)
 	{//这里接收浏览器发出的报文(包括dtls协商报文)
-
+         m_tLibniceCb.HandleRecvData(buf,len);
 	}
 	printf("%.*s", len, buf);
 	//fflush(stdout);

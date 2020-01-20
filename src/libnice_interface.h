@@ -30,6 +30,13 @@ typedef struct LibniceDepData
     int iControlling;
 }T_LibniceDepData;
 
+typedef struct LibniceCb
+{
+    void ( *Handshake)();
+	void ( *HandleRecvData)(char * i_acData,int i_iLen);
+    
+}T_LibniceCb;
+
 /*****************************************************************************
 -Class          : Libnice
 -Description    : Libnice
@@ -42,6 +49,7 @@ class Libnice
 public:
 	Libnice(char * i_strStunAddr,unsigned int i_dwStunPort,int i_iControlling);
 	~Libnice();
+    int SetCallback(T_LibniceCb *i_ptLibniceCb);
     int LibniceProc();
     int GetLocalCandidate(T_LocalCandidate * i_ptLocalCandidate);
     int GetLocalSDP(char * i_strSDP,int i_iSdpLen);
@@ -68,6 +76,7 @@ private:
     unsigned int m_dwStreamID;//m_iLibniceSendReadyFlag被ComponentStateChanged调用
     static int m_iLibniceSendReadyFlag;//0不可发送,1准备好通道可以发送
     T_LibniceDepData m_tLibniceDepData;
+    T_LibniceCb m_tLibniceCb;
 };
 
 
