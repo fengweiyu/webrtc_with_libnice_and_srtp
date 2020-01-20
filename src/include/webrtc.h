@@ -11,22 +11,58 @@
 ******************************************************************************/
 #ifndef WEBRTC_H
 #define WEBRTC_H
+
+#include "libnice_interface.h"
+#include "srtp_interface.h"
+#include "dtls_only_handshake.h"
+
+
+/*****************************************************************************
+-Class          : WebRTC
+-Description    : WebRTC
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/11      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+class WebRTC
+{
+public:
+	WebRTC(char * i_strStunAddr,unsigned int i_dwStunPort,int i_iControlling):m_Libnice(i_strStunAddr,i_dwStunPort,i_iControlling),m_Srtp();
+	~WebRTC();
+    int Proc();
+    int HandleOfferMsg(char * i_strOfferMsg,int i_iOfferMsgLen);
+    int SendProtectedRtp(char * i_acRtpBuf,int i_iRtpBufLen);
+
+
     
+private:
+    Libnice m_Libnice;
+	Srtp m_Srtp;
+    DtlsOnlyHandshake * m_pDtlsOnlyHandshake;
+
+    T_DtlsOnlyHandshakeCb m_tDtlsOnlyHandshakeCb;
+    T_LibniceCb m_tLibniceCb;
+
+
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #endif
