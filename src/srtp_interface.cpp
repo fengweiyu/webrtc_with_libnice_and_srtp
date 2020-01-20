@@ -56,12 +56,12 @@ int Srtp::Create(char *i_acKey,int i_iKeyLen,E_SrtpSsrcType i_eSrtpSsrcType)
     srtp_crypto_policy_set_rtp_default(&tPolicy.rtp);//²»È·¶¨
     srtp_crypto_policy_set_rtcp_default(&tPolicy.rtcp);//
     tPolicy.ssrc.type = i_eSrtpSsrcType;
-    tPolicy.ssrc.value = 0;
+    //tPolicy.ssrc.value = 0;
     tPolicy.key = (unsigned char *)acKey;
     tPolicy.next = NULL;
     
-    tPolicy.window_size = 128;//
-    tPolicy.allow_repeat_tx = 0;//
+    //tPolicy.window_size = 128;//
+    //tPolicy.allow_repeat_tx = 0;//
     
 	memset(&m_tSrtp,0,sizeof(srtp_t));
 	iRet = srtp_create(&m_tSrtp, &tPolicy);
@@ -80,9 +80,17 @@ int Srtp::Create(char *i_acKey,int i_iKeyLen,E_SrtpSsrcType i_eSrtpSsrcType)
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int Srtp::ProtectRtp(char * i_acRtpData,int i_iDataLen)
+int Srtp::ProtectRtp(char * i_acRtpData,int * o_piProtectDataLen,int i_iRtpDataLen)
 {
-    return srtp_protect(m_tSrtp, i_acRtpData, &i_iDataLen);
+    int iRet = -1;
+	if(i_acRtpData == NULL ||o_piDataLen == NULL)
+	{
+		printf("ProtectRtp null\r\n");
+		return iRet;
+	}
+	*o_piProtectDataLen=i_iRtpDataLen;
+	iRet = srtp_protect(m_tSrtp, i_acRtpData, o_piProtectDataLen);
+    return iRet;
 }
 
 

@@ -42,7 +42,7 @@ public:
 	Srtp();
 	~Srtp();
     int Create(char *i_acKey,int i_iKeyLen,E_SrtpSsrcType i_eSrtpSsrcType);
-    int ProtectRtp(char * i_acRtpData,int i_iDataLen);
+    int ProtectRtp(char * i_acRtpData,int * o_piProtectDataLen,int i_iRtpDataLen);
     int Shutdown();
 
 

@@ -42,7 +42,7 @@ private:
 
     T_DtlsOnlyHandshakeCb m_tDtlsOnlyHandshakeCb;
     T_LibniceCb m_tLibniceCb;
-
+	int m_iSrtpCreatedFlag;//0未创建,1已经创建
 
     
 };

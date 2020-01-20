@@ -70,6 +70,7 @@ public:
 	DtlsOnlyHandshake(T_DtlsOnlyHandshakeCb i_tDtlsOnlyHandshakeCb);
 	~DtlsOnlyHandshake();
 	int Init();
+    int Create();
     void Handshake();
     void HandleRecvData(char *buf,int len);
     int GetPolicyInfo(T_PolicyInfo *i_ptPolicyInfo);

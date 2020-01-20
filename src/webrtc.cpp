@@ -13,6 +13,7 @@
 * History               : 	
 ******************************************************************************/
 #include "webrtc.h"
+#include "cJSON.h"
 
 
 /*****************************************************************************
@@ -35,7 +36,13 @@ WebRTC::WebRTC(char * i_strStunAddr,unsigned int i_dwStunPort,int i_iControlling
     memset(&m_tLibniceCb,0,sizeof(T_LibniceCb));
     m_tLibniceCb.Handshake= m_pDtlsOnlyHandshake->Handshake;
     m_tLibniceCb.HandleRecvData= m_pDtlsOnlyHandshake->HandleRecvData;
-    m_Libnice.SetCallback(&m_tLibniceCb)
+    m_Libnice.SetCallback(&m_tLibniceCb);
+
+    m_iSrtpCreatedFlag = 0;
+
+
+    m_pDtlsOnlyHandshake->Init();
+    m_pDtlsOnlyHandshake->Create();
 }
 /*****************************************************************************
 -Fuction        : ~WebRTC
@@ -49,6 +56,9 @@ WebRTC::WebRTC(char * i_strStunAddr,unsigned int i_dwStunPort,int i_iControlling
 ******************************************************************************/
 WebRTC::~WebRTC()
 {
+    m_Srtp.Shutdown();
+    m_iSrtpCreatedFlag = 0;
+    
     delete m_pDtlsOnlyHandshake;
 }
 /*****************************************************************************
@@ -75,9 +85,64 @@ int WebRTC::Proc()
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int WebRTC::HandleOfferMsg(char * i_strOfferMsg,int i_iOfferMsgLen)
+int WebRTC::HandleOfferMsg(char * i_strOfferMsg,char * o_strAnswerMsg,int i_iAnswerMaxLen)
 {
-    return m_Libnice.LibniceProc();
+    int iRet = -1;
+    cJSON * ptOfferJson = NULL;
+    cJSON * ptNode = NULL;
+    char acRemoteSDP[5*1024];
+    char acLocalSDP[5*1024];
+    
+    if(NULL == i_strOfferMsg||NULL == o_strAnswerMsg)
+    {
+        printf("HandleOfferMsg NULL \r\n");
+        return iRet;
+    }
+    ptOfferJson = cJSON_Parse(i_strOfferMsg);
+    if(NULL != ptOfferJson)
+    {
+        ptNode = cJSON_GetObjectItem(ptOfferJson."type");
+        if(NULL != ptNode && NULL != ptNode->valuestring)
+        {
+            if(0 == strcmp(ptNode->valuestring,"offer"))
+            {
+                iRet = 0;
+            }
+            ptNode = NULL;
+        }
+        ptNode = cJSON_GetObjectItem(ptOfferJson."sdp");
+        if(NULL != ptNode && NULL != ptNode->valuestring)
+        {
+            if(sizeof(acRemoteSDP)<strlen(ptNode->valuestring))
+            {
+                printf("cJSON_GetObjectItem sdp err \r\n");
+            }
+            memset(acRemoteSDP,0,sizeof(acRemoteSDP));
+            strncpy(acRemoteSDP,ptNode->valuestring,sizeof(acRemoteSDP));
+            ptNode = NULL;
+        }
+        cJSON_Delete(ptOfferJson);
+    }
+    if(0 != iRet)
+    {
+    }
+    else
+    {
+        memset(acLocalSDP,0,sizeof(acLocalSDP));
+        m_Libnice.GetLocalSDP(acLocalSDP,sizeof(acLocalSDP));
+        cJSON * root = cJSON_CreateObject();
+        cJSON_AddStringToObject(root,"sdp",acLocalSDP);
+        cJSON_AddStringToObject(root,"type","answer");
+        char * buf = cJSON_PrintUnformatted(root);
+        if(buf)
+        {
+            snprintf(o_strAnswerMsg,i_iAnswerMaxLen,"%s",buf);
+            free(buf);
+        }
+        cJSON_Delete(root);
+        iRet=m_Libnice.SetRemoteSDP(acRemoteSDP);
+    }
+    return iRet;
 }
 /*****************************************************************************
 -Fuction        : SendProtectedRtp
@@ -89,7 +154,27 @@ int WebRTC::HandleOfferMsg(char * i_strOfferMsg,int i_iOfferMsgLen)
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int WebRTC::SendProtectedRtp(char * i_acRtpBuf,int i_iRtpBufLen);
+int WebRTC::SendProtectedRtp(char * i_acRtpBuf,int i_iRtpBufLen)
 {
+    int iRet = -1;
+    T_PolicyInfo tPolicyInfo;
+    int iProtectRtpLen;
+    if(NULL == i_acRtpBuf)
+    {
+        printf("SendProtectedRtp NULL \r\n");
+        return iRet;
+    }
+    
+    if(0 == m_iSrtpCreatedFlag)
+    {
+        memset(&tPolicyInfo,0,sizeof(T_PolicyInfo));
+        m_pDtlsOnlyHandshake->GetPolicyInfo(&tPolicyInfo);
+        m_Srtp.Create(tPolicyInfo.key, sizeof(tPolicyInfo.key), SRTP_SSRC_PROTECT);
+        m_iSrtpCreatedFlag = 1;
+    }
+    iProtectRtpLen = i_iRtpBufLen;
+    m_Srtp.ProtectRtp(i_acRtpBuf,&iProtectRtpLen,i_iRtpBufLen);
+    iRet=m_Libnice.SendData(i_acRtpBuf, iProtectRtpLen);
 
+    return iRet;
 }
