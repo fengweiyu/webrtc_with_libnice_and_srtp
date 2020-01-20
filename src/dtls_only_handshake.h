@@ -12,10 +12,28 @@
 #ifndef DTLS_ONLY_HANDSHAKE_H
 #define DTLS_ONLY_HANDSHAKE_H
 
-
 #include <list>
 #include <openssl/bio.h>
 
+
+
+/* SRTP stuff (http://tools.ietf.org/html/rfc3711) */
+#define DTLS_MASTER_KEY_LENGTH	16
+#define DTLS_MASTER_SALT_LENGTH	14
+#define DTLS_MASTER_LENGTH (DTLS_MASTER_KEY_LENGTH + DTLS_MASTER_SALT_LENGTH)
+
+typedef struct DtlsOnlyHandshakeCb
+{
+	int (* SendDataOut)(char * i_acData,int i_iLen);
+
+
+}T_DtlsOnlyHandshakeCb;
+typedef struct PolicyInfo
+{
+	char key[DTLS_MASTER_LENGTH];
+
+	
+}T_PolicyInfo;
 
 /*****************************************************************************
 -Class          : BioFilter
@@ -49,16 +67,21 @@ private:
 class DtlsOnlyHandshake
 {
 public:
-	DtlsOnlyHandshake();
+	DtlsOnlyHandshake(T_DtlsOnlyHandshakeCb i_tDtlsOnlyHandshakeCb);
 	~DtlsOnlyHandshake();
 	int Init();
     void Handshake();
+    void HandleRecvData(char *buf,int len);
+    int GetPolicyInfo(T_PolicyInfo *i_ptPolicyInfo);
 
+    
 private:
     int BioFilterInit(void);
     int GenerateKeys(X509 ** i_pptCertificate, EVP_PKEY ** i_pptPrivateKey);
     int VerifyCallback(int i_iPreverifyOk, X509_STORE_CTX *ctx);
+    void DtlsOnlyHandshake::SendDataOut();
 
+    
     static void Callback(const SSL *ssl, int where, int ret);
     static int BioFilterNew(BIO *bio);
     static int BioFilterFree(BIO *bio);
@@ -76,6 +99,8 @@ private:
     BIO *m_ptWriteBio;//ssl发送数据出口io,需实现将这个io的数据读取来然后通过其他接口发走
     BIO *m_ptFilterBio;//(fix MTU fragmentation on outgoing DTLS data, if required)
 
+    T_DtlsOnlyHandshakeCb m_tDtlsOnlyHandshakeCb;
+    T_PolicyInfo m_tPolicyInfo;
 	int m_iShakeEndFlag;//协商结束标记,0未结束,1结束
 
 

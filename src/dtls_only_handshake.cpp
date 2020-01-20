@@ -34,7 +34,7 @@ openssl版本1.1.0
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-DtlsOnlyHandshake::DtlsOnlyHandshake()
+DtlsOnlyHandshake::DtlsOnlyHandshake(T_DtlsOnlyHandshakeCb i_tDtlsOnlyHandshakeCb)
 {
     m_ptSslCtx = NULL;
     m_ptSslCert = NULL;
@@ -48,6 +48,9 @@ DtlsOnlyHandshake::DtlsOnlyHandshake()
     m_ptWriteBio = NULL;
     m_ptFilterBio = NULL;
 
+    memset(&m_tDtlsOnlyHandshakeCb,0,sizeof(T_DtlsOnlyHandshakeCb));
+    memcpy(&m_tDtlsOnlyHandshakeCb,&i_tDtlsOnlyHandshakeCb,sizeof(T_DtlsOnlyHandshakeCb));
+    memset(&m_tPolicyInfo,0,sizeof(T_PolicyInfo));
 
     
 }
@@ -229,16 +232,216 @@ int DtlsOnlyHandshake::Create()
 ******************************************************************************/
 void DtlsOnlyHandshake::Handshake() 
 {
-	if(m_ptSsl == NULL) {return;}
-    
-    if(DTLS_STATE_CREATED == m_dtls_state)
-    {
-        m_dtls_state = DTLS_STATE_TRYING;
-    }
+	if(m_ptSsl == NULL) 
+	{
+        return;
+	}
 	SSL_do_handshake(m_ptSsl);
-	fd_bridge();
+	SendDataOut();
 }
 
+/*****************************************************************************
+-Fuction        : Handshake
+-Description    : 创建ssl
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+void DtlsOnlyHandshake::HandleRecvData(char *buf,int len)
+{        
+    if(!m_ptSsl || !m_ptReadBio) 
+    {
+        printf("No DTLS stuff for HandleRecvData\n");
+        return;
+    }
+    SendDataOut();
+    int written = BIO_write(m_ptReadBio, buf, len);
+    if(written != len) 
+    {
+        printf("Only written %d/%d of those bytes on the read BIO...\n", written, len);
+    } 
+    else 
+    {
+        printf("Written %d bytes on the read BIO...\n", written);
+    }
+    SendDataOut();
+    /* Try to read data */
+    char data[1500];	/* FIXME */
+    memset(&data, 0, 1500);
+    int read = SSL_read(m_ptSsl, &data, 1500);
+    printf("... and read %d of them from SSL...\n", read);
+    if(read < 0) 
+    {
+        unsigned long err = SSL_get_error(m_ptSsl, read);
+        if(err == SSL_ERROR_SSL) 
+        {
+            /* Ops, something went wrong with the DTLS handshake */
+            char error[200];
+            ERR_error_string_n(ERR_get_error(), error, 200);
+            printf("Handshake error: %s\n", error);
+            return;
+        }
+    }
+    SendDataOut();
+    
+    if(!SSL_is_init_finished(m_ptSsl)) 
+    {
+        /* Nothing else to do for now */
+        printf("Initialization not finished yet...\n");
+        return;
+    }
+    if(m_iShakeEndFlag) 
+    {
+        /* There's data to be read? */
+        printf("Any data available?\n");
+
+        if(read > 0) 
+        {
+            printf("Data available but Data Channels support disabled...\n");
+        }
+    }
+    else
+    {        
+        /* Check the remote fingerprint */
+        X509 *rcert = SSL_get_peer_certificate(m_ptSsl);
+        if(!rcert) 
+        {
+            printf("No remote certificate?? (%s)\n", ERR_reason_error_string(ERR_get_error()));
+        } 
+        else 
+        {
+            unsigned int rsize;
+            unsigned char rfingerprint[EVP_MAX_MD_SIZE];
+            char remote_fingerprint[160];
+            char *rfp = (char *)&remote_fingerprint;
+            //if(stream->remote_hashing && !strcasecmp(stream->remote_hashing, "sha-1")) {
+            if(0)
+            {
+                printf("Computing sha-1 fingerprint of remote certificate...\n");
+                X509_digest(rcert, EVP_sha1(), (unsigned char *)rfingerprint, &rsize);
+            }
+            else 
+            {
+                printf("Computing sha-256 fingerprint of remote certificate...\n");
+                X509_digest(rcert, EVP_sha256(), (unsigned char *)rfingerprint, &rsize);
+            }
+            X509_free(rcert);
+            rcert = NULL;
+            unsigned int i = 0;
+            for(i = 0; i < rsize; i++) 
+            {
+                snprintf(rfp, 4, "%.2X:", rfingerprint[i]);
+                rfp += 3;
+            }
+            *(rfp-1) = 0;
+
+            printf("Remote fingerprint (%s) of the client is %s\n", "sha-256", remote_fingerprint);
+
+
+            unsigned char material[DTLS_MASTER_LENGTH*2];
+            unsigned char *local_key, *local_salt, *remote_key, *remote_salt;
+            /* Export keying material for SRTP */
+            if (!SSL_export_keying_material(m_ptSsl, material, DTLS_MASTER_LENGTH*2, "EXTRACTOR-dtls_srtp", 19, NULL, 0, 0)) 
+            {
+                /* Oops... */
+                printf("Oops, couldn't extract SRTP keying material for (%s)\n",ERR_reason_error_string(ERR_get_error()));
+                return;
+            }
+            /* Key derivation (http://tools.ietf.org/html/rfc5764#section-4.2) */
+            local_key = material;
+            remote_key = local_key + DTLS_MASTER_KEY_LENGTH;
+            local_salt = remote_key + DTLS_MASTER_KEY_LENGTH;
+            remote_salt = local_salt + DTLS_MASTER_SALT_LENGTH;
+
+            memcpy(m_tPolicyInfo.key, local_key, DTLS_MASTER_KEY_LENGTH);
+            memcpy(m_tPolicyInfo.key + DTLS_MASTER_KEY_LENGTH, local_salt, DTLS_MASTER_SALT_LENGTH);
+            
+            m_iShakeEndFlag = 1;
+        }
+    }
+}
+/*****************************************************************************
+-Fuction        : GetPolicyInfo
+-Description    : 获取创建srtp需要的信息
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+int DtlsOnlyHandshake::GetPolicyInfo(T_PolicyInfo *i_ptPolicyInfo) 
+{
+    int iRet = -1;
+	if(i_ptPolicyInfo == NULL) 
+	{
+	    printf("GetPolicyInfo null\r\n");
+        return iRet;
+	}
+	if(0 == m_iShakeEndFlag) 
+	{
+	    printf("GetPolicyInfo err\r\n");
+        return iRet;
+	}
+    memcpy(i_ptPolicyInfo,&m_tPolicyInfo,sizeof(T_PolicyInfo));
+    iRet = 0;
+    return iRet;
+}
+
+/*****************************************************************************
+-Fuction        : IoBridge
+-Description    : IO网桥,输出到回调中
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+void DtlsOnlyHandshake::SendDataOut() 
+{
+	if(!m_ptWriteBio || NULL == m_tDtlsOnlyHandshakeCb.SendDataOut) 
+    {
+		printf("No handle/agent/bio, no DTLS bridge...\n");
+		return;
+	}
+	int pending = BIO_ctrl_pending(m_ptFilterBio);
+	while(pending > 0) 
+    {
+		printf("Going to send DTLS data: %d bytes\n", pending);
+		char* outgoing = new char[pending];
+        int noutgoinglen = pending;
+		int out = BIO_read(m_ptWriteBio, outgoing, noutgoinglen);
+		printf("Read %d bytes from the write_BIO...\n", out);
+		if(out > 1500) 
+        {
+			/* FIXME Just a warning for now, this will need to be solved with proper fragmentation */
+			printf("The DTLS stack is trying to send a packet of %d bytes, this may be larger than the MTU and get dropped!\n", out);
+		}
+        int bytes = m_tDtlsOnlyHandshakeCb.SendDataOut(outgoing,out);
+		if(bytes < out) 
+        {
+			printf("Error sending DTLS message on c%d (%d)\n", out, bytes);
+		} 
+		else 
+		{
+			printf("[%I64u] >> >> ... and sent %d of those bytes on the socket\n", bytes);
+		}
+		/* Update stats (TODO Do the same for the last second window as well)
+		 * FIXME: the Data stats includes the bytes used for the handshake */
+		if(bytes > 0) 
+        {
+// 			component->out_stats.data_packets++;
+// 			component->out_stats.data_bytes += bytes;
+		}
+		delete [] outgoing;
+		/* Check if there's anything left to send (e.g., fragmented packets) */
+		pending = BIO_ctrl_pending(m_ptFilterBio);
+	}
+}
 
 
 int DtlsOnlyHandshake::VerifyCallback(int i_iPreverifyOk, X509_STORE_CTX *ctx) 
