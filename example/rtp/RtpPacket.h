@@ -16,7 +16,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string>
-#include "RtpSession.h"
+
 
 
 using std::string;
@@ -25,6 +25,20 @@ using std::string;
 #define RTP_MAX_PACKET_NUM	(300)
 
 
+#define RTP_PAYLOAD_H264    96
+#define RTP_PAYLOAD_G711    97
+
+//后续放到音视频处理类中
+#define VIDEO_H264_SAMPLE_RATE 90000
+#define AUDIO_G711_SAMPLE_RATE 8000
+
+typedef struct RtpPacketParam
+{
+    unsigned int    dwSSRC;
+    unsigned short  wSeq;
+    unsigned int    dwTimestampFreq;
+    unsigned int    wPayloadType;
+}T_RtpPacketParam;//这些参数在每个rtp会话中都不一样，即唯一的。
 
 typedef struct RtpHeader
 {
@@ -49,7 +63,12 @@ typedef struct RtpHeader
 	unsigned int dwTimestamp;//时间戳(Timestamp): 占32位，记录了该包中数据的第一个字节的采样时刻
 	unsigned int dwSSRC;//同步源标识符(SSRC)：占32位，用于标识同步信源，同步源就是指RTP包流的来源。在同一个RTP会话中不能有两个相同的SSRC值
 }T_RtpHeader;//size 12
+typedef enum RtpPacketType
+{
+	RTP_PACKET_H264,
+	RTP_PACKET_G711,
 
+}E_RtpPacketType;
 
 /*****************************************************************************
 -Class			: RtpPacket
@@ -61,11 +80,19 @@ typedef struct RtpHeader
 class RtpPacket
 {
 public:
-    RtpPacket();
+    RtpPacket(E_RtpPacketType i_eRtpPacketType);
     ~RtpPacket();
     int GenerateRtpHeader(T_RtpPacketParam *i_ptParam,T_RtpHeader *o_ptRtpHeader);
-    virtual int Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbFrameBuf,int i_iFrameLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iVideoOrAudio=0);
+    virtual int Packet(unsigned char *i_pbFrameBuf,int i_iFrameLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,T_RtpPacketParam *i_ptParam=NULL);
+
+protected:
+    unsigned int GetSSRC(void);
+    unsigned long long GetSysTime (void);
+    T_RtpPacketParam m_tParam;
+    E_RtpPacketType m_eRtpPacketType;
 private:
+
+
     RtpPacket *m_pRtpPacket;
 };
 
@@ -80,9 +107,9 @@ private:
 class RtpPacketH264 : public RtpPacket
 {
 public:
-    RtpPacketH264();
+    RtpPacketH264(E_RtpPacketType i_eRtpPacketType) : RtpPacket(i_eRtpPacketType);
     ~RtpPacketH264();
-    virtual int Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,int i_iNaluLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iVideoOrAudio=0);
+    virtual int Packet(unsigned char *i_pbNaluBuf,int i_iNaluLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,T_RtpPacketParam *i_ptParam=NULL);//不为NULL是否就不是复写?
 private:
     RtpPacketH264 *m_pRtpPacketH264;
 };
@@ -98,9 +125,9 @@ private:
 class RtpPacketG711 : public RtpPacket
 {
 public:
-    RtpPacketG711();
+    RtpPacketG711(E_RtpPacketType i_eRtpPacketType) : RtpPacket(i_eRtpPacketType);
     ~RtpPacketG711();
-    virtual int Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbFrameBuf,int i_iFrameLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iVideoOrAudio=0);
+    virtual int Packet(unsigned char *i_pbFrameBuf,int i_iFrameLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,T_RtpPacketParam *i_ptParam=NULL);
 private:
     RtpPacketG711 *m_pRtpPacketG711;
 };
@@ -115,9 +142,9 @@ private:
 class NALU : public RtpPacketH264
 {
 public:
-    NALU();
+    NALU(E_RtpPacketType i_eRtpPacketType) : RtpPacketH264(i_eRtpPacketType);
     ~NALU();
-    int Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,int i_iNaluLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iVideoOrAudio=0);
+    int Packet(unsigned char *i_pbNaluBuf,int i_iNaluLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,T_RtpPacketParam *i_ptParam=NULL);
 
 };
 
@@ -131,9 +158,9 @@ public:
 class FU_A : public RtpPacketH264
 {
 public:
-    FU_A();
+    FU_A(E_RtpPacketType i_eRtpPacketType) : RtpPacketH264(i_eRtpPacketType);
     ~FU_A();
-    int Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,int i_iNaluLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iVideoOrAudio=0);
+    int Packet(unsigned char *i_pbNaluBuf,int i_iNaluLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,T_RtpPacketParam *i_ptParam=NULL);
     static const unsigned char FU_A_TYPE;
 
 };

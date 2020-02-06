@@ -14,9 +14,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <iostream>//不加.h,c++新的头文件
+#include <time.h>
+#include <sys/time.h>
 
-#include "Definition.h"
-#include "Tools.h"
 #include "RtpPacket.h"
 
 using std::cout;//需要<iostream>
@@ -32,10 +32,28 @@ using std::endl;
 * -----------------------------------------------
 * 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-RtpPacket :: RtpPacket()
+RtpPacket :: RtpPacket(E_RtpPacketType i_eRtpPacketType)
 {
     m_pRtpPacket = NULL;
-
+    m_eRtpPacketType = i_eRtpPacketType;
+    memset(&m_tParam,0,sizeof(m_tParam));
+    m_tParam.dwSSRC=GetSSRC();
+    if(RTP_PACKET_H264 == i_eRtpPacketType)
+    {
+        m_tParam.dwTimestampFreq=VIDEO_H264_SAMPLE_RATE;
+        m_tParam.wPayloadType=RTP_PAYLOAD_H264;
+        m_pRtpPacket = new RtpPacketH264(i_eRtpPacketType);
+    }
+    else if(RTP_PACKET_G711 == i_eRtpPacketType)
+    {
+        m_tParam.dwTimestampFreq=AUDIO_G711_SAMPLE_RATE;
+        m_tParam.wPayloadType=RTP_PAYLOAD_G711;
+        m_pRtpPacket = new RtpPacketG711(i_eRtpPacketType);
+    }
+    else
+    {
+        cout<<"RtpPacket err "<<i_eRtpPacketType<<endl;
+    }
 }
 
 /*****************************************************************************
@@ -74,7 +92,7 @@ int RtpPacket :: GenerateRtpHeader(T_RtpPacketParam *i_ptParam,T_RtpHeader *o_pt
     else
     {
         T_RtpHeader tRtpHeader={0};
-        unsigned int dwTimestamp=(unsigned int)(Tools::Instance()->GetSysTime()* i_ptParam->dwTimestampFreq/ 1000000);
+        unsigned int dwTimestamp=(unsigned int)(GetSysTime()* i_ptParam->dwTimestampFreq/ 1000000);
         tRtpHeader.Version=2;
         tRtpHeader.Pad=0;
         tRtpHeader.Extend=0;
@@ -101,32 +119,51 @@ int RtpPacket :: GenerateRtpHeader(T_RtpPacketParam *i_ptParam,T_RtpHeader *o_pt
 * -----------------------------------------------
 * 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-int RtpPacket :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbFrameBuf,int i_iFrameLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iVideoOrAudio)
+int RtpPacket :: Packet(unsigned char *i_pbFrameBuf,int i_iFrameLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,T_RtpPacketParam *i_ptParam)
 {
     int iRet=FALSE;
-	if (!i_pbFrameBuf || i_iFrameLen <= 0 || !o_ppPackets || !o_aiEveryPacketLen)
+	if (!i_pbFrameBuf || i_iFrameLen <= 0 || !o_ppPackets || !o_aiEveryPacketLen || NULL == m_pRtpPacket)
     {
         cout<<"Packet err NULL"<<endl;
     }
     else
     {
-        if(NULL != m_pRtpPacket)
-        {
-            delete m_pRtpPacket;
-        }
-        if(0==i_iVideoOrAudio)
-        {
-            m_pRtpPacket = new RtpPacketH264();
-            iRet=m_pRtpPacket->Packet(i_ptParam,i_pbFrameBuf,i_iFrameLen,o_ppPackets,o_aiEveryPacketLen);
-        }
-        else
-        {
-            m_pRtpPacket = new RtpPacketG711();
-            iRet=m_pRtpPacket->Packet(i_ptParam,i_pbFrameBuf,i_iFrameLen,o_ppPackets,o_aiEveryPacketLen);
-        }
+        iRet=m_pRtpPacket->Packet(i_pbFrameBuf,i_iFrameLen,o_ppPackets,o_aiEveryPacketLen,&m_tParam);
     }
     return iRet;
 }
+/*****************************************************************************
+-Fuction        : GetSSRC
+-Description    : 
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version        Author           Modification
+* -----------------------------------------------
+* 2017/09/21      V1.0.0         Yu Weifeng       Created
+******************************************************************************/
+unsigned int RtpPacket:: GetSSRC(void)
+{
+	static unsigned int s_wSSRC = 0x22345678;
+	return s_wSSRC++;
+}
+/*****************************************************************************
+-Fuction		: GetSysTime
+-Description	: 
+-Input			: 
+-Output 		: 
+-Return 		: 返回微妙us
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2017/09/21	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
+unsigned long long RtpPacket:: GetSysTime (void)
+{
+	struct timespec tp;
+	clock_gettime(CLOCK_MONOTONIC, &tp);//clk_id为CLOCK_MONOTONIC，则返回系统启动后秒数和纳秒数。
+	return (tp.tv_sec * 1000000llu + tp.tv_nsec / 1000llu);//转换为us
+}
+
 /*****************************************************************************
 -Fuction		: RtpPacketH264
 -Description	: RtpPacketH264
@@ -137,7 +174,7 @@ int RtpPacket :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbFrameBuf,
 * -----------------------------------------------
 * 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-RtpPacketH264 :: RtpPacketH264()
+RtpPacketH264 :: RtpPacketH264(E_RtpPacketType i_eRtpPacketType) : RtpPacket(i_eRtpPacketType)
 {
     m_pRtpPacketH264 = NULL;
 
@@ -170,7 +207,7 @@ RtpPacketH264 :: ~RtpPacketH264()
 * -----------------------------------------------
 * 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-int RtpPacketH264 :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,int i_iNaluLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iVideoOrAudio)
+int RtpPacketH264 :: Packet(unsigned char *i_pbNaluBuf,int i_iNaluLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,T_RtpPacketParam *i_ptParam)
 {
     int iRet=FALSE;
     unsigned char *pbNaluBuf=i_pbNaluBuf;
@@ -199,13 +236,13 @@ int RtpPacketH264 :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluB
         }
         if((unsigned int)iNaluLen <=RTP_MAX_PACKET_SIZE- sizeof(T_RtpHeader))
         {//单个NAL包单元
-            m_pRtpPacketH264 = new NALU();
-            iRet=m_pRtpPacketH264->Packet(i_ptParam,pbNaluBuf,iNaluLen,o_ppPackets,o_aiEveryPacketLen);
+            m_pRtpPacketH264 = new NALU(m_eRtpPacketType);
+            iRet=m_pRtpPacketH264->Packet(pbNaluBuf,iNaluLen,o_ppPackets,o_aiEveryPacketLen,i_ptParam);
         }
         else
         {//分片单元（FU-A）
-            m_pRtpPacketH264 = new FU_A();
-            iRet=m_pRtpPacketH264->Packet(i_ptParam,pbNaluBuf,iNaluLen,o_ppPackets,o_aiEveryPacketLen);
+            m_pRtpPacketH264 = new FU_A(m_eRtpPacketType);
+            iRet=m_pRtpPacketH264->Packet(pbNaluBuf,iNaluLen,o_ppPackets,o_aiEveryPacketLen,i_ptParam);
         }
     }
     return iRet;
@@ -221,7 +258,7 @@ int RtpPacketH264 :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluB
 * -----------------------------------------------
 * 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-NALU :: NALU()
+NALU :: NALU(E_RtpPacketType i_eRtpPacketType) : RtpPacketH264(i_eRtpPacketType)
 {
 
 
@@ -253,7 +290,7 @@ NALU :: ~NALU()
 * -----------------------------------------------
 * 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-int NALU :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,int i_iNaluLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iVideoOrAudio)
+int NALU :: Packet(unsigned char *i_pbNaluBuf,int i_iNaluLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,T_RtpPacketParam *i_ptParam)
 {
     int iRet=FALSE;
     int iPackNum=0;
@@ -285,7 +322,7 @@ const unsigned char FU_A::FU_A_TYPE=28;
 * -----------------------------------------------
 * 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-FU_A :: FU_A()
+FU_A :: FU_A(E_RtpPacketType i_eRtpPacketType) : RtpPacketH264(i_eRtpPacketType)
 {
 
 
@@ -317,7 +354,7 @@ FU_A :: ~FU_A()
 * -----------------------------------------------
 * 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-int FU_A :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,int i_iNaluLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iVideoOrAudio)
+int FU_A :: Packet(unsigned char *i_pbNaluBuf,int i_iNaluLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,T_RtpPacketParam *i_ptParam)
 {
     int iRet=FALSE;
     int iPackNum=0;
@@ -388,7 +425,7 @@ int FU_A :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,int i_
 * -----------------------------------------------
 * 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-RtpPacketG711 :: RtpPacketG711()
+RtpPacketG711 :: RtpPacketG711(E_RtpPacketType i_eRtpPacketType) : RtpPacket(i_eRtpPacketType)
 {
     m_pRtpPacketG711 = NULL;
 
@@ -421,7 +458,7 @@ RtpPacketG711 :: ~RtpPacketG711()
 * -----------------------------------------------
 * 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-int RtpPacketG711 :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbFrameBuf,int i_iFrameLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iVideoOrAudio)
+int RtpPacketG711 :: Packet(unsigned char *i_pbFrameBuf,int i_iFrameLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,T_RtpPacketParam *i_ptParam)
 {
     int iRet=FALSE;
     unsigned char *pbFrameBuf=i_pbFrameBuf;
