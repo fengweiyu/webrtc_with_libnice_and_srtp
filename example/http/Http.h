@@ -14,6 +14,9 @@
 
 #include "TcpSocket.h"
 
+
+#define HTTP_PACKET_MAX_LEN 2048
+
 #define HTTP_METHOD_GET "GET"
 #define HTTP_METHOD_PUT "PUT"
 #define HTTP_METHOD_POST "POST"
@@ -34,7 +37,7 @@ public:
 	HttpClient();
 	~HttpClient();
 	int Send(const char * i_srtMethod,char * i_srtURL,char * i_acSendBuf,int i_iSendLen,const char * i_srtContentType=NULL);
-	int Recv(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen);
+	int RecvBody(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen);
 
 private:
 

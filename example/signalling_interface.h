@@ -27,8 +27,11 @@ class signalling_interface
 public:
 	signalling_interface();
 	~signalling_interface();
-	
-
+	int GetOfferMsg(char * i_strServerIp, int i_iServerPort, char * i_strSelfName,char * o_acRecvBuf, int * o_piRecvLen, int i_iRecvBufMaxLen);
+	int SendAnswerMsg(int i_iPeerId, char * i_acSendBuf, int i_iSendLen);
+private:
+	peerconnection_client * m_PeerConnectionClient;
+	int m_iLoginSuccessFlag;//0 fail,1 sucess
 
 };
 

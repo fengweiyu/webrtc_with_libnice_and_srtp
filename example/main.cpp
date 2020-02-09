@@ -17,6 +17,11 @@
 #include <pthread.h>
 #include <sys/prctl.h>
 
+#include "signalling_interface.h"
+#include "RtpInterface.h"
+
+#define WEBRTC_RTP_MAX_PACKET_NUM	(300)
+#define WEBRTC_RTP_MAX_PACKET_SIZE	((1500-42)/4*4)//MTU
 
 static void PrintUsage(char *i_strProcName);
 static void * WebRtcProc(void *pArg);
@@ -40,8 +45,13 @@ int main(int argc, char* argv[])
     pthread_t tWebRtcID;
     char acOfferMsg[6*1024];
     char acAnswerMsg[6*1024];
+    RtpInterface *pRtpInterface=NULL;
+    signalling_interface *pSignalingInf=NULL;
+    int iRecvLen=0;
+    int iPeerId = -1;
+
     
-    if(argc !=3)
+    if(argc !=5)
     {
         PrintUsage(argv[0]);
         return -1;
@@ -57,18 +67,42 @@ int main(int argc, char* argv[])
     }
     else
     {
-        GetOfferMsg();
-        pWebRTC->HandleOfferMsg(char * i_strOfferMsg, char * o_strAnswerMsg, int i_iAnswerMaxLen);
-        SendAnswerMsg();
+        pSignalingInf = new signalling_interface();
+        pRtpInterface = new RtpInterface();
+        pRtpInterface->Init(argv[4]);
+        int iPacketNum=0;
+        unsigned char *ppbPacketBuf[WEBRTC_RTP_MAX_PACKET_NUM]={0};
+        int aiEveryPacketLen[WEBRTC_RTP_MAX_PACKET_NUM]={0};
+        int i=0;
+        for(i=0;i<WEBRTC_RTP_MAX_PACKET_NUM;i++)
+        {
+            ppbPacketBuf[i]=(unsigned char *)malloc(WEBRTC_RTP_MAX_PACKET_SIZE);
+            memset(ppbPacketBuf[i],0,WEBRTC_RTP_MAX_PACKET_SIZE);
+        }
+        
         while(1)
         {
-            if(GetRtpData())
+            memset(acOfferMsg,0,sizeof(acOfferMsg));
+            iPeerId = pSignalingInf->GetOfferMsg(strSeverIp,dwPort,argv[3],acOfferMsg,&iRecvLen,sizeof(acOfferMsg));
+            if(iPeerId>=0)
             {
-                break;
+                memset(acAnswerMsg,0,sizeof(acAnswerMsg));
+                pWebRTC->HandleOfferMsg(acOfferMsg,acAnswerMsg,sizeof(acAnswerMsg));
+                pSignalingInf->SendAnswerMsg(iPeerId,acAnswerMsg,strlen(acAnswerMsg));
             }
-            pWebRTC->SendProtectedRtp(char * i_acRtpBuf, int i_iRtpBufLen);
+            iPacketNum = pRtpInterface->GetRtpData(&ppbPacketBuf,aiEveryPacketLen,WEBRTC_RTP_MAX_PACKET_SIZE,WEBRTC_RTP_MAX_PACKET_NUM);
+            if(iPacketNum > 0)
+            {
+                for(i=0;i<iPacketNum;i++)
+                {
+                    pWebRTC->SendProtectedRtp(ppbPacketBuf[i], aiEveryPacketLen[i]);
+                }
+                iPacketNum = -1;
+            }
             usleep(40*1000);//25Ö¡ÂÊ
         }
+        for(i=0;i<WEBRTC_RTP_MAX_PACKET_NUM;i++)
+            free(ppbPacketBuf[i]);
     }
     delete pWebRTC;
     return 0;
@@ -85,8 +119,8 @@ int main(int argc, char* argv[])
 ******************************************************************************/
 static void PrintUsage(char *i_strProcName)
 {
-    printf("Usage: %s StunIP StunPort\r\n",i_strProcName);
-    printf("egg: %s 192.168.0.119 8888\r\n",i_strProcName);
+    printf("Usage: %s StunIP StunPort SelfName VideoFile\r\n",i_strProcName);
+    printf("egg: %s 192.168.0.119 8888 ywf singl.h264\r\n",i_strProcName);
 }
 
 /*****************************************************************************

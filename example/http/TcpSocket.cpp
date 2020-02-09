@@ -74,7 +74,7 @@ TcpServer::~TcpServer()
 ******************************************************************************/
 int TcpServer::Init(string i_strIP,unsigned short i_wPort)
 {
-	int iRet=FALSE;
+	int iRet=-1;
 	int iSocketFd=-1;
 	unsigned short wPort=i_wPort;
 	string IP(i_strIP.c_str());
@@ -82,7 +82,7 @@ int TcpServer::Init(string i_strIP,unsigned short i_wPort)
 
 	if(m_iServerSocketFd !=-1)
 	{
-	    iRet=TRUE;
+	    iRet=0;
 	}
 	else
 	{
@@ -124,7 +124,7 @@ int TcpServer::Init(string i_strIP,unsigned short i_wPort)
                 else
                 {
                     m_iServerSocketFd=iSocketFd;
-                    iRet=TRUE;
+                    iRet=0;
                 }
             }
 	    }
@@ -174,7 +174,7 @@ int TcpServer::Accept()
 ******************************************************************************/
 int TcpServer::Send(char * i_acSendBuf,int i_iSendLen,int i_iClientSocketFd)
 {
-	int iRet=FALSE;
+	int iRet=-1;
 	if(i_acSendBuf==NULL ||i_iSendLen<=0)
 	{
         cout<<"Send err"<<endl;
@@ -188,7 +188,7 @@ int TcpServer::Send(char * i_acSendBuf,int i_iSendLen,int i_iClientSocketFd)
         }
         else
         {
-            iRet=TRUE;
+            iRet=0;
         }
         string strSend(i_acSendBuf);
         cout<<"Send :\r\n"<<strSend<<endl;
@@ -209,8 +209,8 @@ int TcpServer::Send(char * i_acSendBuf,int i_iSendLen,int i_iClientSocketFd)
 ******************************************************************************/
 int TcpServer::Recv(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen,int i_iClientSocketFd,timeval *i_ptTime)
 {
-    int iRecvLen=FALSE;
-    int iRet=FALSE;
+    int iRecvLen=-1;
+    int iRet=-1;
     fd_set tReadFds;
     timeval tTimeValue;
     char acRecvBuf[1024];
@@ -250,14 +250,14 @@ int TcpServer::Recv(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen,int 
                 if(iRecvAllLen>i_iRecvBufMaxLen)
                 {
                     cout<<"Recv err,RecvLen:"<<iRecvAllLen<<" MaxLen:"<<i_iRecvBufMaxLen<<endl;                    
-                    iRet=FALSE;
+                    iRet=-1;
                     break;
                 }
                 else
                 {
                     memcpy(pcRecvBuf,acRecvBuf,iRecvLen);
                     pcRecvBuf+=iRecvLen;
-                    iRet=TRUE;
+                    iRet=0;
                 }
             }
         }
@@ -266,17 +266,17 @@ int TcpServer::Recv(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen,int 
         	break;
         }
     }
-    if(iRecvAllLen>0 && iRet==TRUE)
+    if(iRecvAllLen>0 && iRet==0)
     {
         string strRecv(o_acRecvBuf);
         *o_piRecvLen=iRecvAllLen;
         cout<<"Recv :\r\n"<<strRecv<<endl;
-        iRet=TRUE;
+        iRet=0;
     }
     else
     {
         //cout<<"Recv err:"<<iRecvAllLen<<endl;
-        iRet=FALSE;
+        iRet=-1;
     }
     return iRet;
 }
@@ -331,7 +331,8 @@ TcpClient ::TcpClient()
 ******************************************************************************/
 TcpClient ::~TcpClient()
 {
-
+    if(-1 !=m_iClientSocketFd)
+        Close();
 }
 
 /*****************************************************************************
@@ -346,7 +347,7 @@ TcpClient ::~TcpClient()
 ******************************************************************************/
 int TcpClient::Init(string i_strIP,unsigned short i_wPort)
 {
-	int iRet=FALSE;
+	int iRet=-1;
 	int iSocketFd=-1;
 	struct sockaddr_in tServerAddr;
 	iSocketFd=socket(AF_INET,SOCK_STREAM,0);
@@ -377,7 +378,7 @@ int TcpClient::Init(string i_strIP,unsigned short i_wPort)
 		{
 			//test
 			m_iClientSocketFd=iSocketFd;
-			iRet=TRUE;
+			iRet=0;
 		}
 	}
 	return iRet;
@@ -397,7 +398,7 @@ int TcpClient::Init(string i_strIP,unsigned short i_wPort)
 ******************************************************************************/
 int TcpClient::Send(char * i_acSendBuf,int i_iSendLen,int i_iClientSocketFd)
 {
-	int iRet=FALSE;
+	int iRet=-1;
 	if(i_acSendBuf==NULL ||i_iSendLen<=0)
 	{
         cout<<"Send err"<<endl;
@@ -411,7 +412,7 @@ int TcpClient::Send(char * i_acSendBuf,int i_iSendLen,int i_iClientSocketFd)
         }
         else
         {
-            iRet=TRUE;
+            iRet=0;
         }
         string strSend(i_acSendBuf);
         cout<<"Send :\r\n"<<strSend<<endl;
@@ -432,8 +433,8 @@ int TcpClient::Send(char * i_acSendBuf,int i_iSendLen,int i_iClientSocketFd)
 ******************************************************************************/
 int TcpClient::Recv(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen,int i_iClientSocketFd,timeval *i_ptTime)
 {
-    int iRecvLen=FALSE;
-    int iRet=FALSE;
+    int iRecvLen=-1;
+    int iRet=-1;
     fd_set tReadFds;
     timeval tTimeValue;
     char acRecvBuf[1024];
@@ -472,14 +473,14 @@ int TcpClient::Recv(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen,int 
                 if(iRecvAllLen>i_iRecvBufMaxLen)
                 {
                     cout<<"Recv err,RecvLen:"<<iRecvAllLen<<" MaxLen:"<<i_iRecvBufMaxLen<<endl;                    
-                    iRet=FALSE;
+                    iRet=-1;
                     break;
                 }
                 else
                 {
                     memcpy(pcRecvBuf,acRecvBuf,iRecvLen);
                     pcRecvBuf+=iRecvLen;
-                    iRet=TRUE;
+                    iRet=0;
                 }
             }
         }
@@ -488,17 +489,17 @@ int TcpClient::Recv(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen,int 
         	break;
         }
     }
-    if(iRecvAllLen>0 && iRet==TRUE)
+    if(iRecvAllLen>0 && iRet==0)
     {
         string strRecv(o_acRecvBuf);
         *o_piRecvLen=iRecvAllLen;
         cout<<"Recv :\r\n"<<strRecv<<endl;
-        iRet=TRUE;
+        iRet=0;
     }
     else
     {
         cout<<"Recv err:"<<iRecvAllLen<<endl;
-        iRet=FALSE;
+        iRet=-1;
     }
     return iRet;
 }
