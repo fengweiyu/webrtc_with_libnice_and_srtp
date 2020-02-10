@@ -1,4 +1,6 @@
-﻿rm install.tar.gz
+﻿#第三方库安装目录要带版本号(lib目录下要，third_lib由于有源码所以不要)，后续优化
+
+rm install.tar.gz
 tar -czf install.tar.gz install
 
 cjson

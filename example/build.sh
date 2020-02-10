@@ -22,19 +22,14 @@ function GenerateCmakeFile()
 		echo "SET(CMAKE_CXX_COMPILER \"$1-g++\")" >> $CmakeFile
 	fi
 }
-function BuildLib()
+function Build()
 {
 	echo -e "Start building ..."
 	OutputPath="./build"
 	if [ -e "$OutputPath" ]; then
-		if [ -e "$OutputPath/lib" ]; then
-			echo "/build/lib exit"
-		else
-			mkdir $OutputPath/lib
-		fi
+		echo "/build exit"
 	else
 		mkdir $OutputPath
-		mkdir $OutputPath/lib
 	fi	
 	cd build
 	cmake ..
@@ -57,41 +52,45 @@ function CopyLib()
 {
 	CurPwd = $PWD
 	cd $1
-	if [ -e "lib" ]; then
-		echo "lib exit"
-	else
-		mkdir lib
-	fi
+	cp $CurPwd/build/webrtc .
+#拷贝固定早就编译好的第三方so库
+#暂时没时间优化直接使用所有编译结果也可以，libnice依赖架构，所以拷贝所有的，不调整架构
+	cp $CurPwd/../lib/glib/* ./third_lib/glib/
+	cp $CurPwd/../lib/glib/* ./third_lib/glib/
+	cp $CurPwd/../lib/glib/* ./third_lib/glib/
 	
-	cd lib
-	if [ -e "webrtc" ]; then
-		echo "webrtc exit"
-	else
-		mkdir webrtc
-	fi
-	
-	cd webrtc
-	if [ -e "common_video" ]; then
-		echo "common_video exit"
-	else
-		mkdir common_video
-	fi
-	
-	cd common_video
-	cp $CurPwd/build/lib/libaudio_encoder_interface.a .
-	cp $CurPwd/build/lib/libvideo_frame_api.a .
-	cp $CurPwd/build/lib/libaudio_codecs_api.a .
-	cp $CurPwd/build/lib/libbuiltin_audio_decoder_factory.a .
-#	cp $CurPwd/build/lib/libvideo_frame_api.a .
+#拷贝目的保持和源码编译结果一样,后续源码编译就可以不用从lib拷贝(直接删除如下语句)
 }
 
 if [ $# == 0 ]; then
 	PrintUsage
 	exit -1
 else
+
+	cd http
+	sh build.sh $1
+	if [ $? -ne 0]; then
+		exit -1
+	fi
+	cd ..
+	
+	cd peerconnection_client
+	sh build.sh $1
+	if [ $? -ne 0]; then
+		exit -1
+	fi
+	cd ..
+
+	cd rtp
+	sh build.sh $1
+	if [ $? -ne 0]; then
+		exit -1
+	fi
+	cd ..	
+		
 	GenerateCmakeFile $1
-	BuildLib
-	CopyLib ../../../build
+	Build
+	CopyLib ../build $1
 fi
 
 

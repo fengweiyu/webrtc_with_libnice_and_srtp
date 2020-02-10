@@ -57,32 +57,17 @@ function CopyLib()
 {
 	CurPwd = $PWD
 	cd $1
-	if [ -e "lib" ]; then
-		echo "lib exit"
+	if [ -e "http" ]; then
+		echo "http exit"
 	else
-		mkdir lib
+		mkdir http
 	fi
 	
-	cd lib
-	if [ -e "webrtc" ]; then
-		echo "webrtc exit"
-	else
-		mkdir webrtc
-	fi
+	cd http
+
 	
-	cd webrtc
-	if [ -e "common_video" ]; then
-		echo "common_video exit"
-	else
-		mkdir common_video
-	fi
-	
-	cd common_video
-	cp $CurPwd/build/lib/libaudio_encoder_interface.a .
-	cp $CurPwd/build/lib/libvideo_frame_api.a .
-	cp $CurPwd/build/lib/libaudio_codecs_api.a .
-	cp $CurPwd/build/lib/libbuiltin_audio_decoder_factory.a .
-#	cp $CurPwd/build/lib/libvideo_frame_api.a .
+	cp $CurPwd/build/lib/libhttp.a .
+	cp $CurPwd/include . -rf
 }
 
 if [ $# == 0 ]; then
@@ -91,7 +76,7 @@ if [ $# == 0 ]; then
 else
 	GenerateCmakeFile $1
 	BuildLib
-	CopyLib ../../../build
+	CopyLib ../../build
 fi
 
 

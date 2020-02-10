@@ -64,25 +64,12 @@ function CopyLib()
 	fi
 	
 	cd lib
-	if [ -e "webrtc" ]; then
-		echo "webrtc exit"
-	else
-		mkdir webrtc
-	fi
+	cp $CurPwd/build/lib/libwebrtc.a .
 	
-	cd webrtc
-	if [ -e "common_video" ]; then
-		echo "common_video exit"
-	else
-		mkdir common_video
-	fi
-	
-	cd common_video
-	cp $CurPwd/build/lib/libaudio_encoder_interface.a .
-	cp $CurPwd/build/lib/libvideo_frame_api.a .
-	cp $CurPwd/build/lib/libaudio_codecs_api.a .
-	cp $CurPwd/build/lib/libbuiltin_audio_decoder_factory.a .
-#	cp $CurPwd/build/lib/libvideo_frame_api.a .
+
+	cp $CurPwd/include . -rf
+
+
 }
 
 if [ $# == 0 ]; then
@@ -91,7 +78,7 @@ if [ $# == 0 ]; then
 else
 	GenerateCmakeFile $1
 	BuildLib
-	CopyLib ../../../build
+	CopyLib ../build
 fi
 
 
