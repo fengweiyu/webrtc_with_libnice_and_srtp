@@ -27,13 +27,19 @@ else
 		else
 			mkdir $OutputPath/lib
 		fi
+		if [ -e "$OutputPath/third_lib" ]; then
+			echo "/build/third_lib exit"
+		else
+			mkdir $OutputPath/third_lib
+		fi				
 	else
 		mkdir $OutputPath
 		mkdir $OutputPath/include
 		mkdir $OutputPath/lib
+		mkdir $OutputPath/third_lib
 	fi
 	
-	cd src/webrtc
+	cd src
 	sh build.sh $1
 	if [ $? -ne 0]; then
 		exit -1

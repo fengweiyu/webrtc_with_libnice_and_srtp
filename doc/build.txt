@@ -1,6 +1,14 @@
 ﻿rm install.tar.gz
 tar -czf install.tar.gz install
 
+cjson
+wget https://github.com/DaveGamble/cJSON/archive/v1.7.12.tar.gz
+mv v1.7.12.tar.gz cJSON_v1.7.12.tar.gz
+tar -xzf cJSON_v2.3.0.tar.gz
+cmake .
+make
+
+
 1.libstrp libsrtp-2.3.0
 wget https://github.com/cisco/libsrtp/archive/v2.3.0.tar.gz
 mv v2.3.0.tar.gz libsrtp_v2.3.0.tar.gz
