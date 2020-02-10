@@ -13,8 +13,8 @@
 #include "signalling_interface.h"
 
 /*****************************************************************************
--Fuction		: signalling_interface
--Description	: signalling_interface
+-Fuction		: SignalingInterface
+-Description	: SignalingInterface
 -Input			: 
 -Output 		: 
 -Return 		: 
@@ -22,7 +22,7 @@
 * -----------------------------------------------
 * 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-signalling_interface :: signalling_interface()
+SignalingInterface :: SignalingInterface()
 {
     m_PeerConnectionClient = new peerconnection_client();
     m_iLoginSuccessFlag = 0;
@@ -31,8 +31,8 @@ signalling_interface :: signalling_interface()
 }
 
 /*****************************************************************************
--Fuction		: ~signalling_interface
--Description	: ~signalling_interface
+-Fuction		: ~SignalingInterface
+-Description	: ~SignalingInterface
 -Input			: 
 -Output 		: 
 -Return 		: 
@@ -40,7 +40,7 @@ signalling_interface :: signalling_interface()
 * -----------------------------------------------
 * 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-signalling_interface :: ~signalling_interface()
+SignalingInterface :: ~SignalingInterface()
 {
     if(NULL != m_PeerConnectionClient)
         delete m_PeerConnectionClient;
@@ -57,7 +57,7 @@ signalling_interface :: ~signalling_interface()
 * -----------------------------------------------
 * 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-int signalling_interface :: GetOfferMsg(char * i_strServerIp, int i_iServerPort, char * i_strSelfName,char * o_acRecvBuf, int * o_piRecvLen, int i_iRecvBufMaxLen)
+int SignalingInterface :: GetOfferMsg(char * i_strServerIp, int i_iServerPort, char * i_strSelfName,char * o_acRecvBuf, int * o_piRecvLen, int i_iRecvBufMaxLen)
 {
     int iRet = -1;
     char *pOfferMsg = NULL;
@@ -109,7 +109,7 @@ int signalling_interface :: GetOfferMsg(char * i_strServerIp, int i_iServerPort,
 * -----------------------------------------------
 * 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-int signalling_interface :: SendAnswerMsg(int i_iPeerId, char * i_acSendBuf, int i_iSendLen)
+int SignalingInterface :: SendAnswerMsg(int i_iPeerId, char * i_acSendBuf, int i_iSendLen)
 {
     int iRet = -1;
     iRet = m_PeerConnectionClient->post_sdp_to_peer(i_iPeerId, i_acSendBuf, i_iSendLen);

@@ -1,7 +1,7 @@
 /*****************************************************************************
 * Copyright (C) 2020-2025 Hanson Yu  All rights reserved.
 ------------------------------------------------------------------------------
-* File Module           :       webrtc.c
+* File Module           :       Rtp.h
 * Description           : 	
 * Created               :       2020.01.13.
 * Author                :       Yu Weifeng
@@ -9,8 +9,8 @@
 * Last Modified         : 	
 * History               : 	
 ******************************************************************************/
-#ifndef RTP_INTERFACE_H
-#define RTP_INTERFACE_H
+#ifndef RTP_H
+#define RTP_H
 
 #include "VideoHandle.h"
 #include "RtpPacket.h"
@@ -22,11 +22,11 @@
 * -----------------------------------------------
 * 2017/09/21	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-class RtpInterface
+class Rtp
 {
 public:
-	RtpInterface();
-	~RtpInterface();
+	Rtp();
+	~Rtp();
     int Init(char *i_strPath);
 
 	

@@ -1,7 +1,7 @@
 /*****************************************************************************
 * Copyright (C) 2020-2025 Hanson Yu  All rights reserved.
 ------------------------------------------------------------------------------
-* File Module           :       RtpInterface.c
+* File Module           :       Rtp.c
 * Description           : 	
 * Created               :       2020.01.13.
 * Author                :       Yu Weifeng
@@ -9,11 +9,11 @@
 * Last Modified         : 	
 * History               : 	
 ******************************************************************************/
-#include "RtpInterface.h"
+#include "Rtp.h"
 
 /*****************************************************************************
--Fuction		: RtpInterface
--Description	: RtpInterface
+-Fuction		: Rtp
+-Description	: Rtp
 -Input			: 
 -Output 		: 
 -Return 		: 
@@ -21,7 +21,7 @@
 * -----------------------------------------------
 * 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-RtpInterface :: RtpInterface()
+Rtp :: Rtp()
 {
     m_pVideoHandle = NULL;
     m_pRtpPacket = NULL;
@@ -30,8 +30,8 @@ RtpInterface :: RtpInterface()
 }
 
 /*****************************************************************************
--Fuction		: ~RtpInterface
--Description	: ~RtpInterface
+-Fuction		: ~Rtp
+-Description	: ~Rtp
 -Input			: 
 -Output 		: 
 -Return 		: 
@@ -39,7 +39,7 @@ RtpInterface :: RtpInterface()
 * -----------------------------------------------
 * 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-RtpInterface :: ~RtpInterface()
+Rtp :: ~Rtp()
 {
     if(NULL !=m_pRtpPacket)
     {
@@ -65,7 +65,7 @@ RtpInterface :: ~RtpInterface()
 * -----------------------------------------------
 * 2017/09/21	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-int RtpInterface::Init(char *i_strPath)
+int Rtp::Init(char *i_strPath)
 {
     int iRet=FALSE;
     if(NULL == i_strPath)
@@ -92,7 +92,7 @@ int RtpInterface::Init(char *i_strPath)
 * -----------------------------------------------
 * 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-int RtpInterface :: GetRtpData(unsigned char **o_ppbPacketBuf,int *o_aiEveryPacketLen,int i_iEveryRtpBufMaxSize,int i_iPacketBufMaxNum)
+int Rtp :: GetRtpData(unsigned char **o_ppbPacketBuf,int *o_aiEveryPacketLen,int i_iEveryRtpBufMaxSize,int i_iPacketBufMaxNum)
 {
     int iPacketNum = -1;
 

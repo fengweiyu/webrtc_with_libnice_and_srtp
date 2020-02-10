@@ -22,11 +22,11 @@
 * -----------------------------------------------
 * 2019/09/21	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-class signalling_interface
+class SignalingInterface
 {
 public:
-	signalling_interface();
-	~signalling_interface();
+	SignalingInterface();
+	~SignalingInterface();
 	int GetOfferMsg(char * i_strServerIp, int i_iServerPort, char * i_strSelfName,char * o_acRecvBuf, int * o_piRecvLen, int i_iRecvBufMaxLen);
 	int SendAnswerMsg(int i_iPeerId, char * i_acSendBuf, int i_iSendLen);
 private:

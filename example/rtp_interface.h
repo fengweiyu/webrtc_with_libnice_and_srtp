@@ -1,7 +1,7 @@
 /*****************************************************************************
 * Copyright (C) 2020-2025 Hanson Yu  All rights reserved.
 ------------------------------------------------------------------------------
-* File Module           :       webrtc.c
+* File Module           :       rtp_interface.c
 * Description           : 	
 * Created               :       2020.01.13.
 * Author                :       Yu Weifeng
@@ -12,8 +12,7 @@
 #ifndef RTP_INTERFACE_H
 #define RTP_INTERFACE_H
 
-#include "VideoHandle.h"
-#include "RtpPacket.h"
+#include "Rtp.h"
 
 /*****************************************************************************
 -Class			: RtpInterface
@@ -25,17 +24,15 @@
 class RtpInterface
 {
 public:
-	RtpInterface();
+	RtpInterface(char *i_strPath);
 	~RtpInterface();
-    int Init(char *i_strPath);
 
 	
     int GetRtpData(unsigned char *o_pbRtpBuf,int *o_iRtpBufSize,int i_iRtpBufMaxSize);
 
 
 private:
-    VideoHandle             *m_pVideoHandle;
-	RtpPacket               *m_pRtpPacket;
+	Rtp               *m_pRtp;
 
     
 };

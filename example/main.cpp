@@ -18,7 +18,7 @@
 #include <sys/prctl.h>
 
 #include "signalling_interface.h"
-#include "RtpInterface.h"
+#include "rtp_interface.h"
 
 #define WEBRTC_RTP_MAX_PACKET_NUM	(300)
 #define WEBRTC_RTP_MAX_PACKET_SIZE	((1500-42)/4*4)//MTU
@@ -46,7 +46,7 @@ int main(int argc, char* argv[])
     char acOfferMsg[6*1024];
     char acAnswerMsg[6*1024];
     RtpInterface *pRtpInterface=NULL;
-    signalling_interface *pSignalingInf=NULL;
+    SignalingInterface *pSignalingInf=NULL;
     int iRecvLen=0;
     int iPeerId = -1;
 
@@ -67,9 +67,8 @@ int main(int argc, char* argv[])
     }
     else
     {
-        pSignalingInf = new signalling_interface();
-        pRtpInterface = new RtpInterface();
-        pRtpInterface->Init(argv[4]);
+        pSignalingInf = new SignalingInterface();
+        pRtpInterface = new RtpInterface(argv[4]);
         int iPacketNum=0;
         unsigned char *ppbPacketBuf[WEBRTC_RTP_MAX_PACKET_NUM]={0};
         int aiEveryPacketLen[WEBRTC_RTP_MAX_PACKET_NUM]={0};
