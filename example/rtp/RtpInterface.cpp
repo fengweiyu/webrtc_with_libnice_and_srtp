@@ -1,7 +1,7 @@
 /*****************************************************************************
 * Copyright (C) 2020-2025 Hanson Yu  All rights reserved.
 ------------------------------------------------------------------------------
-* File Module           :       webrtc.c
+* File Module           :       RtpInterface.c
 * Description           : 	
 * Created               :       2020.01.13.
 * Author                :       Yu Weifeng
@@ -117,7 +117,7 @@ int RtpInterface :: GetRtpData(unsigned char **o_ppbPacketBuf,int *o_aiEveryPack
         iPacketNum=m_pVideoHandle->FindH264Nalu(pbVideoBuf, iVideoBufLen,&pbNaluStartPos, &iNaluLen,&bNaluType);
         if(FALSE== iPacketNum || NULL == pbNaluStartPos ||0==iNaluLen)
         {
-            cout<<"FindH264Nalu err:"<<iRet<<" iNaluLen:"<<iNaluLen<<" iVideoBufLen:"<<iVideoBufLen<<endl;
+            cout<<"FindH264Nalu err:"<<iPacketNum<<" iNaluLen:"<<iNaluLen<<" iVideoBufLen:"<<iVideoBufLen<<endl;
         }
         else
         {
