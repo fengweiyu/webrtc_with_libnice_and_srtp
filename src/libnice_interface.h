@@ -59,15 +59,15 @@ public:
     int SetRemoteSDP(char * i_strSDP);
     int GetSendReadyFlag();
     int SendData(char * i_acBuf,int i_iBufLen);
+    
+    static void Recv(NiceAgent *agent, guint _stream_id, guint component_id,guint len, gchar *buf, gpointer data);
 
-
-	static const char *m_astrCandidateTypeName[] = {"host", "srflx", "prflx", "relay"};
+	static const char *m_astrCandidateTypeName[];
     
 private:
-    static void CandidateGatheringDone(NiceAgent *i_ptAgent, guint i_dwStreamID,gpointer pData);
-    static void NewSelectPair(NiceAgent *agent, guint _stream_id,guint component_id, gchar *lfoundation,gchar *rfoundation, gpointer data);
-    static void ComponentStateChanged(NiceAgent *agent, guint _stream_id,guint component_id, guint state,gpointer data);
-    static void Recv(NiceAgent *agent, guint _stream_id, guint component_id,guint len, gchar *buf, gpointer data);
+    void CandidateGatheringDone(NiceAgent *i_ptAgent, guint i_dwStreamID,gpointer pData);
+    void NewSelectPair(NiceAgent *agent, guint _stream_id,guint component_id, gchar *lfoundation,gchar *rfoundation, gpointer data);
+    void ComponentStateChanged(NiceAgent *agent, guint _stream_id,guint component_id, guint state,gpointer data);
 
 
     T_LocalCandidate m_tLocalCandidate;

@@ -10,6 +10,9 @@
 * History               : 	
 ******************************************************************************/
 #include "srtp_interface.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 
 
 /*****************************************************************************
@@ -25,7 +28,7 @@
 Srtp::Srtp()
 {	
 	memset(&m_tSrtp,0,sizeof(srtp_t));
-    return srtp_init();
+    (void)srtp_init();
 }
 
 
@@ -55,7 +58,7 @@ int Srtp::Create(char *i_acKey,int i_iKeyLen,E_SrtpSsrcType i_eSrtpSsrcType)
 	memcpy(acKey,i_acKey,i_iKeyLen);
     srtp_crypto_policy_set_rtp_default(&tPolicy.rtp);//²»È·¶¨
     srtp_crypto_policy_set_rtcp_default(&tPolicy.rtcp);//
-    tPolicy.ssrc.type = i_eSrtpSsrcType;
+    tPolicy.ssrc.type =(srtp_ssrc_type_t) i_eSrtpSsrcType;
     //tPolicy.ssrc.value = 0;
     tPolicy.key = (unsigned char *)acKey;
     tPolicy.next = NULL;
@@ -83,7 +86,7 @@ int Srtp::Create(char *i_acKey,int i_iKeyLen,E_SrtpSsrcType i_eSrtpSsrcType)
 int Srtp::ProtectRtp(char * i_acRtpData,int * o_piProtectDataLen,int i_iRtpDataLen)
 {
     int iRet = -1;
-	if(i_acRtpData == NULL ||o_piDataLen == NULL)
+	if(i_acRtpData == NULL ||o_piProtectDataLen == NULL)
 	{
 		printf("ProtectRtp null\r\n");
 		return iRet;

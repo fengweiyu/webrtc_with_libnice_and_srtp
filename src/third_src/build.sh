@@ -28,9 +28,9 @@ function BuildcJSON()
 		echo "Makefile generated failed! "
 		exit -1
 	fi
+	CurPwd = $PWD
 	cd ..
 	
-	CurPwd = $PWD
 	cd $1
 	if [ -e "third_lib" ]; then
 		echo "third_lib exit"
@@ -46,7 +46,7 @@ function BuildcJSON()
 	fi
 	
 	cd cJSON
-#	cp $CurPwd/build/lib/libaudio_encoder_interface.a .	
+	cp $CurPwd/libcjson.so .	
 #	
 	
 }

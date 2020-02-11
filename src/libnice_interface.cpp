@@ -14,7 +14,7 @@
 #include <stdio.h>
 #include <string.h>
 
-
+const char * Libnice::m_astrCandidateTypeName[] = {"host", "srflx", "prflx", "relay"};
 int Libnice::m_iLibniceSendReadyFlag = 0;//0不可发送,1准备好通道可以发送
 /*****************************************************************************
 -Fuction        : LibniceInit
@@ -31,7 +31,7 @@ Libnice::Libnice(char * i_strStunAddr,unsigned int i_dwStunPort,int i_iControlli
     m_ptAgent=NULL;
     m_pRemoteCandidatesList = NULL;
     m_dwStreamID=0;//
-    m_iLibniceSendReadyFlag =0
+    m_iLibniceSendReadyFlag =0;
 	memset(&m_tLibniceDepData,0,sizeof(T_LibniceDepData));
 	snprintf(m_tLibniceDepData.strStunAddr,sizeof(m_tLibniceDepData.strStunAddr),"%s",i_strStunAddr);
 	m_tLibniceDepData.dwStunPort = i_dwStunPort;
@@ -129,7 +129,7 @@ int Libnice::LibniceProc()
 
 	// Attach to the component to receive the data
 	// Without this call, candidates cannot be gathered
-	nice_agent_attach_recv(m_ptAgent, m_dwStreamID, 1,g_main_loop_get_context (ptLoop), Recv, NULL);//
+	nice_agent_attach_recv(m_ptAgent, m_dwStreamID, 1,g_main_loop_get_context (ptLoop), &Libnice::Recv, NULL);//
 
 	// Start gathering local candidates
 	if (!nice_agent_gather_candidates(m_ptAgent, m_dwStreamID))
@@ -269,7 +269,7 @@ int Libnice::SetRemoteCandidateToGlist(char * i_strCandidate)
 	{
 		if (strcmp(tokens[4], m_astrCandidateTypeName[i]) == 0)
 		{
-			ntype = i;
+			ntype = (NiceCandidateType)i;
 			break;
 		}
 	}
@@ -391,12 +391,12 @@ int Libnice::SetRemoteSDP(char * i_strSDP)
 int Libnice::SendData(char * i_acBuf,int i_iBufLen)
 {
 	int iRet = -1;
-    if m_ptAgent == NULL || m_dwStreamID == 0 || i_acBuf == NULL) 
+    if( m_ptAgent == NULL || m_dwStreamID == 0 || i_acBuf == NULL) 
     {
 		printf("LibniceSendData m_ptAgent null \r\n");
 		return iRet;
     }
-    if m_iLibniceSendReadyFlag == 0) 
+    if(m_iLibniceSendReadyFlag == 0) 
     {
 		printf("LibniceSendReady err \r\n");
 		return iRet;
@@ -466,7 +466,7 @@ void Libnice::CandidateGatheringDone(NiceAgent *i_ptAgent, guint i_dwStreamID,gp
 			g_free(strLocalPassword);
 		if (cands)
 			g_slist_free_full(cands, (GDestroyNotify)&nice_candidate_free);
-	return iRet;
+	return;
 }
 
 void Libnice::NewSelectPair(NiceAgent *agent, guint _stream_id,guint component_id, gchar *lfoundation,gchar *rfoundation, gpointer data)

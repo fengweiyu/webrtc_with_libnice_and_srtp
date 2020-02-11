@@ -12,8 +12,12 @@
 #ifndef DTLS_ONLY_HANDSHAKE_H
 #define DTLS_ONLY_HANDSHAKE_H
 
+#include "pthread.h"
+
 #include <list>
 #include <openssl/bio.h>
+
+
 
 
 
@@ -48,11 +52,9 @@ public:
 	BioFilter();
 	~BioFilter();
 	std::list < int > packets;    
+    pthread_mutex_t *mutex;
+
 private:
-
-	boost::mutex mutex;
-
-
 
 };
 
@@ -75,19 +77,19 @@ public:
     void HandleRecvData(char *buf,int len);
     int GetPolicyInfo(T_PolicyInfo *i_ptPolicyInfo);
 
-    
+	static int VerifyCallback(int i_iPreverifyOk, X509_STORE_CTX *ctx);//被其他c函数访问就不是只有本类访问了
+	
 private:
     int BioFilterInit(void);
     int GenerateKeys(X509 ** i_pptCertificate, EVP_PKEY ** i_pptPrivateKey);
-    int VerifyCallback(int i_iPreverifyOk, X509_STORE_CTX *ctx);
-    void DtlsOnlyHandshake::SendDataOut();
-
+    void SendDataOut();
+    unsigned int GetRandom();
     
     static void Callback(const SSL *ssl, int where, int ret);
     static int BioFilterNew(BIO *bio);
     static int BioFilterFree(BIO *bio);
-    static int BioFilterWrite(BIO *bio);
-    static int BioFilterCrtl(BIO *bio);
+    static int BioFilterWrite(BIO *bio, const char *in, int inl);
+    static long BioFilterCrtl(BIO *bio, int cmd, long num, void *ptr);
 
 	SSL_CTX * m_ptSslCtx;
 	X509 * m_ptSslCert;

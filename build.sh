@@ -4,9 +4,9 @@ function PrintUsage()
 {
 	echo -e "Usage:"
 	echo -e "./build.sh $ToolChain"
-	echo -e "ToolChain: arm-linux/x86"
+	echo -e "ToolChain: arm-hisiv200-linux/x86"
 	echo -e "EGG:"
-	echo -e "./build.sh arm-linux"
+	echo -e "./build.sh arm-hisiv200-linux"
 	echo -e " or ./build.sh x86"
 }
 

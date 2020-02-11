@@ -19,6 +19,11 @@ SET(src_list
 	)		
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}
 	${PROJECT_SOURCE_DIR}/include
+	${PROJECT_SOURCE_DIR}/../lib/arm-hisiv200-linux/libnice/include/nice
+	${PROJECT_SOURCE_DIR}/../lib/arm-hisiv200-linux/openssl/include
+	${PROJECT_SOURCE_DIR}/../lib/arm-hisiv200-linux/libsrtp/include/srtp2
+	${PROJECT_SOURCE_DIR}/../lib/arm-hisiv200-linux/glib/include/glib-2.0
+	${PROJECT_SOURCE_DIR}/third_src/cJSON-1.7.12
 	)
 ADD_LIBRARY(webrtc_static STATIC ${src_list})
 SET_TARGET_PROPERTIES(webrtc_static PROPERTIES OUTPUT_NAME webrtc)

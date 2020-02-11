@@ -26,16 +26,16 @@
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-WebRTC::WebRTC(char * i_strStunAddr,unsigned int i_dwStunPort,int i_iControlling):m_Libnice(i_strStunAddr,i_dwStunPort,i_iControlling),m_Srtp();
+WebRTC::WebRTC(char * i_strStunAddr,unsigned int i_dwStunPort,int i_iControlling):m_Libnice(i_strStunAddr,i_dwStunPort,i_iControlling),m_Srtp()
 {
     m_pDtlsOnlyHandshake = NULL;
     memset(&m_tDtlsOnlyHandshakeCb,0,sizeof(T_DtlsOnlyHandshakeCb));
-    m_tDtlsOnlyHandshakeCb.SendDataOut=m_Libnice.SendData;
+    m_tDtlsOnlyHandshakeCb.SendDataOut=&m_Libnice.SendData;
     m_pDtlsOnlyHandshake = new DtlsOnlyHandshake(m_tDtlsOnlyHandshakeCb);
     
     memset(&m_tLibniceCb,0,sizeof(T_LibniceCb));
-    m_tLibniceCb.Handshake= m_pDtlsOnlyHandshake->Handshake;
-    m_tLibniceCb.HandleRecvData= m_pDtlsOnlyHandshake->HandleRecvData;
+    m_tLibniceCb.Handshake= &m_pDtlsOnlyHandshake->Handshake;//回调函数必须static,
+    m_tLibniceCb.HandleRecvData= &m_pDtlsOnlyHandshake->HandleRecvData;//如果函数内调用对象里的则必须改c函数传对象指针
     m_Libnice.SetCallback(&m_tLibniceCb);
 
     m_iSrtpCreatedFlag = 0;
@@ -101,7 +101,7 @@ int WebRTC::HandleOfferMsg(char * i_strOfferMsg,char * o_strAnswerMsg,int i_iAns
     ptOfferJson = cJSON_Parse(i_strOfferMsg);
     if(NULL != ptOfferJson)
     {
-        ptNode = cJSON_GetObjectItem(ptOfferJson."type");
+        ptNode = cJSON_GetObjectItem(ptOfferJson,"type");
         if(NULL != ptNode && NULL != ptNode->valuestring)
         {
             if(0 == strcmp(ptNode->valuestring,"offer"))
@@ -110,7 +110,7 @@ int WebRTC::HandleOfferMsg(char * i_strOfferMsg,char * o_strAnswerMsg,int i_iAns
             }
             ptNode = NULL;
         }
-        ptNode = cJSON_GetObjectItem(ptOfferJson."sdp");
+        ptNode = cJSON_GetObjectItem(ptOfferJson,"sdp");
         if(NULL != ptNode && NULL != ptNode->valuestring)
         {
             if(sizeof(acRemoteSDP)<strlen(ptNode->valuestring))

@@ -14,6 +14,16 @@ openssl°æ±¾1.1.0
 * History               : 	
 ******************************************************************************/
 #include "dtls_only_handshake.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <openssl/bio.h>
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+#include <openssl/bn.h>
+#include <openssl/evp.h>
+#include <openssl/rsa.h>
+#include <openssl/asn1.h>
 
 
 /* Duration for the self-generated certs: 1 year */
@@ -101,7 +111,7 @@ int DtlsOnlyHandshake::Init()
         printf("Ops, error creating DTLS context?\n");
         return -1;
     }
-    SSL_CTX_set_verify(m_ptSslCtx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, VerifyCallback);
+    SSL_CTX_set_verify(m_ptSslCtx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, &DtlsOnlyHandshake::VerifyCallback);
     SSL_CTX_set_tlsext_use_srtp(m_ptSslCtx, "SRTP_AES128_CM_SHA1_80");	/* FIXME Should we support something else as well? */
 
     if (GenerateKeys(&m_ptSslCert, &m_ptSslKey) != 0) 
@@ -168,7 +178,7 @@ int DtlsOnlyHandshake::Create()
     m_ptSsl = SSL_new(m_ptSslCtx);
     if(!m_ptSsl) 
     {
-        printf("[%I64u]     Error creating DTLS session! (%s)\n", ERR_reason_error_string(ERR_get_error()));        
+        printf("Error creating DTLS session! (%s)\n", ERR_reason_error_string(ERR_get_error()));        
         return iRet;
     }
     SSL_set_ex_data(m_ptSsl, 0, this);
@@ -428,7 +438,7 @@ void DtlsOnlyHandshake::SendDataOut()
 		} 
 		else 
 		{
-			printf("[%I64u] >> >> ... and sent %d of those bytes on the socket\n", bytes);
+			printf(">> >> ... and sent %d of those bytes on the socket\n", bytes);
 		}
 		/* Update stats (TODO Do the same for the last second window as well)
 		 * FIXME: the Data stats includes the bytes used for the handshake */
@@ -514,7 +524,7 @@ int DtlsOnlyHandshake::GenerateKeys(X509 ** i_pptCertificate, EVP_PKEY ** i_pptP
     X509_set_version(*i_pptCertificate, 2);
 
     /* Set serial number. */
-    ASN1_INTEGER_set(X509_get_serialNumber(*i_pptCertificate), (long)g_random_int());//Éý¼¶openssl
+    ASN1_INTEGER_set(X509_get_serialNumber(*i_pptCertificate), (long)GetRandom()/*g_random_int()*/);//Éý¼¶openssl
 
     /* Set valid period. */
     X509_gmtime_adj(X509_get_notBefore(*i_pptCertificate), -1 * DTLS_AUTOCERT_DURATION);  /* -1 year */
@@ -615,7 +625,8 @@ int DtlsOnlyHandshake::BioFilterFree(BIO *bio)
     return 1;
 }
 
-int DtlsOnlyHandshake::BioFilterWrite(BIO *bio, const char *in, int inl) {
+int DtlsOnlyHandshake::BioFilterWrite(BIO *bio, const char *in, int inl) 
+{
     printf("dtls_bio_filter_write: %p, %d\n", in, inl);
 
     long ret = BIO_write(BIO_next(bio), in, inl);
@@ -627,9 +638,10 @@ int DtlsOnlyHandshake::BioFilterWrite(BIO *bio, const char *in, int inl) {
 
     if(filter != NULL)
     {
-        boost::mutex::scoped_lock lock(filter->mutex);
+        pthread_mutex_lock(filter->mutex);
         //filter->packets = g_list_append(filter->packets, GINT_TO_POINTER(ret));
         filter->packets.push_back(ret);
+        pthread_mutex_unlock(filter->mutex);
         printf("New list length: %d\n", filter->packets.size());
     }
     return ret;
@@ -655,7 +667,7 @@ long DtlsOnlyHandshake::BioFilterCrtl(BIO *bio, int cmd, long num, void *ptr)
 
             if(filter == NULL) {return 0;}
 
-            boost::mutex::scoped_lock lock(filter->mutex);
+            pthread_mutex_lock(filter->mutex);
 
             //mutex_lock(&filter->mutex);
             if(0 == filter->packets.size()) {return 0;}            
@@ -667,7 +679,8 @@ long DtlsOnlyHandshake::BioFilterCrtl(BIO *bio, int cmd, long num, void *ptr)
             filter->packets.pop_front();
             /*g_list_free(first);
             mutex_unlock(&filter->mutex);*/
-
+            
+            pthread_mutex_unlock(filter->mutex);
             /* We return its size so that only part of the buffer is read from the write BIO */
             return pending;
         }
@@ -686,6 +699,31 @@ void DtlsOnlyHandshake::Callback(const SSL *ssl, int where, int ret)
     printf("......................................dtls error from callback.........................\r\n");
 }
 /*****************************************************************************
+-Fuction		: GetRandom
+-Description	: 
+   Return a 32-bit random number.
+   Because "our_random()" returns a 31-bit random number, we call it a second
+   time, to generate the high bit.
+   (Actually, to increase the likelhood of randomness, we take the middle 16 bits of two successive calls to "our_random()")
+
+-Input			: 
+-Output 		: 
+-Return 		: 
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2017/09/21	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
+unsigned int DtlsOnlyHandshake::GetRandom()
+{
+    long random_1 = random();
+    unsigned int random16_1 = (unsigned int)(random_1&0x00FFFF00);
+    
+    long random_2 = random();
+    unsigned int random16_2 = (unsigned int)(random_2&0x00FFFF00);
+    
+    return (random16_1<<8) | (random16_2>>8);
+}
+/*****************************************************************************
 -Fuction        : BioFilter
 -Description    : 
 -Input          : 
@@ -697,7 +735,7 @@ void DtlsOnlyHandshake::Callback(const SSL *ssl, int where, int ret)
 ******************************************************************************/
 BioFilter::BioFilter()
 {
-
+    pthread_mutex_init(mutex,NULL);
 
 }
 
@@ -713,6 +751,7 @@ BioFilter::BioFilter()
 ******************************************************************************/
 BioFilter::~BioFilter()
 {
+    pthread_mutex_destroy(mutex);
     packets.clear();
 }
 

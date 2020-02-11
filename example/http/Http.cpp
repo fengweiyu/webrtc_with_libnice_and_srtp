@@ -10,6 +10,15 @@
 * History               : 	
 ******************************************************************************/
 #include "Http.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <iostream>
+#include <string>
+
+
+using std::cout;
+using std::endl;
 
 /*****************************************************************************
 -Fuction		: HttpClient
@@ -70,12 +79,12 @@ int HttpClient :: Send(const char * i_strMethod,char * i_strURL,char * i_acSendB
     if(NULL != pSendBuf)
     {
         memset(pSendBuf,0,i_iSendLen+512);
-        iSendLen+=snprintf(pSendBuf+iSendLen,"%s %s %s\r\n",i_strMethod,i_strURL,HTTP_VERSION);
+        iSendLen+=snprintf(pSendBuf+iSendLen,i_iSendLen+512-iSendLen,"%s %s %s\r\n",i_strMethod,i_strURL,HTTP_VERSION);
         if(NULL != i_strContentType)
         {
-            iSendLen+=snprintf(pSendBuf+iSendLen,"Content-Length:%d\r\nContent-Type:%s\r\n",i_iSendLen,i_strContentType);
+            iSendLen+=snprintf(pSendBuf+iSendLen,i_iSendLen+512-iSendLen,"Content-Length:%d\r\nContent-Type:%s\r\n",i_iSendLen,i_strContentType);
         }
-        iSendLen+=snprintf(pSendBuf+iSendLen,"\r\n");
+        iSendLen+=snprintf(pSendBuf+iSendLen,i_iSendLen+512-iSendLen,"\r\n");
         if(NULL != i_acSendBuf)
         {
             memcpy(pSendBuf+iSendLen,i_acSendBuf,i_iSendLen);
@@ -128,7 +137,7 @@ int HttpClient :: RecvBody(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxL
         else
         {
             iRet = -1;
-            printf("HttpClient :: Recv err ,%p,%d,%d\r\n",pBody,i_iRecvBufMaxLen,iRecvLen-(pBody-acRecvBuf+strlen(strHttpBodyFlag)));
+            printf("HttpClient :: Recv err ,%p,%d,%d\r\n",pBody,i_iRecvBufMaxLen,(int)(iRecvLen-(pBody-acRecvBuf+strlen(strHttpBodyFlag))));
         }
     }
 
