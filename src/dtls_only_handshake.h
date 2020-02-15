@@ -28,8 +28,8 @@
 
 typedef struct DtlsOnlyHandshakeCb
 {
-	int (* SendDataOut)(char * i_acData,int i_iLen);
-
+	int (* SendDataOut)(char * i_acData,int i_iLen,void *pArg);
+	void *pObj;
 
 }T_DtlsOnlyHandshakeCb;
 typedef struct PolicyInfo

@@ -431,7 +431,7 @@ void DtlsOnlyHandshake::SendDataOut()
 			/* FIXME Just a warning for now, this will need to be solved with proper fragmentation */
 			printf("The DTLS stack is trying to send a packet of %d bytes, this may be larger than the MTU and get dropped!\n", out);
 		}
-        int bytes = m_tDtlsOnlyHandshakeCb.SendDataOut(outgoing,out);
+        int bytes = m_tDtlsOnlyHandshakeCb.SendDataOut(outgoing,out,m_tDtlsOnlyHandshakeCb.pObj);
 		if(bytes < out) 
         {
 			printf("Error sending DTLS message on c%d (%d)\n", out, bytes);

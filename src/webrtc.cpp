@@ -30,12 +30,14 @@ WebRTC::WebRTC(char * i_strStunAddr,unsigned int i_dwStunPort,int i_iControlling
 {
     m_pDtlsOnlyHandshake = NULL;
     memset(&m_tDtlsOnlyHandshakeCb,0,sizeof(T_DtlsOnlyHandshakeCb));
-    m_tDtlsOnlyHandshakeCb.SendDataOut=&m_Libnice.SendData;
+    m_tDtlsOnlyHandshakeCb.SendDataOut=&WebRTC::SendDataOutCb;
+    m_tDtlsOnlyHandshakeCb.pObj=&m_Libnice;
     m_pDtlsOnlyHandshake = new DtlsOnlyHandshake(m_tDtlsOnlyHandshakeCb);
     
-    memset(&m_tLibniceCb,0,sizeof(T_LibniceCb));
-    m_tLibniceCb.Handshake= &m_pDtlsOnlyHandshake->Handshake;//回调函数必须static,
-    m_tLibniceCb.HandleRecvData= &m_pDtlsOnlyHandshake->HandleRecvData;//如果函数内调用对象里的则必须改c函数传对象指针
+    memset(&m_tLibniceCb,0,sizeof(T_LibniceCb));//改回调为传入对象的方法,回调必须带对象指针参数(回调函数要访问对象里的内容)
+    m_tLibniceCb.Handshake= &WebRTC::HandshakeCb;//回调函数必须static,
+    m_tLibniceCb.HandleRecvData= &WebRTC::HandleRecvDataCb;//如果函数内调用对象里的则必须改c函数传对象指针
+    m_tLibniceCb.pCbObj=m_pDtlsOnlyHandshake;//不再libnice类里面做指针转换,这是防止底层模块相互依赖
     m_Libnice.SetCallback(&m_tLibniceCb);
 
     m_iSrtpCreatedFlag = 0;
@@ -178,3 +180,74 @@ int WebRTC::SendProtectedRtp(char * i_acRtpBuf,int i_iRtpBufLen)
 
     return iRet;
 }
+
+
+
+/*****************************************************************************
+-Fuction        : HandshakeCb
+-Description    : HandshakeCb
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+void WebRTC::HandshakeCb(void * pArg)
+{
+    DtlsOnlyHandshake *pDtlsOnlyHandshake=NULL;
+    if(NULL!=pArg)//防止该静态函数对本对象的依赖,
+    {//所以不直接用m_pDtlsOnlyHandshake->Handshake();
+        pDtlsOnlyHandshake = (DtlsOnlyHandshake *)pArg;
+        pDtlsOnlyHandshake->Handshake();
+        
+    }
+}
+
+/*****************************************************************************
+-Fuction        : HandshakeCb
+-Description    : HandshakeCb
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+void WebRTC::HandleRecvDataCb(char * i_acData,int i_iLen,void * pArg)
+{
+    DtlsOnlyHandshake *pDtlsOnlyHandshake=NULL;
+    if(NULL!=pArg)//防止该静态函数对本对象的依赖,
+    {//所以不直接用m_pDtlsOnlyHandshake->Handshake();
+        pDtlsOnlyHandshake = (DtlsOnlyHandshake *)pArg;
+        pDtlsOnlyHandshake->HandleRecvData(i_acData,i_iLen);
+        
+    }
+}
+
+/*****************************************************************************
+-Fuction        : SendDataOutCb
+-Description    : SendDataOutCb
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+int WebRTC::SendDataOutCb(char * i_acData,int i_iLen,void * pArg)
+{
+    Libnice *pLibnice=NULL;
+    if(NULL!=pArg)//防止该静态函数对本对象的依赖,
+    {//所以不直接用m_pDtlsOnlyHandshake->Handshake();
+        pLibnice = (Libnice *)pArg;
+        pLibnice->SendData(i_acData,i_iLen);
+        
+    }
+}
+
+
+
+
+
+

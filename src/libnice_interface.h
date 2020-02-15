@@ -32,9 +32,9 @@ typedef struct LibniceDepData
 
 typedef struct LibniceCb
 {
-    void ( *Handshake)();
-	void ( *HandleRecvData)(char * i_acData,int i_iLen);
-    
+    void ( *Handshake)(void * pArg);
+	void ( *HandleRecvData)(char * i_acData,int i_iLen,void * pArg);
+    void *pObjCb;
 }T_LibniceCb;
 
 /*****************************************************************************
@@ -63,20 +63,19 @@ public:
     static void Recv(NiceAgent *agent, guint _stream_id, guint component_id,guint len, gchar *buf, gpointer data);
 
 	static const char *m_astrCandidateTypeName[];
-    
-private:
-    void CandidateGatheringDone(NiceAgent *i_ptAgent, guint i_dwStreamID,gpointer pData);
-    void NewSelectPair(NiceAgent *agent, guint _stream_id,guint component_id, gchar *lfoundation,gchar *rfoundation, gpointer data);
-    void ComponentStateChanged(NiceAgent *agent, guint _stream_id,guint component_id, guint state,gpointer data);
-
-
+    T_LibniceCb m_tLibniceCb;//回调需使用
     T_LocalCandidate m_tLocalCandidate;
+    static int m_iLibniceSendReadyFlag;//0不可发送,1准备好通道可以发送,后续添加设置函数然后改属性
+private:
+    static void CandidateGatheringDone(NiceAgent *i_ptAgent, guint i_dwStreamID,gpointer pData);
+    static void NewSelectPair(NiceAgent *agent, guint _stream_id,guint component_id, gchar *lfoundation,gchar *rfoundation, gpointer data);
+    static void ComponentStateChanged(NiceAgent *agent, guint _stream_id,guint component_id, guint state,gpointer data);
+
+
     NiceAgent * m_ptAgent;
     GSList * m_pRemoteCandidatesList;
     unsigned int m_dwStreamID;//m_iLibniceSendReadyFlag被ComponentStateChanged调用
-    static int m_iLibniceSendReadyFlag;//0不可发送,1准备好通道可以发送
     T_LibniceDepData m_tLibniceDepData;
-    T_LibniceCb m_tLibniceCb;
 };
 
 

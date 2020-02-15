@@ -33,8 +33,9 @@ public:
     int HandleOfferMsg(char * i_strOfferMsg,char * o_strAnswerMsg,int i_iAnswerMaxLen);
     int SendProtectedRtp(char * i_acRtpBuf,int i_iRtpBufLen);
 
-
-    
+    static void HandshakeCb(void * pArg);//放到上层的目的是为了底层模块之间不要相互依赖
+    static void HandleRecvDataCb(char * i_acData,int i_iLen,void * pArg);//后续可以改为private试试
+	static int SendDataOutCb(char * i_acData,int i_iLen,void * pArg);
 private:
     Libnice m_Libnice;
 	Srtp m_Srtp;

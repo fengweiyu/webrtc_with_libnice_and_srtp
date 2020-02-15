@@ -118,9 +118,9 @@ int Libnice::LibniceProc()
 	g_object_set(m_ptAgent, "controlling-mode", m_tLibniceDepData.iControlling, NULL);
 
 	// Connect to the signals
-	g_signal_connect(m_ptAgent, "candidate-gathering-done",G_CALLBACK(CandidateGatheringDone), NULL);
-	g_signal_connect(m_ptAgent, "new-selected-pair",G_CALLBACK(NewSelectPair), NULL);//
-	g_signal_connect(m_ptAgent, "component-state-changed",G_CALLBACK(ComponentStateChanged), NULL);//
+	g_signal_connect(m_ptAgent, "candidate-gathering-done",G_CALLBACK(&Libnice::CandidateGatheringDone), this);
+	g_signal_connect(m_ptAgent, "new-selected-pair",G_CALLBACK(&Libnice::NewSelectPair), this);//
+	g_signal_connect(m_ptAgent, "component-state-changed",G_CALLBACK(&Libnice::ComponentStateChanged), this);//
 
 	// Create a new stream with one component
 	m_dwStreamID = nice_agent_add_stream(m_ptAgent, 1);//
@@ -129,7 +129,7 @@ int Libnice::LibniceProc()
 
 	// Attach to the component to receive the data
 	// Without this call, candidates cannot be gathered
-	nice_agent_attach_recv(m_ptAgent, m_dwStreamID, 1,g_main_loop_get_context (ptLoop), &Libnice::Recv, NULL);//
+	nice_agent_attach_recv(m_ptAgent, m_dwStreamID, 1,g_main_loop_get_context (ptLoop), &Libnice::Recv, this);//
 
 	// Start gathering local candidates
 	if (!nice_agent_gather_candidates(m_ptAgent, m_dwStreamID))
@@ -423,6 +423,7 @@ int Libnice::GetSendReadyFlag()
 void Libnice::CandidateGatheringDone(NiceAgent *i_ptAgent, guint i_dwStreamID,gpointer pData)
 {
 	g_debug("SIGNAL candidate gathering done\n");
+    Libnice *pLibnice=NULL;
 
 	// Candidate gathering is done. Send our local candidates on stdout
 	int iRet = -1;
@@ -437,7 +438,9 @@ void Libnice::CandidateGatheringDone(NiceAgent *i_ptAgent, guint i_dwStreamID,gp
 	cands = nice_agent_get_local_candidates(i_ptAgent, i_dwStreamID, 1);
 	if (cands == NULL)
 		goto end;
-
+    pLibnice =(Libnice *)pData;
+	if (pLibnice == NULL)
+		goto end;
 	for (item = cands; item; item = item->next) 
 	{
 		NiceCandidate *c = (NiceCandidate *)item->data;
@@ -450,13 +453,13 @@ void Libnice::CandidateGatheringDone(NiceAgent *i_ptAgent, guint i_dwStreamID,gp
 		// [raddr <connection-address>] [rport <port>]
 		// *(SP extension-att-name SP extension-att-value)
 		//"candidate:3442447574 1 udp 2122260223 192.168.0.170 54653 typ host generation 0 ufrag gX6M network-id 1"
-		snprintf(m_tLocalCandidate.strCandidateData,sizeof(m_tLocalCandidate.strCandidateData),
+		snprintf(pLibnice->m_tLocalCandidate.strCandidateData,sizeof(pLibnice->m_tLocalCandidate.strCandidateData),
 		"candidate:%s %u %s %u %s %u typ %s",
 		c->foundation,c->component_id,transport_name[c->transport],c->priority,
 		ipaddr,nice_address_get_port(&c->addr),m_astrCandidateTypeName[c->type]);
 	}
-	printf("%s ,%s %s", m_tLocalCandidate.strCandidateData,strLocalUfrag, strLocalPassword);
-	m_tLocalCandidate.iGatheringDoneFlag = 1;
+	printf("%s ,%s %s", pLibnice->m_tLocalCandidate.strCandidateData,strLocalUfrag, strLocalPassword);
+	pLibnice->m_tLocalCandidate.iGatheringDoneFlag = 1;
 	iRet = 0;
 
 	end:
@@ -472,9 +475,14 @@ void Libnice::CandidateGatheringDone(NiceAgent *i_ptAgent, guint i_dwStreamID,gp
 void Libnice::NewSelectPair(NiceAgent *agent, guint _stream_id,guint component_id, gchar *lfoundation,gchar *rfoundation, gpointer data)
 {//此处开始dtls握手
 	g_debug("SIGNAL: selected pair %s %s", lfoundation, rfoundation);
-	if (NULL != m_tLibniceCb.Handshake)
-	{//这里接收浏览器发出的报文(包括dtls协商报文)
-         m_tLibniceCb.Handshake();
+    Libnice *pLibnice=NULL;
+    pLibnice = (Libnice *)data;
+	if (NULL != pLibnice)
+	{
+        if (NULL != pLibnice->m_tLibniceCb.Handshake)
+        {//这里接收浏览器发出的报文(包括dtls协商报文)
+             pLibnice->m_tLibniceCb.Handshake(pLibnice->m_tLibniceCb.pObjCb);
+        }
 	}
 	
 }
@@ -484,18 +492,27 @@ void Libnice::ComponentStateChanged(NiceAgent *agent, guint _stream_id,guint com
 	static const gchar *state_name[] = {"disconnected", "gathering", "connecting","connected", "ready", "failed"};
     
 	g_debug("SIGNAL: state changed %d %d %s[%d]\n",_stream_id, component_id, state_name[state], state);
-
+    Libnice *pLibnice=NULL;
+    pLibnice = (Libnice *)data;
 	if (state == NICE_COMPONENT_STATE_READY) 
 	{//协商成功
-        m_iLibniceSendReadyFlag = 1;
+        if (NULL != pLibnice)
+        {
+            pLibnice->m_iLibniceSendReadyFlag = 1;
+        }
 	}
 }
 
 void Libnice::Recv(NiceAgent *agent, guint _stream_id, guint component_id,guint len, gchar *buf, gpointer data)
 {
-	if (NULL != m_tLibniceCb.HandleRecvData)
-	{//这里接收浏览器发出的报文(包括dtls协商报文)
-         m_tLibniceCb.HandleRecvData(buf,len);
+    Libnice *pLibnice=NULL;
+    pLibnice = (Libnice *)data;
+	if (NULL != pLibnice)
+	{
+        if (NULL != pLibnice->m_tLibniceCb.HandleRecvData)
+        {//这里接收浏览器发出的报文(包括dtls协商报文)
+             pLibnice->m_tLibniceCb.HandleRecvData(buf,len,pLibnice->m_tLibniceCb.pObjCb);
+        }
 	}
 	printf("%.*s", len, buf);
 	//fflush(stdout);
