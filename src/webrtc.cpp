@@ -37,7 +37,7 @@ WebRTC::WebRTC(char * i_strStunAddr,unsigned int i_dwStunPort,int i_iControlling
     memset(&m_tLibniceCb,0,sizeof(T_LibniceCb));//改回调为传入对象的方法,回调必须带对象指针参数(回调函数要访问对象里的内容)
     m_tLibniceCb.Handshake= &WebRTC::HandshakeCb;//回调函数必须static,
     m_tLibniceCb.HandleRecvData= &WebRTC::HandleRecvDataCb;//如果函数内调用对象里的则必须改c函数传对象指针
-    m_tLibniceCb.pCbObj=m_pDtlsOnlyHandshake;//不再libnice类里面做指针转换,这是防止底层模块相互依赖
+    m_tLibniceCb.pObjCb=m_pDtlsOnlyHandshake;//不再libnice类里面做指针转换,这是防止底层模块相互依赖
     m_Libnice.SetCallback(&m_tLibniceCb);
 
     m_iSrtpCreatedFlag = 0;

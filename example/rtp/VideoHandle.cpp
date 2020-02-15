@@ -9,10 +9,10 @@
 * Last Modified 	: 	
 * History			: 	
 ******************************************************************************/
-
 #include "VideoHandle.h"
 #include <string.h>
 #include <iostream>
+#include "Definition.h"
 //#include "RtspServer.h"//移动VIDEO_BUFFER_MAX_SIZE 宏后则可以去掉这行
 
 using std::cout;//需要<iostream>

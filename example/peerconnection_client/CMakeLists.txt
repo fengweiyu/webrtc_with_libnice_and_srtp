@@ -12,14 +12,14 @@ project (WebRTC)
 
 
 SET(src_list
-    Http.cpp
-	TcpSocket.cpp
+    peerconnection_client.cpp
 	)		
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}
 	${PROJECT_SOURCE_DIR}/include
+	${PROJECT_SOURCE_DIR}/../http/include
 	)
-ADD_LIBRARY(http_static STATIC ${src_list})
-SET_TARGET_PROPERTIES(http_static PROPERTIES OUTPUT_NAME http)
+ADD_LIBRARY(peerconnection_client_static STATIC ${src_list})
+SET_TARGET_PROPERTIES(peerconnection_client_static PROPERTIES OUTPUT_NAME peerconnection_client)
 
 
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/build/lib)

@@ -57,16 +57,16 @@ function CopyLib()
 {
 	CurPwd = $PWD
 	cd $1
-	if [ -e "http" ]; then
-		echo "http exit"
+	if [ -e "rtp" ]; then
+		echo "rtp exit"
 	else
-		mkdir http
+		mkdir rtp
 	fi
 	
-	cd http
+	cd rtp
 
 	
-	cp $CurPwd/build/lib/libhttp.a .
+	cp $CurPwd/build/lib/librtp.a .
 	cp $CurPwd/include . -rf
 }
 

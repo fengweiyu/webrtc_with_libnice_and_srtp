@@ -57,16 +57,16 @@ function CopyLib()
 {
 	CurPwd = $PWD
 	cd $1
-	if [ -e "http" ]; then
-		echo "http exit"
+	if [ -e "peerconnection_client" ]; then
+		echo "peerconnection_client exit"
 	else
-		mkdir http
+		mkdir peerconnection_client
 	fi
 	
-	cd http
+	cd peerconnection_client
 
 	
-	cp $CurPwd/build/lib/libhttp.a .
+	cp $CurPwd/build/lib/libpeerconnection_client.a .
 	cp $CurPwd/include . -rf
 }
 

@@ -12,14 +12,15 @@ project (WebRTC)
 
 
 SET(src_list
-    Http.cpp
-	TcpSocket.cpp
+    Rtp.cpp
+	RtpPacket.cpp
+	VideoHandle.cpp
 	)		
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}
 	${PROJECT_SOURCE_DIR}/include
 	)
-ADD_LIBRARY(http_static STATIC ${src_list})
-SET_TARGET_PROPERTIES(http_static PROPERTIES OUTPUT_NAME http)
+ADD_LIBRARY(rtp_static STATIC ${src_list})
+SET_TARGET_PROPERTIES(rtp_static PROPERTIES OUTPUT_NAME rtp)
 
 
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/build/lib)

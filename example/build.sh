@@ -69,21 +69,21 @@ else
 
 	cd http
 	sh build.sh $1
-	if [ $? -ne 0]; then
+	if [ $? -ne 0 ]; then
 		exit -1
 	fi
 	cd ..
 	
 	cd peerconnection_client
 	sh build.sh $1
-	if [ $? -ne 0]; then
+	if [ $? -ne 0 ]; then
 		exit -1
 	fi
 	cd ..
 
 	cd rtp
 	sh build.sh $1
-	if [ $? -ne 0]; then
+	if [ $? -ne 0 ]; then
 		exit -1
 	fi
 	cd ..	
