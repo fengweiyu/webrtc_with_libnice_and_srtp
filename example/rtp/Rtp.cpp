@@ -10,6 +10,15 @@
 * History               : 	
 ******************************************************************************/
 #include "Rtp.h"
+#include <stdlib.h>//还是需要.h
+#include <stdio.h>
+#include <string.h>
+#include <iostream>//不加.h,c++新的头文件
+#include "Definition.h"
+
+
+using std::cout;//需要<iostream>
+using std::endl;
 
 /*****************************************************************************
 -Fuction		: Rtp

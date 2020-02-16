@@ -107,7 +107,7 @@ private:
 class RtpPacketH264 : public RtpPacket
 {
 public:
-    RtpPacketH264(E_RtpPacketType i_eRtpPacketType) : RtpPacket(i_eRtpPacketType);
+    RtpPacketH264(E_RtpPacketType i_eRtpPacketType);
     ~RtpPacketH264();
     virtual int Packet(unsigned char *i_pbNaluBuf,int i_iNaluLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,T_RtpPacketParam *i_ptParam=NULL);//不为NULL是否就不是复写?
 private:
@@ -125,7 +125,7 @@ private:
 class RtpPacketG711 : public RtpPacket
 {
 public:
-    RtpPacketG711(E_RtpPacketType i_eRtpPacketType) : RtpPacket(i_eRtpPacketType);
+    RtpPacketG711(E_RtpPacketType i_eRtpPacketType);
     ~RtpPacketG711();
     virtual int Packet(unsigned char *i_pbFrameBuf,int i_iFrameLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,T_RtpPacketParam *i_ptParam=NULL);
 private:
@@ -142,7 +142,7 @@ private:
 class NALU : public RtpPacketH264
 {
 public:
-    NALU(E_RtpPacketType i_eRtpPacketType) : RtpPacketH264(i_eRtpPacketType);
+    NALU(E_RtpPacketType i_eRtpPacketType);
     ~NALU();
     int Packet(unsigned char *i_pbNaluBuf,int i_iNaluLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,T_RtpPacketParam *i_ptParam=NULL);
 
@@ -158,7 +158,7 @@ public:
 class FU_A : public RtpPacketH264
 {
 public:
-    FU_A(E_RtpPacketType i_eRtpPacketType) : RtpPacketH264(i_eRtpPacketType);
+    FU_A(E_RtpPacketType i_eRtpPacketType);
     ~FU_A();
     int Packet(unsigned char *i_pbNaluBuf,int i_iNaluLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,T_RtpPacketParam *i_ptParam=NULL);
     static const unsigned char FU_A_TYPE;
