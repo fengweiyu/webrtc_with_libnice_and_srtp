@@ -58,17 +58,24 @@ function CopyLib()
 #	CurPwd = $PWD
 	CurPwd=$PWD
 	cd $1
-	if [ -e "lib" ]; then
-		echo "lib exit"
+	if [ -e "third_lib" ]; then
+		echo "third_lib exit"
 	else
-		mkdir lib
+		mkdir third_lib
 	fi
 	
-	cd lib
-	cp $CurPwd/build/lib/libwebrtc.a .
+	cd third_lib
+	if [ -e "cJSON" ]; then
+		echo "cJSON exit"
+	else
+		mkdir cJSON
+	fi
+	
+	cd cJSON
+	cp $CurPwd/build/lib/libcjson.a .
 	
 
-	cp $CurPwd/include . -rf
+#	cp $CurPwd/cJSON.h .
 
 
 }
@@ -77,16 +84,9 @@ if [ $# == 0 ]; then
 	PrintUsage
 	exit -1
 else
-	cd third_src
-	sh build.sh $1
-	if [ $? -ne 0 ]; then
-		exit -1
-	fi
-	cd ..
-	
 	GenerateCmakeFile $1
 	BuildLib
-	CopyLib ../build
+	CopyLib ../../../build
 fi
 
 

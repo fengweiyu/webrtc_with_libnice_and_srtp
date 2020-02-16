@@ -46,8 +46,8 @@ function BuildcJSON()
 	fi
 	
 	cd cJSON
-	cp $CurPwd/libcjson.so .	
-#	
+	cp $CurPwd/libcjson.so .
+#	cp $CurPwd/cJSON.h .
 	
 }
 
@@ -57,7 +57,16 @@ if [ $# == 0 ]; then
 	PrintUsage
 	exit -1
 else
-	BuildcJSON ../../build $1
+#	BuildcJSON ../../build
+	cp cJSON_build.sh ./cJSON-1.7.12/build.sh
+	cp cJSON_CMakeLists.txt ./cJSON-1.7.12/CMakeLists.txt
+	cd cJSON-1.7.12
+	sh build.sh $1
+	if [ $? -ne 0 ]; then
+		exit -1
+	fi
+	cd ..	
+	
 fi
 
 

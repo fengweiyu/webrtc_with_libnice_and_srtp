@@ -19,8 +19,8 @@ SET(src_list
 	)		
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}
 	${PROJECT_SOURCE_DIR}/include
-	${PROJECT_SOURCE_DIR}/../lib/arm-hisiv200-linux/libnice/include/nice
-	${PROJECT_SOURCE_DIR}/../lib/arm-hisiv200-linux/openssl/include
+	${PROJECT_SOURCE_DIR}/../lib/arm-hisiv200-linux/libnice_0.1.16/include/nice
+	${PROJECT_SOURCE_DIR}/../lib/arm-hisiv200-linux/openssl-1.1.1d/include
 	${PROJECT_SOURCE_DIR}/../lib/arm-hisiv200-linux/libsrtp/include/srtp2
 	${PROJECT_SOURCE_DIR}/../lib/arm-hisiv200-linux/glib/include/glib-2.0
 	${PROJECT_SOURCE_DIR}/third_src/cJSON-1.7.12
