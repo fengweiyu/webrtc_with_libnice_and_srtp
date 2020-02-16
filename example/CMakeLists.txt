@@ -32,14 +32,14 @@ TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/rtp/librtp.a)
 TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/http/libhttp.a)
 
 #第三方库
-TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/third_lib/libsrtp/lib/libsrtp2.a)
 TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/third_lib/cJSON/libcjson.so)
+TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/third_lib/libsrtp/lib/libsrtp2.a)
 #so
 #//初始脚本ln -s到libglib-2.0.so快捷方式操作，或者直接拷贝成libglib-2.0.so
-TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/third_lib/libnice_0.1.16/lib/libnice.so)
+TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/third_lib/libnice/lib/libnice.so)
 
-TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/third_lib/openssl-1.1.1d/lib/libssl.a)
-TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/third_lib/openssl-1.1.1d/lib/libcrypto.a)
+TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/third_lib/openssl/lib/libssl.a)
+TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/third_lib/openssl/lib/libcrypto.a)
 TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/third_lib/zlib/lib/libz.a)
 TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/third_lib/libffi/lib/libffi.a)
 
