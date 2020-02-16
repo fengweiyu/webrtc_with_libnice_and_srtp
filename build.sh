@@ -19,26 +19,33 @@ else
 #build目录是给main执行程序编译用的，同时也是直接提供库，类似make install
 #所以内部编译的原则是main的编译脚本(库的使用者)才会依赖build里面的东西，其他模块的编译脚本是不依赖的	
 	if [ -e "$OutputPath" ]; then
-		if [ -e "$OutputPath/include" ]; then
-			echo "/build/include exit"
+		if [ -e "$OutputPath/$1" ]; then
+			echo "/build/$1 exit"
 		else
-			mkdir $OutputPath/include
+			mkdir $OutputPath/$1
+			if [ -e "$OutputPath/$1/include" ]; then
+				echo "/build/$1/include exit"
+			else
+				mkdir $OutputPath/$1/include
+			fi
+			if [ -e "$OutputPath/$1/lib" ]; then
+				echo "/build/$1/lib exit"
+			else
+				mkdir $OutputPath/$1/lib
+			fi
+			if [ -e "$OutputPath/$1/third_lib" ]; then
+				echo "/build/$1/third_lib exit"
+			else
+				mkdir $OutputPath/$1/third_lib
+			fi			
 		fi
-		if [ -e "$OutputPath/lib" ]; then
-			echo "/build/lib exit"
-		else
-			mkdir $OutputPath/lib
-		fi
-		if [ -e "$OutputPath/third_lib" ]; then
-			echo "/build/third_lib exit"
-		else
-			mkdir $OutputPath/third_lib
-		fi				
+		
 	else
 		mkdir $OutputPath
-		mkdir $OutputPath/include
-		mkdir $OutputPath/lib
-		mkdir $OutputPath/third_lib
+		mkdir $OutputPath/$1
+		mkdir $OutputPath/$1/include
+		mkdir $OutputPath/$1/lib
+		mkdir $OutputPath/$1/third_lib
 	fi
 	
 	cd src

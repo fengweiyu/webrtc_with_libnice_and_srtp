@@ -20,6 +20,7 @@ function GenerateCmakeFile()
 	else
 		echo "SET(CMAKE_C_COMPILER \"$1-gcc\")" >> $CmakeFile
 		echo "SET(CMAKE_CXX_COMPILER \"$1-g++\")" >> $CmakeFile
+		echo "SET(CMAKE_ToolChain \"$1\")" >> $CmakeFile
 	fi
 }
 function Build()
@@ -101,9 +102,9 @@ else
 	cd ..	
 		
 	GenerateCmakeFile $1
-	CopyLib ../build $1
+	CopyLib ../build/$1 $1
 	Build
-	CopyEXE ../build
+	CopyEXE ../build/$1
 fi
 
 

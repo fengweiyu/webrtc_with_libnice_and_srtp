@@ -86,7 +86,7 @@ if [ $# == 0 ]; then
 else
 	GenerateCmakeFile $1
 	BuildLib
-	CopyLib ../../../build
+	CopyLib ../../../build/$1
 fi
 
 
