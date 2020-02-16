@@ -36,7 +36,7 @@ INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}
 
 ADD_EXECUTABLE(webrtc ${SRC_LIST})
 
-TARGET_LINK_LIBRARIES(webrtc pthread -lm )
+TARGET_LINK_LIBRARIES(webrtc -pthread -lm -lrt -ldl -lresolv)
 TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/lib/libwebrtc.a)
 TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/peerconnection_client/libpeerconnection_client.a)
 TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/rtp/librtp.a)
@@ -51,15 +51,15 @@ TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/third_lib/libnice/li
 
 TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/third_lib/openssl/lib/libssl.a)
 TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/third_lib/openssl/lib/libcrypto.a)
-TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/third_lib/zlib/lib/libz.a)
-TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/third_lib/libffi/lib/libffi.a)
 
-TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/third_lib/glib/lib/libglib-2.0.a)
 TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/third_lib/glib/lib/libgio-2.0.a)
-TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/third_lib/glib/lib/libgmodule-2.0.a)
 TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/third_lib/glib/lib/libgobject-2.0.a)
 TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/third_lib/glib/lib/libgthread-2.0.a)
-
+TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/third_lib/glib/lib/libgmodule-2.0.a)
+#glib是依赖的底层，放在后面
+TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/third_lib/glib/lib/libglib-2.0.a)
+TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/third_lib/libffi/lib/libffi.a)
+TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/third_lib/zlib/lib/libz.a)
 #TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/third_lib/glib/libglib-2.0.so) #优化后才这个路径
 
 
