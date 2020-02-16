@@ -12,10 +12,10 @@
 #ifndef TCP_SOCKET_H
 #define TCP_SOCKET_H
 
-
 #include <map>
 #include <stdio.h>
 #include <string>
+#include <sys/time.h>
 
 using std::map;
 using std::string;
