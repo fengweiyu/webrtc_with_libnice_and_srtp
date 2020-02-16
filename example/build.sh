@@ -58,11 +58,12 @@ function CopyLib()
 #暂时没时间优化直接使用所有编译结果也可以，libnice依赖架构，所以拷贝所有的，不调整架构
 	cp $CurPwd/../lib/$2/zlib ./third_lib/zlib -rf
 	cp $CurPwd/../lib/$2/libffi ./third_lib/libffi -rf
-	cp $CurPwd/../lib/$2/glib ./third_lib/glib -rf
+	cp $CurPwd/../lib/$2/glib_2.48.0 ./third_lib/glib -rf
 
 	cp $CurPwd/../lib/$2/openssl-1.1.1d ./third_lib/openssl -rf
 	cp $CurPwd/../lib/$2/libnice_0.1.16 ./third_lib/libnice -rf
 	cp $CurPwd/../lib/$2/libsrtp ./third_lib/libsrtp -rf	
+#cp两次 libnice下会出现libnice_0.1.16，后续处理	
 #拷贝目的保持和源码编译结果一样,后续源码编译就可以不用从lib拷贝(直接删除如下语句)
 	cd $CurPwd
 }
