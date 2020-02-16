@@ -18,9 +18,20 @@ SET(SRC_LIST
 		
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}
     ${PROJECT_SOURCE_DIR}/../build/lib/include
+#webrtc.h又依赖其内部头文件	
+	${PROJECT_SOURCE_DIR}/../build/lib
 	${PROJECT_SOURCE_DIR}/../build/peerconnection_client/include
+#peerconnection_client中又依赖http	
+	${PROJECT_SOURCE_DIR}/../build/http/include
 	${PROJECT_SOURCE_DIR}/../build/rtp/include
+#rtp.h又依赖其内部头文件		
+	${PROJECT_SOURCE_DIR}/../build/rtp
 #	${PROJECT_SOURCE_DIR}/../build/third_lib/glib/include
+#.h中又依赖
+	${PROJECT_SOURCE_DIR}/../build/third_lib/libnice/include/nice
+	${PROJECT_SOURCE_DIR}/../build/third_lib/glib/include/glib-2.0
+	${PROJECT_SOURCE_DIR}/../build/third_lib/libsrtp/include/srtp2
+	${PROJECT_SOURCE_DIR}/../build/third_lib/openssl/include
 	)
 
 ADD_EXECUTABLE(webrtc ${SRC_LIST})
@@ -32,7 +43,7 @@ TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/rtp/librtp.a)
 TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/http/libhttp.a)
 
 #第三方库
-TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/third_lib/cJSON/libcjson.so)
+TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/third_lib/cJSON/libcjson.a)
 TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/third_lib/libsrtp/lib/libsrtp2.a)
 #so
 #//初始脚本ln -s到libglib-2.0.so快捷方式操作，或者直接拷贝成libglib-2.0.so

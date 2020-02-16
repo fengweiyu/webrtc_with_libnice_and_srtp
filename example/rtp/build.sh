@@ -69,6 +69,8 @@ function CopyLib()
 	
 	cp $CurPwd/build/lib/librtp.a .
 	cp $CurPwd/include . -rf
+#由于对外头文件又依赖内部头文件，所以要拷贝，暂时这么处理后续优化	
+	cp $CurPwd/*.h .
 }
 
 if [ $# == 0 ]; then

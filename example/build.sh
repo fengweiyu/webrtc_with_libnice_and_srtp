@@ -50,7 +50,8 @@ function Build()
 
 function CopyLib()
 {
-	CurPwd = $PWD
+#	CurPwd = $PWD
+	CurPwd=$PWD
 	cd $1
 
 #拷贝固定早就编译好的第三方so库
@@ -63,10 +64,12 @@ function CopyLib()
 	cp $CurPwd/../lib/$2/libnice_0.1.16 ./third_lib/libnice -rf
 	cp $CurPwd/../lib/$2/libsrtp ./third_lib/libsrtp -rf	
 #拷贝目的保持和源码编译结果一样,后续源码编译就可以不用从lib拷贝(直接删除如下语句)
+	cd $CurPwd
 }
 function CopyEXE()
 {
-	CurPwd = $PWD
+#	CurPwd = $PWD
+	CurPwd=$PWD
 	cd $1
 	cp $CurPwd/build/webrtc .
 }
@@ -97,8 +100,8 @@ else
 	cd ..	
 		
 	GenerateCmakeFile $1
-	Build
 	CopyLib ../build $1
+	Build
 	CopyEXE ../build
 fi
 
