@@ -30,9 +30,7 @@ public:
     int Init(char *i_strPath);
 
 	
-    int GetRtpData(unsigned char *o_pbRtpBuf,int *o_iRtpBufSize,int i_iRtpBufMaxSize);
-
-
+    int GetRtpData(unsigned char **o_ppbPacketBuf,int *o_aiEveryPacketLen,int i_iEveryRtpBufMaxSize,int i_iPacketBufMaxNum);
 private:
     VideoHandle             *m_pVideoHandle;
 	RtpPacket               *m_pRtpPacket;

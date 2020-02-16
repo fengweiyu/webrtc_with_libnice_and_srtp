@@ -55,7 +55,8 @@ function BuildLib()
 
 function CopyLib()
 {
-	CurPwd = $PWD
+#	CurPwd = $PWD
+	CurPwd=$PWD
 	cd $1
 	if [ -e "peerconnection_client" ]; then
 		echo "peerconnection_client exit"
