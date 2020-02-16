@@ -1,5 +1,5 @@
 ﻿lib目录是已经编译(编译安装)好的
-
+#第三方库安装目录要带版本号(lib目录下要，third_lib由于有源码所以不要)，后续优化
 
 
 
@@ -32,8 +32,6 @@
 	
 
 ******************************************************************************	
-/work/workspace/WebRTC_Without_RTP/src/webrtc/base/../third_party/openssl/include/openssl/e_os2.h:13:34: fatal error: openssl/opensslconf.h: 没有那个文件或目录
- # include <openssl/opensslconf.h>
-改源码需要拉分支，当前主干不需要依赖的openssl等库先安装。
+
 
 	

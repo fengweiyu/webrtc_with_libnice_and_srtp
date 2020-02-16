@@ -52,6 +52,9 @@ tar -xzf zlib_v1.2.11.tar.gz
 
 wget https://www.openssl.org/source/old/1.0.2/openssl-1.0.2j.tar.gz
 tar -xzf openssl-1.0.2j.tar.gz
+wget https://www.openssl.org/source/openssl-1.1.1d.tar.gz
+tar -xzf openssl-1.1.1d.tar.gz 
+
 
 2.2.glib glib-glib-2-54
 ywf@ywf-pc:/work/workspace/webrtc_nice/glib-glib-2-54$ ./autogen.sh
@@ -131,6 +134,8 @@ export LD_LIBRARY_PATH=/work/workspace/install/libffi/lib
 *******
 sudo cp /work/workspace/install/zlib/lib/libz.so* /opt/hisi-linux/x86-arm/arm-hisiv200-linux/libc/lib/
 sudo cp /work/workspace/install/libffi/lib/libffi.so* /opt/hisi-linux/x86-arm/arm-hisiv200-linux/libc/lib/
+sudo cp /work/workspace/install/zlib/lib/libz.* /opt/hisi-linux/x86-arm/arm-hisiv200-linux/libc/lib/
+sudo cp /work/workspace/install/libffi/lib/libffi.* /opt/hisi-linux/x86-arm/arm-hisiv200-linux/libc/lib/
 重新拷贝刚才的linux.cache文件
 ./configure --prefix=/work/workspace/install/glib --host=arm-hisiv200-linux CC=/opt/hisi-linux/x86-arm/arm-hisiv200-linux/target/bin/arm-hisiv200-linux-gcc --cache-file=linux.cache --enable-libmount=no --with-pcre=internal LIBFFI_CFLAGS=-I/work/workspace/install/libffi/lib/libffi-3.2.1/include LIBFFI_LIBS="-L/work/workspace/install/libffi/lib/-lffi" ZLIB_CFLAGS=-I/work/workspace/install/zlib/include ZLIB_LIBS="-L/work/workspace/install/zlib/lib/-lz"
 //./configure --prefix=/work/workspace/install/glib --host=arm-hisiv200-linux CC=/opt/hisi-linux/x86-arm/arm-hisiv200-linux/target/bin/arm-hisiv200-linux-gcc LD=/opt/hisi-linux/x86-arm/arm-hisiv200-linux/target/bin/arm-hisiv200-linux-ld --cache-file=linux.cache --enable-libmount=no --with-pcre=internal LIBFFI_CFLAGS=-I/work/workspace/install/libffi/lib/libffi-3.2.1/include LIBFFI_LIBS="-L/work/workspace/install/libffi/lib/-lffi" ZLIB_CFLAGS=-I/work/workspace/install/zlib/include ZLIB_LIBS="-L/work/workspace/install/zlib/lib/-lz"
@@ -142,10 +147,23 @@ ZLIB_CFLAGS=-I/work/workspace/install/zlib/include ZLIB_LIBS="-L/work/workspace/
 make 
 make install
 
-2.3.openssl
-./Configure shared --prefix=/work/workspace/install/openssl --cross-compile-prefix=arm-hisiv200-linux- linux-elf no-asm
+
+./configure --prefix=/work/workspace/install/glib_2.48.0 --host=arm-hisiv200-linux \
+CC=/opt/hisi-linux/x86-arm/arm-hisiv200-linux/target/bin/arm-hisiv200-linux-gcc \
+--cache-file=linux.cache --enable-libmount=no --with-pcre=internal --disable-selinux  --disable-xattr --disable-libelf --enable-static --disable-shared CFLAGS="-static" \
+LIBFFI_CFLAGS=-I/work/workspace/install/libffi/lib/libffi-3.2.1/include LIBFFI_LIBS="-L/work/workspace/install/libffi/lib/ -lffi" LIBFFI_LDFLAGS=-L/work/workspace/install/libffi/lib \
+ZLIB_CFLAGS=-I/work/workspace/install/zlib/include ZLIB_LIBS="-L/work/workspace/install/zlib/lib/ -lz" ZLIB_LDFLAGS=-L/work/workspace/install/zlib/lib
 make 
 make install
+
+
+2.3.openssl
+#./config --prefix=
+./Configure shared --prefix=/work/workspace/install/openssl-1.1.1d --cross-compile-prefix=arm-hisiv200-linux- linux-elf no-asm
+make 
+make install
+
+
 
  
 
@@ -164,14 +182,20 @@ make
 /bin/sh: 行 1: --fhead: 未找到命令
 
 sudo apt-get install libglib2.0-dev
-./configure --prefix=/work/workspace/install/libnice --host=arm-hisiv200-linux CC=arm-hisiv200-linux-gcc \
+./configure --prefix=/work/workspace/install/libnice_0.1.16 --host=arm-hisiv200-linux CC=arm-hisiv200-linux-gcc \
 AR=arm-hisiv200-linux-ar RANLIB=arm-hisiv200-linux-ranlib \
 GLIB_CFLAGS=-I/work/workspace/install/glib/include/glib-2.0 GLIB_LIBS="-L/work/workspace/install/glib/lib/ -lglib-2.0 -lgio-2.0 -lgmodule-2.0 -lgobject-2.0 -lgthread-2.0" \
---disable-gupnp --with-openssl=/work/workspace/install/openssl --with-crypto-library=openssl
+--disable-gupnp --with-openssl=/work/workspace/install/openssl-1.1.1d --with-crypto-library=openssl
 make
 make install
 
-
+cp /work/workspace/install/glib_2.48.0/lib/glib-2.0/include/*.h /work/workspace/install/glib_2.48.0/include/glib-2.0
+./configure --prefix=/work/workspace/install/libnice_0.1.16 --host=arm-hisiv200-linux CC=arm-hisiv200-linux-gcc \
+AR=arm-hisiv200-linux-ar RANLIB=arm-hisiv200-linux-ranlib \
+GLIB_CFLAGS=-I/work/workspace/install/glib_2.48.0/include/glib-2.0 GLIB_LIBS="-L/work/workspace/install/glib_2.48.0/lib/ -lglib-2.0 -lgio-2.0 -lgmodule-2.0 -lgobject-2.0 -lgthread-2.0" \
+--disable-gupnp --enable-static --with-openssl=/work/workspace/install/openssl-1.1.1d --with-crypto-library=openssl
+make
+make install
 
 
 
