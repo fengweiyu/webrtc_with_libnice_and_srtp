@@ -58,7 +58,6 @@ WebRTC::WebRTC(char * i_strStunAddr,unsigned int i_dwStunPort,int i_iControlling
 ******************************************************************************/
 WebRTC::~WebRTC()
 {
-    m_Srtp.Shutdown();
     m_iSrtpCreatedFlag = 0;
     
     delete m_pDtlsOnlyHandshake;

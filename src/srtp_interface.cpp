@@ -33,6 +33,22 @@ Srtp::Srtp()
 
 
 /*****************************************************************************
+-Fuction        : SrtpInit
+-Description    : v
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+Srtp::~Srtp()
+{	
+	Shutdown();
+}
+
+
+/*****************************************************************************
 -Fuction        : SrtpCreate
 -Description    : SrtpCreate
 -Input          : 
