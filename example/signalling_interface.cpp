@@ -9,8 +9,10 @@
 * Last Modified         : 	
 * History               : 	
 ******************************************************************************/
-
 #include "signalling_interface.h"
+#include <stdlib.h>//还是需要.h
+#include <stdio.h>
+#include <string.h>
 
 /*****************************************************************************
 -Fuction		: SignalingInterface

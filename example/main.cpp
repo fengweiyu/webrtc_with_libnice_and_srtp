@@ -89,12 +89,12 @@ int main(int argc, char* argv[])
                 pWebRTC->HandleOfferMsg(acOfferMsg,acAnswerMsg,sizeof(acAnswerMsg));
                 pSignalingInf->SendAnswerMsg(iPeerId,acAnswerMsg,strlen(acAnswerMsg));
             }
-            iPacketNum = pRtpInterface->GetRtpData(&ppbPacketBuf,aiEveryPacketLen,WEBRTC_RTP_MAX_PACKET_SIZE,WEBRTC_RTP_MAX_PACKET_NUM);
+            iPacketNum = pRtpInterface->GetRtpData(ppbPacketBuf,aiEveryPacketLen,WEBRTC_RTP_MAX_PACKET_SIZE,WEBRTC_RTP_MAX_PACKET_NUM);
             if(iPacketNum > 0)
             {
                 for(i=0;i<iPacketNum;i++)
                 {
-                    pWebRTC->SendProtectedRtp(ppbPacketBuf[i], aiEveryPacketLen[i]);
+                    pWebRTC->SendProtectedRtp((char *)ppbPacketBuf[i], aiEveryPacketLen[i]);
                 }
                 iPacketNum = -1;
             }
