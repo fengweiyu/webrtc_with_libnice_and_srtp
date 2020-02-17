@@ -36,6 +36,7 @@ function Build()
 	cd build
 	cmake ..
 	if [ -e "Makefile" ]; then	
+		make clean
 		make -j4 > /dev/null
 		if [ $? == 0 ]; then
 			echo "make success! "
@@ -58,12 +59,18 @@ function CopyLib()
 
 #拷贝固定早就编译好的第三方so库
 #暂时没时间优化直接使用所有编译结果也可以，libnice依赖架构，所以拷贝所有的，不调整架构
+	rm ./third_lib/zlib -rf
 	cp $CurPwd/../lib/$2/zlib_v1.2.11 ./third_lib/zlib -rf
+	rm ./third_lib/libffi -rf
 	cp $CurPwd/../lib/$2/libffi_v3.2.1 ./third_lib/libffi -rf
+	rm ./third_lib/glib -rf
 	cp $CurPwd/../lib/$2/glib_2.48.0 ./third_lib/glib -rf
-
+	
+	rm ./third_lib/openssl -rf
 	cp $CurPwd/../lib/$2/openssl-1.1.1d ./third_lib/openssl -rf
+	rm ./third_lib/libnice -rf
 	cp $CurPwd/../lib/$2/libnice_0.1.16 ./third_lib/libnice -rf
+	rm ./third_lib/libsrtp -rf
 	cp $CurPwd/../lib/$2/libsrtp_v2.3.0 ./third_lib/libsrtp -rf	
 #cp两次 libnice下会出现libnice_0.1.16，后续处理	
 #拷贝目的保持和源码编译结果一样,后续源码编译就可以不用从lib拷贝(直接删除如下语句)

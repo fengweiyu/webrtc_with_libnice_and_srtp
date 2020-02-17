@@ -39,6 +39,7 @@ function BuildLib()
 	cd build
 	cmake ..
 	if [ -e "Makefile" ]; then	
+		make clean
 		make -j4 > /dev/null
 		if [ $? == 0 ]; then
 			echo "make success! "
