@@ -11,8 +11,8 @@ function PrintUsage()
 }
 function GenerateCmakeFile()
 {
-	mkdir -p build
-	CmakeFile="./build/ToolChain.cmake"
+#	mkdir -p build
+	CmakeFile="$2/ToolChain.cmake"
 	echo "SET(CMAKE_SYSTEM_NAME \"Linux\")" > $CmakeFile
 	if [ $1 == x86 ]; then
 		echo "SET(CMAKE_C_COMPILER \"gcc\")" >> $CmakeFile	
@@ -26,14 +26,19 @@ function GenerateCmakeFile()
 }
 function Build()
 {
-	echo -e "Start building ..."
+	echo -e "Start building example..."
 	OutputPath="./build"
 	if [ -e "$OutputPath" ]; then
-		echo "/build exit"
-	else
-		mkdir $OutputPath
+		rm $OutputPath -rf
+#防止切换平台编译时由于平台不对应报错，所以删掉重新建立		
+#		echo "/build exit"	
+#	else
+#		mkdir $OutputPath
 	fi	
-	cd build
+	mkdir $OutputPath
+	
+	GenerateCmakeFile $1 $OutputPath	
+	cd $OutputPath
 	cmake ..
 	if [ -e "Makefile" ]; then	
 		make clean
@@ -119,9 +124,9 @@ else
 	fi
 	cd ..	
 		
-	GenerateCmakeFile $1
+#	GenerateCmakeFile $1
 	CopyLib ../build/$1 $1
-	Build
+	Build $1
 	CopyEXE ../build/$1 $1
 fi
 
