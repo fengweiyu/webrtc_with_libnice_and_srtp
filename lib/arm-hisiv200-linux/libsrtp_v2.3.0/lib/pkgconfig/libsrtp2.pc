@@ -1,5 +1,5 @@
-prefix=/work/workspace/install/libsrtp
-exec_prefix=/work/workspace/install/libsrtp
+prefix=/work/workspace/install/libsrtp_v2.3.0
+exec_prefix=/work/workspace/install/libsrtp_v2.3.0
 libdir=${exec_prefix}/lib
 includedir=${prefix}/include
 
