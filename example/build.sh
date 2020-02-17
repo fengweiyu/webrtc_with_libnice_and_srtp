@@ -74,6 +74,10 @@ function CopyEXE()
 	CurPwd=$PWD
 	cd $1
 	cp $CurPwd/build/webrtc .
+	cd $CurPwd
+	$2-strip -s ./build/webrtc
+	cd $1
+	cp $CurPwd/build/webrtc ./webrtc_strip
 }
 if [ $# == 0 ]; then
 	PrintUsage
@@ -104,7 +108,7 @@ else
 	GenerateCmakeFile $1
 	CopyLib ../build/$1 $1
 	Build
-	CopyEXE ../build/$1
+	CopyEXE ../build/$1 $1
 fi
 
 
