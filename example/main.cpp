@@ -81,6 +81,7 @@ int main(int argc, char* argv[])
         
         while(1)
         {
+            iPacketNum = pRtpInterface->GetRtpData(ppbPacketBuf,aiEveryPacketLen,WEBRTC_RTP_MAX_PACKET_SIZE,WEBRTC_RTP_MAX_PACKET_NUM);
             memset(acOfferMsg,0,sizeof(acOfferMsg));
             iPeerId = pSignalingInf->GetOfferMsg(strSeverIp,dwPort,argv[3],acOfferMsg,&iRecvLen,sizeof(acOfferMsg));
             if(iPeerId>=0)
@@ -89,7 +90,6 @@ int main(int argc, char* argv[])
                 pWebRTC->HandleOfferMsg(acOfferMsg,acAnswerMsg,sizeof(acAnswerMsg));
                 pSignalingInf->SendAnswerMsg(iPeerId,acAnswerMsg,strlen(acAnswerMsg));
             }
-            iPacketNum = pRtpInterface->GetRtpData(ppbPacketBuf,aiEveryPacketLen,WEBRTC_RTP_MAX_PACKET_SIZE,WEBRTC_RTP_MAX_PACKET_NUM);
             if(iPacketNum > 0)
             {
                 for(i=0;i<iPacketNum;i++)
