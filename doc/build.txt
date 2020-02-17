@@ -168,7 +168,7 @@ make install
 
 run `make distclean' and/or `rm linux.cache' 
 cp linux.cache
-#相对前面少了--disable-shared CFLAGS="-static"，结果编译出来.a库大小是前面的两倍多，但是最后编译的应用程序大小是一样的
+#相对前面少了--disable-shared CFLAGS="-static"，结果编译出来.a库大小是前面的两倍多，但是最后编译的应用程序(现在没strip是11MB,strip后是5MB。前面没strip是7.6MB,strip后是6MB)
 ./configure --prefix=/work/workspace/install/glib_2.48.0 --host=arm-hisiv200-linux \
 CC=/opt/hisi-linux/x86-arm/arm-hisiv200-linux/target/bin/arm-hisiv200-linux-gcc \
 --cache-file=linux.cache --enable-libmount=no --with-pcre=internal --disable-selinux  --disable-xattr --disable-libelf --enable-static \
