@@ -10,6 +10,12 @@ project (WebRTC)
 #SET(CMAKE_C_FLAGS "-g")
 SET(CMAKE_CXX_FLAGS "-g")
 
+if(${CMAKE_ToolChain} STREQUAL "")
+
+else()
+
+endif()
+
 SET(SRC_LIST
     rtp_interface.cpp
 	signalling_interface.cpp
@@ -36,7 +42,6 @@ INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}
 
 ADD_EXECUTABLE(webrtc ${SRC_LIST})
 
-TARGET_LINK_LIBRARIES(webrtc -pthread -lm -lrt -ldl -lresolv)
 TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/lib/libwebrtc.a)
 TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/peerconnection_client/libpeerconnection_client.a)
 TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/rtp/librtp.a)
@@ -62,7 +67,7 @@ TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/t
 TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/third_lib/zlib/lib/libz.a)
 #TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/third_lib/glib/libglib-2.0.so) #优化后才这个路径
 
-
+TARGET_LINK_LIBRARIES(webrtc -pthread -lm -lrt -ldl -lresolv)
 
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/build)
 #TARGET_LINK_LIBRARIES(crnode log4cpp thrift)
