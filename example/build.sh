@@ -16,7 +16,8 @@ function GenerateCmakeFile()
 	echo "SET(CMAKE_SYSTEM_NAME \"Linux\")" > $CmakeFile
 	if [ $1 == x86 ]; then
 		echo "SET(CMAKE_C_COMPILER \"gcc\")" >> $CmakeFile	
-		echo "SET(CMAKE_CXX_COMPILER \"g++\")" >> $CmakeFile	
+		echo "SET(CMAKE_CXX_COMPILER \"g++\")" >> $CmakeFile
+		echo "SET(CMAKE_ToolChain \"$1\")" >> $CmakeFile		
 	else
 		echo "SET(CMAKE_C_COMPILER \"$1-gcc\")" >> $CmakeFile
 		echo "SET(CMAKE_CXX_COMPILER \"$1-g++\")" >> $CmakeFile
@@ -57,8 +58,8 @@ function CopyLib()
 
 #拷贝固定早就编译好的第三方so库
 #暂时没时间优化直接使用所有编译结果也可以，libnice依赖架构，所以拷贝所有的，不调整架构
-	cp $CurPwd/../lib/$2/zlib ./third_lib/zlib -rf
-	cp $CurPwd/../lib/$2/libffi ./third_lib/libffi -rf
+	cp $CurPwd/../lib/$2/zlib_v1.2.11 ./third_lib/zlib -rf
+	cp $CurPwd/../lib/$2/libffi_v3.2.1 ./third_lib/libffi -rf
 	cp $CurPwd/../lib/$2/glib_2.48.0 ./third_lib/glib -rf
 
 	cp $CurPwd/../lib/$2/openssl-1.1.1d ./third_lib/openssl -rf

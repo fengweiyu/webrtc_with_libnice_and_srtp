@@ -83,6 +83,11 @@ ac_cv_func_posix_getgrgid_r=yes
 make
 make install
 
+./configure --prefix=/work/workspace/install/zlib_v1.2.11
+修改makefile gcc , ar,ranlib
+make
+make install
+
 2.2.2 libffi
 ./autogen.sh
 ./configure --prefix=/work/workspace/install/libffi --host=arm-hisiv200-linux CC=arm-hisiv200-linux-gcc
@@ -104,6 +109,10 @@ sudo apt-get install libsysfs-dev
 source /etc/profile
 ./autogen.sh
 ./configure --prefix=/work/workspace/install/libffi --host=arm-hisiv200-linux CC=arm-hisiv200-linux-gcc
+make
+make install
+
+./configure --prefix=/work/workspace/install/libffi_v3.2.1 --host=arm-hisiv200-linux CC=arm-hisiv200-linux-gcc
 make
 make install
 
@@ -157,6 +166,16 @@ ZLIB_CFLAGS=-I/work/workspace/install/zlib/include ZLIB_LIBS="-L/work/workspace/
 make 
 make install
 
+run `make distclean' and/or `rm linux.cache' 
+cp linux.cache
+#相对前面少了--disable-shared CFLAGS="-static"，结果编译出来.a库大小是前面的两倍多，但是最后编译的应用程序大小是一样的
+./configure --prefix=/work/workspace/install/glib_2.48.0 --host=arm-hisiv200-linux \
+CC=/opt/hisi-linux/x86-arm/arm-hisiv200-linux/target/bin/arm-hisiv200-linux-gcc \
+--cache-file=linux.cache --enable-libmount=no --with-pcre=internal --disable-selinux  --disable-xattr --disable-libelf --enable-static \
+LIBFFI_CFLAGS=-I/work/workspace/install/libffi_v3.2.1/lib/libffi-3.2.1/include LIBFFI_LIBS="-L/work/workspace/install/libffi_v3.2.1/lib/ -lffi" LIBFFI_LDFLAGS=-L/work/workspace/install/libffi_v3.2.1/lib \
+ZLIB_CFLAGS=-I/work/workspace/install/zlib_v1.2.11/include ZLIB_LIBS="-L/work/workspace/install/zlib_v1.2.11/lib/ -lz" ZLIB_LDFLAGS=-L/work/workspace/install/zlib_v1.2.11/lib
+make 
+make install
 
 2.3.openssl
 #./config --prefix=

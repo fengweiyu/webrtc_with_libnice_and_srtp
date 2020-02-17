@@ -16,11 +16,13 @@ function GenerateCmakeFile()
 	echo "SET(CMAKE_SYSTEM_NAME \"Linux\")" > $CmakeFile
 	if [ $1 == x86 ]; then
 		echo "SET(CMAKE_C_COMPILER \"gcc\")" >> $CmakeFile	
-		echo "SET(CMAKE_CXX_COMPILER \"g++\")" >> $CmakeFile	
+		echo "SET(CMAKE_CXX_COMPILER \"g++\")" >> $CmakeFile		
 	else
 		echo "SET(CMAKE_C_COMPILER \"$1-gcc\")" >> $CmakeFile
 		echo "SET(CMAKE_CXX_COMPILER \"$1-g++\")" >> $CmakeFile
+		
 	fi
+	echo "SET(CMAKE_ToolChain \"$1\")" >> $CmakeFile
 }
 function BuildLib()
 {
