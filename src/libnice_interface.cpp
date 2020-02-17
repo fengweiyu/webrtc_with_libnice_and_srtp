@@ -458,7 +458,7 @@ void Libnice::CandidateGatheringDone(NiceAgent *i_ptAgent, guint i_dwStreamID,gp
 		c->foundation,c->component_id,transport_name[c->transport],c->priority,
 		ipaddr,nice_address_get_port(&c->addr),m_astrCandidateTypeName[c->type]);
 	}
-	printf("%s ,%s %s", pLibnice->m_tLocalCandidate.strCandidateData,strLocalUfrag, strLocalPassword);
+	printf("CandidateGatheringDone:%s ,%s %s\r\n", pLibnice->m_tLocalCandidate.strCandidateData,strLocalUfrag, strLocalPassword);
 	pLibnice->m_tLocalCandidate.iGatheringDoneFlag = 1;
 	iRet = 0;
 

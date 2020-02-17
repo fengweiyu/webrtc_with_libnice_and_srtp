@@ -36,7 +36,7 @@ class VideoHandle
 public:
     VideoHandle();
     ~VideoHandle();
-    int Init(char *i_strPath);
+    virtual int Init(char *i_strPath);
     int GetNextVideoFrame(unsigned char *o_pbVideoBuf,int *o_iVideoBufSize,int i_iBufMaxSize);
     int FindH264Nalu(unsigned char *i_pbVideoBuf,int i_iVideoBufLen,unsigned char **o_ppbNaluStartPos,int *o_iNaluLen,unsigned char *o_bNaluType);
     int TrySetSPS_PPS(unsigned char *i_pbNaluBuf,int i_iNaluLen);

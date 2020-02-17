@@ -31,13 +31,21 @@ using std::string;
 //后续放到音视频处理类中
 #define VIDEO_H264_SAMPLE_RATE 90000
 #define AUDIO_G711_SAMPLE_RATE 8000
+typedef enum RtpPacketType
+{
+	RTP_PACKET_H264=1,
+	RTP_PACKET_G711,
+
+}E_RtpPacketType;
 
 typedef struct RtpPacketParam
 {
     unsigned int    dwSSRC;
-    unsigned short  wSeq;
     unsigned int    dwTimestampFreq;
     unsigned int    wPayloadType;
+    E_RtpPacketType  eType;
+    unsigned short  wSeq;
+    unsigned short  res;
 }T_RtpPacketParam;//这些参数在每个rtp会话中都不一样，即唯一的。
 
 typedef struct RtpHeader
@@ -63,12 +71,6 @@ typedef struct RtpHeader
 	unsigned int dwTimestamp;//时间戳(Timestamp): 占32位，记录了该包中数据的第一个字节的采样时刻
 	unsigned int dwSSRC;//同步源标识符(SSRC)：占32位，用于标识同步信源，同步源就是指RTP包流的来源。在同一个RTP会话中不能有两个相同的SSRC值
 }T_RtpHeader;//size 12
-typedef enum RtpPacketType
-{
-	RTP_PACKET_H264,
-	RTP_PACKET_G711,
-
-}E_RtpPacketType;
 
 /*****************************************************************************
 -Class			: RtpPacket

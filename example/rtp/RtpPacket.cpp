@@ -39,17 +39,18 @@ RtpPacket :: RtpPacket(E_RtpPacketType i_eRtpPacketType)
     m_eRtpPacketType = i_eRtpPacketType;
     memset(&m_tParam,0,sizeof(m_tParam));
     m_tParam.dwSSRC=GetSSRC();
+    m_tParam.eType=i_eRtpPacketType;
     if(RTP_PACKET_H264 == i_eRtpPacketType)
     {
         m_tParam.dwTimestampFreq=VIDEO_H264_SAMPLE_RATE;
         m_tParam.wPayloadType=RTP_PAYLOAD_H264;
-        m_pRtpPacket = new RtpPacketH264(i_eRtpPacketType);
+//        m_pRtpPacket = new RtpPacketH264(i_eRtpPacketType);//这里new运行时会奔溃
     }
     else if(RTP_PACKET_G711 == i_eRtpPacketType)
     {
         m_tParam.dwTimestampFreq=AUDIO_G711_SAMPLE_RATE;
         m_tParam.wPayloadType=RTP_PAYLOAD_G711;
-        m_pRtpPacket = new RtpPacketG711(i_eRtpPacketType);
+//        m_pRtpPacket = new RtpPacketG711(i_eRtpPacketType);//不能加virtual的原因
     }
     else
     {
@@ -129,7 +130,26 @@ int RtpPacket :: Packet(unsigned char *i_pbFrameBuf,int i_iFrameLen,unsigned cha
     }
     else
     {
-        iRet=m_pRtpPacket->Packet(i_pbFrameBuf,i_iFrameLen,o_ppPackets,o_aiEveryPacketLen,&m_tParam);
+        if(NULL == m_pRtpPacket)
+        {
+            if(RTP_PACKET_H264 == m_tParam.eType)
+            {
+                m_pRtpPacket = new RtpPacketH264(m_tParam.eType);
+            }
+            else if(RTP_PACKET_G711 == m_tParam.eType)
+            {
+                m_pRtpPacket = new RtpPacketG711(m_tParam.eType);
+            }
+            else
+            {
+                cout<<"RtpPacket Packet err "<<m_tParam.eType<<endl;
+            }
+        }
+        if(NULL != m_pRtpPacket)
+        {
+            iRet=m_pRtpPacket->Packet(i_pbFrameBuf,i_iFrameLen,o_ppPackets,o_aiEveryPacketLen,&m_tParam);
+        }
+    
     }
     return iRet;
 }
