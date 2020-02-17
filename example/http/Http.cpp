@@ -32,8 +32,9 @@ using std::endl;
 ******************************************************************************/
 HttpClient :: HttpClient()
 {
-
-
+    m_pTcpClient =NULL;
+    m_iServerPort = -1;
+    m_strServerIp.assign("");
 
 }
 
@@ -49,8 +50,32 @@ HttpClient :: HttpClient()
 ******************************************************************************/
 HttpClient :: ~HttpClient()
 {
+    if(NULL != m_pTcpClient)
+        delete m_pTcpClient;
+}
 
-
+/*****************************************************************************
+-Fuction		: ~Init
+-Description	: ~Init
+-Input			: 
+-Output 		: 
+-Return 		: 
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
+int HttpClient :: Init(char * i_strIP,unsigned short i_wPort)
+{
+    int iRet=-1;
+    if(NULL==i_strIP || i_wPort<0)
+    {
+        printf("HttpClient :: Init NULL\r\n");
+        return iRet;
+    }
+    m_strServerIp.assign(i_strIP);
+    m_iServerPort=i_wPort;
+    iRet=0;
+    return iRet;
 }
 
 
@@ -75,6 +100,20 @@ int HttpClient :: Send(const char * i_strMethod,char * i_strURL,char * i_acSendB
         cout<<"Send NULL"<<endl;
         return iRet;
     }
+    
+    if(NULL != m_pTcpClient)
+    {
+        delete m_pTcpClient;
+        m_pTcpClient =NULL;
+    }
+    m_pTcpClient = new TcpClient();//http短连接从新建立连接
+    if(NULL == m_pTcpClient)
+    {
+        printf("HttpClient :: Send NULL\r\n");
+        return iRet;
+    }
+    m_pTcpClient->Init(m_strServerIp,m_iServerPort);
+
     pSendBuf = (char *)malloc(i_iSendLen+512);//512是头部大小
     if(NULL != pSendBuf)
     {
@@ -91,7 +130,7 @@ int HttpClient :: Send(const char * i_strMethod,char * i_strURL,char * i_acSendB
             iSendLen+=i_iSendLen;
         }
 
-        iRet=TcpClient::Send(pSendBuf,iSendLen);
+        iRet=m_pTcpClient->Send(pSendBuf,iSendLen);
 
         
         free(pSendBuf);
@@ -121,11 +160,17 @@ int HttpClient :: RecvBody(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxL
     
     if(NULL == o_acRecvBuf ||NULL == o_piRecvLen)
     {
-        cout<<"Send NULL"<<endl;
+        cout<<"RecvBody NULL"<<endl;
         return iRet;
     }
+    if(NULL == m_pTcpClient)
+    {
+        printf("HttpClient :: RecvBody err no request\r\n");
+        return iRet;
+    }
+    
     memset(acRecvBuf,0,sizeof(acRecvBuf));
-    iRet=TcpClient::Recv(acRecvBuf,&iRecvLen,sizeof(acRecvBuf));
+    iRet=m_pTcpClient->Recv(acRecvBuf,&iRecvLen,sizeof(acRecvBuf));
     if(iRet == 0)
     {
         pBody = strstr(acRecvBuf,strHttpBodyFlag);
@@ -140,7 +185,40 @@ int HttpClient :: RecvBody(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxL
             printf("HttpClient :: Recv err ,%p,%d,%d\r\n",pBody,i_iRecvBufMaxLen,(int)(iRecvLen-(pBody-acRecvBuf+strlen(strHttpBodyFlag))));
         }
     }
+    delete m_pTcpClient;
+    m_pTcpClient =NULL;
+    return iRet;
+}
 
+
+/*****************************************************************************
+-Fuction		: Recv
+-Description	: 返回原始数据
+-Input			: 
+-Output 		: 
+-Return 		: 
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
+int HttpClient :: Recv(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen)
+{
+    int iRet = -1;
+    
+    if(NULL == o_acRecvBuf ||NULL == o_piRecvLen)
+    {
+        cout<<"Recv NULL"<<endl;
+        return iRet;
+    }
+    if(NULL == m_pTcpClient)
+    {
+        printf("HttpClient :: RecvBody err no request\r\n");
+        return iRet;
+    }
+    
+    iRet=m_pTcpClient->Recv(o_acRecvBuf,o_piRecvLen,i_iRecvBufMaxLen);
+    delete m_pTcpClient;
+    m_pTcpClient =NULL;
     return iRet;
 }
 

@@ -31,17 +31,19 @@
 * -----------------------------------------------
 * 2019/09/21	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-class HttpClient : public TcpClient
+class HttpClient
 {
 public:
 	HttpClient();
 	~HttpClient();
+	int Init(char * i_strIP,unsigned short i_wPort);
 	int Send(const char * i_srtMethod,char * i_srtURL,char * i_acSendBuf,int i_iSendLen,const char * i_srtContentType=NULL);
 	int RecvBody(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen);
-
+	int Recv(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen);
 private:
-
-
+	TcpClient *m_pTcpClient;
+	string m_strServerIp;
+	int m_iServerPort;
 };
 
 

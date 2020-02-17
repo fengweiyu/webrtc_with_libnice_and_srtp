@@ -66,7 +66,6 @@ peerconnection_client :: ~peerconnection_client()
 int peerconnection_client :: login(char * i_strServerIp,int i_iServerPort,char * i_strSelfName)
 {
     int iRet = -1;
-    string ServerIp;
     char strURL[128];
     char acRecvBuf[2048];
     int iRecvLen=0;
@@ -80,8 +79,8 @@ int peerconnection_client :: login(char * i_strServerIp,int i_iServerPort,char *
         printf("peerconnection_client :: login NULL\r\n");
         return iRet;
     }
-    ServerIp.assign(i_strServerIp);
-    m_pHttpClient->Init(ServerIp,i_iServerPort);
+
+    m_pHttpClient->Init(i_strServerIp,i_iServerPort);
     memset(strURL,0,sizeof(strURL));
     snprintf(strURL,sizeof(strURL),"/sign_in?%s",i_strSelfName);
     if(0==m_pHttpClient->Send(HTTP_METHOD_GET,strURL,NULL,0))

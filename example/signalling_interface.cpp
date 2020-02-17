@@ -93,6 +93,7 @@ int SignalingInterface :: GetOfferMsg(char * i_strServerIp, int i_iServerPort, c
             pOfferMsg = strstr(o_acRecvBuf,strOfferMsgFlag);
             if(NULL == pOfferMsg)
             {
+                printf("m_PeerConnectionClient->get_peer_sdp err:%d\r\n",iRet);
                 iRet = -1;
             }
         }
