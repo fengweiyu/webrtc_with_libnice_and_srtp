@@ -638,10 +638,10 @@ int DtlsOnlyHandshake::BioFilterWrite(BIO *bio, const char *in, int inl)
 
     if(filter != NULL)
     {
-        pthread_mutex_lock(filter->mutex);
+        pthread_mutex_lock(&filter->mutex);
         //filter->packets = g_list_append(filter->packets, GINT_TO_POINTER(ret));
         filter->packets.push_back(ret);
-        pthread_mutex_unlock(filter->mutex);
+        pthread_mutex_unlock(&filter->mutex);
         printf("New list length: %d\n", filter->packets.size());
     }
     return ret;
@@ -667,7 +667,7 @@ long DtlsOnlyHandshake::BioFilterCrtl(BIO *bio, int cmd, long num, void *ptr)
 
             if(filter == NULL) {return 0;}
 
-            pthread_mutex_lock(filter->mutex);
+            pthread_mutex_lock(&filter->mutex);
 
             //mutex_lock(&filter->mutex);
             if(0 == filter->packets.size()) {return 0;}            
@@ -680,7 +680,7 @@ long DtlsOnlyHandshake::BioFilterCrtl(BIO *bio, int cmd, long num, void *ptr)
             /*g_list_free(first);
             mutex_unlock(&filter->mutex);*/
             
-            pthread_mutex_unlock(filter->mutex);
+            pthread_mutex_unlock(&filter->mutex);
             /* We return its size so that only part of the buffer is read from the write BIO */
             return pending;
         }
@@ -735,7 +735,7 @@ unsigned int DtlsOnlyHandshake::GetRandom()
 ******************************************************************************/
 BioFilter::BioFilter()
 {
-    pthread_mutex_init(mutex,NULL);
+    pthread_mutex_init(&mutex,NULL);
 
 }
 
@@ -751,7 +751,7 @@ BioFilter::BioFilter()
 ******************************************************************************/
 BioFilter::~BioFilter()
 {
-    pthread_mutex_destroy(mutex);
+    pthread_mutex_destroy(&mutex);
     packets.clear();
 }
 

@@ -52,7 +52,7 @@ public:
 	BioFilter();
 	~BioFilter();
 	std::list < int > packets;    
-    pthread_mutex_t *mutex;
+    pthread_mutex_t mutex;
 
 private:
 
