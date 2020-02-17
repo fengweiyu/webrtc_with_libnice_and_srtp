@@ -59,6 +59,7 @@ function CopyLib()
 
 #拷贝固定早就编译好的第三方so库
 #暂时没时间优化直接使用所有编译结果也可以，libnice依赖架构，所以拷贝所有的，不调整架构
+#加了删除操作第二次及以后编译会变慢但是这样更整洁
 	rm ./third_lib/zlib -rf
 	cp $CurPwd/../lib/$2/zlib_v1.2.11 ./third_lib/zlib -rf
 	rm ./third_lib/libffi -rf
