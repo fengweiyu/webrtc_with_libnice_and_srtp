@@ -75,7 +75,12 @@ function CopyEXE()
 	cd $1
 	cp $CurPwd/build/webrtc .
 	cd $CurPwd
-	$2-strip -s ./build/webrtc
+	
+    if [ $2 == x86 ]; then
+		strip -s ./build/webrtc
+	else
+		$2-strip -s ./build/webrtc
+	fi		
 	cd $1
 	cp $CurPwd/build/webrtc ./webrtc_strip
 }
