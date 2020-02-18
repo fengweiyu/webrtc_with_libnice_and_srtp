@@ -132,8 +132,8 @@ int Libnice::LibniceProc()
 	g_signal_connect(m_ptAgent, "component-state-changed",G_CALLBACK(&Libnice::ComponentStateChanged), this);//
 
 	// Create a new stream with one component
-    AddVideoStream(m_ptAgent,"video",1);
-    AddAudioStream(m_ptAgent,"audio",1);//防止设置sdp时出错，暂时只是添加不使用
+    AddVideoStream(m_ptAgent,(char *)"video",1);
+    AddAudioStream(m_ptAgent,(char *)"audio",1);//防止设置sdp时出错，暂时只是添加不使用
 
 	// Attach to the component to receive the data
 	// Without this call, candidates cannot be gathered
@@ -503,7 +503,7 @@ int Libnice::SetRemoteSDP(char * i_strSDP)
 int Libnice::SendVideoData(char * i_acBuf,int i_iBufLen)
 {
 	int iRet = -1;
-	int i=0
+	int i=0;
     if( m_ptAgent == NULL || m_tVideoStream.iID== 0 || i_acBuf == NULL) 
     {
 		printf("LibniceSendData m_ptAgent null \r\n");
@@ -534,7 +534,7 @@ int Libnice::SendVideoData(char * i_acBuf,int i_iBufLen)
 int Libnice::SendAudioData(char * i_acBuf,int i_iBufLen)
 {
 	int iRet = -1;
-	int i=0
+	int i=0;
     if( m_ptAgent == NULL || m_tAudioStream.iID== 0 || i_acBuf == NULL) 
     {
 		printf("LibniceSendData m_ptAgent null \r\n");
@@ -678,7 +678,7 @@ void Libnice::RecvAudioData(NiceAgent *agent, guint _stream_id, guint component_
 int Libnice::AddVideoStream(NiceAgent *i_ptNiceAgent,char *i_strName, int i_iNum)
 {
     int iRet = -1;
-	if (NULL != i_ptNiceAgent||NULL != i_strName ||i_iNum <1)
+	if (NULL == i_ptNiceAgent||NULL == i_strName ||i_iNum <1)
     {
         printf("Libnice: AddVideoStream NULL:%d\r\n",i_iNum);
         return iRet;
@@ -702,7 +702,7 @@ int Libnice::AddVideoStream(NiceAgent *i_ptNiceAgent,char *i_strName, int i_iNum
 int Libnice::AddAudioStream(NiceAgent *i_ptNiceAgent,char *i_strName, int i_iNum)
 {
     int iRet = -1;
-	if (NULL != i_ptNiceAgent||NULL != i_strName ||i_iNum <1)
+	if (NULL == i_ptNiceAgent||NULL == i_strName ||i_iNum <1)
     {
         printf("Libnice: AddAudioStream NULL:%d\r\n",i_iNum);
         return iRet;

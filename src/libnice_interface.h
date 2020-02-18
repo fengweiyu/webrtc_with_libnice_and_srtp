@@ -12,11 +12,13 @@
 #ifndef LIBNICE_INTERFACE_H
 #define LIBNICE_INTERFACE_H
 
+#include <string>
 #include <ctype.h>
 #include <agent.h>
 
 #include <gio/gnetworking.h>
 
+using std::string;
 
 typedef struct StreamInfo
 {

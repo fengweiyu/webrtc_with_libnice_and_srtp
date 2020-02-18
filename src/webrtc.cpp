@@ -13,6 +13,7 @@
 * History               : 	
 ******************************************************************************/
 #include "webrtc.h"
+#include <sys/time.h>
 #include "cJSON.h"
 
 
@@ -286,18 +287,21 @@ int WebRTC::GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int i_iSd
         "a=setup:actpass\r\n"
         "a=connection:new\r\n"
         "a=rtpmap:%d %s/%d\r\n"
-        "a=ssrc:%d cname:ywf%s\r\n"
-        "a=ssrc:%d msid:janus janusa0\r\n"
-        "a=ssrc:%d mslabel:janus\r\n"
-        "a=ssrc:%d label:janusa0\r\n"
+        "a=ssrc:%ld cname:ywf%s\r\n"
+        "a=ssrc:%ld msid:janus janusa0\r\n"
+        "a=ssrc:%ld mslabel:janus\r\n"
+        "a=ssrc:%ld label:janusa0\r\n"
         "a=%s\r\n",
         tCreateTime.tv_sec,tCreateTime.tv_usec,1,tLocalCandidate.strIP,
         strStreamType,
-        strStreamType,i_ptVideoInfo->wPortNumForSDP,i_ptVideoInfo->ucRtpPayloadType
-        tLocalCandidate.strIP,strStreamType
-        tLocalCandidate.strUfrag, tLocalCandidate.strPassword,strLocalFingerprint,
+        strStreamType,i_ptVideoInfo->wPortNumForSDP,i_ptVideoInfo->ucRtpPayloadType,
+        tLocalCandidate.strIP,
+        strStreamType,
+        tLocalCandidate.strUfrag, 
+        tLocalCandidate.strPassword,
+        strLocalFingerprint,
         i_ptVideoInfo->ucRtpPayloadType,i_ptVideoInfo->pstrFormatName,i_ptVideoInfo->dwTimestampFrequency,
-        strStreamType,tCreateTime.tv_sec, tCreateTime.tv_sec, tCreateTime.tv_sec, tCreateTime.tv_sec,
+        tCreateTime.tv_sec, strStreamType,tCreateTime.tv_sec, tCreateTime.tv_sec, tCreateTime.tv_sec,
         tLocalCandidate.strCandidateData);
 
 	return iRet;

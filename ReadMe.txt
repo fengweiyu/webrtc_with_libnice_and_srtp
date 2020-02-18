@@ -24,7 +24,8 @@
 2.usage	
 	./webrtc StunIP StunPort SelfName VideoFile
 	eg:
-	./webrtc 192.168.0.103 8888 ywf555 singl.h264
+	./webrtc 192.168.0.103 8888 ywf555 sintel.h264
+
 	
 ******************************************************************************
 目前实现的是客户端，并且是answer端

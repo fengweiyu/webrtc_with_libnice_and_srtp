@@ -145,7 +145,7 @@ int main(int argc, char* argv[])
                         tVideoInfo.dwTimestampFrequency=WEBRTC_H264_TIMESTAMP_FREQUENCY;  
                         tVideoInfo.ucRtpPayloadType=WEBRTC_RTP_PAYLOAD_H264;
                         tVideoInfo.wPortNumForSDP=0;
-                        if(0==pWebRTC->HandleCandidateMsg(acGetMsg,&tVideoInfo,acAnswerMsg,sizeof(acAnswerMsg))
+                        if(0==pWebRTC->HandleCandidateMsg(acGetMsg,&tVideoInfo,acAnswerMsg,sizeof(acAnswerMsg)))
                         {
                             if(0==pSignalingInf->SendAnswerMsg(iPeerId,acAnswerMsg,strlen(acAnswerMsg)))
                             {

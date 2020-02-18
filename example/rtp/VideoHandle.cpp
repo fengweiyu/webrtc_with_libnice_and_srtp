@@ -240,7 +240,7 @@ int H264Handle::Init(char *i_strPath)
         m_pVideoFile = fopen(i_strPath,"rb");
         if(NULL == m_pVideoFile)
         {
-            cout<<"Init "<<i_strPath<<"failed !"<<endl;
+            cout<<"H264Handle Init "<<i_strPath<<" failed !"<<endl;
             iRet = FALSE;
         }      
         else

@@ -665,7 +665,7 @@ int DtlsOnlyHandshake::BioFilterWrite(BIO *bio, const char *in, int inl)
         //filter->packets = g_list_append(filter->packets, GINT_TO_POINTER(ret));
         filter->packets.push_back(ret);
         pthread_mutex_unlock(&filter->mutex);
-        printf("New list length: %d\n", filter->packets.size());
+        printf("New list length: %lu\n", filter->packets.size());
     }
     return ret;
 }
