@@ -45,6 +45,7 @@ Libnice::Libnice(char * i_strStunAddr,unsigned int i_dwStunPort,int i_iControlli
     memset(&m_tLibniceCb,0,sizeof(T_LibniceCb));
     memset(&m_tVideoStream,0,sizeof(T_StreamInfo));
     memset(&m_tAudioStream,0,sizeof(T_StreamInfo));
+    m_strRemoteSDP.assign("");
 }
 
 /*****************************************************************************
@@ -367,6 +368,89 @@ int Libnice::SetRemoteCandidates()
 /*****************************************************************************
 -Fuction        : LibniceSetRemoteSDP
 -Description    : LibniceSetRemoteSDP
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+int Libnice::SaveRemoteSDP(char * i_strSDP)
+{
+	int iRet = -1;
+    if (m_ptAgent == NULL || i_strSDP == NULL) 
+    {
+		printf("SaveRemoteSDP m_ptAgent null \r\n");
+		return iRet;
+    }
+    m_strRemoteSDP.assign(i_strSDP);
+    iRet = 0;
+	return iRet;
+}
+
+/*****************************************************************************
+-Fuction        : SetRemoteCandidateAndSDP
+-Description    : LibniceSetRemoteSDP
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+int Libnice::SetRemoteCandidateAndSDP(char * i_strCandidate)
+{
+	int iRet = -1;
+	int i=0;
+    if (m_ptAgent == NULL || i_strCandidate == NULL ||m_strRemoteSDP.length()<=0) 
+    {
+		printf("Libnice SetRemoteCandidateAndSDP m_ptAgent null \r\n");
+		return iRet;
+    }
+    m_strRemoteSDP.append("a=");//webrtc对方sdp中没有包含candidate,所以只好组合起来
+    m_strRemoteSDP.append(i_strCandidate);
+    m_strRemoteSDP.append("\r\n");
+    char* ufrag = NULL;
+    char* pwd = NULL;
+    GSList * plist = nice_agent_parse_remote_stream_sdp (m_ptAgent, m_tVideoStream.iID, m_strRemoteSDP.c_str(), &ufrag, &pwd);
+    if (ufrag && pwd && g_slist_length(plist) > 0)
+    {//audio streamid暂时不处理,
+        ufrag[strlen(ufrag)-1] = 0;
+        pwd[strlen(pwd)-1] = 0;
+
+        NiceCandidate* c = (NiceCandidate*)g_slist_nth(plist, 0)->data; 
+
+        if (!nice_agent_set_remote_credentials(m_ptAgent, m_tVideoStream.iID, ufrag, pwd)) 
+        {
+            g_message("failed to set remote credentials");
+        }
+        else
+        {
+            // Note: this will trigger the start of negotiation.
+            for (i = 1; i <= m_tVideoStream.iNum; i++)
+            {
+                if (nice_agent_set_remote_candidates(m_ptAgent, m_tVideoStream.iID, i, plist) < 1) 
+                {
+                    printf("###failed to set remote candidates:%d\r\n",i);
+                }
+                else
+                {
+                    iRet=0;
+                }
+            }
+        }
+        g_free(ufrag);
+        g_free(pwd);
+        //g_slist_free(plist);
+        g_slist_free_full(plist, (GDestroyNotify)&nice_candidate_free);
+    }
+	return iRet;
+}
+
+/*****************************************************************************
+-Fuction        : LibniceSetRemoteSDP
+-Description    : 由于webrtc对方发来的sdp中不含candidate所以该
+接口暂时不用
 -Input          : 
 -Output         : 
 -Return         : 

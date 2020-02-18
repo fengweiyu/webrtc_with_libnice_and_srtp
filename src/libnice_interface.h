@@ -61,16 +61,19 @@ public:
     int LibniceProc();
     int GetLocalCandidate(T_LocalCandidate * i_ptLocalCandidate);
     int GetLocalSDP(char * i_strSDP,int i_iSdpLen);
+    int SaveRemoteSDP(char * i_strSDP);
+    int SetRemoteCandidateAndSDP(char * i_strCandidate);
+    
+    int GetSendReadyFlag();
+    int SendVideoData(char * i_acBuf,int i_iBufLen);
+    int SendAudioData(char * i_acBuf,int i_iBufLen);
+    static void RecvVideoData(NiceAgent *agent, guint _stream_id, guint component_id,guint len, gchar *buf, gpointer data);
+    static void RecvAudioData(NiceAgent *agent, guint _stream_id, guint component_id,guint len, gchar *buf, gpointer data);
+    
     int SetRemoteCredentials(char * i_strUfrag,char * i_strPasswd);
     int SetRemoteCandidateToGlist(char * i_strCandidate);
     int SetRemoteCandidates();
     int SetRemoteSDP(char * i_strSDP);
-    int GetSendReadyFlag();
-    int SendVideoData(char * i_acBuf,int i_iBufLen);
-    int SendAudioData(char * i_acBuf,int i_iBufLen);
-    
-    static void RecvVideoData(NiceAgent *agent, guint _stream_id, guint component_id,guint len, gchar *buf, gpointer data);
-    static void RecvAudioData(NiceAgent *agent, guint _stream_id, guint component_id,guint len, gchar *buf, gpointer data);
     
 	static const char *m_astrCandidateTypeName[];
     T_LibniceCb m_tLibniceCb;//回调需使用
@@ -89,6 +92,7 @@ private:
     T_StreamInfo m_tVideoStream;
     T_StreamInfo m_tAudioStream;
     T_LibniceDepData m_tLibniceDepData;
+    string m_strRemoteSDP;
 };
 
 

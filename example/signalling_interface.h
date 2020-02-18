@@ -27,7 +27,9 @@ class SignalingInterface
 public:
 	SignalingInterface();
 	~SignalingInterface();
-	int GetOfferMsg(char * i_strServerIp, int i_iServerPort, char * i_strSelfName,char * o_acRecvBuf, int * o_piRecvLen, int i_iRecvBufMaxLen);
+	int Login(char * i_strServerIp, int i_iServerPort, char * i_strSelfName);
+	int GetOfferMsg(char * o_acRecvBuf, int * o_piRecvLen, int i_iRecvBufMaxLen);
+	int GetCandidateMsg(char * o_acRecvBuf, int * o_piRecvLen, int i_iRecvBufMaxLen);
 	int SendAnswerMsg(int i_iPeerId, char * i_acSendBuf, int i_iSendLen);
 private:
 	peerconnection_client * m_PeerConnectionClient;

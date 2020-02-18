@@ -78,7 +78,8 @@ int WebRTC::Proc()
 }
 /*****************************************************************************
 -Fuction        : HandleOfferMsg
--Description    : HandleOfferMsg
+-Description    : 收到offer还是发wait消息，只有收到Candidate才发answer
+消息
 -Input          : 
 -Output         : 
 -Return         : 
@@ -86,15 +87,14 @@ int WebRTC::Proc()
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int WebRTC::HandleOfferMsg(char * i_strOfferMsg,char * o_strAnswerMsg,int i_iAnswerMaxLen)
+int WebRTC::HandleOfferMsg(char * i_strOfferMsg)
 {
     int iRet = -1;
     cJSON * ptOfferJson = NULL;
     cJSON * ptNode = NULL;
     char acRemoteSDP[5*1024];
-    char acLocalSDP[5*1024];
     
-    if(NULL == i_strOfferMsg||NULL == o_strAnswerMsg)
+    if(NULL == i_strOfferMsg)
     {
         printf("HandleOfferMsg NULL \r\n");
         return iRet;
@@ -129,6 +129,60 @@ int WebRTC::HandleOfferMsg(char * i_strOfferMsg,char * o_strAnswerMsg,int i_iAns
     }
     else
     {
+        iRet=m_Libnice.SaveRemoteSDP(acRemoteSDP);
+    }
+    return iRet;
+}
+/*****************************************************************************
+-Fuction        : HandleOfferMsg
+-Description    : Offer消息必须是是在Candidate之前的，有这样的时序要求
+这是webrtc抓包发现的，所以不符合这个时序则返回错误
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+int WebRTC::HandleCandidateMsg(char * i_strCandidateMsg,char * o_strAnswerMsg,int i_iAnswerMaxLen)
+{
+    int iRet = -1;
+    cJSON * ptCandidateJson = NULL;
+    cJSON * ptNode = NULL;
+    char acRemoteCandidate[1024];
+    char acLocalSDP[5*1024];
+    
+    if(NULL == i_strCandidateMsg||NULL == o_strAnswerMsg)
+    {
+        printf("HandleOfferMsg NULL \r\n");
+        return iRet;
+    }
+    ptCandidateJson = cJSON_Parse(i_strCandidateMsg);
+    if(NULL != ptCandidateJson)
+    {
+        ptNode = cJSON_GetObjectItem(ptCandidateJson,"candidate");
+        if(NULL != ptNode && NULL != ptNode->valuestring)
+        {
+            if(sizeof(acRemoteCandidate)<strlen(ptNode->valuestring))
+            {
+                printf("cJSON_GetObjectItem candidate err \r\n");
+            }
+            else
+            {
+                memset(acRemoteCandidate,0,sizeof(acRemoteCandidate));
+                strncpy(acRemoteCandidate,ptNode->valuestring,sizeof(acRemoteCandidate));
+                iRet=0;
+            }
+            ptNode = NULL;
+        }
+        cJSON_Delete(ptCandidateJson);
+    }
+    if(0 != iRet)
+    {
+    }
+    else
+    {
+        iRet=m_Libnice.SetRemoteCandidateAndSDP(acRemoteCandidate);
         memset(acLocalSDP,0,sizeof(acLocalSDP));
         m_Libnice.GetLocalSDP(acLocalSDP,sizeof(acLocalSDP));
         cJSON * root = cJSON_CreateObject();
@@ -141,7 +195,6 @@ int WebRTC::HandleOfferMsg(char * i_strOfferMsg,char * o_strAnswerMsg,int i_iAns
             free(buf);
         }
         cJSON_Delete(root);
-        iRet=m_Libnice.SetRemoteSDP(acRemoteSDP);
     }
     return iRet;
 }

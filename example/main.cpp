@@ -23,6 +23,15 @@
 #define WEBRTC_RTP_MAX_PACKET_NUM	(300)
 #define WEBRTC_RTP_MAX_PACKET_SIZE	((1500-42)/4*4)//MTU
 
+typedef enum WebRtcStatus
+{
+    WEBRTC_INIT,
+    WEBRTC_HANDLE_OFFER,
+    WEBRTC_HANDLE_CANDIDATE,
+    WEBRTC_SEND_RTP,
+    WEBRTC_EXIT,
+}E_WebRtcStatus;
+
 static void PrintUsage(char *i_strProcName);
 static void * WebRtcProc(void *pArg);
 
@@ -43,13 +52,13 @@ int main(int argc, char* argv[])
     int dwPort;
     WebRTC * pWebRTC=NULL;
     pthread_t tWebRtcID;
-    char acOfferMsg[6*1024];
+    char acGetMsg[6*1024];
     char acAnswerMsg[6*1024];
     RtpInterface *pRtpInterface=NULL;
     SignalingInterface *pSignalingInf=NULL;
     int iRecvLen=0;
     int iPeerId = -1;
-
+    int iRet = -1;
     
     if(argc !=5)
     {
@@ -78,27 +87,113 @@ int main(int argc, char* argv[])
             ppbPacketBuf[i]=(unsigned char *)malloc(WEBRTC_RTP_MAX_PACKET_SIZE);
             memset(ppbPacketBuf[i],0,WEBRTC_RTP_MAX_PACKET_SIZE);
         }
-        
+        E_WebRtcStatus eWebRtcStatus=WEBRTC_INIT;
         while(1)
         {
-            iPacketNum = pRtpInterface->GetRtpData(ppbPacketBuf,aiEveryPacketLen,WEBRTC_RTP_MAX_PACKET_SIZE,WEBRTC_RTP_MAX_PACKET_NUM);
-            memset(acOfferMsg,0,sizeof(acOfferMsg));
-            iPeerId = pSignalingInf->GetOfferMsg(strSeverIp,dwPort,argv[3],acOfferMsg,&iRecvLen,sizeof(acOfferMsg));
-            if(iPeerId>=0)
+            switch(eWebRtcStatus)
             {
-                memset(acAnswerMsg,0,sizeof(acAnswerMsg));
-                pWebRTC->HandleOfferMsg(acOfferMsg,acAnswerMsg,sizeof(acAnswerMsg));
-                pSignalingInf->SendAnswerMsg(iPeerId,acAnswerMsg,strlen(acAnswerMsg));
-            }
-            if(iPacketNum > 0)
-            {
-                for(i=0;i<iPacketNum;i++)
+                case WEBRTC_INIT:
                 {
-                    pWebRTC->SendProtectedRtp((char *)ppbPacketBuf[i], aiEveryPacketLen[i]);
+                    iPacketNum = pRtpInterface->GetRtpData(ppbPacketBuf,aiEveryPacketLen,WEBRTC_RTP_MAX_PACKET_SIZE,WEBRTC_RTP_MAX_PACKET_NUM);
+                    if(pSignalingInf->Login(strSeverIp,dwPort,argv[3])==0)
+                    {
+                        eWebRtcStatus=WEBRTC_HANDLE_OFFER;
+                    }
+                    else
+                    {
+                        printf("pSignalingInf->Login err\r\n");
+                    }
+                    break;
                 }
-                iPacketNum = -1;
+                
+                case WEBRTC_HANDLE_OFFER:
+                {
+                    memset(acGetMsg,0,sizeof(acGetMsg));
+                    iPeerId = pSignalingInf->GetOfferMsg(acGetMsg,&iRecvLen,sizeof(acGetMsg));
+                    if(iPeerId>=0)
+                    {
+                        if(0==pWebRTC->HandleOfferMsg(acGetMsg))
+                        {
+                            eWebRtcStatus=WEBRTC_HANDLE_CANDIDATE;
+                        }
+                        else
+                        {
+                            printf("pSignalingInf->HandleOfferMsg err\r\n");
+                        }
+                    }
+                    else
+                    {
+                        printf("pSignalingInf->GetOfferMsg err\r\n");
+                    }
+                    break;
+                }
+                
+                case WEBRTC_HANDLE_CANDIDATE:
+                {
+                    memset(acGetMsg,0,sizeof(acGetMsg));
+                    iPeerId = pSignalingInf->GetCandidateMsg(acGetMsg,&iRecvLen,sizeof(acGetMsg));
+                    if(iPeerId>=0)
+                    {
+                        memset(acAnswerMsg,0,sizeof(acAnswerMsg));
+                        if(0==pWebRTC->HandleCandidateMsg(acGetMsg,acAnswerMsg,sizeof(acAnswerMsg))
+                        {
+                            if(0==pSignalingInf->SendAnswerMsg(iPeerId,acAnswerMsg,strlen(acAnswerMsg)))
+                            {
+                                eWebRtcStatus=WEBRTC_SEND_RTP;
+                            }
+                            else
+                            {
+                                printf("pSignalingInf->SendAnswerMsg err\r\n");
+                            }
+                        }
+                        else
+                        {
+                            printf("pSignalingInf->HandleCandidateMsg err\r\n");
+                        }
+                    }
+                    else
+                    {
+                        printf("pSignalingInf->GetCandidateMsg err\r\n");
+                    }
+                    break;
+                }
+                
+                case WEBRTC_SEND_RTP:
+                {
+                    if(iPacketNum > 0)
+                    {
+                        for(i=0;i<iPacketNum;i++)
+                        {
+                            pWebRTC->SendProtectedRtp((char *)ppbPacketBuf[i], aiEveryPacketLen[i]);
+                        }
+                        iPacketNum = -1;
+                        iPacketNum = pRtpInterface->GetRtpData(ppbPacketBuf,aiEveryPacketLen,WEBRTC_RTP_MAX_PACKET_SIZE,WEBRTC_RTP_MAX_PACKET_NUM);
+                    }
+                    else
+                    {
+                        printf("pRtpInterface->GetRtpData err\r\n");
+                        eWebRtcStatus=WEBRTC_SEND_RTP;
+                    }
+                    break;
+                }
+                
+                case WEBRTC_EXIT:
+                {
+                    printf("#####################WEBRTC_EXIT:%d\r\n",eWebRtcStatus);
+                    break;
+                }
+                
+                default:
+                {
+                    printf("unkown eWebRtcStatus:%d\r\n",eWebRtcStatus);
+                    break;
+                }
+                usleep(40*1000);//25Ö¡ÂÊ
             }
-            usleep(40*1000);//25Ö¡ÂÊ
+            if(WEBRTC_EXIT == eWebRtcStatus)
+            {
+                break;
+            }
         }
         for(i=0;i<WEBRTC_RTP_MAX_PACKET_NUM;i++)
             free(ppbPacketBuf[i]);
