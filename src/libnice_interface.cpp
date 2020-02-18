@@ -190,7 +190,18 @@ int Libnice::GetLocalCandidate(T_LocalCandidate * i_ptLocalCandidate)
 }
 /*****************************************************************************
 -Fuction        : LibniceGetLocalSDP
--Description    : LibniceGetLocalSDP
+-Description    : local sdp缺少信息只好自己组包
+m=- 39240 ICE/SDP\n
+c=IN IP4 192.168.0.105\n
+a=ice-ufrag:F77M\n
+a=ice-pwd:xIem6dTc1rcgJMt3QUzDcE\n
+a=candidate:1 1 UDP 2013266431 fe80::20c:29ff:fe7e:5629 36651 typ host\n
+a=candidate:2 1 TCP 1015022847 fe80::20c:29ff:fe7e:5629 9 typ host tcptype active\n
+a=candidate:3 1 TCP 1010828543 fe80::20c:29ff:fe7e:5629 53316 typ host tcptype passive\n
+a=candidate:4 1 UDP 2013266430 192.168.0.105 54379 typ host\n
+a=candidate:5 1 TCP 1015022079 192.168.0.105 9 typ host tcptype active\n
+a=candidate:6 1 TCP 1010827775 192.168.0.105 39240 typ host tcptype passive\n
+
 -Input          : 
 -Output         : 
 -Return         : 
@@ -577,6 +588,8 @@ void Libnice::CandidateGatheringDone(NiceAgent *i_ptAgent, guint i_dwStreamID,gp
     pLibnice =(Libnice *)pData;
 	if (pLibnice == NULL)
 		goto end;
+    snprintf(pLibnice->m_tLocalCandidate.strUfrag,sizeof(pLibnice->m_tLocalCandidate.strUfrag),"%s",strLocalUfrag);
+    snprintf(pLibnice->m_tLocalCandidate.strPassword,sizeof(pLibnice->m_tLocalCandidate.strPassword),"%s",strLocalPassword);
 	for (item = cands; item; item = item->next) 
 	{
 		NiceCandidate *c = (NiceCandidate *)item->data;
@@ -593,6 +606,8 @@ void Libnice::CandidateGatheringDone(NiceAgent *i_ptAgent, guint i_dwStreamID,gp
 		"candidate:%s %u %s %u %s %u typ %s",
 		c->foundation,c->component_id,transport_name[c->transport],c->priority,
 		ipaddr,nice_address_get_port(&c->addr),m_astrCandidateTypeName[c->type]);
+        snprintf(pLibnice->m_tLocalCandidate.strIP,sizeof(pLibnice->m_tLocalCandidate.strIP),"%s",ipaddr);
+        break;//暂时取一个即可
 	}
 	printf("CandidateGatheringDone:%s ,%s %s\r\n", pLibnice->m_tLocalCandidate.strCandidateData,strLocalUfrag, strLocalPassword);
 	pLibnice->m_tLocalCandidate.iGatheringDoneFlag = 1;

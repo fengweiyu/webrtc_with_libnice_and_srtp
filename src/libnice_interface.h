@@ -28,6 +28,9 @@ typedef struct StreamInfo
 typedef struct LocalCandidate
 {
 	int iGatheringDoneFlag;//0 未收集,1收集成功
+    char strUfrag[16];
+    char strPassword[64];
+    char strIP[32];
 	char strCandidateData[256];
 //"candidate:3442447574 1 udp 2122260223 192.168.0.170 54653 typ host generation 0 ufrag gX6M network-id 1"
 }T_LocalCandidate;

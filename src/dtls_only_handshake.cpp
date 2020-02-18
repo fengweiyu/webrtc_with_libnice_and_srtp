@@ -453,6 +453,29 @@ void DtlsOnlyHandshake::SendDataOut()
 	}
 }
 
+/*****************************************************************************
+-Fuction        : GetLocalFingerprint
+-Description    : 
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+int DtlsOnlyHandshake::GetLocalFingerprint(char * i_strLocalFingerprint,int i_iFingerprintMaxLen)
+{
+	int iRet=-1;
+    if (i_strLocalFingerprint == NULL || i_iFingerprintMaxLen <= 0) 
+    {
+		printf("GetLocalFingerprint NULL\r\n");
+		return iRet;
+    }
+    snprintf(i_strLocalFingerprint,i_iFingerprintMaxLen,"%s",m_acLocalFingerprint);
+    iRet = 0;
+	return iRet;
+}
+
 
 int DtlsOnlyHandshake::VerifyCallback(int i_iPreverifyOk, X509_STORE_CTX *ctx) 
 {

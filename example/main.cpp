@@ -23,6 +23,10 @@
 #define WEBRTC_RTP_MAX_PACKET_NUM	(300)
 #define WEBRTC_RTP_MAX_PACKET_SIZE	((1500-42)/4*4)//MTU
 
+#define WEBRTC_RTP_PAYLOAD_H264 96
+#define WEBRTC_VIDEO_ENCODE_FORMAT_NAME "H264"
+#define WEBRTC_H264_TIMESTAMP_FREQUENCY 90000
+
 typedef enum WebRtcStatus
 {
     WEBRTC_INIT,
@@ -53,6 +57,7 @@ int main(int argc, char* argv[])
     WebRTC * pWebRTC=NULL;
     pthread_t tWebRtcID;
     char acGetMsg[6*1024];
+    T_VideoInfo tVideoInfo;
     char acAnswerMsg[6*1024];
     RtpInterface *pRtpInterface=NULL;
     SignalingInterface *pSignalingInf=NULL;
@@ -135,7 +140,12 @@ int main(int argc, char* argv[])
                     if(iPeerId>=0)
                     {
                         memset(acAnswerMsg,0,sizeof(acAnswerMsg));
-                        if(0==pWebRTC->HandleCandidateMsg(acGetMsg,acAnswerMsg,sizeof(acAnswerMsg))
+                        memset(&tVideoInfo,0,sizeof(tVideoInfo));
+                        tVideoInfo.pstrFormatName=WEBRTC_VIDEO_ENCODE_FORMAT_NAME;
+                        tVideoInfo.dwTimestampFrequency=WEBRTC_H264_TIMESTAMP_FREQUENCY;  
+                        tVideoInfo.ucRtpPayloadType=WEBRTC_RTP_PAYLOAD_H264;
+                        tVideoInfo.wPortNumForSDP=0;
+                        if(0==pWebRTC->HandleCandidateMsg(acGetMsg,&tVideoInfo,acAnswerMsg,sizeof(acAnswerMsg))
                         {
                             if(0==pSignalingInf->SendAnswerMsg(iPeerId,acAnswerMsg,strlen(acAnswerMsg)))
                             {

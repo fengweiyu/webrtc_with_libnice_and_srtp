@@ -144,7 +144,7 @@ int WebRTC::HandleOfferMsg(char * i_strOfferMsg)
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int WebRTC::HandleCandidateMsg(char * i_strCandidateMsg,char * o_strAnswerMsg,int i_iAnswerMaxLen)
+int WebRTC::HandleCandidateMsg(char * i_strCandidateMsg,T_VideoInfo *i_ptVideoInfo,char * o_strAnswerMsg,int i_iAnswerMaxLen)
 {
     int iRet = -1;
     cJSON * ptCandidateJson = NULL;
@@ -152,7 +152,7 @@ int WebRTC::HandleCandidateMsg(char * i_strCandidateMsg,char * o_strAnswerMsg,in
     char acRemoteCandidate[1024];
     char acLocalSDP[5*1024];
     
-    if(NULL == i_strCandidateMsg||NULL == o_strAnswerMsg)
+    if(NULL == i_strCandidateMsg||NULL == o_strAnswerMsg ||NULL==i_ptVideoInfo)
     {
         printf("HandleOfferMsg NULL \r\n");
         return iRet;
@@ -184,7 +184,8 @@ int WebRTC::HandleCandidateMsg(char * i_strCandidateMsg,char * o_strAnswerMsg,in
     {
         iRet=m_Libnice.SetRemoteCandidateAndSDP(acRemoteCandidate);
         memset(acLocalSDP,0,sizeof(acLocalSDP));
-        m_Libnice.GetLocalSDP(acLocalSDP,sizeof(acLocalSDP));
+        //m_Libnice.GetLocalSDP(acLocalSDP,sizeof(acLocalSDP));//local sdp缺少信息只好自己组包
+        GenerateLocalSDP(i_ptVideoInfo,acLocalSDP,sizeof(acLocalSDP));
         cJSON * root = cJSON_CreateObject();
         cJSON_AddStringToObject(root,"sdp",acLocalSDP);
         cJSON_AddStringToObject(root,"type","answer");
@@ -233,6 +234,74 @@ int WebRTC::SendProtectedRtp(char * i_acRtpBuf,int i_iRtpBufLen)
     return iRet;
 }
 
+/*****************************************************************************
+-Fuction        : GenerateLocalSDP
+-Description    : GenerateLocalSDP
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+int WebRTC::GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int i_iSdpMaxLen)
+{
+	int iRet=-1;
+	char *strSDP = NULL;
+    struct timeval tCreateTime;
+    T_LocalCandidate tLocalCandidate;
+    char strLocalFingerprint[160];
+    const char *strStreamType="video";
+    
+    if (o_strSDP == NULL || NULL==i_ptVideoInfo || i_iSdpMaxLen <= 0) 
+    {
+		printf("GenerateLocalSDP NULL\r\n");
+		return iRet;
+    }
+    memset(&tLocalCandidate,0,sizeof(T_LocalCandidate));
+    m_Libnice.GetLocalCandidate(&tLocalCandidate);
+	if(tLocalCandidate.iGatheringDoneFlag == 0)
+	{
+		printf("GenerateLocalSDP err\r\n");
+		return iRet;
+	}
+    memset(&tCreateTime,0,sizeof(struct timeval));
+    gettimeofday(&tCreateTime, NULL);
+    memset(strLocalFingerprint,0,sizeof(strLocalFingerprint));
+    m_pDtlsOnlyHandshake->GetLocalFingerprint(strLocalFingerprint,sizeof(strLocalFingerprint));
+    iRet=snprintf(o_strSDP,i_iSdpMaxLen,"v=0\r\n"
+        "o=- %ld%06ld %d IN IP4 %s\r\n"//o=<username><session id> <version> <network type> <address type><address> Origin ,给定了会话的发起者信息
+        "s=ywf webrtc\r\n"//s=<sessionname> ;给定了Session Name
+        "t=0 0\r\na=group:BUNDLE %s\r\n"//t=<start time><stop time> ;Time
+        "a=msid-semantic: WMS ywf\r\n"
+        "m=%s %u RTP/SAVPF %d\r\n"
+        "c=IN IP4 %s\r\n"
+        "a=mid:%s\r\n"
+        "a=sendrecv\r\n"
+        "a=rtcp-mux\r\n"
+        "a=ice-ufrag:%s\r\n"
+        "a=ice-pwd:%s\r\n"
+        "a=ice-options:trickle\r\n"
+        "a=fingerprint:sha-256 %s\r\n"
+        "a=setup:actpass\r\n"
+        "a=connection:new\r\n"
+        "a=rtpmap:%d %s/%d\r\n"
+        "a=ssrc:%d cname:ywf%s\r\n"
+        "a=ssrc:%d msid:janus janusa0\r\n"
+        "a=ssrc:%d mslabel:janus\r\n"
+        "a=ssrc:%d label:janusa0\r\n"
+        "a=%s\r\n",
+        tCreateTime.tv_sec,tCreateTime.tv_usec,1,tLocalCandidate.strIP,
+        strStreamType,
+        strStreamType,i_ptVideoInfo->wPortNumForSDP,i_ptVideoInfo->ucRtpPayloadType
+        tLocalCandidate.strIP,strStreamType
+        tLocalCandidate.strUfrag, tLocalCandidate.strPassword,strLocalFingerprint,
+        i_ptVideoInfo->ucRtpPayloadType,i_ptVideoInfo->pstrFormatName,i_ptVideoInfo->dwTimestampFrequency,
+        strStreamType,tCreateTime.tv_sec, tCreateTime.tv_sec, tCreateTime.tv_sec, tCreateTime.tv_sec,
+        tLocalCandidate.strCandidateData);
+
+	return iRet;
+}
 
 
 /*****************************************************************************

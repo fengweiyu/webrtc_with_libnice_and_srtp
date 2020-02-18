@@ -76,7 +76,7 @@ public:
     void Handshake();
     void HandleRecvData(char *buf,int len);
     int GetPolicyInfo(T_PolicyInfo *i_ptPolicyInfo);
-
+    int GetLocalFingerprint(char * i_strLocalFingerprint,int i_iFingerprintMaxLen);
 	static int VerifyCallback(int i_iPreverifyOk, X509_STORE_CTX *ctx);//被其他c函数访问就不是只有本类访问了
 	
 private:
