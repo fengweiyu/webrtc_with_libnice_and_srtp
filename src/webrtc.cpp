@@ -18,7 +18,7 @@
 
 /*****************************************************************************
 -Fuction        : WebRTC
--Description    : WebRTC
+-Description    : 底层三者关系比较乱，暂时回调后续考虑用设计模式
 -Input          : 
 -Output         : 
 -Return         : 
@@ -175,7 +175,7 @@ int WebRTC::SendProtectedRtp(char * i_acRtpBuf,int i_iRtpBufLen)
     }
     iProtectRtpLen = i_iRtpBufLen;
     m_Srtp.ProtectRtp(i_acRtpBuf,&iProtectRtpLen,i_iRtpBufLen);
-    iRet=m_Libnice.SendData(i_acRtpBuf, iProtectRtpLen);
+    iRet=m_Libnice.SendVideoData(i_acRtpBuf, iProtectRtpLen);
 
     return iRet;
 }
@@ -240,7 +240,7 @@ int WebRTC::SendDataOutCb(char * i_acData,int i_iLen,void * pArg)
     if(NULL!=pArg)//防止该静态函数对本对象的依赖,
     {//所以不直接用m_pDtlsOnlyHandshake->Handshake();
         pLibnice = (Libnice *)pArg;
-        pLibnice->SendData(i_acData,i_iLen);
+        pLibnice->SendVideoData(i_acData,i_iLen);
         
     }
 }

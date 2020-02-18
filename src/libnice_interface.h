@@ -17,6 +17,14 @@
 
 #include <gio/gnetworking.h>
 
+
+typedef struct StreamInfo
+{
+	char strName[16];
+	int iID;
+	int iNum;//(视音频)流的路数，如表示视频流有几路，一般只有1路视频流
+}T_StreamInfo;
+
 typedef struct LocalCandidate
 {
 	int iGatheringDoneFlag;//0 未收集,1收集成功
@@ -58,23 +66,28 @@ public:
     int SetRemoteCandidates();
     int SetRemoteSDP(char * i_strSDP);
     int GetSendReadyFlag();
-    int SendData(char * i_acBuf,int i_iBufLen);
+    int SendVideoData(char * i_acBuf,int i_iBufLen);
+    int SendAudioData(char * i_acBuf,int i_iBufLen);
     
-    static void Recv(NiceAgent *agent, guint _stream_id, guint component_id,guint len, gchar *buf, gpointer data);
-
+    static void RecvVideoData(NiceAgent *agent, guint _stream_id, guint component_id,guint len, gchar *buf, gpointer data);
+    static void RecvAudioData(NiceAgent *agent, guint _stream_id, guint component_id,guint len, gchar *buf, gpointer data);
+    
 	static const char *m_astrCandidateTypeName[];
     T_LibniceCb m_tLibniceCb;//回调需使用
-    T_LocalCandidate m_tLocalCandidate;
-    static int m_iLibniceSendReadyFlag;//0不可发送,1准备好通道可以发送,后续添加设置函数然后改属性
+    T_LocalCandidate m_tLocalCandidate;//m_iLibniceSendReadyFlag被ComponentStateChanged调用
+    static int m_iLibniceSendReadyFlag;//0不可发送,1准备好通道可以发送,后续添加设置函数然后改属性，后续应区分音视频
 private:
     static void CandidateGatheringDone(NiceAgent *i_ptAgent, guint i_dwStreamID,gpointer pData);
     static void NewSelectPair(NiceAgent *agent, guint _stream_id,guint component_id, gchar *lfoundation,gchar *rfoundation, gpointer data);
     static void ComponentStateChanged(NiceAgent *agent, guint _stream_id,guint component_id, guint state,gpointer data);
-
+    int AddVideoStream(NiceAgent *i_ptNiceAgent,char *i_strName, int i_iNum);
+    int AddAudioStream(NiceAgent *i_ptNiceAgent,char *i_strName, int i_iNum);
 
     NiceAgent * m_ptAgent;
     GSList * m_pRemoteCandidatesList;
-    unsigned int m_dwStreamID;//m_iLibniceSendReadyFlag被ComponentStateChanged调用
+//    unsigned int m_dwStreamID;目前只有一个streamid使用,即videostream里面的
+    T_StreamInfo m_tVideoStream;
+    T_StreamInfo m_tAudioStream;
     T_LibniceDepData m_tLibniceDepData;
 };
 

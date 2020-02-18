@@ -3,6 +3,11 @@
 ------------------------------------------------------------------------------
 * File Module           :       libnice_interface.cpp
 * Description           : 	
+后续可以把音视频流做成map或list(特别是流类型比较多的时候)，
+这样通过streamid进行分发
+本层就可以不关心音频还是视频了交给上层管理
+
+
 * Created               :       2020.01.13.
 * Author                :       Yu Weifeng
 * Function List         : 	
@@ -30,7 +35,7 @@ Libnice::Libnice(char * i_strStunAddr,unsigned int i_dwStunPort,int i_iControlli
 {
     m_ptAgent=NULL;
     m_pRemoteCandidatesList = NULL;
-    m_dwStreamID=0;//
+//    m_dwStreamID=0;
     m_iLibniceSendReadyFlag =0;
 	memset(&m_tLibniceDepData,0,sizeof(T_LibniceDepData));
 	snprintf(m_tLibniceDepData.strStunAddr,sizeof(m_tLibniceDepData.strStunAddr),"%s",i_strStunAddr);
@@ -38,6 +43,8 @@ Libnice::Libnice(char * i_strStunAddr,unsigned int i_dwStunPort,int i_iControlli
 	m_tLibniceDepData.iControlling = i_iControlling;
 
     memset(&m_tLibniceCb,0,sizeof(T_LibniceCb));
+    memset(&m_tVideoStream,0,sizeof(T_StreamInfo));
+    memset(&m_tAudioStream,0,sizeof(T_StreamInfo));
 }
 
 /*****************************************************************************
@@ -97,6 +104,7 @@ int Libnice::LibniceProc()
 	int iRet = -1;
     static GMainLoop *ptLoop=NULL;//
     static GIOChannel* ptStdinIO=NULL;//
+    int inx =0;
 
     m_iLibniceSendReadyFlag = 0;
     memset(&m_tLocalCandidate,0,sizeof(T_LocalCandidate));
@@ -123,16 +131,22 @@ int Libnice::LibniceProc()
 	g_signal_connect(m_ptAgent, "component-state-changed",G_CALLBACK(&Libnice::ComponentStateChanged), this);//
 
 	// Create a new stream with one component
-	m_dwStreamID = nice_agent_add_stream(m_ptAgent, 1);//
-	if (m_dwStreamID == 0)
-		g_error("Failed to add stream");
+    AddVideoStream(m_ptAgent,"video",1);
+    AddAudioStream(m_ptAgent,"audio",1);//防止设置sdp时出错，暂时只是添加不使用
 
 	// Attach to the component to receive the data
 	// Without this call, candidates cannot be gathered
-	nice_agent_attach_recv(m_ptAgent, m_dwStreamID, 1,g_main_loop_get_context (ptLoop), &Libnice::Recv, this);//
+    for (inx = 1; inx <= m_tVideoStream.iNum; inx++)
+    {
+        nice_agent_attach_recv(m_ptAgent, m_tVideoStream.iID, inx, g_main_loop_get_context (ptLoop),&Libnice::RecvVideoData, this);
+    }
+    for (inx = 1; inx <= m_tAudioStream.iNum; inx++)
+    {
+        nice_agent_attach_recv(m_ptAgent, m_tAudioStream.iID, inx, g_main_loop_get_context (ptLoop),&Libnice::RecvAudioData, this);
+    }
 
 	// Start gathering local candidates
-	if (!nice_agent_gather_candidates(m_ptAgent, m_dwStreamID))
+	if (!nice_agent_gather_candidates(m_ptAgent, m_tVideoStream.iID))
 		g_error("Failed to start candidate gathering");
 
 	g_debug("waiting for candidate-gathering-done signal...");
@@ -210,7 +224,7 @@ int Libnice::GetLocalSDP(char * i_strSDP,int i_iSdpLen)
 
 /*****************************************************************************
 -Fuction        : LibniceSetRemoteCredentials
--Description    : LibniceSetRemoteCredentials
+-Description    : 后续区分音视频
 -Input          : 
 -Output         : 
 -Return         : 
@@ -221,13 +235,13 @@ int Libnice::GetLocalSDP(char * i_strSDP,int i_iSdpLen)
 int Libnice::SetRemoteCredentials(char * i_strUfrag,char * i_strPasswd)
 {
 	int iRet = -1;
-    if (i_strUfrag == NULL || i_strPasswd == NULL || m_ptAgent == NULL || m_dwStreamID == 0) 
+    if (i_strUfrag == NULL || i_strPasswd == NULL || m_ptAgent == NULL || m_tVideoStream.iID == 0) 
     {
 		g_message("line must have at least ufrag, password, and one candidate");
 		return iRet;
     }
     
-    if (!nice_agent_set_remote_credentials(m_ptAgent, m_dwStreamID, i_strUfrag, i_strPasswd)) 
+    if (!nice_agent_set_remote_credentials(m_ptAgent, m_tVideoStream.iID, i_strUfrag, i_strPasswd)) 
     {
 		g_message("failed to set remote credentials");
 		return iRet;
@@ -252,7 +266,7 @@ int Libnice::SetRemoteCandidateToGlist(char * i_strCandidate)
     NiceCandidateType ntype;
     char **tokens = NULL;
     unsigned int i=0;
-	if(NULL == i_strCandidate || 0==m_dwStreamID)
+	if(NULL == i_strCandidate || 0==m_tVideoStream.iID)
 	{
         g_message("line must have at least ufrag, password, and one candidate");
         return iRet;
@@ -280,7 +294,7 @@ int Libnice::SetRemoteCandidateToGlist(char * i_strCandidate)
     }    
 	ptCand = nice_candidate_new(ntype);
 	ptCand->component_id = 1;
-	ptCand->stream_id = m_dwStreamID;
+	ptCand->stream_id = m_tVideoStream.iID;
 	ptCand->transport = NICE_CANDIDATE_TRANSPORT_UDP;
 	strncpy(ptCand->foundation, tokens[0], NICE_CANDIDATE_MAX_FOUNDATION);
 	ptCand->foundation[NICE_CANDIDATE_MAX_FOUNDATION - 1] = 0;
@@ -309,7 +323,7 @@ int Libnice::SetRemoteCandidateToGlist(char * i_strCandidate)
 
 /*****************************************************************************
 -Fuction        : LibniceSetRemoteCandidates
--Description    : LibniceSetRemoteCandidates
+-Description    : 后续区分音视频
 -Input          : 
 -Output         : 
 -Return         : 
@@ -325,19 +339,22 @@ int Libnice::SetRemoteCandidates()
 		printf("m_pRemoteCandidatesList null \r\n");
 	    return iRet;
     }
-    if (m_ptAgent == NULL || m_dwStreamID == 0) 
+    if (m_ptAgent == NULL || m_tVideoStream.iID == 0) 
     {
 		printf("m_ptAgent null \r\n");
 		return iRet;
     }
 	// Note: this will trigger the start of negotiation.
-	if (nice_agent_set_remote_candidates(m_ptAgent, m_dwStreamID, 1,m_pRemoteCandidatesList) < 1) 
+	for(int i=1;i<=m_tVideoStream.iNum;i++)
 	{
-		g_message("failed to set remote candidates");
-	}
-	else
-	{
-		iRet=0;
+        if (nice_agent_set_remote_candidates(m_ptAgent, m_tVideoStream.iID, i,m_pRemoteCandidatesList) < 1) 
+        {
+            g_message("failed to set remote candidates");
+        }
+        else
+        {
+            iRet=0;
+        }
 	}
 	if (m_pRemoteCandidatesList != NULL)
 	{
@@ -388,10 +405,11 @@ int Libnice::SetRemoteSDP(char * i_strSDP)
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int Libnice::SendData(char * i_acBuf,int i_iBufLen)
+int Libnice::SendVideoData(char * i_acBuf,int i_iBufLen)
 {
 	int iRet = -1;
-    if( m_ptAgent == NULL || m_dwStreamID == 0 || i_acBuf == NULL) 
+	int i=0
+    if( m_ptAgent == NULL || m_tVideoStream.iID== 0 || i_acBuf == NULL) 
     {
 		printf("LibniceSendData m_ptAgent null \r\n");
 		return iRet;
@@ -401,7 +419,41 @@ int Libnice::SendData(char * i_acBuf,int i_iBufLen)
 		printf("LibniceSendReady err \r\n");
 		return iRet;
     }
-    iRet = nice_agent_send(m_ptAgent, m_dwStreamID, 1, i_iBufLen, i_acBuf);
+    for (i = 1; i <= m_tVideoStream.iNum; i++)
+    {
+        iRet = nice_agent_send(m_ptAgent, m_tVideoStream.iID, i, i_iBufLen, i_acBuf);
+    }
+    return iRet;
+}
+
+/*****************************************************************************
+-Fuction        : LibniceSendData
+-Description    : LibniceSendData
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+int Libnice::SendAudioData(char * i_acBuf,int i_iBufLen)
+{
+	int iRet = -1;
+	int i=0
+    if( m_ptAgent == NULL || m_tAudioStream.iID== 0 || i_acBuf == NULL) 
+    {
+		printf("LibniceSendData m_ptAgent null \r\n");
+		return iRet;
+    }
+    if(m_iLibniceSendReadyFlag == 0) 
+    {
+		printf("LibniceSendReady err \r\n");
+		return iRet;
+    }
+    for (i = 1; i <= m_tAudioStream.iNum; i++)
+    {
+        iRet = nice_agent_send(m_ptAgent, m_tAudioStream.iID, i, i_iBufLen, i_acBuf);
+    }
     return iRet;
 }
 
@@ -474,7 +526,7 @@ void Libnice::CandidateGatheringDone(NiceAgent *i_ptAgent, guint i_dwStreamID,gp
 
 void Libnice::NewSelectPair(NiceAgent *agent, guint _stream_id,guint component_id, gchar *lfoundation,gchar *rfoundation, gpointer data)
 {//此处开始dtls握手
-	g_debug("SIGNAL: selected pair %s %s", lfoundation, rfoundation);
+	printf("SIGNAL: selected pair %s %s\r\n", lfoundation, rfoundation);
     Libnice *pLibnice=NULL;
     pLibnice = (Libnice *)data;
 	if (NULL != pLibnice)
@@ -503,7 +555,7 @@ void Libnice::ComponentStateChanged(NiceAgent *agent, guint _stream_id,guint com
 	}
 }
 
-void Libnice::Recv(NiceAgent *agent, guint _stream_id, guint component_id,guint len, gchar *buf, gpointer data)
+void Libnice::RecvVideoData(NiceAgent *agent, guint _stream_id, guint component_id,guint len, gchar *buf, gpointer data)
 {
     Libnice *pLibnice=NULL;
     pLibnice = (Libnice *)data;
@@ -518,8 +570,59 @@ void Libnice::Recv(NiceAgent *agent, guint _stream_id, guint component_id,guint 
 	//fflush(stdout);
 }
 
+void Libnice::RecvAudioData(NiceAgent *agent, guint _stream_id, guint component_id,guint len, gchar *buf, gpointer data)
+{
+	printf("RecvAudioData:%d\r\n", len);
+	//fflush(stdout);
+}
 
+int Libnice::AddVideoStream(NiceAgent *i_ptNiceAgent,char *i_strName, int i_iNum)
+{
+    int iRet = -1;
+	if (NULL != i_ptNiceAgent||NULL != i_strName ||i_iNum <1)
+    {
+        printf("Libnice: AddVideoStream NULL:%d\r\n",i_iNum);
+        return iRet;
+    }
+    memset(&m_tVideoStream,0,sizeof(T_StreamInfo));
+    snprintf(m_tVideoStream.strName,sizeof(m_tVideoStream.strName),"%s",i_strName);
+    m_tVideoStream.iNum=i_iNum;
+    m_tVideoStream.iID = nice_agent_add_stream(i_ptNiceAgent, m_tVideoStream.iNum);
+    if (m_tVideoStream.iID == 0)
+    {
+        printf("Libnice: AddVideoStream err:%d\r\n",i_iNum);
+    }
+    else
+    {
+        nice_agent_set_stream_name(i_ptNiceAgent, m_tVideoStream.iID, m_tVideoStream.strName);
+        iRet=0;
+    }
+    return iRet;
+}
 
+int Libnice::AddAudioStream(NiceAgent *i_ptNiceAgent,char *i_strName, int i_iNum)
+{
+    int iRet = -1;
+	if (NULL != i_ptNiceAgent||NULL != i_strName ||i_iNum <1)
+    {
+        printf("Libnice: AddAudioStream NULL:%d\r\n",i_iNum);
+        return iRet;
+    }
+    memset(&m_tAudioStream,0,sizeof(T_StreamInfo));
+    snprintf(m_tAudioStream.strName,sizeof(m_tAudioStream.strName),"%s",i_strName);
+    m_tAudioStream.iNum=i_iNum;
+    m_tAudioStream.iID = nice_agent_add_stream(i_ptNiceAgent, m_tAudioStream.iNum);
+    if (m_tAudioStream.iID == 0)
+    {
+        printf("Libnice: AddAudioStream err:%d\r\n",i_iNum);
+    }
+    else
+    {
+        nice_agent_set_stream_name(i_ptNiceAgent, m_tAudioStream.iID, m_tAudioStream.strName);
+        iRet=0;
+    }
+    return iRet;
+}
 
 
 
