@@ -49,7 +49,8 @@ public:
 	static int SendDataOutCb(char * i_acData,int i_iLen,void * pArg);
 private:
     int GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int i_iSdpMaxLen);
-
+    static bool IsDtls(char *buf);
+    
     Libnice m_Libnice;
 	Srtp m_Srtp;
     DtlsOnlyHandshake * m_pDtlsOnlyHandshake;

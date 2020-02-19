@@ -311,7 +311,10 @@ int WebRTC::GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int i_iSd
     struct timeval tCreateTime;
     T_LocalCandidate tLocalCandidate;
     char strLocalFingerprint[160];
+    char strCandidate[128];
     const char *strStreamType="video";
+    string strSdpFmt("");
+    int i=0;
     
     if (o_strSDP == NULL || NULL==i_ptVideoInfo || i_iSdpMaxLen <= 0) 
     {
@@ -329,7 +332,7 @@ int WebRTC::GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int i_iSd
     gettimeofday(&tCreateTime, NULL);
     memset(strLocalFingerprint,0,sizeof(strLocalFingerprint));
     m_pDtlsOnlyHandshake->GetLocalFingerprint(strLocalFingerprint,sizeof(strLocalFingerprint));
-    iRet=snprintf(o_strSDP,i_iSdpMaxLen,"v=0\r\n"
+    strSdpFmt.assign("v=0\r\n"
         "o=- %ld%06ld %d IN IP4 %s\r\n"//o=<username><session id> <version> <network type> <address type><address> Origin ,给定了会话的发起者信息
         "s=ywf webrtc\r\n"//s=<sessionname> ;给定了Session Name
         "t=0 0\r\na=group:BUNDLE %s\r\n"//t=<start time><stop time> ;Time
@@ -349,19 +352,25 @@ int WebRTC::GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int i_iSd
         "a=ssrc:%ld cname:ywf%s\r\n"
         "a=ssrc:%ld msid:janus janusa0\r\n"
         "a=ssrc:%ld mslabel:janus\r\n"
-        "a=ssrc:%ld label:janusa0\r\n"
-        "a=%s\r\n",
-        tCreateTime.tv_sec,tCreateTime.tv_usec,1,tLocalCandidate.strIP,
+        "a=ssrc:%ld label:janusa0\r\n");
+    for(i=0;i<tLocalCandidate.iCurCandidateNum;i++)
+    {//iCurCandidateNum目前为1个，多个也是失败
+        memset(strCandidate,0,sizeof(strCandidate));
+        snprintf(strCandidate,sizeof(strCandidate),"a=%s\r\n",tLocalCandidate.strCandidateData[i]);
+        strSdpFmt.append(strCandidate);
+    }
+
+    iRet=snprintf(o_strSDP,i_iSdpMaxLen,strSdpFmt.c_str(),
+        tCreateTime.tv_sec,tCreateTime.tv_usec,1,tLocalCandidate.strIP[i-1],
         strStreamType,
         strStreamType,i_ptVideoInfo->wPortNumForSDP,i_ptVideoInfo->ucRtpPayloadType,
-        tLocalCandidate.strIP,
+        tLocalCandidate.strIP[i-1],//"0.0.0.0"还是失败，多个也是失败
         strStreamType,
         tLocalCandidate.strUfrag, 
         tLocalCandidate.strPassword,
         strLocalFingerprint,
         i_ptVideoInfo->ucRtpPayloadType,i_ptVideoInfo->pstrFormatName,i_ptVideoInfo->dwTimestampFrequency,
-        tCreateTime.tv_sec, strStreamType,tCreateTime.tv_sec, tCreateTime.tv_sec, tCreateTime.tv_sec,
-        tLocalCandidate.strCandidateData);
+        tCreateTime.tv_sec, strStreamType,tCreateTime.tv_sec, tCreateTime.tv_sec, tCreateTime.tv_sec);
 
 	return iRet;
 }
@@ -401,11 +410,14 @@ void WebRTC::HandshakeCb(void * pArg)
 void WebRTC::HandleRecvDataCb(char * i_acData,int i_iLen,void * pArg)
 {
     DtlsOnlyHandshake *pDtlsOnlyHandshake=NULL;
-    if(NULL!=pArg)//防止该静态函数对本对象的依赖,
-    {//所以不直接用m_pDtlsOnlyHandshake->Handshake();
-        pDtlsOnlyHandshake = (DtlsOnlyHandshake *)pArg;
-        pDtlsOnlyHandshake->HandleRecvData(i_acData,i_iLen);
-        
+    if (IsDtls(i_acData))
+    {
+        if(NULL!=pArg)//防止该静态函数对本对象的依赖,
+        {//所以不直接用m_pDtlsOnlyHandshake->Handshake();
+            pDtlsOnlyHandshake = (DtlsOnlyHandshake *)pArg;
+            pDtlsOnlyHandshake->HandleRecvData(i_acData,i_iLen);
+            
+        }
     }
 }
 
@@ -430,6 +442,20 @@ int WebRTC::SendDataOutCb(char * i_acData,int i_iLen,void * pArg)
     }
 }
 
+/*****************************************************************************
+-Fuction        : IsDtls
+-Description    : IsDtls
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+bool WebRTC::IsDtls(char *buf) 
+{
+    return ((*buf >= 20) && (*buf <= 64));
+}
 
 
 
