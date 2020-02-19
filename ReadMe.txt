@@ -25,7 +25,7 @@
 	./webrtc StunIP StunPort SelfName VideoFile
 	eg:
 	./webrtc 192.168.0.103 8888 ywf555 sintel.h264
-
+ 
 	
 ******************************************************************************
 目前实现的是客户端，并且是answer端
@@ -67,7 +67,8 @@ iRet=m_Libnice.SetRemoteCandidateAndSDP(acRemoteCandidate);//
 结果还是：
 SIGNAL: state changed 1 1 connecting[2]
 SIGNAL: state changed 1 1 failed[5]
-可能SDP不完整？
-//或者其他阿里云等待试试
-判断dtls包
+//可能SDP不完整，补充了所有candidate没用
+//或者其他阿里云等待试试，webrtc例子是好的
+//判断dtls包，加了
 
+试试私有静态成员函数是否能被直接访问

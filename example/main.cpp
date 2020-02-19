@@ -173,10 +173,11 @@ int main(int argc, char* argv[])
                     if(pWebRTC->GetSendReadyFlag() == 0)
                     {
                         eWebRtcStatus=WEBRTC_SEND_RTP;
+                        printf("WEBRTC_SEND_RTP......\r\n");
                     }
                     else
                     {
-                        printf("WEBRTC_SEND_READY......\r\n");
+                        //printf("WEBRTC_SEND_READY......\r\n");
                     }
                     break;
                 }

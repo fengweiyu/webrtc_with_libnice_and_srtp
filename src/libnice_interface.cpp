@@ -594,8 +594,8 @@ void Libnice::CandidateGatheringDone(NiceAgent *i_ptAgent, guint i_dwStreamID,gp
     snprintf(pLibnice->m_tLocalCandidate.strPassword,sizeof(pLibnice->m_tLocalCandidate.strPassword),"%s",strLocalPassword);
 	for (item = cands; item; item = item->next) 
 	{
-		NiceCandidate *c = (NiceCandidate *)item->data;
-
+		NiceCandidate *c = (NiceCandidate *)item->data;//从第一个开始去candidate列表内容
+        //NiceCandidate *c = (NiceCandidate *)g_slist_nth(cands, 0)->data;//取列表第一个不一定是最好的那个
 		nice_address_to_string(&c->addr, ipaddr);
 
 		// RFC 5245
