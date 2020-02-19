@@ -395,6 +395,7 @@ int Libnice::SaveRemoteSDP(char * i_strSDP)
 		return iRet;
     }
     m_strRemoteSDP.assign(i_strSDP);
+    //printf("##########SaveRemoteSDP:%s ##########\r\n",m_strRemoteSDP.c_str());
     iRet = 0;
 	return iRet;
 }
@@ -433,7 +434,7 @@ int Libnice::SetRemoteCandidateAndSDP(char * i_strCandidate)
 
         if (!nice_agent_set_remote_credentials(m_ptAgent, m_tVideoStream.iID, ufrag, pwd)) 
         {
-            g_message("failed to set remote credentials");
+            printf("failed to set remote credentials\r\n");
         }
         else
         {
@@ -509,11 +510,11 @@ int Libnice::SendVideoData(char * i_acBuf,int i_iBufLen)
 		printf("LibniceSendData m_ptAgent null \r\n");
 		return iRet;
     }
-    if(m_iLibniceSendReadyFlag == 0) 
-    {
+    /*if(m_iLibniceSendReadyFlag == 0) 
+    {//发送标记由上层控制，因为发送协商报文也是这个接口但是还不是ready
 		printf("LibniceSendReady err \r\n");
 		return iRet;
-    }
+    }*/
     for (i = 1; i <= m_tVideoStream.iNum; i++)
     {
         iRet = nice_agent_send(m_ptAgent, m_tVideoStream.iID, i, i_iBufLen, i_acBuf);
@@ -607,7 +608,10 @@ void Libnice::CandidateGatheringDone(NiceAgent *i_ptAgent, guint i_dwStreamID,gp
 		c->foundation,c->component_id,transport_name[c->transport],c->priority,
 		ipaddr,nice_address_get_port(&c->addr),m_astrCandidateTypeName[c->type]);
         snprintf(pLibnice->m_tLocalCandidate.strIP,sizeof(pLibnice->m_tLocalCandidate.strIP),"%s",ipaddr);
-        break;//暂时取一个即可
+        if(NULL!= strstr(pLibnice->m_tLocalCandidate.strCandidateData,"udp")&&NULL!= strstr(pLibnice->m_tLocalCandidate.strCandidateData,"."))
+        {//后续可以优化为全部取出来放到数组中,sdp中的ip填0.0.0.0
+            break;//或者试试(NiceCandidate *)g_slist_nth(cands, 0)->data;可能是最优路径
+        }
 	}
 	printf("CandidateGatheringDone:%s ,%s %s\r\n", pLibnice->m_tLocalCandidate.strCandidateData,strLocalUfrag, strLocalPassword);
 	pLibnice->m_tLocalCandidate.iGatheringDoneFlag = 1;
@@ -642,7 +646,7 @@ void Libnice::ComponentStateChanged(NiceAgent *agent, guint _stream_id,guint com
 {
 	static const gchar *state_name[] = {"disconnected", "gathering", "connecting","connected", "ready", "failed"};
     
-	g_debug("SIGNAL: state changed %d %d %s[%d]\n",_stream_id, component_id, state_name[state], state);
+	printf("SIGNAL: state changed %d %d %s[%d]\n",_stream_id, component_id, state_name[state], state);
     Libnice *pLibnice=NULL;
     pLibnice = (Libnice *)data;
 	if (state == NICE_COMPONENT_STATE_READY) 
