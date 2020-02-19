@@ -13,10 +13,10 @@
 #define LIBNICE_INTERFACE_H
 
 #include <string>
-#include <ctype.h>
-#include <agent.h>
+#include "ctype.h"
+#include "agent.h"
 
-#include <gio/gnetworking.h>
+#include "gio/gnetworking.h"
 
 using std::string;
 

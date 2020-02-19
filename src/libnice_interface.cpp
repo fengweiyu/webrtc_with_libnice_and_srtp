@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include "debug.h"
 
 const char * Libnice::m_astrCandidateTypeName[] = {"host", "srflx", "prflx", "relay"};
 int Libnice::m_iLibniceSendReadyFlag = 0;//0不可发送,1准备好通道可以发送
@@ -113,6 +114,7 @@ int Libnice::LibniceProc()
 	ptLoop = g_main_loop_new(NULL, FALSE);//
 	ptStdinIO = g_io_channel_unix_new(fileno(stdin));//
 
+    //nice_debug_enable(1);
 	// Create the nice agent
 	m_ptAgent = nice_agent_new(g_main_loop_get_context (ptLoop),NICE_COMPATIBILITY_RFC5245);
 	if (m_ptAgent == NULL)
