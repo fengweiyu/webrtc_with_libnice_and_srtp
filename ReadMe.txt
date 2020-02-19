@@ -58,5 +58,5 @@ libnice后续可以把音视频流做成map或list(特别是流类型比较多�
 webrtc对方sdp中没有包含candidate,所以要组合offer和candidate两条消息
 
 
-
+收集到本地信息再登录这样应该更安全，或者增加等待操作。
 
