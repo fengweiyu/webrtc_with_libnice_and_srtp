@@ -135,7 +135,7 @@ int WebRTC::HandleOfferMsg(char * i_strOfferMsg)
     return iRet;
 }
 /*****************************************************************************
--Fuction        : HandleOfferMsg
+-Fuction        : HandleCandidateMsg
 -Description    : Offer消息必须是是在Candidate之前的，有这样的时序要求
 这是webrtc抓包发现的，所以不符合这个时序则返回错误
 -Input          : 
@@ -183,7 +183,7 @@ int WebRTC::HandleCandidateMsg(char * i_strCandidateMsg,T_VideoInfo *i_ptVideoIn
     }
     else
     {
-        iRet=m_Libnice.SetRemoteCandidateAndSDP(acRemoteCandidate);
+        iRet=m_Libnice.SetRemoteCandidateAndSDP(acRemoteCandidate);//
         memset(acLocalSDP,0,sizeof(acLocalSDP));
         //m_Libnice.GetLocalSDP(acLocalSDP,sizeof(acLocalSDP));//local sdp缺少信息只好自己组包
         GenerateLocalSDP(i_ptVideoInfo,acLocalSDP,sizeof(acLocalSDP));
@@ -234,6 +234,28 @@ int WebRTC::SendProtectedRtp(char * i_acRtpBuf,int i_iRtpBufLen)
 
     return iRet;
 }
+/*****************************************************************************
+-Fuction        : GetSendReadyFlag
+-Description    : -1不可发送,0准备好通道可以发送
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+int WebRTC::GetSendReadyFlag()
+{
+    int iRet = -1;
+    T_PolicyInfo tPolicyInfo;
+
+    if(0!= m_Libnice.GetSendReadyFlag())
+    {
+        memset(&tPolicyInfo,0,sizeof(T_PolicyInfo));
+        iRet=m_pDtlsOnlyHandshake->GetPolicyInfo(&tPolicyInfo);//获取成功表示通道协商成功了
+    }
+    return iRet;
+}
 
 /*****************************************************************************
 -Fuction        : GenerateLocalSDP
@@ -248,7 +270,6 @@ int WebRTC::SendProtectedRtp(char * i_acRtpBuf,int i_iRtpBufLen)
 int WebRTC::GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int i_iSdpMaxLen)
 {
 	int iRet=-1;
-	char *strSDP = NULL;
     struct timeval tCreateTime;
     T_LocalCandidate tLocalCandidate;
     char strLocalFingerprint[160];

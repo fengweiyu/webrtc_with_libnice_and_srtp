@@ -32,6 +32,7 @@ typedef enum WebRtcStatus
     WEBRTC_INIT,
     WEBRTC_HANDLE_OFFER,
     WEBRTC_HANDLE_CANDIDATE,
+    WEBRTC_SEND_READY,//等待通道建立
     WEBRTC_SEND_RTP,
     WEBRTC_EXIT,
 }E_WebRtcStatus;
@@ -99,7 +100,7 @@ int main(int argc, char* argv[])
             {
                 case WEBRTC_INIT:
                 {
-                    iPacketNum = pRtpInterface->GetRtpData(ppbPacketBuf,aiEveryPacketLen,WEBRTC_RTP_MAX_PACKET_SIZE,WEBRTC_RTP_MAX_PACKET_NUM);
+                    iPacketNum = pRtpInterface->GetRtpData(ppbPacketBuf,aiEveryPacketLen,WEBRTC_RTP_MAX_PACKET_SIZE,WEBRTC_RTP_MAX_PACKET_NUM);//第一次会失败
                     if(pSignalingInf->Login(strSeverIp,dwPort,argv[3])==0)
                     {
                         eWebRtcStatus=WEBRTC_HANDLE_OFFER;
@@ -149,7 +150,7 @@ int main(int argc, char* argv[])
                         {
                             if(0==pSignalingInf->SendAnswerMsg(iPeerId,acAnswerMsg,strlen(acAnswerMsg)))
                             {
-                                eWebRtcStatus=WEBRTC_SEND_RTP;
+                                eWebRtcStatus=WEBRTC_SEND_READY;
                             }
                             else
                             {
@@ -167,6 +168,18 @@ int main(int argc, char* argv[])
                     }
                     break;
                 }
+                case WEBRTC_SEND_READY:
+                {
+                    if(pWebRTC->GetSendReadyFlag() == 0)
+                    {
+                        eWebRtcStatus=WEBRTC_SEND_RTP;
+                    }
+                    else
+                    {
+                        printf("WEBRTC_SEND_READY......\r\n");
+                    }
+                    break;
+                }
                 
                 case WEBRTC_SEND_RTP:
                 {
@@ -177,13 +190,13 @@ int main(int argc, char* argv[])
                             pWebRTC->SendProtectedRtp((char *)ppbPacketBuf[i], aiEveryPacketLen[i]);
                         }
                         iPacketNum = -1;
-                        iPacketNum = pRtpInterface->GetRtpData(ppbPacketBuf,aiEveryPacketLen,WEBRTC_RTP_MAX_PACKET_SIZE,WEBRTC_RTP_MAX_PACKET_NUM);
                     }
                     else
                     {
                         printf("pRtpInterface->GetRtpData err\r\n");
                         eWebRtcStatus=WEBRTC_SEND_RTP;
                     }
+                    iPacketNum = pRtpInterface->GetRtpData(ppbPacketBuf,aiEveryPacketLen,WEBRTC_RTP_MAX_PACKET_SIZE,WEBRTC_RTP_MAX_PACKET_NUM);
                     break;
                 }
                 
