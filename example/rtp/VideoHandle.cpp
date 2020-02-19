@@ -45,8 +45,11 @@ VideoHandle::VideoHandle()
 ******************************************************************************/
 VideoHandle::~VideoHandle()
 {
-	m_pVideoHandle =NULL;
-
+    if(NULL !=m_pVideoHandle)
+    {
+        delete m_pVideoHandle;
+        m_pVideoHandle =NULL;
+    }
 }
 
 /*****************************************************************************
