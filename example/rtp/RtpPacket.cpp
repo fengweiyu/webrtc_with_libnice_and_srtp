@@ -124,7 +124,7 @@ int RtpPacket :: GenerateRtpHeader(T_RtpPacketParam *i_ptParam,T_RtpHeader *o_pt
 int RtpPacket :: Packet(unsigned char *i_pbFrameBuf,int i_iFrameLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,T_RtpPacketParam *i_ptParam)
 {
     int iRet=FALSE;
-	if (!i_pbFrameBuf || i_iFrameLen <= 0 || !o_ppPackets || !o_aiEveryPacketLen || NULL == m_pRtpPacket)
+	if (!i_pbFrameBuf || i_iFrameLen <= 0 || !o_ppPackets || !o_aiEveryPacketLen)
     {
         cout<<"Packet err NULL"<<endl;
     }

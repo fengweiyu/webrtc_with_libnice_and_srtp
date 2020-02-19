@@ -30,7 +30,7 @@ using std::endl;
 ******************************************************************************/
 VideoHandle::VideoHandle()
 {
-	m_pVideoHandle =NULL;
+	//m_pVideoHandle =NULL;//Init中已经new了这里就不再null，后续优化
 }
 
 /*****************************************************************************
@@ -72,7 +72,9 @@ int VideoHandle::Init(char *i_strPath)
         {
             m_pVideoHandle=new H264Handle();
             if(NULL !=m_pVideoHandle)
+            {
                 iRet=m_pVideoHandle->Init(i_strPath);
+            }
         }
         else
         {
@@ -99,6 +101,10 @@ int VideoHandle::GetNextVideoFrame(unsigned char *o_pbVideoBuf,int *o_iVideoBufS
     if(NULL !=m_pVideoHandle)
     {
         iRet=m_pVideoHandle->GetNextVideoFrame(o_pbVideoBuf,o_iVideoBufSize,i_iBufMaxSize);
+    }
+    else
+    {
+        cout<<"VideoHandle::GetNextVideoFrame m_pVideoHandle NULL"<<endl;//
     }
 	return iRet;
 }
@@ -403,6 +409,7 @@ int H264Handle::FindH264Nalu(unsigned char *i_pbVideoBuf,int i_iVideoBufLen,unsi
         if(NULL != pbNaluStartPos && FALSE==iRet)
         {
             *o_iNaluLen = (pbVideoBuf - pbNaluStartPos + iVideoBufLen);//整个buf里就一个nalu的情况
+            *o_ppbNaluStartPos=pbNaluStartPos;
             iRet=TRUE;
         }
     }
