@@ -133,7 +133,7 @@ int peerconnection_client :: get_peer_sdp(char *o_acRecvBuf,int *o_piRecvLen,int
 {
     int iRet = -1;
     char strURL[128];
-    char acRecvBuf[4*1024];
+    char acRecvBuf[6*1024];
     int iRecvLen=0;
     const char * strHttpBodyFlag = "\r\n\r\n";
     const char * strPeerIdFlag = "Pragma: ";
@@ -149,6 +149,7 @@ int peerconnection_client :: get_peer_sdp(char *o_acRecvBuf,int *o_piRecvLen,int
     snprintf(strURL,sizeof(strURL),"/wait?peer_id=%d",m_iMyId);
     if(0==m_pHttpClient->Send(HTTP_METHOD_GET,strURL,NULL,0))
     {
+        memset(acRecvBuf,0,sizeof(acRecvBuf));
         if(0==m_pHttpClient->Recv(acRecvBuf,&iRecvLen,sizeof(acRecvBuf)))
         {
             pBody = strstr(acRecvBuf,strHttpBodyFlag);
@@ -159,7 +160,9 @@ int peerconnection_client :: get_peer_sdp(char *o_acRecvBuf,int *o_piRecvLen,int
                 pPeerId = strstr(acRecvBuf,strPeerIdFlag);
                 if(NULL != pPeerId)
                 {
-                    iRet = atoi(pPeerId+strlen(pPeerId));
+                    iRet = atoi(pPeerId+strlen(strPeerIdFlag));
+                    //printf("************peerconnection_client :: get_peer_sdp:%s**********\r\n",acRecvBuf);
+                    
                 }
             }
         }
