@@ -62,9 +62,12 @@ webrtc对方sdp中没有包含candidate,所以要组合offer和candidate两条�
 
 //m_pVideoHandle =NULL;//Init顺序在这之后，按道理可以去掉注释
 
-
-
-
-
-
+//提前发回应然后再：
+iRet=m_Libnice.SetRemoteCandidateAndSDP(acRemoteCandidate);//
+结果还是：
+SIGNAL: state changed 1 1 connecting[2]
+SIGNAL: state changed 1 1 failed[5]
+可能SDP不完整？
+//或者其他阿里云等待试试
+判断dtls包
 

@@ -42,7 +42,8 @@ public:
     int HandleCandidateMsg(char * i_strCandidateMsg,T_VideoInfo *i_ptVideoInfo,char * o_strAnswerMsg,int i_iAnswerMaxLen);
     int GetSendReadyFlag();
     int SendProtectedRtp(char * i_acRtpBuf,int i_iRtpBufLen);
-
+    int GetAnswerMsg(T_VideoInfo *i_ptVideoInfo,char * o_strAnswerMsg,int i_iAnswerMaxLen);
+    
     static void HandshakeCb(void * pArg);//放到上层的目的是为了底层模块之间不要相互依赖
     static void HandleRecvDataCb(char * i_acData,int i_iLen,void * pArg);//后续可以改为private试试
 	static int SendDataOutCb(char * i_acData,int i_iLen,void * pArg);

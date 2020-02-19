@@ -6,7 +6,8 @@ SET(CMAKE_TOOLCHAIN_FILE "build/ToolChain.cmake")
 #SET(CMAKE_CXX_COMPILER "g++")
 
 project (WebRTC)
- 
+SET(USE_STATIC_LIB_LINKAGE ON)
+
 #SET(CMAKE_C_FLAGS "-g")
 SET(CMAKE_CXX_FLAGS "-g")
 

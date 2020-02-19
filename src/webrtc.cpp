@@ -200,6 +200,44 @@ int WebRTC::HandleCandidateMsg(char * i_strCandidateMsg,T_VideoInfo *i_ptVideoIn
     }
     return iRet;
 }
+
+/*****************************************************************************
+-Fuction        : GetAnswerMsg
+-Description    : 
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+int WebRTC::GetAnswerMsg(T_VideoInfo *i_ptVideoInfo,char * o_strAnswerMsg,int i_iAnswerMaxLen)
+{
+    int iRet = -1;
+    cJSON * ptNode = NULL;
+    char acLocalSDP[5*1024];
+    
+    if(i_iAnswerMaxLen <= 0||NULL == o_strAnswerMsg ||NULL==i_ptVideoInfo)
+    {
+        printf("GetAnswerMsg NULL \r\n");
+        return iRet;
+    }
+    memset(acLocalSDP,0,sizeof(acLocalSDP));
+    //m_Libnice.GetLocalSDP(acLocalSDP,sizeof(acLocalSDP));//local sdp缺少信息只好自己组包
+    iRet=GenerateLocalSDP(i_ptVideoInfo,acLocalSDP,sizeof(acLocalSDP));
+    cJSON * root = cJSON_CreateObject();
+    cJSON_AddStringToObject(root,"sdp",acLocalSDP);
+    cJSON_AddStringToObject(root,"type","answer");
+    char * buf = cJSON_PrintUnformatted(root);
+    if(buf)
+    {
+        snprintf(o_strAnswerMsg,i_iAnswerMaxLen,"%s",buf);
+        free(buf);
+    }
+    cJSON_Delete(root);
+    return iRet;
+}
+
 /*****************************************************************************
 -Fuction        : SendProtectedRtp
 -Description    : SendProtectedRtp
