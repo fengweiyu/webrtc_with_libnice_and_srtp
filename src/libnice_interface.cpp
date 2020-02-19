@@ -572,7 +572,7 @@ void Libnice::CandidateGatheringDone(NiceAgent *i_ptAgent, guint i_dwStreamID,gp
 {
 	g_debug("SIGNAL candidate gathering done\n");
     Libnice *pLibnice=NULL;
-
+    int i=0;
 	// Candidate gathering is done. Send our local candidates on stdout
 	int iRet = -1;
 	gchar *strLocalUfrag = NULL;
@@ -589,6 +589,7 @@ void Libnice::CandidateGatheringDone(NiceAgent *i_ptAgent, guint i_dwStreamID,gp
     pLibnice =(Libnice *)pData;
 	if (pLibnice == NULL)
 		goto end;
+	memset(&pLibnice->m_tLocalCandidate,0,sizeof(T_LocalCandidate));	
     snprintf(pLibnice->m_tLocalCandidate.strUfrag,sizeof(pLibnice->m_tLocalCandidate.strUfrag),"%s",strLocalUfrag);
     snprintf(pLibnice->m_tLocalCandidate.strPassword,sizeof(pLibnice->m_tLocalCandidate.strPassword),"%s",strLocalPassword);
 	for (item = cands; item; item = item->next) 
@@ -603,17 +604,24 @@ void Libnice::CandidateGatheringDone(NiceAgent *i_ptAgent, guint i_dwStreamID,gp
 		// [raddr <connection-address>] [rport <port>]
 		// *(SP extension-att-name SP extension-att-value)
 		//"candidate:3442447574 1 udp 2122260223 192.168.0.170 54653 typ host generation 0 ufrag gX6M network-id 1"
-		snprintf(pLibnice->m_tLocalCandidate.strCandidateData,sizeof(pLibnice->m_tLocalCandidate.strCandidateData),
+		snprintf(pLibnice->m_tLocalCandidate.strCandidateData[i],sizeof(pLibnice->m_tLocalCandidate.strCandidateData[i]),
 		"candidate:%s %u %s %u %s %u typ %s",
 		c->foundation,c->component_id,transport_name[c->transport],c->priority,
 		ipaddr,nice_address_get_port(&c->addr),m_astrCandidateTypeName[c->type]);
-        snprintf(pLibnice->m_tLocalCandidate.strIP,sizeof(pLibnice->m_tLocalCandidate.strIP),"%s",ipaddr);
-        if(NULL!= strstr(pLibnice->m_tLocalCandidate.strCandidateData,"udp")&&NULL!= strstr(pLibnice->m_tLocalCandidate.strCandidateData,"."))
+        snprintf(pLibnice->m_tLocalCandidate.strIP[i],sizeof(pLibnice->m_tLocalCandidate.strIP[i]),"%s",ipaddr);
+        /*i++;
+        if(i>=MAX_CANDIDATE_NUM)
+        {
+            break;
+        }*/
+        if(NULL!= strstr(pLibnice->m_tLocalCandidate.strCandidateData[i],"udp")&&NULL!= strstr(pLibnice->m_tLocalCandidate.strCandidateData[i],"."))
         {//后续可以优化为全部取出来放到数组中,sdp中的ip填0.0.0.0
+            i=1;
             break;//或者试试(NiceCandidate *)g_slist_nth(cands, 0)->data;可能是最优路径
         }
 	}
-	printf("CandidateGatheringDone:%s ,%s %s\r\n", pLibnice->m_tLocalCandidate.strCandidateData,strLocalUfrag, strLocalPassword);
+	pLibnice->m_tLocalCandidate.iCurCandidateNum=i;
+	printf("CandidateGatheringDone:%d ,%s %s\r\n",pLibnice->m_tLocalCandidate.iCurCandidateNum,strLocalUfrag, strLocalPassword);
 	pLibnice->m_tLocalCandidate.iGatheringDoneFlag = 1;
 	iRet = 0;
 
@@ -726,7 +734,6 @@ int Libnice::AddAudioStream(NiceAgent *i_ptNiceAgent,char *i_strName, int i_iNum
     }
     return iRet;
 }
-
 
 
 
