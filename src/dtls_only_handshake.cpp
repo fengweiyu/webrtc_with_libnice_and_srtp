@@ -262,6 +262,7 @@ void DtlsOnlyHandshake::Handshake()
 ******************************************************************************/
 void DtlsOnlyHandshake::HandleRecvData(char *buf,int len)
 {        
+    printf("DTLS stuff for HandleRecvData\n");
     if(!m_ptSsl || !m_ptReadBio) 
     {
         printf("No DTLS stuff for HandleRecvData\n");
@@ -393,7 +394,7 @@ int DtlsOnlyHandshake::GetPolicyInfo(T_PolicyInfo *i_ptPolicyInfo)
 	}
 	if(0 == m_iShakeEndFlag) 
 	{
-	    printf("GetPolicyInfo err\r\n");
+	    //printf("GetPolicyInfo err\r\n");
         return iRet;
 	}
     memcpy(i_ptPolicyInfo,&m_tPolicyInfo,sizeof(T_PolicyInfo));

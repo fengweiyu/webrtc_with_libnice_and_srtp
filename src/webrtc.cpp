@@ -433,13 +433,15 @@ void WebRTC::HandleRecvDataCb(char * i_acData,int i_iLen,void * pArg)
 ******************************************************************************/
 int WebRTC::SendDataOutCb(char * i_acData,int i_iLen,void * pArg)
 {
+    int iRet=-1;
     Libnice *pLibnice=NULL;
     if(NULL!=pArg)//防止该静态函数对本对象的依赖,
     {//所以不直接用m_pDtlsOnlyHandshake->Handshake();
         pLibnice = (Libnice *)pArg;
-        pLibnice->SendVideoData(i_acData,i_iLen);
-        
+        iRet=pLibnice->SendVideoData(i_acData,i_iLen);
     }
+    printf("WebRTC::SendDataOutCb:%d\r\n",iRet);
+    return iRet;
 }
 
 /*****************************************************************************
