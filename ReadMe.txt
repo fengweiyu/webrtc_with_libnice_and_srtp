@@ -28,7 +28,7 @@
  
 	
 ******************************************************************************
-目前实现的是客户端，并且是answer端
+目前实现的是客户端，并且是answer端，作为answer必须对方offer支持h264
 	
 lib目录是已经编译(编译安装)好的
 #第三方库安装目录要带版本号(lib目录下要，third_lib由于有源码所以不要)，后续优化
@@ -91,6 +91,8 @@ response的目的IP和端口等于Binding Request的源IP和端口
 
 (peerconnection.cc:5750): The order of m-lines in answer doesn't match order in offer.
 vp8试试
+sdp是双向选择(offer表示我支持这些格式，answer就得在里面选，收发格式应该要一致)
+answer信息不仅是自己支持(推流)的格式(还应该是对方支持的格式)
 
 (port.cc:1297): Received conflicting role from the peer.
 answer controlled ，offer controlling
