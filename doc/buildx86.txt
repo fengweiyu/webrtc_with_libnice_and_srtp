@@ -219,7 +219,45 @@ GLIB_CFLAGS=-I/work/workspace/installx86/glib_2.48.0/include/glib-2.0 GLIB_LIBS=
 make
 make install
 
+./configure --prefix=/work/workspace/installx86/libnice_debug0.1.16 \
+GLIB_CFLAGS=-I/work/workspace/installx86/glib_2.48.0/include/glib-2.0 GLIB_LIBS="-L/work/workspace/installx86/glib_2.48.0/lib/ -lglib-2.0 -lgio-2.0 -lgmodule-2.0 -lgobject-2.0 -lgthread-2.0" \
+--disable-gupnp --enable-assert=no --enable-static --with-openssl=/work/workspace/installx86/openssl-1.1.1d --with-crypto-library=openssl
+或修改config.h中/* #undef NDEBUG */ 为#define NDEBUG 1 
+//不起作用,由于函数空：
+static inline void nice_debug (const char *fmt, ...) { }
+static inline void nice_debug_verbose (const char *fmt, ...) { }
+修改
+#define nice_debug printf
+#define nice_debug_verbose printf
 
+或者：
+./configure --prefix=/work/workspace/installx86/libnice_0.1.16 \
+GLIB_CFLAGS=-I/work/workspace/installx86/glib_2.48.0/include/glib-2.0 GLIB_LIBS="-L/work/workspace/installx86/glib_2.48.0/lib/ -lglib-2.0 -lgio-2.0 -lgmodule-2.0 -lgobject-2.0 -lgthread-2.0" \
+--disable-gupnp --enable-static --with-openssl=/work/workspace/installx86/openssl-1.1.1d --with-crypto-library=openssl
+void nice_debug (const char *fmt, ...)
+{
+  char temp[8*1024];
+  va_list ap;
+  if (debug_enabled) {
+    va_start (ap, fmt);
+    vsnprintf(temp,sizeof(temp),fmt,ap);
+    va_end (ap);
+	printf("%s\r\n",temp);
+  }
+}
+void nice_debug_verbose (const char *fmt, ...)
+{
+  char temp[8*1024];
+  va_list ap;
+  if (debug_verbose_enabled) {
+    va_start (ap, fmt);
+    vsnprintf(temp,sizeof(temp),fmt,ap);
+    va_end (ap);
+	printf("%s\r\n",temp);
+  }
+}
+make
+make install
 
 优化
 

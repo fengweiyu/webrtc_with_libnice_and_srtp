@@ -58,7 +58,9 @@ libnice后续可以把音视频流做成map或list(特别是流类型比较多�
 webrtc对方sdp中没有包含candidate,所以要组合offer和candidate两条消息
 
 
-收集到本地信息再登录这样应该更安全，或者增加等待操作。
+！！！！！！！！！！！！收集到本地信息再登录这样应该更安全，或者增加等待操作。
+!!!!!!根据ready概率来选择sendanswer是在connecting之前还是之后
+
 
 //m_pVideoHandle =NULL;//Init顺序在这之后，按道理可以去掉注释
 
@@ -66,9 +68,64 @@ webrtc对方sdp中没有包含candidate,所以要组合offer和candidate两条�
 iRet=m_Libnice.SetRemoteCandidateAndSDP(acRemoteCandidate);//
 结果还是：
 SIGNAL: state changed 1 1 connecting[2]
-SIGNAL: state changed 1 1 failed[5]
+SIGNAL: state changed 1 1 failed[5]  //抓包分析，对方回应错误码：487 Role conflict，对端关闭重启多次好，由controlling改为controlled无用
+//先链接服务端(等收集到再另一个对端来启动)似乎不会failed
 //可能SDP不完整，补充了所有candidate没用
 //或者其他阿里云等待试试，webrtc例子是好的
 //判断dtls包，加了
+
+ICE-CONTROLLED和ICE-CONTROLLING
+在每次会话中,每个终端都有一个身份,有两种身份,即受控方(controlled role)和主控方(controlling role).
+主控方负责选择最终用来通讯的候选地址对,受控方被告知哪个候选地址对用来进行哪次媒体流传输,
+并且不生成更新过的offer来提示此次告知.发起ICE处理进程(即生成offer)的一方必须是主控方,而另一方则是受控方.
+如果终端是受控方,那么在request中就必须加上ICE-CONTROLLED属性,同样,如果终端是主控方,就需要ICE-CONTROLLING属性.
+！！！！失败响应
+如果STUN传输返回487(Role Conflict)错误响应,终端首先会检查其是否包含了ICE-CONTROLLED或ICE-CONTROLLING
+属性.如果有ICE-CONTROLLED,终端必须切换为controlling role;如果请求包含ICE-CONTROLLING属性,
+则必须切换为controlled role.切换好之后,终端必须使产生487错误的候选地址对进入检查队列中,
+并将此地址对的状态设置为Waiting.
+成功响应,一次连接检查在满足下列所有情况时候就被认为成功:
+STUN传输产生一个Success Response
+response的源IP和端口等于Binding Request的目的IP和端口
+response的目的IP和端口等于Binding Request的源IP和端口
+
+(peerconnection.cc:5750): The order of m-lines in answer doesn't match order in offer.
+vp8试试
+
+(port.cc:1297): Received conflicting role from the peer.
+answer controlled ，offer controlling
+
+:96 VP8/90000
+
+
+
+
+Send :
+POST /message?peer_id=8&to=0 HTTP/1.0
+Content-Length:574
+Content-Type:text/plain
+
+{"sdp":"m=- 39240 ICE/SDP\n
+c=IN IP4 192.168.0.105\n
+a=ice-ufrag:F77M\n
+a=ice-pwd:xIem6dTc1rcgJMt3QUzDcE\n
+a=candidate:1 1 UDP 2013266431 fe80::20c:29ff:fe7e:5629 36651 typ host\n
+a=candidate:2 1 TCP 1015022847 fe80::20c:29ff:fe7e:5629 9 typ host tcptype active\n
+a=candidate:3 1 TCP 1010828543 fe80::20c:29ff:fe7e:5629 53316 typ host tcptype passive\n
+a=candidate:4 1 UDP 2013266430 192.168.0.105 54379 typ host\n
+a=candidate:5 1 TCP 1015022079 192.168.0.105 9 typ host tcptype active\n
+a=candidate:6 1 TCP 1010827775 192.168.0.105 39240 typ host tcptype passive\n
+","type":"answer"}
+
+
+ready才能发送报文？
+出现ready但是协商还是收不到报文，
+
+
+抓包分析
+自己已经发出，抓包出来，对方没回serverhello
+webrtc是有dtls hello的
+DTLSv1_2_method无用
+
 
 试试私有静态成员函数是否能被直接访问

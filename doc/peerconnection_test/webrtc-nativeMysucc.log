@@ -1,0 +1,629 @@
+(peer_connection_client.cc:306): Headers received
+(peer_connection_client.cc:483): PeerConnectionClient::OnClose
+(conductor.cc:296): Conductor::OnPeerConnected
+(conductor.cc:282): Conductor::OnSignedIn
+(conductor.cc:547): SEND_MESSAGE_TO_PEER
+(audio_processing_impl.cc:432): Capture post processor activated: 0
+Render pre processor activated: 0
+(webrtcvoiceengine.cc:211): WebRtcVoiceEngine::WebRtcVoiceEngine
+(webrtcvideoengine.cc:552): WebRtcVideoEngine::WebRtcVideoEngine()
+(webrtcvoiceengine.cc:234): WebRtcVoiceEngine::Init
+(webrtcvoiceengine.cc:241): Supported send codecs in order of preference:
+(webrtcvoiceengine.cc:244): opus/16000/2 { minptime=10 useinbandfec=1 } (111)
+(webrtcvoiceengine.cc:244): ISAC/16000/1 (103)
+(webrtcvoiceengine.cc:244): ISAC/32000/1 (104)
+(webrtcvoiceengine.cc:244): G722/8000/1 (9)
+(webrtcvoiceengine.cc:244): ILBC/8000/1 (102)
+(webrtcvoiceengine.cc:244): PCMU/8000/1 (0)
+(webrtcvoiceengine.cc:244): PCMA/8000/1 (8)
+(webrtcvoiceengine.cc:244): CN/32000/1 (106)
+(webrtcvoiceengine.cc:244): CN/16000/1 (105)
+(webrtcvoiceengine.cc:244): CN/8000/1 (13)
+(webrtcvoiceengine.cc:244): telephone-event/32000/1 (112)
+(webrtcvoiceengine.cc:244): telephone-event/16000/1 (113)
+(webrtcvoiceengine.cc:244): telephone-event/8000/1 (126)
+(webrtcvoiceengine.cc:247): Supported recv codecs in order of preference:
+(webrtcvoiceengine.cc:250): opus/16000/2 { minptime=10 useinbandfec=1 } (111)
+(webrtcvoiceengine.cc:250): ISAC/16000/1 (103)
+(webrtcvoiceengine.cc:250): ISAC/32000/1 (104)
+(webrtcvoiceengine.cc:250): G722/8000/1 (9)
+(webrtcvoiceengine.cc:250): ILBC/8000/1 (102)
+(webrtcvoiceengine.cc:250): PCMU/8000/1 (0)
+(webrtcvoiceengine.cc:250): PCMA/8000/1 (8)
+(webrtcvoiceengine.cc:250): CN/32000/1 (106)
+(webrtcvoiceengine.cc:250): CN/16000/1 (105)
+(webrtcvoiceengine.cc:250): CN/8000/1 (13)
+(webrtcvoiceengine.cc:250): telephone-event/32000/1 (112)
+(webrtcvoiceengine.cc:250): telephone-event/16000/1 (113)
+(webrtcvoiceengine.cc:250): telephone-event/8000/1 (126)
+(audio_device_impl.cc:74): Create
+(audio_device_buffer.cc:63): AudioDeviceBuffer::ctor
+(audio_device_impl.cc:108): AudioDeviceModuleImpl
+(audio_device_impl.cc:112): CheckPlatform
+(audio_device_impl.cc:117): current platform is Win32
+(audio_device_impl.cc:142): CreatePlatformSpecificObjects
+(audio_device_impl.cc:921): PlatformAudioLayer
+(audio_device_impl.cc:164): Attempting to use the Windows Core Audio APIs...
+(audio_device_core_win.cc:175): CoreAudioIsSupported
+(audio_device_core_win.cc:296): AudioDeviceWindowsCore::CoreAudioIsSupported() CoCreateInstance(MMDeviceEnumerator) succeeded (hr=0)
+(audio_device_core_win.cc:435): AudioDeviceWindowsCore created
+(audio_device_core_win.cc:445): AudioDeviceWindowsCore::AudioDeviceWindowsCore() The Avrt DLL module is now loaded
+(audio_device_core_win.cc:459): AudioDeviceWindowsCore::AudioDeviceWindowsCore() AvRevertMmThreadCharacteristics() is OK
+(audio_device_core_win.cc:462): AudioDeviceWindowsCore::AudioDeviceWindowsCore() AvSetMmThreadCharacteristicsA() is OK
+(audio_device_core_win.cc:465): AudioDeviceWindowsCore::AudioDeviceWindowsCore() AvSetMmThreadPriority() is OK
+(audio_device_core_win.cc:3981): _EnumerateEndpointDevicesAll
+(audio_device_core_win.cc:4010): #rendering endpoint devices (counting all): 1
+(audio_device_core_win.cc:4022): Endpoint 0:
+(audio_device_core_win.cc:4035): ID string    : 0000000000296F40
+(audio_device_core_win.cc:4052): friendly name: "00000000002B27E0"
+(audio_device_core_win.cc:4059): state (0x1)  : *ACTIVE*
+(audio_device_core_win.cc:4080): hwmask (0x3) : HARDWARE_SUPPORT_VOLUME
+(audio_device_core_win.cc:4084): hwmask (0x3) : HARDWARE_SUPPORT_MUTE
+(audio_device_core_win.cc:4096): #channels    : 2
+(audio_device_core_win.cc:4106): volume range : -65.25 (min), 0 (max), 0.75 (inc) [dB]
+(audio_device_core_win.cc:4116): #intervals   : 87
+(audio_device_core_win.cc:4130): volume steps : 8 (nStep), 51 (nStepCount)
+(audio_device_core_win.cc:3981): _EnumerateEndpointDevicesAll
+(audio_device_core_win.cc:4013): #capturing endpoint devices (counting all): 2
+(audio_device_core_win.cc:4022): Endpoint 0:
+(audio_device_core_win.cc:4035): ID string    : 0000000000296FC0
+(audio_device_core_win.cc:4052): friendly name: "00000000002B27E0"
+(audio_device_core_win.cc:4059): state (0x1)  : *ACTIVE*
+(audio_device_core_win.cc:4080): hwmask (0x3) : HARDWARE_SUPPORT_VOLUME
+(audio_device_core_win.cc:4084): hwmask (0x3) : HARDWARE_SUPPORT_MUTE
+(audio_device_core_win.cc:4096): #channels    : 2
+(audio_device_core_win.cc:4106): volume range : -17.25 (min), 30 (max), 0.75 (inc) [dB]
+(audio_device_core_win.cc:4116): #intervals   : 63
+(audio_device_core_win.cc:4130): volume steps : 47 (nStep), 51 (nStepCount)
+(audio_device_core_win.cc:4022): Endpoint 1:
+(audio_device_core_win.cc:4035): ID string    : 0000000000296FC0
+(audio_device_core_win.cc:4052): friendly name: "00000000002B27E0"
+(audio_device_core_win.cc:4068): state (0x8)  : UNPLUGGED
+(audio_device_core_win.cc:4135): Error when logging device information
+(audio_device_core_win.cc:3548): _RefreshDeviceList
+(audio_device_core_win.cc:3584): _DeviceListCount
+(audio_device_core_win.cc:3548): _RefreshDeviceList
+(audio_device_core_win.cc:3584): _DeviceListCount
+(audio_device_core_win.cc:3829): _GetDeviceName
+(audio_device_core_win.cc:1722): friendly name: "000000000352E660"
+(audio_device_core_win.cc:3548): _RefreshDeviceList
+(audio_device_core_win.cc:3584): _DeviceListCount
+(audio_device_core_win.cc:2190): Audio Engine's current capturing mix format:
+(audio_device_core_win.cc:2192): wFormatTag     : 0xfffe (65534)
+(audio_device_core_win.cc:2196): nChannels      : 2
+(audio_device_core_win.cc:2198): nSamplesPerSec : 44100
+(audio_device_core_win.cc:2200): nAvgBytesPerSec: 352800
+(audio_device_core_win.cc:2202): nBlockAlign    : 8
+(audio_device_core_win.cc:2204): wBitsPerSample : 32
+(audio_device_core_win.cc:2205): cbSize         : 22
+(audio_device_core_win.cc:2239): nChannels=2, nSamplesPerSec=48000 is not supported. Closest match: nChannels=2, nSamplesPerSec=44100
+(audio_device_core_win.cc:2239): nChannels=1, nSamplesPerSec=48000 is not supported. Closest match: nChannels=2, nSamplesPerSec=44100
+(audio_device_core_win.cc:2239): nChannels=4, nSamplesPerSec=48000 is not supported. Closest match: nChannels=2, nSamplesPerSec=44100
+(audio_device_core_win.cc:2264): VoE selected this capturing format:
+(audio_device_core_win.cc:2265): wFormatTag        : 0xfffe (65534)
+(audio_device_core_win.cc:2268): nChannels         : 2
+(audio_device_core_win.cc:2269): nSamplesPerSec    : 44100
+(audio_device_core_win.cc:2270): nAvgBytesPerSec   : 176400
+(audio_device_core_win.cc:2271): nBlockAlign       : 4
+(audio_device_core_win.cc:2272): wBitsPerSample    : 16
+(audio_device_core_win.cc:2273): cbSize            : 22
+(audio_device_core_win.cc:2274): Additional settings:
+(audio_device_core_win.cc:2275): _recAudioFrameSize: 4
+(audio_device_core_win.cc:2276): _recBlockSize     : 441
+(audio_device_core_win.cc:2277): _recChannels      : 2
+(audio_device_core_win.cc:2307): AudioDeviceBuffer must be attached before streaming can start
+(audio_device_core_win.cc:2316): IAudioClient::GetBufferSize() => 896 (<=> 3584 bytes)
+(audio_device_core_win.cc:2338): capture side is now initialized
+(audio_device_core_win.cc:2424): no capturing stream is active => close down WASAPI only
+(audio_device_core_win.cc:3548): _RefreshDeviceList
+(audio_device_core_win.cc:3584): _DeviceListCount
+(audio_device_core_win.cc:3548): _RefreshDeviceList
+(audio_device_core_win.cc:3584): _DeviceListCount
+(audio_device_core_win.cc:3548): _RefreshDeviceList
+(audio_device_core_win.cc:3584): _DeviceListCount
+(audio_device_core_win.cc:3829): _GetDeviceName
+(audio_device_core_win.cc:1459): friendly name: "000000000352E660"
+(audio_device_core_win.cc:3548): _RefreshDeviceList
+(audio_device_core_win.cc:3584): _DeviceListCount
+(audio_device_core_win.cc:1873): Audio Engine's current rendering mix format:
+(audio_device_core_win.cc:1875): wFormatTag     : 0xfffe (65534)
+(audio_device_core_win.cc:1879): nChannels      : 2
+(audio_device_core_win.cc:1881): nSamplesPerSec : 44100
+(audio_device_core_win.cc:1883): nAvgBytesPerSec: 352800
+(audio_device_core_win.cc:1885): nBlockAlign    : 8
+(audio_device_core_win.cc:1887): wBitsPerSample : 32
+(audio_device_core_win.cc:1888): cbSize         : 22
+(audio_device_core_win.cc:1917): nChannels=2, nSamplesPerSec=48000 is not supported. Closest match: nChannels=2, nSamplesPerSec=44100
+(audio_device_core_win.cc:1917): nChannels=1, nSamplesPerSec=48000 is not supported. Closest match: nChannels=2, nSamplesPerSec=44100
+(audio_device_core_win.cc:1949): VoE selected this rendering format:
+(audio_device_core_win.cc:1950): wFormatTag         : 0x1 (1)
+(audio_device_core_win.cc:1953): nChannels          : 2
+(audio_device_core_win.cc:1954): nSamplesPerSec     : 44100
+(audio_device_core_win.cc:1955): nAvgBytesPerSec    : 176400
+(audio_device_core_win.cc:1956): nBlockAlign        : 4
+(audio_device_core_win.cc:1957): wBitsPerSample     : 16
+(audio_device_core_win.cc:1958): cbSize             : 0
+(audio_device_core_win.cc:1959): Additional settings:
+(audio_device_core_win.cc:1960): _playAudioFrameSize: 4
+(audio_device_core_win.cc:1961): _playBlockSize     : 441
+(audio_device_core_win.cc:1963): _playChannels      : 2
+(audio_device_core_win.cc:2018): AudioDeviceBuffer must be attached before streaming can start
+(audio_device_core_win.cc:2027): IAudioClient::GetBufferSize() => 1323 (<=> 5292 bytes)
+(audio_device_core_win.cc:2049): render side is now initialized
+(audio_device_core_win.cc:2563): no rendering stream is active => close down WASAPI only
+(audio_device_core_win.cc:3548): _RefreshDeviceList
+(audio_device_core_win.cc:3584): _DeviceListCount
+(audio_device_core_win.cc:532): ~AudioDeviceWindowsCore destroyed
+(audio_device_core_win.cc:579): AudioDeviceWindowsCore::~AudioDeviceWindowsCore() the Avrt DLL module is now unloaded
+(audio_device_core_win.cc:365): *** Windows Core Audio is supported ***
+(audio_device_core_win.cc:435): AudioDeviceWindowsCore created
+(audio_device_core_win.cc:445): AudioDeviceWindowsCore::AudioDeviceWindowsCore() The Avrt DLL module is now loaded
+(audio_device_core_win.cc:459): AudioDeviceWindowsCore::AudioDeviceWindowsCore() AvRevertMmThreadCharacteristics() is OK
+(audio_device_core_win.cc:462): AudioDeviceWindowsCore::AudioDeviceWindowsCore() AvSetMmThreadCharacteristicsA() is OK
+(audio_device_core_win.cc:465): AudioDeviceWindowsCore::AudioDeviceWindowsCore() AvSetMmThreadPriority() is OK
+(audio_device_impl.cc:167): Windows Core Audio APIs will be utilized
+(audio_device_impl.cc:297): AttachAudioBuffer
+(audio_device_buffer.cc:185): SetRecordingSampleRate(0)
+(audio_device_buffer.cc:192): SetPlayoutSampleRate(0)
+(audio_device_buffer.cc:209): SetRecordingChannels(0)
+(audio_device_buffer.cc:216): SetPlayoutChannels(0)
+(audio_device_impl.cc:317): Init
+(audio_device_core_win.cc:3981): _EnumerateEndpointDevicesAll
+(audio_device_core_win.cc:4010): #rendering endpoint devices (counting all): 1
+(audio_device_core_win.cc:4022): Endpoint 0:
+(audio_device_core_win.cc:4035): ID string    : 0000000000297140
+(audio_device_core_win.cc:4052): friendly name: "00000000002B27E0"
+(audio_device_core_win.cc:4059): state (0x1)  : *ACTIVE*
+(audio_device_core_win.cc:4080): hwmask (0x3) : HARDWARE_SUPPORT_VOLUME
+(audio_device_core_win.cc:4084): hwmask (0x3) : HARDWARE_SUPPORT_MUTE
+(audio_device_core_win.cc:4096): #channels    : 2
+(audio_device_core_win.cc:4106): volume range : -65.25 (min), 0 (max), 0.75 (inc) [dB]
+(audio_device_core_win.cc:4116): #intervals   : 87
+(audio_device_core_win.cc:4130): volume steps : 8 (nStep), 51 (nStepCount)
+(audio_device_core_win.cc:3981): _EnumerateEndpointDevicesAll
+(audio_device_core_win.cc:4013): #capturing endpoint devices (counting all): 2
+(audio_device_core_win.cc:4022): Endpoint 0:
+(audio_device_core_win.cc:4035): ID string    : 00000000002971C0
+(audio_device_core_win.cc:4052): friendly name: "00000000002B27E0"
+(audio_device_core_win.cc:4059): state (0x1)  : *ACTIVE*
+(audio_device_core_win.cc:4080): hwmask (0x3) : HARDWARE_SUPPORT_VOLUME
+(audio_device_core_win.cc:4084): hwmask (0x3) : HARDWARE_SUPPORT_MUTE
+(audio_device_core_win.cc:4096): #channels    : 2
+(audio_device_core_win.cc:4106): volume range : -17.25 (min), 30 (max), 0.75 (inc) [dB]
+(audio_device_core_win.cc:4116): #intervals   : 63
+(audio_device_core_win.cc:4130): volume steps : 47 (nStep), 51 (nStepCount)
+(audio_device_core_win.cc:4022): Endpoint 1:
+(audio_device_core_win.cc:4035): ID string    : 00000000002971C0
+(audio_device_core_win.cc:4052): friendly name: "00000000002B27E0"
+(audio_device_core_win.cc:4068): state (0x8)  : UNPLUGGED
+(audio_device_core_win.cc:4135): Error when logging device information
+(audio_device_impl.cc:664): SetPlayoutDevice
+(audio_device_core_win.cc:3548): _RefreshDeviceList
+(audio_device_core_win.cc:3829): _GetDeviceName
+(audio_device_core_win.cc:1509): friendly name: "000000000352ED60"
+(audio_device_impl.cc:350): InitSpeaker
+(audio_device_core_win.cc:3927): _GetDefaultDevice
+(audio_device_impl.cc:562): StereoPlayoutIsAvailable
+(audio_device_impl.cc:569): output: 1
+(audio_device_impl.cc:574): SetStereoPlayout(1)
+(audio_device_buffer.cc:216): SetPlayoutChannels(2)
+(audio_device_impl.cc:726): SetRecordingDevice
+(audio_device_core_win.cc:3548): _RefreshDeviceList
+(audio_device_core_win.cc:3829): _GetDeviceName
+(audio_device_core_win.cc:1772): friendly name: "000000000352ED60"
+(audio_device_impl.cc:356): InitMicrophone
+(audio_device_core_win.cc:3927): _GetDefaultDevice
+(audio_device_impl.cc:519): StereoRecordingIsAvailable
+(audio_device_impl.cc:526): output: 1
+(audio_device_impl.cc:531): SetStereoRecording(1)
+(audio_device_buffer.cc:209): SetRecordingChannels(2)
+(audio_processing_impl.cc:432): Capture post processor activated: 0
+Render pre processor activated: 0
+(audio_processing_impl.cc:695): Highpass filter activated: 0
+(audio_processing_impl.cc:709): Gain Controller 2 activated: 0
+(audio_processing_impl.cc:711): Pre-amplifier activated: 0
+(audio_device_impl.cc:833): RegisterAudioCallback
+(audio_device_buffer.cc:83): RegisterAudioCallback
+(webrtcvoiceengine.cc:324): WebRtcVoiceEngine::ApplyOptions: AudioOptions {aec: true, agc: true, ns: true, hf: true, swap: false, audio_jitter_buffer_max_packets: 50, audio_jitter_buffer_fast_accelerate: false, typing: true, experimental_agc: false, extended_filter_aec: false, delay_agnostic_aec: false, experimental_ns: false, intelligibility_enhancer: false, residual_echo_detector: true, }
+(audio_device_impl.cc:849): BuiltInAECIsAvailable
+(audio_device_impl.cc:852): output: 1
+(audio_device_impl.cc:857): EnableBuiltInAEC(1)
+(audio_device_impl.cc:860): output: 0
+(webrtcvoiceengine.cc:435): Disabling EC since built-in EC will be used instead
+(apm_helpers.cc:118): Echo control set to 0 with mode 0
+(apm_helpers.cc:128): EC metrics set to 0
+(audio_device_impl.cc:865): BuiltInAGCIsAvailable
+(audio_device_generic.cc:27): BuiltInAGCIsAvailable: Not supported on this platform
+(audio_device_impl.cc:868): output: 0
+(apm_helpers.cc:82): AGC set to 1 with mode 0
+(audio_device_impl.cc:881): BuiltInNSIsAvailable
+(audio_device_generic.cc:37): BuiltInNSIsAvailable: Not supported on this platform
+(audio_device_impl.cc:884): output: 0
+(apm_helpers.cc:153): NS set to 1
+(webrtcvoiceengine.cc:507): Stereo swapping enabled? 0
+(webrtcvoiceengine.cc:512): NetEq capacity is 50
+(webrtcvoiceengine.cc:518): NetEq fast mode? 0
+(webrtcvoiceengine.cc:525): Typing detection is enabled? 1
+(apm_helpers.cc:167): VAD set to 1 for typing detection.
+(webrtcvoiceengine.cc:536): Delay agnostic aec is enabled? 0
+(webrtcvoiceengine.cc:546): Extended filter aec is enabled? 0
+(webrtcvoiceengine.cc:556): Experimental ns is enabled? 0
+(webrtcvoiceengine.cc:562): Intelligibility Enhancer is enabled? 0
+(audio_processing_impl.cc:695): Highpass filter activated: 1
+(audio_processing_impl.cc:709): Gain Controller 2 activated: 0
+(audio_processing_impl.cc:711): Pre-amplifier activated: 0
+(peerconnectionfactory.cc:415): Using default network controller factory
+(alr_experiment.cc:65): Using ALR experiment settings: pacing factor: 1, max pacer queue length: 2875, ALR start bandwidth usage percent: 80, ALR end budget level percent: 40, ALR end budget level percent: -60, ALR experiment group ID: 3
+(bitrate_prober.cc:62): Bandwidth probing enabled, set to inactive
+(rtp_transport_controller_send.cc:45): Using Legacy SSCC
+(aimd_rate_control.cc:75): Using aimd rate control with back off factor 0.85
+(delay_based_bwe.cc:105): Using Trendline filter for delay change estimation with window size 20
+(send_side_congestion_controller.cc:276): SignalNetworkState Down
+(delay_based_bwe.cc:313): BWE Setting start bitrate to: 300000
+(paced_sender.cc:356): ProcessThreadAttached 0x000000000028F760
+(cpu_info.cc:46): Available number of cores: 4
+(rw_lock_win.cc:72): Loaded Kernel.dll
+(rw_lock_win.cc:89): Loaded Native RW Lock
+(aimd_rate_control.cc:75): Using aimd rate control with back off factor 0.85
+(remote_bitrate_estimator_single_stream.cc:56): RemoteBitrateEstimatorSingleStream: Instantiating.
+(webrtcsessiondescriptionfactory.cc:172): DTLS-SRTP enabled; sending DTLS identity request (key type: 1).
+(opensslidentity.cc:44): Making key pair
+(peerconnection.cc:1247): Adding audio transceiver in response to a call to AddTrack.
+(opensslidentity.cc:92): Returning key pair
+(opensslcertificate.cc:58): Making certificate for WebRTC
+(opensslcertificate.cc:105): Returning certificate
+(device_info_ds.cc:205): GetDeviceInfo USB HD Webcam
+(device_info_ds.cc:205): GetDeviceInfo USB HD Webcam
+(device_info_ds.cc:311): CreateCapabilityMap called for device \\?\usb#vid_5986&pid_0523&mi_00#7&ae79133&0&0000#{65e8773d-8f56-11d0-a3b9-00a0c9223196}\global
+(paced_sender.cc:97): PacedSender paused.
+(device_info_ds.cc:388): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:377): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:388): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:377): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:388): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:377): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:388): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:377): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:388): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:377): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:388): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:377): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:388): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:377): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:388): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:377): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:388): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:377): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:388): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:377): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:388): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:377): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:388): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:377): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:388): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:377): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:388): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:377): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:388): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:377): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:518): Camera capability, width:640 height:480 type:9 fps:30
+(device_info_ds.cc:518): Camera capability, width:320 height:240 type:9 fps:30
+(device_info_ds.cc:518): Camera capability, width:352 height:288 type:9 fps:30
+(device_info_ds.cc:518): Camera capability, width:424 height:240 type:9 fps:30
+(device_info_ds.cc:518): Camera capability, width:640 height:360 type:9 fps:30
+(device_info_ds.cc:518): Camera capability, width:800 height:448 type:9 fps:15
+(device_info_ds.cc:518): Camera capability, width:960 height:544 type:9 fps:10
+(device_info_ds.cc:518): Camera capability, width:1280 height:720 type:9 fps:8
+(device_info_ds.cc:518): Camera capability, width:640 height:480 type:12 fps:30
+(device_info_ds.cc:518): Camera capability, width:320 height:240 type:12 fps:30
+(device_info_ds.cc:518): Camera capability, width:352 height:288 type:12 fps:30
+(device_info_ds.cc:518): Camera capability, width:640 height:360 type:12 fps:30
+(device_info_ds.cc:518): Camera capability, width:800 height:448 type:12 fps:30
+(device_info_ds.cc:518): Camera capability, width:960 height:544 type:12 fps:30
+(device_info_ds.cc:518): Camera capability, width:1280 height:720 type:12 fps:30
+(device_info_ds.cc:537): CreateCapabilityMap 15
+(device_info_ds.cc:311): CreateCapabilityMap called for device \\?\usb#vid_5986&pid_0523&mi_00#7&ae79133&0&0000#{65e8773d-8f56-11d0-a3b9-00a0c9223196}\global
+(device_info_ds.cc:388): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:377): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:388): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:377): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:388): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:377): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:388): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:377): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:388): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:377): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:388): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:377): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:388): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:377): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:388): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:377): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:388): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:377): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:388): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:377): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:388): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:377): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:388): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:377): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:388): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:377): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:388): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:377): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:388): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:377): Device support FORMAT_VideoInfo2
+(device_info_ds.cc:518): Camera capability, width:640 height:480 type:9 fps:30
+(device_info_ds.cc:518): Camera capability, width:320 height:240 type:9 fps:30
+(device_info_ds.cc:518): Camera capability, width:352 height:288 type:9 fps:30
+(device_info_ds.cc:518): Camera capability, width:424 height:240 type:9 fps:30
+(device_info_ds.cc:518): Camera capability, width:640 height:360 type:9 fps:30
+(device_info_ds.cc:518): Camera capability, width:800 height:448 type:9 fps:15
+(device_info_ds.cc:518): Camera capability, width:960 height:544 type:9 fps:10
+(device_info_ds.cc:518): Camera capability, width:1280 height:720 type:9 fps:8
+(device_info_ds.cc:518): Camera capability, width:640 height:480 type:12 fps:30
+(device_info_ds.cc:518): Camera capability, width:320 height:240 type:12 fps:30
+(device_info_ds.cc:518): Camera capability, width:352 height:288 type:12 fps:30
+(device_info_ds.cc:518): Camera capability, width:640 height:360 type:12 fps:30
+(device_info_ds.cc:518): Camera capability, width:800 height:448 type:12 fps:30
+(device_info_ds.cc:518): Camera capability, width:960 height:544 type:12 fps:30
+(device_info_ds.cc:518): Camera capability, width:1280 height:720 type:12 fps:30
+(device_info_ds.cc:537): CreateCapabilityMap 15
+(device_info_impl.cc:212): Best camera format: 640x480@30fps, color format: 9
+(sink_filter_ds.cc:148): GetMediaType position 0, width 640, height 480, biCompression 0x32595559
+(sink_filter_ds.cc:189): CheckMediaType width:640 height:480 Compression:0x32595559
+(video_capture_ds.cc:125): Capture device '\\?\usb#vid_5986&pid_0523&mi_00#7&ae79133&0&0000#{65e8773d-8f56-11d0-a3b9-00a0c9223196}\global' initialized.
+(device_info_impl.cc:212): Best camera format: 640x480@30fps, color format: 9
+(sink_filter_ds.cc:148): GetMediaType position 0, width 640, height 480, biCompression 0x32595559
+(sink_filter_ds.cc:189): CheckMediaType width:640 height:480 Compression:0x32595559
+(webrtcvideocapturer.cc:280): Camera '0' started with format YUY2 640x480x30, elapsed time 113 ms
+(peerconnection.cc:1247): Adding video transceiver in response to a call to AddTrack.
+(webrtcsessiondescriptionfactory.cc:463): Setting new certificate.
+(mediasession.cc:356): Duplicate id found. Reassigning from 102 to 127
+(p2ptransportchannel.cc:437): Set backup connection ping interval to 25000 milliseconds.
+(p2ptransportchannel.cc:446): Set ICE receiving timeout to 2500 milliseconds
+(p2ptransportchannel.cc:453): Set ping most likely connection to 0
+(p2ptransportchannel.cc:460): Set stable_writable_connection_ping_interval to 2500
+(p2ptransportchannel.cc:473): Set presume writable when fully relayed to 0
+(p2ptransportchannel.cc:482): Set regather_on_failed_networks_interval to 300000
+(p2ptransportchannel.cc:501): Set receiving_switching_delay to 1000
+(dtlssrtptransport.cc:57): Setting RTCP Transport on 0 transport 0000000000000000
+(dtlssrtptransport.cc:62): Setting RTP Transport on 0 transport 00000000025D1810
+(p2ptransportchannel.cc:437): Set backup connection ping interval to 25000 milliseconds.
+(p2ptransportchannel.cc:446): Set ICE receiving timeout to 2500 milliseconds
+(p2ptransportchannel.cc:453): Set ping most likely connection to 0
+(p2ptransportchannel.cc:460): Set stable_writable_connection_ping_interval to 2500
+(p2ptransportchannel.cc:473): Set presume writable when fully relayed to 0
+(p2ptransportchannel.cc:482): Set regather_on_failed_networks_interval to 300000
+(p2ptransportchannel.cc:501): Set receiving_switching_delay to 1000
+(dtlssrtptransport.cc:57): Setting RTCP Transport on 1 transport 0000000000000000
+(dtlssrtptransport.cc:62): Setting RTP Transport on 1 transport 00000000025D4C80
+(p2ptransportchannel.cc:374): Set ICE ufrag: Ojd2 pwd: DbAg2RBLN1Aie1oI14SJHpY5 on transport 0
+(p2ptransportchannel.cc:374): Set ICE ufrag: Ojd2 pwd: DbAg2RBLN1Aie1oI14SJHpY5 on transport 1
+(webrtcvoiceengine.cc:1271): WebRtcVoiceMediaChannel::WebRtcVoiceMediaChannel
+(webrtcvoiceengine.cc:1482): Setting voice channel options: AudioOptions {audio_jitter_buffer_max_packets: 50, audio_jitter_buffer_fast_accelerate: false, }
+(webrtcvoiceengine.cc:324): WebRtcVoiceEngine::ApplyOptions: AudioOptions {audio_jitter_buffer_max_packets: 50, audio_jitter_buffer_fast_accelerate: false, }
+(webrtcvoiceengine.cc:512): NetEq capacity is 50
+(webrtcvoiceengine.cc:518): NetEq fast mode? 0
+(webrtcvoiceengine.cc:536): Delay agnostic aec is enabled? 0
+(webrtcvoiceengine.cc:546): Extended filter aec is enabled? 0
+(webrtcvoiceengine.cc:556): Experimental ns is enabled? 0
+(webrtcvoiceengine.cc:562): Intelligibility Enhancer is enabled? 0
+(audio_processing_impl.cc:695): Highpass filter activated: 1
+(audio_processing_impl.cc:709): Gain Controller 2 activated: 0
+(audio_processing_impl.cc:711): Pre-amplifier activated: 0
+(webrtcvoiceengine.cc:1500): Set voice channel options. Current options: AudioOptions {audio_jitter_buffer_max_packets: 50, audio_jitter_buffer_fast_accelerate: false, }
+(channel.cc:113): Created channel for 0
+(webrtcvoiceengine.cc:2109): OnReadyToSend: Not ready.
+(call.cc:1056): UpdateAggregateNetworkState: aggregate_state=down
+(send_side_congestion_controller.cc:276): SignalNetworkState Down
+(webrtcvideoengine.cc:563): CreateChannel. Options: VideoOptions {}
+(channel.cc:113): Created channel for 1
+(webrtcvideoengine.cc:1505): OnReadyToSend: Not ready.
+(call.cc:1056): UpdateAggregateNetworkState: aggregate_state=down
+(peerconnection.cc:3506): Session: 7555384125885950016 Old state: kStable New state: kHaveLocalOffer
+(send_side_congestion_controller.cc:276): SignalNetworkState Down
+(channel.cc:802): Setting local voice description
+(webrtcvoiceengine.cc:1338): WebRtcVoiceMediaChannel::SetRecvParameters: {codecs: [AudioCodec[111:opus:16000:0:2], AudioCodec[103:ISAC:16000:0:1], AudioCodec[104:ISAC:32000:0:1], AudioCodec[9:G722:8000:0:1], AudioCodec[102:ILBC:8000:0:1], AudioCodec[0:PCMU:8000:0:1], AudioCodec[8:PCMA:8000:0:1], AudioCodec[106:CN:32000:0:1], AudioCodec[105:CN:16000:0:1], AudioCodec[13:CN:8000:0:1], AudioCodec[112:telephone-event:32000:0:1], AudioCodec[113:telephone-event:16000:0:1], AudioCodec[126:telephone-event:8000:0:1]], extensions: [{uri: urn:ietf:params:rtp-hdrext:ssrc-audio-level, id: 1}, {uri: urn:ietf:params:rtp-hdrext:sdes:mid, id: 9}]}
+(webrtcvoiceengine.cc:1510): Setting receive voice codecs.
+(webrtcvoiceengine.cc:1780): AddSendStream: {id:audio_label;ssrcs:[2971167550];ssrc_groups:;cname:7c8Jqh8D2gNME1xU;stream_ids:stream_id;}
+(neteq_impl.cc:114): NetEq config: sample_rate_hz=16000, enable_post_decode_vad=true, max_packets_in_buffer=0, playout_mode=0, enable_fast_accelerate=false, enable_muted_state= true
+(neteq_impl.cc:2051): SetSampleRateAndChannels 16000 1
+(neteq_impl.cc:484): FlushBuffers
+(audio_coding_module.cc:462): Created
+(neteq_impl.cc:484): FlushBuffers
+(audio_send_stream.cc:134): AudioSendStream: 2971167550
+(audio_send_stream.cc:199): AudioSendStream::ConfigureStream: {rtp: {ssrc: 2971167550, extensions: [], nack: {rtp_history_ms: 0}, c_name: 7c8Jqh8D2gNME1xU}, send_transport: (Transport), min_bitrate_bps: -1, max_bitrate_bps: -1, send_codec_spec: <unset>}
+(call.cc:1056): UpdateAggregateNetworkState: aggregate_state=down
+(send_side_congestion_controller.cc:276): SignalNetworkState Down
+(channel.cc:625): Add send stream ssrc: 2971167550
+(channel.cc:794): Changing voice state, recv=0 send=0
+(channel.cc:937): Setting local video description
+(webrtcvideoengine.cc:990): SetRecvParameters: {codecs: [VideoCodec[96:VP8], VideoCodec[97:rtx], VideoCodec[98:VP9], VideoCodec[99:rtx], VideoCodec[100:red], VideoCodec[101:rtx], VideoCodec[127:ulpfec]], extensions: [{uri: urn:ietf:params:rtp-hdrext:toffset, id: 2}, {uri: http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time, id: 3}, {uri: urn:3gpp:video-orientation, id: 4}, {uri: http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01, id: 5}, {uri: http://www.webrtc.org/experiments/rtp-hdrext/playout-delay, id: 6}, {uri: http://www.webrtc.org/experiments/rtp-hdrext/video-content-type, id: 7}, {uri: http://www.webrtc.org/experiments/rtp-hdrext/video-timing, id: 8}, {uri: urn:ietf:params:rtp-hdrext:sdes:mid, id: 9}]}
+(webrtcvideoengine.cc:1005): Changing recv codecs from {VideoCodec[96:VP8], VideoCodec[98:VP9]} to {VideoCodec[96:VP8], VideoCodec[98:VP9]}
+(webrtcvideoengine.cc:1110): AddSendStream: {id:video_label;ssrcs:[3922435624,3050311418];ssrc_groups:{semantics:FID;ssrcs:[3922435624,3050311418]};cname:7c8Jqh8D2gNME1xU;stream_ids:stream_id;}
+(webrtcvideoengine.cc:1142): SetLocalSsrc on all the receive streams because we added a send stream.
+(channel.cc:625): Add send stream ssrc: 3922435624
+(webrtcvideoengine.cc:1047): SetSend: false
+(channel.cc:924): Changing video state, send=0
+(peerconnection.cc:4756): Local and Remote descriptions must be applied to get the SSL Role of the SCTP transport.
+(webrtcvoiceengine.cc:1482): Setting voice channel options: AudioOptions {}
+(webrtcvoiceengine.cc:324): WebRtcVoiceEngine::ApplyOptions: AudioOptions {audio_jitter_buffer_max_packets: 50, audio_jitter_buffer_fast_accelerate: false, }
+(webrtcvoiceengine.cc:512): NetEq capacity is 50
+(webrtcvoiceengine.cc:518): NetEq fast mode? 0
+(webrtcvoiceengine.cc:536): Delay agnostic aec is enabled? 0
+(webrtcvoiceengine.cc:546): Extended filter aec is enabled? 0
+(webrtcvoiceengine.cc:556): Experimental ns is enabled? 0
+(webrtcvoiceengine.cc:562): Intelligibility Enhancer is enabled? 0
+(audio_processing_impl.cc:695): Highpass filter activated: 1
+(audio_processing_impl.cc:709): Gain Controller 2 activated: 0
+(audio_processing_impl.cc:711): Pre-amplifier activated: 0
+(webrtcvoiceengine.cc:1500): Set voice channel options. Current options: AudioOptions {audio_jitter_buffer_max_packets: 50, audio_jitter_buffer_fast_accelerate: false, }
+(webrtcvideoengine.cc:1068): SetVideoSend (ssrc= 3922435624, options: VideoOptions {is_screencast : false, }, source = (source))
+(basicportallocator.cc:339): Start getting ports with prune_turn_ports disabled
+(basicportallocator.cc:339): Start getting ports with prune_turn_ports disabled
+(conductor.cc:620): SDP£¨json£©{
+   "sdp" : "v=0\r\no=- 7555384125885950016 2 IN IP4 127.0.0.1\r\ns=-\r\nt=0 0\r\na=group:BUNDLE 0 1\r\na=msid-semantic: WMS stream_id\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111 103 104 9 102 0 8 106 105 13 112 113 126\r\nc=IN IP4 0.0.0.0\r\na=rtcp:9 IN IP4 0.0.0.0\r\na=ice-ufrag:Ojd2\r\na=ice-pwd:DbAg2RBLN1Aie1oI14SJHpY5\r\na=ice-options:trickle\r\na=fingerprint:sha-256 18:C3:7B:0A:E3:A2:36:24:40:3D:5E:D6:AF:44:30:CB:70:8C:A1:AC:90:FB:06:BB:97:88:71:45:C3:5E:35:72\r\na=setup:actpass\r\na=mid:0\r\na=extmap:1 urn:ietf:params:rtp-hdrext:ssrc-audio-level\r\na=extmap:9 urn:ietf:params:rtp-hdrext:sdes:mid\r\na=sendrecv\r\na=msid:stream_id audio_label\r\na=rtcp-mux\r\na=rtpmap:111 opus/16000/2\r\na=rtcp-fb:111 transport-cc\r\na=fmtp:111 minptime=10;useinbandfec=1\r\na=rtpmap:103 ISAC/16000\r\na=rtpmap:104 ISAC/32000\r\na=rtpmap:9 G722/8000\r\na=rtpmap:102 ILBC/8000\r\na=rtpmap:0 PCMU/8000\r\na=rtpmap:8 PCMA/8000\r\na=rtpmap:106 CN/32000\r\na=rtpmap:105 CN/16000\r\na=rtpmap:13 CN/8000\r\na=rtpmap:112 telephone-event/32000\r\na=rtpmap:113 telephone-event/16000\r\na=rtpmap:126 telephone-event/8000\r\na=ssrc:2971167550 cname:7c8Jqh8D2gNME1xU\r\na=ssrc:2971167550 msid:stream_id audio_label\r\na=ssrc:2971167550 mslabel:stream_id\r\na=ssrc:2971167550 label:audio_label\r\nm=video 9 UDP/TLS/RTP/SAVPF 96 97 98 99 100 101 127\r\nc=IN IP4 0.0.0.0\r\na=rtcp:9 IN IP4 0.0.0.0\r\na=ice-ufrag:Ojd2\r\na=ice-pwd:DbAg2RBLN1Aie1oI14SJHpY5\r\na=ice-options:trickle\r\na=fingerprint:sha-256 18:C3:7B:0A:E3:A2:36:24:40:3D:5E:D6:AF:44:30:CB:70:8C:A1:AC:90:FB:06:BB:97:88:71:45:C3:5E:35:72\r\na=setup:actpass\r\na=mid:1\r\na=extmap:2 urn:ietf:params:rtp-hdrext:toffset\r\na=extmap:3 http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time\r\na=extmap:4 urn:3gpp:video-orientation\r\na=extmap:5 http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01\r\na=extmap:6 http://www.webrtc.org/experiments/rtp-hdrext/playout-delay\r\na=extmap:7 http://www.webrtc.org/experiments/rtp-hdrext/video-content-type\r\na=extmap:8 http://www.webrtc.org/experiments/rtp-hdrext/video-timing\r\na=extmap:9 urn:ietf:params:rtp-hdrext:sdes:mid\r\na=sendrecv\r\na=msid:stream_id video_label\r\na=rtcp-mux\r\na=rtcp-rsize\r\na=rtpmap:96 VP8/90000\r\na=rtcp-fb:96 goog-remb\r\na=rtcp-fb:96 transport-cc\r\na=rtcp-fb:96 ccm fir\r\na=rtcp-fb:96 nack\r\na=rtcp-fb:96 nack pli\r\na=rtpmap:97 rtx/90000\r\na=fmtp:97 apt=96\r\na=rtpmap:98 VP9/90000\r\na=rtcp-fb:98 goog-remb\r\na=rtcp-fb:98 transport-cc\r\na=rtcp-fb:98 ccm fir\r\na=rtcp-fb:98 nack\r\na=rtcp-fb:98 nack pli\r\na=rtpmap:99 rtx/90000\r\na=fmtp:99 apt=98\r\na=rtpmap:100 red/90000\r\na=rtpmap:101 rtx/90000\r\na=fmtp:101 apt=100\r\na=rtpmap:127 ulpfec/90000\r\na=ssrc-group:FID 3922435624 3050311418\r\na=ssrc:3922435624 cname:7c8Jqh8D2gNME1xU\r\na=ssrc:3922435624 msid:stream_id video_label\r\na=ssrc:3922435624 mslabel:stream_id\r\na=ssrc:3922435624 label:video_label\r\na=ssrc:3050311418 cname:7c8Jqh8D2gNME1xU\r\na=ssrc:3050311418 msid:stream_id video_label\r\na=ssrc:3050311418 mslabel:stream_id\r\na=ssrc:3050311418 label:video_label\r\n",
+   "type" : "offer"
+}
+
+(conductor.cc:80): DummySetSessionDescriptionObserver::OnSuccess
+(conductor.cc:547): SEND_MESSAGE_TO_PEER
+(peer_connection_client.cc:306): Headers received
+(peer_connection_client.cc:483): PeerConnectionClient::OnClose
+(conductor.cc:547): SEND_MESSAGE_TO_PEER
+(basicportallocator.cc:107): Filtered out ignored networks:
+(basicportallocator.cc:109): Net[Software:0:0:0:x:x:x:x:x/128:Loopback:id=3]
+(basicportallocator.cc:109): Net[Software:127.0.0.x/32:Loopback:id=2]
+(basicportallocator.cc:829): Network manager has started
+(basicportallocator.cc:107): Filtered out ignored networks:
+(basicportallocator.cc:109): Net[Software:0:0:0:x:x:x:x:x/128:Loopback:id=3]
+(basicportallocator.cc:109): Net[Software:127.0.0.x/32:Loopback:id=2]
+(basicportallocator.cc:829): Network manager has started
+(basicportallocator.cc:107): Filtered out ignored networks:
+(basicportallocator.cc:109): Net[Software:0:0:0:x:x:x:x:x/128:Loopback:id=3]
+(basicportallocator.cc:109): Net[Software:127.0.0.x/32:Loopback:id=2]
+(basicportallocator.cc:744): Allocate ports on 1 networks
+(basicportallocator.cc:107): Filtered out ignored networks:
+(basicportallocator.cc:109): Net[Software:0:0:0:x:x:x:x:x/128:Loopback:id=3]
+(basicportallocator.cc:109): Net[Software:127.0.0.x/32:Loopback:id=2]
+(basicportallocator.cc:744): Allocate ports on 1 networks
+(basicportallocator.cc:1284): Net[Qualcomm:192.168.0.x/32:Ethernet:id=1]: Allocation Phase=Udp
+(port.cc:328): Port[00000000025FFAA0::1:0:local:Net[Qualcomm:192.168.0.x/32:Ethernet:id=1]]: Port created with network cost 0
+(basicportallocator.cc:851): Adding allocated port for 0
+(basicportallocator.cc:871): Port[00000000025FFAA0:0:1:0:local:Net[Qualcomm:192.168.0.x/32:Ethernet:id=1]]: Added port to allocator
+(basicportallocator.cc:889): Port[00000000025FFAA0:0:1:0:local:Net[Qualcomm:192.168.0.x/32:Ethernet:id=1]]: Gathered candidate: Cand[:2949042989:1:udp:2122260223:192.168.0.x:59757:local::0:Ojd2:DbAg2RBLN1Aie1oI14SJHpY5:1:0:0]
+(basicportallocator.cc:917): Port[00000000025FFAA0:0:1:0:local:Net[Qualcomm:192.168.0.x/32:Ethernet:id=1]]: Port ready.
+(physicalsocketserver.cc:592): Socket::OPT_DSCP not supported.
+(p2ptransportchannel.cc:711): Port[00000000025FFAA0:0:1:0:local:Net[Qualcomm:192.168.0.x/32:Ethernet:id=1]]: SetOption(5, 0) failed: 0
+(p2ptransportchannel.cc:1538): Sorting 0 available connections
+(conductor.cc:224): Conductor::OnIceCandidate 0
+(conductor.cc:226): ice candidate ip 192.168.0.122
+(conductor.cc:227): ice candidate port 59757
+(conductor.cc:547): SEND_MESSAGE_TO_PEER
+(basicportallocator.cc:991): Port[00000000025FFAA0:0:1:0:local:Net[Qualcomm:192.168.0.x/32:Ethernet:id=1]]: Port completed gathering candidates.
+(basicportallocator.cc:1284): Net[Qualcomm:192.168.0.x/32:Ethernet:id=1]: Allocation Phase=Udp
+(port.cc:328): Port[00000000063DA9F0::1:0:local:Net[Qualcomm:192.168.0.x/32:Ethernet:id=1]]: Port created with network cost 0
+(basicportallocator.cc:851): Adding allocated port for 1
+(basicportallocator.cc:871): Port[00000000063DA9F0:1:1:0:local:Net[Qualcomm:192.168.0.x/32:Ethernet:id=1]]: Added port to allocator
+(basicportallocator.cc:889): Port[00000000063DA9F0:1:1:0:local:Net[Qualcomm:192.168.0.x/32:Ethernet:id=1]]: Gathered candidate: Cand[:2949042989:1:udp:2122260223:192.168.0.x:59758:local::0:Ojd2:DbAg2RBLN1Aie1oI14SJHpY5:1:0:0]
+(basicportallocator.cc:917): Port[00000000063DA9F0:1:1:0:local:Net[Qualcomm:192.168.0.x/32:Ethernet:id=1]]: Port ready.
+(physicalsocketserver.cc:592): Socket::OPT_DSCP not supported.
+(p2ptransportchannel.cc:711): Port[00000000063DA9F0:1:1:0:local:Net[Qualcomm:192.168.0.x/32:Ethernet:id=1]]: SetOption(5, 0) failed: 0
+(p2ptransportchannel.cc:1538): Sorting 0 available connections
+(basicportallocator.cc:991): Port[00000000063DA9F0:1:1:0:local:Net[Qualcomm:192.168.0.x/32:Ethernet:id=1]]: Port completed gathering candidates.
+(conductor.cc:224): Conductor::OnIceCandidate 1
+(conductor.cc:226): ice candidate ip 192.168.0.122
+(conductor.cc:227): ice candidate port 59758
+(conductor.cc:547): SEND_MESSAGE_TO_PEER
+(peer_connection_client.cc:306): Headers received
+(peer_connection_client.cc:483): PeerConnectionClient::OnClose
+(conductor.cc:547): SEND_MESSAGE_TO_PEER
+(peer_connection_client.cc:306): Headers received
+(peer_connection_client.cc:483): PeerConnectionClient::OnClose
+(conductor.cc:547): SEND_MESSAGE_TO_PEER
+(basicportallocator.cc:1284): Net[Qualcomm:192.168.0.x/32:Ethernet:id=1]: Allocation Phase=Relay
+(basicportallocator.cc:1416): AllocationSequence: Relay ports disabled, skipping.
+(basicportallocator.cc:1284): Net[Qualcomm:192.168.0.x/32:Ethernet:id=1]: Allocation Phase=Relay
+(basicportallocator.cc:1416): AllocationSequence: Relay ports disabled, skipping.
+(basicportallocator.cc:1284): Net[Qualcomm:192.168.0.x/32:Ethernet:id=1]: Allocation Phase=Tcp
+(port.cc:328): Port[00000000063ED7B0::1:0:local:Net[Qualcomm:192.168.0.x/32:Ethernet:id=1]]: Port created with network cost 0
+(basicportallocator.cc:851): Adding allocated port for 0
+(basicportallocator.cc:871): Port[00000000063ED7B0:0:1:0:local:Net[Qualcomm:192.168.0.x/32:Ethernet:id=1]]: Added port to allocator
+(tcpport.cc:168): Preparing TCP address, current state: 2
+(basicportallocator.cc:889): Port[00000000063ED7B0:0:1:0:local:Net[Qualcomm:192.168.0.x/32:Ethernet:id=1]]: Gathered candidate: Cand[:3779407837:1:tcp:1518280447:192.168.0.x:55114:local::0:Ojd2:DbAg2RBLN1Aie1oI14SJHpY5:1:0:0]
+(basicportallocator.cc:917): Port[00000000063ED7B0:0:1:0:local:Net[Qualcomm:192.168.0.x/32:Ethernet:id=1]]: Port ready.
+(physicalsocketserver.cc:592): Socket::OPT_DSCP not supported.
+(p2ptransportchannel.cc:711): Port[00000000063ED7B0:0:1:0:local:Net[Qualcomm:192.168.0.x/32:Ethernet:id=1]]: SetOption(5, 0) failed: 0
+(p2ptransportchannel.cc:1538): Sorting 0 available connections
+(conductor.cc:224): Conductor::OnIceCandidate 0
+(conductor.cc:226): ice candidate ip 192.168.0.122
+(conductor.cc:227): ice candidate port 55114
+(conductor.cc:547): SEND_MESSAGE_TO_PEER
+(basicportallocator.cc:991): Port[00000000063ED7B0:0:1:0:local:Net[Qualcomm:192.168.0.x/32:Ethernet:id=1]]: Port completed gathering candidates.
+(basicportallocator.cc:1087): All candidates gathered for 0:1:0
+(p2ptransportchannel.cc:766): P2PTransportChannel: 0, component 1 gathering complete
+(basicportallocator.cc:1284): Net[Qualcomm:192.168.0.x/32:Ethernet:id=1]: Allocation Phase=Tcp
+(port.cc:328): Port[00000000063EE8A0::1:0:local:Net[Qualcomm:192.168.0.x/32:Ethernet:id=1]]: Port created with network cost 0
+(basicportallocator.cc:851): Adding allocated port for 1
+(basicportallocator.cc:871): Port[00000000063EE8A0:1:1:0:local:Net[Qualcomm:192.168.0.x/32:Ethernet:id=1]]: Added port to allocator
+(tcpport.cc:168): Preparing TCP address, current state: 2
+(basicportallocator.cc:889): Port[00000000063EE8A0:1:1:0:local:Net[Qualcomm:192.168.0.x/32:Ethernet:id=1]]: Gathered candidate: Cand[:3779407837:1:tcp:1518280447:192.168.0.x:55115:local::0:Ojd2:DbAg2RBLN1Aie1oI14SJHpY5:1:0:0]
+(basicportallocator.cc:917): Port[00000000063EE8A0:1:1:0:local:Net[Qualcomm:192.168.0.x/32:Ethernet:id=1]]: Port ready.
+(physicalsocketserver.cc:592): Socket::OPT_DSCP not supported.
+(p2ptransportchannel.cc:711): Port[00000000063EE8A0:1:1:0:local:Net[Qualcomm:192.168.0.x/32:Ethernet:id=1]]: SetOption(5, 0) failed: 0
+(p2ptransportchannel.cc:1538): Sorting 0 available connections
+(basicportallocator.cc:991): Port[00000000063EE8A0:1:1:0:local:Net[Qualcomm:192.168.0.x/32:Ethernet:id=1]]: Port completed gathering candidates.
+(basicportallocator.cc:1087): All candidates gathered for 1:1:0
+(p2ptransportchannel.cc:766): P2PTransportChannel: 1, component 1 gathering complete
+(conductor.cc:224): Conductor::OnIceCandidate 1
+(conductor.cc:226): ice candidate ip 192.168.0.122
+(conductor.cc:227): ice candidate port 55115
+(conductor.cc:547): SEND_MESSAGE_TO_PEER
+(peer_connection_client.cc:306): Headers received
+(peer_connection_client.cc:483): PeerConnectionClient::OnClose
+(conductor.cc:547): SEND_MESSAGE_TO_PEER
+(peer_connection_client.cc:306): Headers received
+(peer_connection_client.cc:483): PeerConnectionClient::OnClose
+(conductor.cc:547): SEND_MESSAGE_TO_PEER
+(webrtcvideocapturer.cc:337): Captured frame size 640x480. Expected format YUY2 640x480x30
+(peer_connection_client.cc:384): PeerConnectionClient::OnHangingGetRead
+(peer_connection_client.cc:306): Headers received
+(peer_connection_client.cc:483): PeerConnectionClient::OnClose
+(conductor.cc:368):  Received session description :{"sdp":"v=0\r\no=- 1582598017305826 1 IN IP4 192.168.0.199\r\ns=ywf webrtc\r\nt=0 0\r\na=group:BUNDLE video\r\na=msid-semantic: WMS ywf\r\nm=video 0 RTP/SAVPF 96\r\nc=IN IP4 192.168.0.199\r\na=mid:video\r\na=sendrecv\r\na=rtcp-mux\r\na=ice-ufrag:L45A\r\na=ice-pwd:shEvi/FwzPDpvIs/WI5Q6M\r\na=ice-options:trickle\r\na=fingerprint:sha-256 30:18:03:FF:7D:4B:E3:76:0A:A2:3E:DB:4E:93:73:A2:92:19:D6:35:7C:9A:B7:DA:E0:D2:D1:64:8C:B3:E3:63\r\na=setup:actpass\r\na=connection:new\r\na=rtpmap:96 H264/90000\r\na=ssrc:1582598017 cname:ywfvideo\r\na=ssrc:1582598017 msid:janus janusa0\r\na=ssrc:1582598017 mslabel:janus\r\na=ssrc:1582598017 label:janusa0\r\na=candidate:4 1 udp 2013266430 192.168.0.199 52614 typ host\r\n","type":"answer"}
+(peerconnection.cc:5750): The order of m-lines in answer doesn't match order in offer. Rejecting answer. (INVALID_PARAMETER)
+(peerconnection.cc:2198): Failed to set remote answer sdp: The order of m-lines in answer doesn't match order in offer. Rejecting answer.
+(conductor.cc:82): DummySetSessionDescriptionObserver::OnFailure Failed to set remote answer sdp: The order of m-lines in answer doesn't match order in offer. Rejecting answer.
+(port.cc:487): Received STUN ping id=f8e2e88dfb2f38f97af00dbd from unknown address 192.168.0.x:52614
+(port.cc:1086): Conn[00000000063F04E0:0:Net[Qualcomm:192.168.0.x/32:Ethernet:id=1]:r2R+Jq4j:1:0:local:udp:192.168.0.x:59757->IU2G2DVl:1:1845494271:prflx:udp:192.168.0.x:52614|C--W|-|0|0|7926337543144881663|-]: Connection created
+(p2ptransportchannel.cc:883): Adding connection from peer reflexive candidate: Cand[:69738711:1:udp:1845494271:192.168.0.199:52614:prflx::0:L45A::0:0:0]
+(port.cc:1156): Conn[00000000063F04E0:0:Net[Qualcomm:192.168.0.x/32:Ethernet:id=1]:r2R+Jq4j:1:0:local:udp:192.168.0.x:59757->IU2G2DVl:1:1845494271:prflx:udp:192.168.0.x:52614|C--W|-|0|0|7926337543144881663|-]: set_receiving to 1
+(port.cc:849): Port[00000000025FFAA0:0:1:0:local:Net[Qualcomm:192.168.0.x/32:Ethernet:id=1]]: Sending STUN binding error: reason=Role Conflict to 192.168.0.x:52614
+(port.cc:1297): Received conflicting role from the peer.
+(port.cc:1409): Conn[00000000063F04E0:0:Net[Qualcomm:192.168.0.x/32:Ethernet:id=1]:r2R+Jq4j:1:0:local:udp:192.168.0.x:59757->IU2G2DVl:1:1845494271:prflx:udp:192.168.0.x:52614|CR-W|-|0|0|7926337543144881663|-]: UpdateState(), ms since last received response=85192612, ms since last received data=85192612, rtt=6000, pings_since_last_response=
+(p2ptransportchannel.cc:1538): Sorting 1 available connections
+(p2ptransportchannel.cc:1541): Conn[00000000063F04E0:0:Net[Qualcomm:192.168.0.x/32:Ethernet:id=1]:r2R+Jq4j:1:0:local:udp:192.168.0.x:59757->IU2G2DVl:1:1845494271:prflx:udp:192.168.0.x:52614|CR-W|-|0|0|7926337543144881663|-]
+(p2ptransportchannel.cc:1716): Channel[0|1|__]: Transport channel state changed from 0 to 2
+(jseptransportcontroller.cc:1158): 0 Transport 1 state changed. Check if state is complete.
+(dtlstransport.cc:532): DtlsTransport[0|1|__]: ice_transport receiving state changed to 1
+(port.cc:849): Port[00000000025FFAA0:0:1:0:local:Net[Qualcomm:192.168.0.x/32:Ethernet:id=1]]: Sending STUN binding error: reason=Role Conflict to 192.168.0.x:52614
+(port.cc:496): Received conflicting role from the peer.
+(port.cc:1409): Conn[00000000063F04E0:0:Net[Qualcomm:192.168.0.x/32:Ethernet:id=1]:r2R+Jq4j:1:0:local:udp:192.168.0.x:59757->IU2G2DVl:1:1845494271:prflx:udp:192.168.0.x:52614|CR-W|-|0|0|7926337543144881663|-]: UpdateState(), ms since last received response=85192613, ms since last received data=85192613, rtt=6000, pings_since_last_response=
+(p2ptransportchannel.cc:1538): Sorting 1 available connections
+(p2ptransportchannel.cc:1541): Conn[00000000063F04E0:0:Net[Qualcomm:192.168.0.x/32:Ethernet:id=1]:r2R+Jq4j:1:0:local:udp:192.168.0.x:59757->IU2G2DVl:1:1845494271:prflx:udp:192.168.0.x:52614|CR-W|-|0|0|7926337543144881663|-]
+(port.cc:1243): Conn[00000000063F04E0:0:Net[Qualcomm:192.168.0.x/32:Ethernet:id=1]:r2R+Jq4j:1:0:local:udp:192.168.0.x:59757->IU2G2DVl:1:1845494271:prflx:udp:192.168.0.x:52614|CR-W|-|0|0|7926337543144881663|-]: Received STUN ping, id=e1b894877c068d3ffe9bdeae
+(port.cc:807): Port[00000000025FFAA0:0:1:0:local:Net[Qualcomm:192.168.0.x/32:Ethernet:id=1]]: Sent STUN ping response, to=192.168.0.x:52614, id=e1b894877c068d3ffe9bdeae
+(webrtcvideoengine.cc:1068): SetVideoSend (ssrc= 3922435624, options: nullptr, source = nullptr)
+(rtpreceiver.cc:275): VideoRtpReceiver::Stop: No video channel exists.
+(channel.cc:126): Destroyed channel: 1
+(webrtcvoiceengine.cc:1279): WebRtcVoiceMediaChannel::~WebRtcVoiceMediaChannel
+(webrtcvoiceengine.cc:1817): RemoveSendStream: 2971167550
+(call.cc:1056): UpdateAggregateNetworkState: aggregate_state=down
+(send_side_congestion_controller.cc:276): SignalNetworkState Down
+(audio_send_stream.cc:157): ~AudioSendStream: 2971167550
+(channel.cc:126): Destroyed channel: 0
+(peerconnection.cc:849): Session: 7555384125885950016 is destroyed.
+(paced_sender.cc:356): ProcessThreadAttached 0x0000000000000000
+(paced_sender.cc:356): ProcessThreadAttached 0x0000000000000000
+(rtc_event_log_impl.cc:194): Stopping WebRTC event log.
+(rtc_event_log_impl.cc:211): WebRTC event log successfully stopped.
+(dtmfsender.cc:234): The Dtmf provider is deleted. Clear the sending queue.
+(video_capture_ds.cc:164): CaptureStarted 2
+(webrtcvideocapturer.cc:304): Camera '0' stopped after capturing 538 frames and dropping 0%
+(webrtcvideoengine.cc:556): WebRtcVideoEngine::~WebRtcVideoEngine
+(webrtcvoiceengine.cc:220): WebRtcVoiceEngine::~WebRtcVoiceEngine
+(audio_device_impl.cc:784): StopPlayout
+(audio_device_impl.cc:788): output: 0
+(audio_device_impl.cc:815): StopRecording
+(audio_device_impl.cc:819): output: 0
+(audio_device_impl.cc:833): RegisterAudioCallback
+(audio_device_buffer.cc:83): RegisterAudioCallback
+(audio_device_impl.cc:334): Terminate
+(audio_device_impl.cc:303): ~AudioDeviceModuleImpl
+(audio_device_core_win.cc:532): ~AudioDeviceWindowsCore destroyed
+(audio_device_core_win.cc:579): AudioDeviceWindowsCore::~AudioDeviceWindowsCore() the Avrt DLL module is now unloaded
+(audio_device_buffer.cc:77): AudioDeviceBuffer::~dtor
+(peer_connection_client.cc:306): Headers received
+(peer_connection_client.cc:483): PeerConnectionClient::OnClose
+(conductor.cc:287): Conductor::OnDisconnected
+(conductor.cc:547): SEND_MESSAGE_TO_PEER
