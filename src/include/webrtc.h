@@ -35,7 +35,7 @@ typedef struct VideoInfo
 class WebRTC
 {
 public:
-	WebRTC(char * i_strStunAddr,unsigned int i_dwStunPort,int i_iControlling);//:m_Libnice(i_strStunAddr,i_dwStunPort,i_iControlling),m_Srtp()
+	WebRTC(char * i_strStunAddr,unsigned int i_dwStunPort,E_IceControlRole i_eControlling);//:m_Libnice(i_strStunAddr,i_dwStunPort,i_iControlling),m_Srtp()
 	~WebRTC();
     int Proc();
     int HandleOfferMsg(char * i_strOfferMsg);

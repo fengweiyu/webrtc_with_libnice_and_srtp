@@ -75,7 +75,7 @@ int main(int argc, char* argv[])
     strncpy(strSeverIp,argv[1],sizeof(strSeverIp));
     dwPort=atoi(argv[2]);
 
-    pWebRTC = new WebRTC(strSeverIp,dwPort,1);
+    pWebRTC = new WebRTC(strSeverIp,dwPort,ICE_CONTROLLING_ROLE);
     if( pthread_create(&tWebRtcID,NULL,WebRtcProc,(void *)pWebRTC) != 0 )
     {
         printf("WebRtcProc pthread_create err\r\n");

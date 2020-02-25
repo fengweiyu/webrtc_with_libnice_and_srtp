@@ -22,6 +22,13 @@ using std::string;
 
 #define MAX_CANDIDATE_NUM 8
 
+typedef enum IceControlRole
+{
+    ICE_CONTROLLED_ROLE=0,//使用这个失败
+    ICE_CONTROLLING_ROLE
+}E_IceControlRole;
+
+
 typedef struct StreamInfo
 {
 	char strName[16];
@@ -43,7 +50,7 @@ typedef struct LibniceDepData
 {
     char strStunAddr[24];
     unsigned int dwStunPort;
-    int iControlling;
+    E_IceControlRole eControlling;
 }T_LibniceDepData;
 
 typedef struct LibniceCb
@@ -63,7 +70,7 @@ typedef struct LibniceCb
 class Libnice
 {
 public:
-	Libnice(char * i_strStunAddr,unsigned int i_dwStunPort,int i_iControlling);
+	Libnice(char * i_strStunAddr,unsigned int i_dwStunPort,E_IceControlRole i_eControlling);
 	~Libnice();
     int SetCallback(T_LibniceCb *i_ptLibniceCb);
     int LibniceProc();

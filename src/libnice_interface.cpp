@@ -32,7 +32,7 @@ int Libnice::m_iLibniceSendReadyFlag = 0;//0不可发送,1准备好通道可以发送
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-Libnice::Libnice(char * i_strStunAddr,unsigned int i_dwStunPort,int i_iControlling)
+Libnice::Libnice(char * i_strStunAddr,unsigned int i_dwStunPort,E_IceControlRole i_eControlling)
 {
     m_ptAgent=NULL;
     m_pRemoteCandidatesList = NULL;
@@ -41,7 +41,7 @@ Libnice::Libnice(char * i_strStunAddr,unsigned int i_dwStunPort,int i_iControlli
 	memset(&m_tLibniceDepData,0,sizeof(T_LibniceDepData));
 	snprintf(m_tLibniceDepData.strStunAddr,sizeof(m_tLibniceDepData.strStunAddr),"%s",i_strStunAddr);
 	m_tLibniceDepData.dwStunPort = i_dwStunPort;
-	m_tLibniceDepData.iControlling = i_iControlling;
+	m_tLibniceDepData.eControlling = i_eControlling;
 
     memset(&m_tLibniceCb,0,sizeof(T_LibniceCb));
     memset(&m_tVideoStream,0,sizeof(T_StreamInfo));
@@ -114,7 +114,7 @@ int Libnice::LibniceProc()
 	ptLoop = g_main_loop_new(NULL, FALSE);//
 	ptStdinIO = g_io_channel_unix_new(fileno(stdin));//
 
-    //nice_debug_enable(1);
+    nice_debug_enable(1);//不起作用
 	// Create the nice agent
 	m_ptAgent = nice_agent_new(g_main_loop_get_context (ptLoop),NICE_COMPATIBILITY_RFC5245);
 	if (m_ptAgent == NULL)
@@ -126,7 +126,7 @@ int Libnice::LibniceProc()
 		g_object_set(m_ptAgent, "stun-server", m_tLibniceDepData.strStunAddr, NULL);
 		g_object_set(m_ptAgent, "stun-server-port", m_tLibniceDepData.dwStunPort, NULL);
 	}
-	g_object_set(m_ptAgent, "controlling-mode", m_tLibniceDepData.iControlling, NULL);
+	g_object_set(m_ptAgent, "controlling-mode", (int)m_tLibniceDepData.eControlling, NULL);
 
 	// Connect to the signals
 	g_signal_connect(m_ptAgent, "candidate-gathering-done",G_CALLBACK(&Libnice::CandidateGatheringDone), this);
@@ -512,11 +512,11 @@ int Libnice::SendVideoData(char * i_acBuf,int i_iBufLen)
 		printf("LibniceSendData m_ptAgent null \r\n");
 		return iRet;
     }
-    /*if(m_iLibniceSendReadyFlag == 0) 
+    if(m_iLibniceSendReadyFlag == 0) //根据接口说明，这里必须ready才能发送成功
     {//发送标记由上层控制，因为发送协商报文也是这个接口但是还不是ready
-		printf("LibniceSendReady err \r\n");
+		printf("LibniceSendReady err \r\n");//上面注释机制修改为ready才协商
 		return iRet;
-    }*/
+    }
     for (i = 1; i <= m_tVideoStream.iNum; i++)
     {
         iRet = nice_agent_send(m_ptAgent, m_tVideoStream.iID, i, i_iBufLen, i_acBuf);
@@ -646,8 +646,8 @@ void Libnice::NewSelectPair(NiceAgent *agent, guint _stream_id,guint component_i
 	{
         if (NULL != pLibnice->m_tLibniceCb.Handshake)
         {//这里接收浏览器发出的报文(包括dtls协商报文)
-             pLibnice->m_tLibniceCb.Handshake(pLibnice->m_tLibniceCb.pObjCb);
-        }
+             //pLibnice->m_tLibniceCb.Handshake(pLibnice->m_tLibniceCb.pObjCb);//ready才能发送报文
+        }//selected pair在ready前发生
 	}
 	
 }
@@ -664,12 +664,18 @@ void Libnice::ComponentStateChanged(NiceAgent *agent, guint _stream_id,guint com
         if (NULL != pLibnice)
         {
             pLibnice->m_iLibniceSendReadyFlag = 1;
+            
+            if (NULL != pLibnice->m_tLibniceCb.Handshake)
+            {//这里接收浏览器发出的报文(包括dtls协商报文)
+                 pLibnice->m_tLibniceCb.Handshake(pLibnice->m_tLibniceCb.pObjCb);
+            }
         }
 	}
 }
 
 void Libnice::RecvVideoData(NiceAgent *agent, guint _stream_id, guint component_id,guint len, gchar *buf, gpointer data)
 {
+    printf("Libnice::RecvVideoData \n");
     Libnice *pLibnice=NULL;
     pLibnice = (Libnice *)data;
 	if (NULL != pLibnice)

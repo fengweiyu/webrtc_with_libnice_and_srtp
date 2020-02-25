@@ -27,7 +27,7 @@
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-WebRTC::WebRTC(char * i_strStunAddr,unsigned int i_dwStunPort,int i_iControlling):m_Libnice(i_strStunAddr,i_dwStunPort,i_iControlling),m_Srtp()
+WebRTC::WebRTC(char * i_strStunAddr,unsigned int i_dwStunPort,E_IceControlRole i_eControlling):m_Libnice(i_strStunAddr,i_dwStunPort,i_eControlling),m_Srtp()
 {
     m_pDtlsOnlyHandshake = NULL;
     memset(&m_tDtlsOnlyHandshakeCb,0,sizeof(T_DtlsOnlyHandshakeCb));
