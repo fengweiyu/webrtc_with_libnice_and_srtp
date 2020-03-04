@@ -27,20 +27,59 @@ class peerconnection_client
 {
 public:
 	peerconnection_client();
-	~peerconnection_client();
-    int login(char * i_strServerIp,int i_iServerPort,char * i_strSelfName);
-    int get_peer_sdp(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen);
-    int post_sdp_to_peer(int i_iPeerId,char * i_acSendBuf,int i_iSendLen);
-    
-private:
+	virtual ~peerconnection_client();
+    virtual int Login(char * i_strServerIp,int i_iServerPort,char * i_strSelfName)=0;
+    int GetMsgFromPeer(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen);
+    int PostMsgToPeer(int i_iPeerId,char * i_acSendBuf,int i_iSendLen,char * o_acRecvBuf, int * o_piRecvLen, int i_iRecvBufMaxLen);
+    int GetCandidateMsg(char * o_acRecvBuf, int * o_piRecvLen, int i_iRecvBufMaxLen);
+
+	virtual int GetMsg(char * o_acRecvBuf, int * o_piRecvLen, int i_iRecvBufMaxLen)=0;
+	virtual int SendMsg(int i_iPeerId, char * i_acSendBuf, int i_iSendLen,char * o_acRecvBuf, int * o_piRecvLen, int i_iRecvBufMaxLen)=0;
+protected:
 	HttpClient * m_pHttpClient;
 	int m_iMyId;
 	int m_iPeerId;
 };
 
+/*****************************************************************************
+-Class			: peerconnection_client_offer
+-Description	: 
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2019/09/21	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
+class peerconnection_client_offer : public peerconnection_client
+{
+public:
+	peerconnection_client_offer();
+	virtual ~peerconnection_client_offer();
+
+	int Login(char * i_strServerIp,int i_iServerPort,char * i_strSelfName);
+	int GetMsg(char * o_acRecvBuf, int * o_piRecvLen, int i_iRecvBufMaxLen);
+	int SendMsg(int i_iPeerId, char * i_acSendBuf, int i_iSendLen,char * o_acRecvBuf, int * o_piRecvLen, int i_iRecvBufMaxLen);
 
 
+};
 
 
+/*****************************************************************************
+-Class			: peerconnection_client_answer
+-Description	: 
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2019/09/21	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
+class peerconnection_client_answer : public peerconnection_client
+{
+public:
+	peerconnection_client_answer();
+	virtual ~peerconnection_client_answer();
+
+	int Login(char * i_strServerIp,int i_iServerPort,char * i_strSelfName);
+
+	int GetMsg(char * o_acRecvBuf, int * o_piRecvLen, int i_iRecvBufMaxLen);
+	int SendMsg(int i_iPeerId, char * i_acSendBuf, int i_iSendLen,char * o_acRecvBuf, int * o_piRecvLen, int i_iRecvBufMaxLen);
+	
+};
 
 #endif

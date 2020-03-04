@@ -24,11 +24,17 @@
 * -----------------------------------------------
 * 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-SignalingInterface :: SignalingInterface()
+SignalingInterface :: SignalingInterface(int i_iIsAnswer)
 {
-    m_PeerConnectionClient = new peerconnection_client();
     m_iLoginSuccessFlag = 0;
-
+    if(0 == i_iIsAnswer)
+    {
+        m_PeerConnectionClient = new peerconnection_client_offer();
+    }
+    else
+    {
+        m_PeerConnectionClient = new peerconnection_client_answer();
+    }
 
 }
 
@@ -81,23 +87,9 @@ int SignalingInterface :: Login(char * i_strServerIp, int i_iServerPort, char * 
 * -----------------------------------------------
 * 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-int SignalingInterface :: GetOfferMsg(char * o_acRecvBuf, int * o_piRecvLen, int i_iRecvBufMaxLen)
+int SignalingInterface :: GetMsg(char * o_acRecvBuf, int * o_piRecvLen, int i_iRecvBufMaxLen)
 {
-    int iRet = -1;
-    char *pOfferMsg = NULL;
-    const char * strOfferMsgFlag = "\"type\" : \"offer\"";
-
-    iRet = m_PeerConnectionClient->get_peer_sdp(o_acRecvBuf, o_piRecvLen, i_iRecvBufMaxLen);
-    if(iRet >= 0)
-    {
-        pOfferMsg = strstr(o_acRecvBuf,strOfferMsgFlag);
-        if(NULL == pOfferMsg)
-        {
-            printf("m_PeerConnectionClient->GetOfferMsg err:%d\r\n",iRet);
-            iRet = -1;
-        }
-    }
-    return iRet;
+    return m_PeerConnectionClient->GetMsg(o_acRecvBuf, o_piRecvLen, i_iRecvBufMaxLen);
 }
 
 
@@ -113,21 +105,7 @@ int SignalingInterface :: GetOfferMsg(char * o_acRecvBuf, int * o_piRecvLen, int
 ******************************************************************************/
 int SignalingInterface :: GetCandidateMsg(char * o_acRecvBuf, int * o_piRecvLen, int i_iRecvBufMaxLen)
 {
-    int iRet = -1;
-    char *pCandidateMsg = NULL;
-    const char * strCandidateMsgFlag = "\"candidate\" : \"candidate:";
-
-    iRet = m_PeerConnectionClient->get_peer_sdp(o_acRecvBuf, o_piRecvLen, i_iRecvBufMaxLen);
-    if(iRet >= 0)
-    {
-        pCandidateMsg = strstr(o_acRecvBuf,strCandidateMsgFlag);
-        if(NULL == pCandidateMsg)
-        {
-            printf("m_PeerConnectionClient->GetCandidateMsg err:%d\r\n",iRet);
-            iRet = -1;
-        }
-    }
-    return iRet;
+    return m_PeerConnectionClient->GetCandidateMsg(o_acRecvBuf, o_piRecvLen, i_iRecvBufMaxLen);
 }
 
 
@@ -141,11 +119,9 @@ int SignalingInterface :: GetCandidateMsg(char * o_acRecvBuf, int * o_piRecvLen,
 * -----------------------------------------------
 * 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-int SignalingInterface :: SendAnswerMsg(int i_iPeerId, char * i_acSendBuf, int i_iSendLen)
+int SignalingInterface :: SendMsg(int i_iPeerId, char * i_acSendBuf, int i_iSendLen,char * o_acRecvBuf, int * o_piRecvLen, int i_iRecvBufMaxLen)
 {
-    int iRet = -1;
-    iRet = m_PeerConnectionClient->post_sdp_to_peer(i_iPeerId, i_acSendBuf, i_iSendLen);
-    return iRet;
+    return m_PeerConnectionClient->SendMsg(i_iPeerId, i_acSendBuf, i_iSendLen,o_acRecvBuf,o_piRecvLen,i_iRecvBufMaxLen);
 }
 
 

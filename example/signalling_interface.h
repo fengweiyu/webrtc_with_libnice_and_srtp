@@ -25,12 +25,12 @@
 class SignalingInterface
 {
 public:
-	SignalingInterface();
+	SignalingInterface(int i_iIsAnswer);
 	~SignalingInterface();
 	int Login(char * i_strServerIp, int i_iServerPort, char * i_strSelfName);
-	int GetOfferMsg(char * o_acRecvBuf, int * o_piRecvLen, int i_iRecvBufMaxLen);
+	int GetMsg(char * o_acRecvBuf, int * o_piRecvLen, int i_iRecvBufMaxLen);
 	int GetCandidateMsg(char * o_acRecvBuf, int * o_piRecvLen, int i_iRecvBufMaxLen);
-	int SendAnswerMsg(int i_iPeerId, char * i_acSendBuf, int i_iSendLen);
+	int SendMsg(int i_iPeerId, char * i_acSendBuf, int i_iSendLen,char * o_acRecvBuf, int * o_piRecvLen, int i_iRecvBufMaxLen);
 private:
 	peerconnection_client * m_PeerConnectionClient;
 	int m_iLoginSuccessFlag;//0 fail,1 sucess
