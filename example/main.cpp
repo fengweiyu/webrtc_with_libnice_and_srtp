@@ -27,16 +27,26 @@
 #define WEBRTC_VIDEO_ENCODE_FORMAT_NAME "H264"
 #define WEBRTC_H264_TIMESTAMP_FREQUENCY 90000
 
-typedef enum WebRtcStatus
+typedef enum WebRtcOfferStatus
 {
-    WEBRTC_INIT,
-    WEBRTC_HANDLE_OFFER,
-    WEBRTC_HANDLE_ANSWER,//与前面一个在流程中只能存在一个
-    WEBRTC_HANDLE_CANDIDATE,
-    WEBRTC_SEND_READY,//等待通道建立
-    WEBRTC_SEND_RTP,
-    WEBRTC_EXIT,
-}E_WebRtcStatus;
+    WEBRTC_OFFER_INIT,
+    WEBRTC_OFFER_SEND_OFFER,
+    WEBRTC_OFFER_HANDLE_ANSWER,
+    WEBRTC_OFFER_HANDLE_CANDIDATE,
+    WEBRTC_OFFER_SEND_READY,//等待通道建立
+    WEBRTC_OFFER_SEND_RTP,
+    WEBRTC_OFFER_EXIT,
+}E_WebRtcOfferStatus;
+
+typedef enum WebRtcAnswerStatus
+{
+    WEBRTC_ANSWER_INIT,
+    WEBRTC_ANSWER_HANDLE_OFFER,
+    WEBRTC_ANSWER_HANDLE_CANDIDATE,
+    WEBRTC_ANSWER_SEND_READY,//等待通道建立
+    WEBRTC_ANSWER_SEND_RTP,
+    WEBRTC_ANSWER_EXIT,
+}E_WebRtcAnswerStatus;
 
 static void PrintUsage(char *i_strProcName);
 static void * WebRtcProc(void *pArg);
@@ -62,7 +72,7 @@ int main(int argc, char* argv[])
 
     int iRet = -1;
     
-    if(argc !=5)
+    if(argc !=6)
     {
         PrintUsage(argv[0]);
         return -1;
@@ -70,17 +80,35 @@ int main(int argc, char* argv[])
     memset(strSeverIp,0,sizeof(strSeverIp));
     strncpy(strSeverIp,argv[1],sizeof(strSeverIp));
     dwPort=atoi(argv[2]);
-
-    pWebRTC = new WebRtcAnswer(strSeverIp,dwPort,ICE_CONTROLLING_ROLE);
+    
+    //简单点，又因为没有ui，所以offer 和answer不能共存
+    if(0 == strcmp(argv[5],"offer"))
+    {
+        pWebRTC = new WebRtcOffer(strSeverIp,dwPort,ICE_CONTROLLING_ROLE);
+    }
+    else if(0 == strcmp(argv[5],"answer"))
+    {
+        pWebRTC = new WebRtcAnswer(strSeverIp,dwPort,ICE_CONTROLLING_ROLE);
+    }
+    else
+    {
+        PrintUsage(argv[0]);
+        return -1;
+    }
     if( pthread_create(&tWebRtcID,NULL,WebRtcProc,(void *)pWebRTC) != 0 )
     {
         printf("WebRtcProc pthread_create err\r\n");
     }
     else
     {
-        iRet =AnswerProc(pWebRTC,strSeverIp,dwPort,argv[3],argv[4]);
-        //简单点，又因为没有ui，所以offer 和answer不能共存
-        //iRet =OfferProc(pWebRTC,strSeverIp,dwPort,argv[3],argv[4]);
+        if(0 == strcmp(argv[5],"offer"))
+        {
+            iRet =OfferProc(pWebRTC,strSeverIp,dwPort,argv[3],argv[4]);
+        }
+        else
+        {
+            iRet =AnswerProc(pWebRTC,strSeverIp,dwPort,argv[3],argv[4]);
+        }
     }
     delete pWebRTC;
     return iRet;
@@ -97,8 +125,8 @@ int main(int argc, char* argv[])
 ******************************************************************************/
 static void PrintUsage(char *i_strProcName)
 {
-    printf("Usage: %s StunIP StunPort SelfName VideoFile\r\n",i_strProcName);
-    printf("eg: %s 192.168.0.199 8888 ywf sintel.h264\r\n",i_strProcName);
+    printf("Usage: %s StunIP StunPort SelfName VideoFile offer/answer\r\n",i_strProcName);
+    printf("eg: %s 192.168.0.181 8888 ywf sintel.h264 answer\r\n",i_strProcName);
 }
 
 /*****************************************************************************
@@ -157,18 +185,18 @@ static int OfferProc(WebRTC * i_pWebRTC,char * i_strServerIp, int i_iServerPort,
         ppbPacketBuf[i]=(unsigned char *)malloc(WEBRTC_RTP_MAX_PACKET_SIZE);//
         memset(ppbPacketBuf[i],0,WEBRTC_RTP_MAX_PACKET_SIZE);
     }
-    E_WebRtcStatus eWebRtcStatus=WEBRTC_INIT;
+    E_WebRtcOfferStatus eWebRtcStatus=WEBRTC_OFFER_INIT;
     while(1)
     {
         switch(eWebRtcStatus)
         {
-            case WEBRTC_INIT:
+            case WEBRTC_OFFER_INIT:
             {
                 iPacketNum = pRtpInterface->GetRtpData(ppbPacketBuf,aiEveryPacketLen,WEBRTC_RTP_MAX_PACKET_SIZE,WEBRTC_RTP_MAX_PACKET_NUM);//第一次会失败
                 iPeerId = pSignalingInf->Login(i_strServerIp,i_iServerPort,i_strSelfName);
                 if(iPeerId >= 0)
                 {
-                    eWebRtcStatus=WEBRTC_HANDLE_ANSWER;
+                    eWebRtcStatus=WEBRTC_OFFER_SEND_OFFER;
                 }
                 else
                 {
@@ -176,22 +204,45 @@ static int OfferProc(WebRTC * i_pWebRTC,char * i_strServerIp, int i_iServerPort,
                 }
                 break;
             }
-            
-            case WEBRTC_HANDLE_ANSWER:
+            case WEBRTC_OFFER_SEND_OFFER:
             {
                 memset(&tVideoInfo,0,sizeof(tVideoInfo));
                 tVideoInfo.pstrFormatName=WEBRTC_VIDEO_ENCODE_FORMAT_NAME;
                 tVideoInfo.dwTimestampFrequency=WEBRTC_H264_TIMESTAMP_FREQUENCY;  
                 tVideoInfo.ucRtpPayloadType=WEBRTC_RTP_PAYLOAD_H264;
                 tVideoInfo.wPortNumForSDP=0;
+                tVideoInfo.iID=0;
+                memset(acOfferMsg,0,sizeof(acOfferMsg));
                 if(i_pWebRTC->GenerateLocalMsg(&tVideoInfo,acOfferMsg,sizeof(acOfferMsg))>=0)
+                {
+                    memset(acGetMsg,0,sizeof(acGetMsg));
+                    pSignalingInf->SendMsg(iPeerId,acOfferMsg,strlen(acOfferMsg),acGetMsg,&iRecvLen,sizeof(acGetMsg));
+                    eWebRtcStatus=WEBRTC_OFFER_HANDLE_ANSWER;
+                }
+                else
+                {
+                    printf("pSignalingInf->GenerateLocalMsg err\r\n");
+                }
+                break;
+            }
+            
+            case WEBRTC_OFFER_HANDLE_ANSWER:
+            {
+                memset(&tVideoInfo,0,sizeof(tVideoInfo));
+                tVideoInfo.pstrFormatName=WEBRTC_VIDEO_ENCODE_FORMAT_NAME;
+                tVideoInfo.dwTimestampFrequency=WEBRTC_H264_TIMESTAMP_FREQUENCY;  
+                tVideoInfo.ucRtpPayloadType=WEBRTC_RTP_PAYLOAD_H264;
+                tVideoInfo.wPortNumForSDP=0;
+                tVideoInfo.iID=0;
+                memset(acOfferMsg,0,sizeof(acOfferMsg));
+                if(i_pWebRTC->GenerateLocalCandidateMsg(&tVideoInfo,acOfferMsg,sizeof(acOfferMsg))>=0)
                 {
                     memset(acGetMsg,0,sizeof(acGetMsg));
                     if(0==pSignalingInf->SendMsg(iPeerId,acOfferMsg,strlen(acOfferMsg),acGetMsg,&iRecvLen,sizeof(acGetMsg)))
                     {
                         if(0==i_pWebRTC->HandleMsg(acGetMsg))
                         {
-                            eWebRtcStatus=WEBRTC_HANDLE_CANDIDATE;
+                            eWebRtcStatus=WEBRTC_OFFER_HANDLE_CANDIDATE;
                         }
                         else
                         {
@@ -210,14 +261,14 @@ static int OfferProc(WebRTC * i_pWebRTC,char * i_strServerIp, int i_iServerPort,
                 break;
             }
             
-            case WEBRTC_HANDLE_CANDIDATE:
+            case WEBRTC_OFFER_HANDLE_CANDIDATE:
             {
                 memset(acGetMsg,0,sizeof(acGetMsg));
                 if(pSignalingInf->GetCandidateMsg(acGetMsg,&iRecvLen,sizeof(acGetMsg)) >= 0)
                 {
                     if(0==i_pWebRTC->HandleCandidateMsg(acGetMsg))
                     {
-                        eWebRtcStatus=WEBRTC_SEND_READY;
+                        eWebRtcStatus=WEBRTC_OFFER_SEND_READY;
                     }
                     else
                     {
@@ -230,11 +281,11 @@ static int OfferProc(WebRTC * i_pWebRTC,char * i_strServerIp, int i_iServerPort,
                 }
                 break;
             }
-            case WEBRTC_SEND_READY:
+            case WEBRTC_OFFER_SEND_READY:
             {
                 if(i_pWebRTC->GetSendReadyFlag() == 0)
                 {
-                    eWebRtcStatus=WEBRTC_SEND_RTP;
+                    eWebRtcStatus=WEBRTC_OFFER_SEND_RTP;
                     printf("WEBRTC_SEND_RTP......\r\n");
                 }
                 else
@@ -244,7 +295,7 @@ static int OfferProc(WebRTC * i_pWebRTC,char * i_strServerIp, int i_iServerPort,
                 break;
             }
             
-            case WEBRTC_SEND_RTP:
+            case WEBRTC_OFFER_SEND_RTP:
             {
                 if(iPacketNum > 0)
                 {
@@ -257,13 +308,13 @@ static int OfferProc(WebRTC * i_pWebRTC,char * i_strServerIp, int i_iServerPort,
                 else
                 {
                     printf("pRtpInterface->GetRtpData err\r\n");
-                    eWebRtcStatus=WEBRTC_SEND_RTP;
+                    eWebRtcStatus=WEBRTC_OFFER_SEND_RTP;
                 }
                 iPacketNum = pRtpInterface->GetRtpData(ppbPacketBuf,aiEveryPacketLen,WEBRTC_RTP_MAX_PACKET_SIZE,WEBRTC_RTP_MAX_PACKET_NUM);
                 break;
             }
             
-            case WEBRTC_EXIT:
+            case WEBRTC_OFFER_EXIT:
             {
                 printf("#####################WEBRTC_EXIT:%d\r\n",eWebRtcStatus);
                 break;
@@ -276,7 +327,7 @@ static int OfferProc(WebRTC * i_pWebRTC,char * i_strServerIp, int i_iServerPort,
             }
             usleep(40*1000);//25帧率
         }
-        if(WEBRTC_EXIT == eWebRtcStatus)
+        if(WEBRTC_OFFER_EXIT == eWebRtcStatus)
         {
             break;
         }
@@ -318,17 +369,17 @@ static int AnswerProc(WebRTC * i_pWebRTC,char * i_strServerIp, int i_iServerPort
         ppbPacketBuf[i]=(unsigned char *)malloc(WEBRTC_RTP_MAX_PACKET_SIZE);//
         memset(ppbPacketBuf[i],0,WEBRTC_RTP_MAX_PACKET_SIZE);
     }
-    E_WebRtcStatus eWebRtcStatus=WEBRTC_INIT;
+    E_WebRtcAnswerStatus eWebRtcStatus=WEBRTC_ANSWER_INIT;
     while(1)
     {
         switch(eWebRtcStatus)
         {
-            case WEBRTC_INIT:
+            case WEBRTC_ANSWER_INIT:
             {
                 iPacketNum = pRtpInterface->GetRtpData(ppbPacketBuf,aiEveryPacketLen,WEBRTC_RTP_MAX_PACKET_SIZE,WEBRTC_RTP_MAX_PACKET_NUM);//第一次会失败
                 if(pSignalingInf->Login(i_strServerIp,i_iServerPort,i_strSelfName)==0)
                 {
-                    eWebRtcStatus=WEBRTC_HANDLE_OFFER;
+                    eWebRtcStatus=WEBRTC_ANSWER_HANDLE_OFFER;
                 }
                 else
                 {
@@ -337,7 +388,7 @@ static int AnswerProc(WebRTC * i_pWebRTC,char * i_strServerIp, int i_iServerPort
                 break;
             }
             
-            case WEBRTC_HANDLE_OFFER:
+            case WEBRTC_ANSWER_HANDLE_OFFER:
             {
                 memset(acGetMsg,0,sizeof(acGetMsg));
                 iPeerId = pSignalingInf->GetMsg(acGetMsg,&iRecvLen,sizeof(acGetMsg));
@@ -345,7 +396,7 @@ static int AnswerProc(WebRTC * i_pWebRTC,char * i_strServerIp, int i_iServerPort
                 {
                     if(0==i_pWebRTC->HandleMsg(acGetMsg))
                     {
-                        eWebRtcStatus=WEBRTC_HANDLE_CANDIDATE;
+                        eWebRtcStatus=WEBRTC_ANSWER_HANDLE_CANDIDATE;
                     }
                     else
                     {
@@ -359,7 +410,7 @@ static int AnswerProc(WebRTC * i_pWebRTC,char * i_strServerIp, int i_iServerPort
                 break;
             }
             
-            case WEBRTC_HANDLE_CANDIDATE:
+            case WEBRTC_ANSWER_HANDLE_CANDIDATE:
             {
                 memset(acGetMsg,0,sizeof(acGetMsg));
                 iPeerId = pSignalingInf->GetCandidateMsg(acGetMsg,&iRecvLen,sizeof(acGetMsg));
@@ -377,7 +428,7 @@ static int AnswerProc(WebRTC * i_pWebRTC,char * i_strServerIp, int i_iServerPort
                         {
                             if(0==pSignalingInf->SendMsg(iPeerId,acAnswerMsg,strlen(acAnswerMsg),acGetMsg,&iRecvLen,sizeof(acGetMsg)))
                             {
-                                eWebRtcStatus=WEBRTC_SEND_READY;
+                                eWebRtcStatus=WEBRTC_ANSWER_SEND_READY;
                             }
                             else
                             {
@@ -400,11 +451,11 @@ static int AnswerProc(WebRTC * i_pWebRTC,char * i_strServerIp, int i_iServerPort
                 }
                 break;
             }
-            case WEBRTC_SEND_READY:
+            case WEBRTC_ANSWER_SEND_READY:
             {
                 if(i_pWebRTC->GetSendReadyFlag() == 0)
                 {
-                    eWebRtcStatus=WEBRTC_SEND_RTP;
+                    eWebRtcStatus=WEBRTC_ANSWER_SEND_RTP;
                     printf("WEBRTC_SEND_RTP......\r\n");
                 }
                 else
@@ -414,7 +465,7 @@ static int AnswerProc(WebRTC * i_pWebRTC,char * i_strServerIp, int i_iServerPort
                 break;
             }
             
-            case WEBRTC_SEND_RTP:
+            case WEBRTC_ANSWER_SEND_RTP:
             {
                 if(iPacketNum > 0)
                 {
@@ -427,13 +478,13 @@ static int AnswerProc(WebRTC * i_pWebRTC,char * i_strServerIp, int i_iServerPort
                 else
                 {
                     printf("pRtpInterface->GetRtpData err\r\n");
-                    eWebRtcStatus=WEBRTC_SEND_RTP;
+                    eWebRtcStatus=WEBRTC_ANSWER_SEND_RTP;
                 }
                 iPacketNum = pRtpInterface->GetRtpData(ppbPacketBuf,aiEveryPacketLen,WEBRTC_RTP_MAX_PACKET_SIZE,WEBRTC_RTP_MAX_PACKET_NUM);
                 break;
             }
             
-            case WEBRTC_EXIT:
+            case WEBRTC_ANSWER_EXIT:
             {
                 printf("#####################WEBRTC_EXIT:%d\r\n",eWebRtcStatus);
                 break;
@@ -446,7 +497,7 @@ static int AnswerProc(WebRTC * i_pWebRTC,char * i_strServerIp, int i_iServerPort
             }
             usleep(40*1000);//25帧率
         }
-        if(WEBRTC_EXIT == eWebRtcStatus)
+        if(WEBRTC_ANSWER_EXIT == eWebRtcStatus)
         {
             break;
         }

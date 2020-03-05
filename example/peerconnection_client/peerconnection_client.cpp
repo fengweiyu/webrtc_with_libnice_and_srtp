@@ -247,14 +247,13 @@ int peerconnection_client_offer :: Login(char * i_strServerIp,int i_iServerPort,
                 m_iMyId = atoi(pSelfName+strlen(i_strSelfName)+1);
                 printf("peer list:\r\n");
                 printf("%s",acRecvBuf);
-                iRet =0;
                 printf("connect peer name:");
                 memset(strPeerName,0,sizeof(strPeerName));
                 scanf("%s",strPeerName);
                 pPeerName = strstr(acRecvBuf,strPeerName);
                 if(NULL != pPeerName)
                 {
-                    iRet = atoi(pPeerName+strlen(i_strSelfName)+1);//return peer id
+                    iRet = atoi(pPeerName+strlen(strPeerName)+1);//return peer id
                 }
                 else
                 {
@@ -320,7 +319,10 @@ int peerconnection_client_offer :: SendMsg(int i_iPeerId, char * i_acSendBuf, in
             }
         }
     }
-    
+    else
+    {
+        printf("peerconnection_client_answer->PostMsgToPeer err:%d\r\n",iRet);
+    }
     return iRet;
 }
 

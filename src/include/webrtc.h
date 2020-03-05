@@ -23,7 +23,7 @@ typedef struct VideoInfo
     unsigned short wPortNumForSDP;
     unsigned char ucRtpPayloadType;
     unsigned char res;
-
+	int iID;
 }T_VideoInfo;
 
 /*****************************************************************************
@@ -44,6 +44,7 @@ public:
     int GetSendReadyFlag();
     int SendProtectedRtp(char * i_acRtpBuf,int i_iRtpBufLen);
     virtual int GenerateLocalMsg(T_VideoInfo *i_ptVideoInfo,char * o_strMsg,int i_iMaxLen)=0;
+    int GenerateLocalCandidateMsg(T_VideoInfo *i_ptVideoInfo,char * o_strCandidateMsg,int i_iCandidateMaxLen);
     
     static void HandshakeCb(void * pArg);//放到上层的目的是为了底层模块之间不要相互依赖
     static void HandleRecvDataCb(char * i_acData,int i_iLen,void * pArg);//后续可以改为private试试

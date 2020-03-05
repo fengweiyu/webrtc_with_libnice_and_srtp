@@ -8,9 +8,9 @@
 
 
 2.使用：
-	./webrtc StunIP StunPort SelfName VideoFile
+	./webrtc StunIP StunPort SelfName VideoFile offer/answer
 	eg:
-	./webrtc 192.168.0.103 8888 ywf555 sintel.h264
+	./webrtc 192.168.0.103 8888 ywf555 sintel.h264 answer
 	
 ******************************************************************************
 
@@ -22,9 +22,9 @@
 	ywf@ywf-pc:/work/workspace/webrtc_with_libnice_and_srtp/build/x86$ ls webrtc
 	webrtc
 2.usage	
-	./webrtc StunIP StunPort SelfName VideoFile
+	./webrtc StunIP StunPort SelfName VideoFile offer/answer
 	eg:
-	./webrtc 192.168.0.103 8888 ywf555 sintel.h264
+	./webrtc 192.168.0.103 8888 ywf555 sintel.h264 answer
  
 	
 ******************************************************************************

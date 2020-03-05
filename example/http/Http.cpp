@@ -185,8 +185,8 @@ int HttpClient :: RecvBody(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxL
             printf("HttpClient :: Recv err ,%p,%d,%d\r\n",pBody,i_iRecvBufMaxLen,(int)(iRecvLen-(pBody-acRecvBuf+strlen(strHttpBodyFlag))));
         }
     }
-    delete m_pTcpClient;
-    m_pTcpClient =NULL;
+    //delete m_pTcpClient;//每次发的时候会释放
+    //m_pTcpClient =NULL;//因为可能有接收两次的情况
     return iRet;
 }
 

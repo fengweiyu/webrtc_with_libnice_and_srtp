@@ -267,6 +267,58 @@ int WebRTC::GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int i_iSd
 	return iRet;
 }
 
+/*****************************************************************************
+-Fuction        : GenerateLocalSDP
+-Description    : GenerateLocalSDP
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+int WebRTC::GenerateLocalCandidateMsg(T_VideoInfo *i_ptVideoInfo,char * o_strCandidateMsg,int i_iCandidateMaxLen)
+{
+    int iRet = -1;
+    cJSON * ptNode = NULL;
+    T_LocalCandidate tLocalCandidate;
+    char strCandidate[128];
+    int i;
+    char strID[4];
+    
+    if(i_iCandidateMaxLen <= 0||NULL == o_strCandidateMsg ||NULL==i_ptVideoInfo)
+    {
+        printf("WebRtcOffer GenerateLocalMsg NULL \r\n");
+        return iRet;
+    }
+    memset(&tLocalCandidate,0,sizeof(T_LocalCandidate));
+    m_Libnice.GetLocalCandidate(&tLocalCandidate);
+	if(tLocalCandidate.iGatheringDoneFlag == 0)
+	{
+		printf("GenerateLocalSDP err\r\n");
+		return iRet;
+	}
+    for(i=0;i<tLocalCandidate.iCurCandidateNum;i++)
+    {//iCurCandidateNum目前为1个，多个也是失败
+        memset(strCandidate,0,sizeof(strCandidate));
+        snprintf(strCandidate,sizeof(strCandidate),"%s",
+        tLocalCandidate.strCandidateData[i]);
+    }
+    snprintf(strID,sizeof(strID),"%d",i_ptVideoInfo->iID);
+    cJSON * root = cJSON_CreateObject();
+    cJSON_AddStringToObject(root,"candidate",strCandidate);
+    cJSON_AddNumberToObject(root,"sdpMLineIndex",i_ptVideoInfo->iID);
+    cJSON_AddStringToObject(root,"sdpMid",strID);
+    char * buf = cJSON_PrintUnformatted(root);
+    if(buf)
+    {
+        iRet=snprintf(o_strCandidateMsg,i_iCandidateMaxLen,"%s",buf);
+        free(buf);
+    }
+    cJSON_Delete(root);
+    return iRet;
+}
+
 
 /*****************************************************************************
 -Fuction        : HandshakeCb
