@@ -130,4 +130,44 @@ webrtc是有dtls hello的
 DTLSv1_2_method无用
 
 
+打包为webrtc_v1.0_(android)-----已备份，重命名u盘，经验证风险低所以可以，
+测试gn win结果ok  ，测试ok
+由于不影响源码不影响其他编译结果，只是在out多个h264,所以可备份，打包为webrtc_v2.0_win
+打包备份解压，把win工程拷贝出来到本地---------（搞好sln，再次备份进去，原始数据就无所谓了）
+(由于压缩包存在，所以删除文件夹webrtc_v2.0_win，，再解压一个出来，看大小看h264(应该有))
+查看本地是否有h264,不大的话可以保留 ，有h264开机62g比原先57g多5g，关机60g比原先(v1.0)
+
+
+
+
+
+
+
+
+offer  端：
+登录后选择对方id
+不断post sdp给对方(先post sdp后不断post candidate) ，直到对方回answer(可能要读第二次才读到，RecvBody)
+然后get请求对方candidate
+
+answer端：
+登录后
+不断get请求对方的offer消息
+成功后，不断get请求对方的candidate消息
+成功后，post answer 消息
+
+
+一种是一个类包含所有函数，一种是采用两个类即两个子类，两个类更清晰也方便使用
+信令端：peer 里面放 offer之类的处理，并里面有两个子类，signal对其进行封装
+处理端：webrtc类放两个子类，HandleMsg GetMsg 分别对应子类的不同处理方式
+
+
+
+
+
+
+
+
+
+
+
 试试私有静态成员函数是否能被直接访问

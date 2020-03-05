@@ -66,7 +66,7 @@ SignalingInterface :: ~SignalingInterface()
 ******************************************************************************/
 int SignalingInterface :: Login(char * i_strServerIp, int i_iServerPort, char * i_strSelfName)
 {
-    return m_PeerConnectionClient->login(i_strServerIp, i_iServerPort,i_strSelfName);
+    return m_PeerConnectionClient->Login(i_strServerIp, i_iServerPort,i_strSelfName);
 }
 
 
