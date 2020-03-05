@@ -31,6 +31,7 @@ typedef enum WebRtcStatus
 {
     WEBRTC_INIT,
     WEBRTC_HANDLE_OFFER,
+    WEBRTC_HANDLE_ANSWER,//与前面一个在流程中只能存在一个
     WEBRTC_HANDLE_CANDIDATE,
     WEBRTC_SEND_READY,//等待通道建立
     WEBRTC_SEND_RTP,
@@ -39,6 +40,7 @@ typedef enum WebRtcStatus
 
 static void PrintUsage(char *i_strProcName);
 static void * WebRtcProc(void *pArg);
+static int OfferProc(WebRTC * i_pWebRTC,char * i_strServerIp, int i_iServerPort, char * i_strSelfName,char *i_strVideoPath);
 static int AnswerProc(WebRTC * i_pWebRTC,char * i_strServerIp, int i_iServerPort, char * i_strSelfName,char *i_strVideoPath);
 
 /*****************************************************************************
@@ -69,7 +71,7 @@ int main(int argc, char* argv[])
     strncpy(strSeverIp,argv[1],sizeof(strSeverIp));
     dwPort=atoi(argv[2]);
 
-    pWebRTC = new WebRTC(strSeverIp,dwPort,ICE_CONTROLLING_ROLE);
+    pWebRTC = new WebRtcAnswer(strSeverIp,dwPort,ICE_CONTROLLING_ROLE);
     if( pthread_create(&tWebRtcID,NULL,WebRtcProc,(void *)pWebRTC) != 0 )
     {
         printf("WebRtcProc pthread_create err\r\n");
@@ -77,6 +79,8 @@ int main(int argc, char* argv[])
     else
     {
         iRet =AnswerProc(pWebRTC,strSeverIp,dwPort,argv[3],argv[4]);
+        //简单点，又因为没有ui，所以offer 和answer不能共存
+        //iRet =OfferProc(pWebRTC,strSeverIp,dwPort,argv[3],argv[4]);
     }
     delete pWebRTC;
     return iRet;
@@ -122,8 +126,8 @@ static void * WebRtcProc(void *pArg)
 }
 
 /*****************************************************************************
--Fuction        : OfferProc
--Description    : SendOfferProc
+-Fuction        : AnswerProc
+-Description    : SendAnswerProc
 -Input          : 
 -Output         : 
 -Return         : 
@@ -142,7 +146,7 @@ static int OfferProc(WebRTC * i_pWebRTC,char * i_strServerIp, int i_iServerPort,
     int iPeerId = -1;
     int iRet=0;
 
-    pSignalingInf = new SignalingInterface();
+    pSignalingInf = new SignalingInterface(0);
     pRtpInterface = new RtpInterface(i_strVideoPath);
     int iPacketNum=0;
     unsigned char *ppbPacketBuf[WEBRTC_RTP_MAX_PACKET_NUM]={0};
@@ -161,9 +165,10 @@ static int OfferProc(WebRTC * i_pWebRTC,char * i_strServerIp, int i_iServerPort,
             case WEBRTC_INIT:
             {
                 iPacketNum = pRtpInterface->GetRtpData(ppbPacketBuf,aiEveryPacketLen,WEBRTC_RTP_MAX_PACKET_SIZE,WEBRTC_RTP_MAX_PACKET_NUM);//第一次会失败
-                if(pSignalingInf->Login(i_strServerIp,i_iServerPort,i_strSelfName)==0)
+                iPeerId = pSignalingInf->Login(i_strServerIp,i_iServerPort,i_strSelfName);
+                if(iPeerId >= 0)
                 {
-                    eWebRtcStatus=WEBRTC_HANDLE_OFFER;
+                    eWebRtcStatus=WEBRTC_HANDLE_ANSWER;
                 }
                 else
                 {
@@ -172,24 +177,35 @@ static int OfferProc(WebRTC * i_pWebRTC,char * i_strServerIp, int i_iServerPort,
                 break;
             }
             
-            case WEBRTC_HANDLE_OFFER:
+            case WEBRTC_HANDLE_ANSWER:
             {
-                memset(acGetMsg,0,sizeof(acGetMsg));
-                iPeerId = pSignalingInf->GetOfferMsg(acGetMsg,&iRecvLen,sizeof(acGetMsg));
-                if(iPeerId>=0)
+                memset(&tVideoInfo,0,sizeof(tVideoInfo));
+                tVideoInfo.pstrFormatName=WEBRTC_VIDEO_ENCODE_FORMAT_NAME;
+                tVideoInfo.dwTimestampFrequency=WEBRTC_H264_TIMESTAMP_FREQUENCY;  
+                tVideoInfo.ucRtpPayloadType=WEBRTC_RTP_PAYLOAD_H264;
+                tVideoInfo.wPortNumForSDP=0;
+                if(0==i_pWebRTC->GenerateLocalMsg(&tVideoInfo,acOfferMsg,sizeof(acOfferMsg)))
                 {
-                    if(0==i_pWebRTC->HandleOfferMsg(acGetMsg))
+                    memset(acGetMsg,0,sizeof(acGetMsg));
+                    if(0==pSignalingInf->SendMsg(iPeerId,acOfferMsg,strlen(acOfferMsg),acGetMsg,&iRecvLen,sizeof(acGetMsg)))
                     {
-                        eWebRtcStatus=WEBRTC_HANDLE_CANDIDATE;
+                        if(0==i_pWebRTC->HandleMsg(acGetMsg))
+                        {
+                            eWebRtcStatus=WEBRTC_HANDLE_CANDIDATE;
+                        }
+                        else
+                        {
+                            printf("pSignalingInf->HandleOfferMsg err\r\n");
+                        }
                     }
                     else
                     {
-                        printf("pSignalingInf->HandleOfferMsg err\r\n");
+                        printf("pSignalingInf->Send acOfferMsg err\r\n");
                     }
                 }
                 else
                 {
-                    printf("pSignalingInf->GetOfferMsg err\r\n");
+                    printf("pSignalingInf->GenerateLocalMsg err\r\n");
                 }
                 break;
             }
@@ -197,25 +213,11 @@ static int OfferProc(WebRTC * i_pWebRTC,char * i_strServerIp, int i_iServerPort,
             case WEBRTC_HANDLE_CANDIDATE:
             {
                 memset(acGetMsg,0,sizeof(acGetMsg));
-                iPeerId = pSignalingInf->GetCandidateMsg(acGetMsg,&iRecvLen,sizeof(acGetMsg));
-                if(iPeerId>=0)
+                if(pSignalingInf->GetCandidateMsg(acGetMsg,&iRecvLen,sizeof(acGetMsg)) >= 0)
                 {
-                    memset(acAnswerMsg,0,sizeof(acAnswerMsg));
-                    memset(&tVideoInfo,0,sizeof(tVideoInfo));
-                    tVideoInfo.pstrFormatName=WEBRTC_VIDEO_ENCODE_FORMAT_NAME;
-                    tVideoInfo.dwTimestampFrequency=WEBRTC_H264_TIMESTAMP_FREQUENCY;  
-                    tVideoInfo.ucRtpPayloadType=WEBRTC_RTP_PAYLOAD_H264;
-                    tVideoInfo.wPortNumForSDP=0;
-                    if(0==i_pWebRTC->HandleCandidateMsg(acGetMsg,&tVideoInfo,acAnswerMsg,sizeof(acAnswerMsg)))
+                    if(0==i_pWebRTC->HandleCandidateMsg(acGetMsg))
                     {
-                        if(0==pSignalingInf->SendAnswerMsg(iPeerId,acAnswerMsg,strlen(acAnswerMsg)))
-                        {
-                            eWebRtcStatus=WEBRTC_SEND_READY;
-                        }
-                        else
-                        {
-                            printf("pSignalingInf->SendAnswerMsg err\r\n");
-                        }
+                        eWebRtcStatus=WEBRTC_SEND_READY;
                     }
                     else
                     {
@@ -284,7 +286,6 @@ static int OfferProc(WebRTC * i_pWebRTC,char * i_strServerIp, int i_iServerPort,
 
     return iRet;
 }
-
 /*****************************************************************************
 -Fuction        : AnswerProc
 -Description    : SendAnswerProc
@@ -306,7 +307,7 @@ static int AnswerProc(WebRTC * i_pWebRTC,char * i_strServerIp, int i_iServerPort
     int iPeerId = -1;
     int iRet=0;
 
-    pSignalingInf = new SignalingInterface();
+    pSignalingInf = new SignalingInterface(1);
     pRtpInterface = new RtpInterface(i_strVideoPath);
     int iPacketNum=0;
     unsigned char *ppbPacketBuf[WEBRTC_RTP_MAX_PACKET_NUM]={0};
@@ -342,7 +343,7 @@ static int AnswerProc(WebRTC * i_pWebRTC,char * i_strServerIp, int i_iServerPort
                 iPeerId = pSignalingInf->GetMsg(acGetMsg,&iRecvLen,sizeof(acGetMsg));
                 if(iPeerId>=0)
                 {
-                    if(0==i_pWebRTC->HandleOfferMsg(acGetMsg))
+                    if(0==i_pWebRTC->HandleMsg(acGetMsg))
                     {
                         eWebRtcStatus=WEBRTC_HANDLE_CANDIDATE;
                     }
@@ -364,21 +365,28 @@ static int AnswerProc(WebRTC * i_pWebRTC,char * i_strServerIp, int i_iServerPort
                 iPeerId = pSignalingInf->GetCandidateMsg(acGetMsg,&iRecvLen,sizeof(acGetMsg));
                 if(iPeerId>=0)
                 {
-                    memset(acAnswerMsg,0,sizeof(acAnswerMsg));
-                    memset(&tVideoInfo,0,sizeof(tVideoInfo));
-                    tVideoInfo.pstrFormatName=WEBRTC_VIDEO_ENCODE_FORMAT_NAME;
-                    tVideoInfo.dwTimestampFrequency=WEBRTC_H264_TIMESTAMP_FREQUENCY;  
-                    tVideoInfo.ucRtpPayloadType=WEBRTC_RTP_PAYLOAD_H264;
-                    tVideoInfo.wPortNumForSDP=0;
-                    if(0==i_pWebRTC->HandleCandidateMsg(acGetMsg,&tVideoInfo,acAnswerMsg,sizeof(acAnswerMsg)))
+                    if(0==i_pWebRTC->HandleCandidateMsg(acGetMsg))
                     {
-                        if(0==pSignalingInf->SendMsg(iPeerId,acAnswerMsg,strlen(acAnswerMsg),acGetMsg,&iRecvLen,sizeof(acGetMsg)))
+                        memset(acAnswerMsg,0,sizeof(acAnswerMsg));
+                        memset(&tVideoInfo,0,sizeof(tVideoInfo));
+                        tVideoInfo.pstrFormatName=WEBRTC_VIDEO_ENCODE_FORMAT_NAME;
+                        tVideoInfo.dwTimestampFrequency=WEBRTC_H264_TIMESTAMP_FREQUENCY;  
+                        tVideoInfo.ucRtpPayloadType=WEBRTC_RTP_PAYLOAD_H264;
+                        tVideoInfo.wPortNumForSDP=0;
+                        if(0==i_pWebRTC->GenerateLocalMsg(&tVideoInfo,acAnswerMsg,sizeof(acAnswerMsg)))
                         {
-                            eWebRtcStatus=WEBRTC_SEND_READY;
+                            if(0==pSignalingInf->SendMsg(iPeerId,acAnswerMsg,strlen(acAnswerMsg),acGetMsg,&iRecvLen,sizeof(acGetMsg)))
+                            {
+                                eWebRtcStatus=WEBRTC_SEND_READY;
+                            }
+                            else
+                            {
+                                printf("pSignalingInf->SendAnswerMsg err\r\n");
+                            }
                         }
                         else
                         {
-                            printf("pSignalingInf->SendAnswerMsg err\r\n");
+                            printf("pSignalingInf->GenerateLocalMsg err\r\n");
                         }
                     }
                     else

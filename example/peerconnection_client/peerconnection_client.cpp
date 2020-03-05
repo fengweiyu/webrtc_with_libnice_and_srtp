@@ -299,7 +299,7 @@ int peerconnection_client_offer :: SendMsg(int i_iPeerId, char * i_acSendBuf, in
     char *pAnswerMsg = NULL;
     const char * strAnswerMsgFlag = "\"type\" : \"answer\"";
     
-    if(0 == PostMsgToPeer(i_iPeerId, i_acSendBuf, i_iSendLen))
+    if(0 == PostMsgToPeer(i_iPeerId, i_acSendBuf, i_iSendLen,o_acRecvBuf,o_piRecvLen,i_iRecvBufMaxLen))
     {
         pAnswerMsg = strstr(o_acRecvBuf,strAnswerMsgFlag);
         if(NULL == pAnswerMsg)

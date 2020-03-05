@@ -66,14 +66,7 @@ SignalingInterface :: ~SignalingInterface()
 ******************************************************************************/
 int SignalingInterface :: Login(char * i_strServerIp, int i_iServerPort, char * i_strSelfName)
 {
-    int iRet=-1;
-    
-    if(m_PeerConnectionClient->login(i_strServerIp, i_iServerPort,i_strSelfName)>=0)
-    {
-        iRet=0;
-    }
-
-    return iRet;
+    return m_PeerConnectionClient->login(i_strServerIp, i_iServerPort,i_strSelfName);
 }
 
 

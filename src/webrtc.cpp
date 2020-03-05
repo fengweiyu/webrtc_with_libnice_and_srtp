@@ -78,63 +78,6 @@ int WebRTC::Proc()
     return m_Libnice.LibniceProc();
 }
 /*****************************************************************************
--Fuction        : HandleOfferMsg
--Description    : 收到offer还是发wait消息，只有收到Candidate才发answer
-消息
--Input          : 
--Output         : 
--Return         : 
-* Modify Date     Version             Author           Modification
-* -----------------------------------------------
-* 2020/01/13      V1.0.0              Yu Weifeng       Created
-******************************************************************************/
-int WebRTC::HandleOfferMsg(char * i_strOfferMsg)
-{
-    int iRet = -1;
-    cJSON * ptOfferJson = NULL;
-    cJSON * ptNode = NULL;
-    char acRemoteSDP[5*1024];
-    
-    if(NULL == i_strOfferMsg)
-    {
-        printf("HandleOfferMsg NULL \r\n");
-        return iRet;
-    }
-    ptOfferJson = cJSON_Parse(i_strOfferMsg);
-    if(NULL != ptOfferJson)
-    {
-        ptNode = cJSON_GetObjectItem(ptOfferJson,"type");
-        if(NULL != ptNode && NULL != ptNode->valuestring)
-        {
-            if(0 == strcmp(ptNode->valuestring,"offer"))
-            {
-                iRet = 0;
-            }
-            ptNode = NULL;
-        }
-        ptNode = cJSON_GetObjectItem(ptOfferJson,"sdp");
-        if(NULL != ptNode && NULL != ptNode->valuestring)
-        {
-            if(sizeof(acRemoteSDP)<strlen(ptNode->valuestring))
-            {
-                printf("cJSON_GetObjectItem sdp err \r\n");
-            }
-            memset(acRemoteSDP,0,sizeof(acRemoteSDP));
-            strncpy(acRemoteSDP,ptNode->valuestring,sizeof(acRemoteSDP));
-            ptNode = NULL;
-        }
-        cJSON_Delete(ptOfferJson);
-    }
-    if(0 != iRet)
-    {
-    }
-    else
-    {
-        iRet=m_Libnice.SaveRemoteSDP(acRemoteSDP);
-    }
-    return iRet;
-}
-/*****************************************************************************
 -Fuction        : HandleCandidateMsg
 -Description    : Offer消息必须是是在Candidate之前的，有这样的时序要求
 这是webrtc抓包发现的，所以不符合这个时序则返回错误
@@ -145,15 +88,14 @@ int WebRTC::HandleOfferMsg(char * i_strOfferMsg)
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int WebRTC::HandleCandidateMsg(char * i_strCandidateMsg,T_VideoInfo *i_ptVideoInfo,char * o_strAnswerMsg,int i_iAnswerMaxLen)
+int WebRTC::HandleCandidateMsg(char * i_strCandidateMsg)
 {
     int iRet = -1;
     cJSON * ptCandidateJson = NULL;
     cJSON * ptNode = NULL;
     char acRemoteCandidate[1024];
-    char acLocalSDP[5*1024];
     
-    if(NULL == i_strCandidateMsg||NULL == o_strAnswerMsg ||NULL==i_ptVideoInfo)
+    if(NULL == i_strCandidateMsg)
     {
         printf("HandleOfferMsg NULL \r\n");
         return iRet;
@@ -184,57 +126,7 @@ int WebRTC::HandleCandidateMsg(char * i_strCandidateMsg,T_VideoInfo *i_ptVideoIn
     else
     {
         iRet=m_Libnice.SetRemoteCandidateAndSDP(acRemoteCandidate);//
-        memset(acLocalSDP,0,sizeof(acLocalSDP));
-        //m_Libnice.GetLocalSDP(acLocalSDP,sizeof(acLocalSDP));//local sdp缺少信息只好自己组包
-        GenerateLocalSDP(i_ptVideoInfo,acLocalSDP,sizeof(acLocalSDP));
-        cJSON * root = cJSON_CreateObject();
-        cJSON_AddStringToObject(root,"sdp",acLocalSDP);
-        cJSON_AddStringToObject(root,"type","answer");
-        char * buf = cJSON_PrintUnformatted(root);
-        if(buf)
-        {
-            snprintf(o_strAnswerMsg,i_iAnswerMaxLen,"%s",buf);
-            free(buf);
-        }
-        cJSON_Delete(root);
     }
-    return iRet;
-}
-
-/*****************************************************************************
--Fuction        : GetAnswerMsg
--Description    : 
--Input          : 
--Output         : 
--Return         : 
-* Modify Date     Version             Author           Modification
-* -----------------------------------------------
-* 2020/01/13      V1.0.0              Yu Weifeng       Created
-******************************************************************************/
-int WebRTC::GetAnswerMsg(T_VideoInfo *i_ptVideoInfo,char * o_strAnswerMsg,int i_iAnswerMaxLen)
-{
-    int iRet = -1;
-    cJSON * ptNode = NULL;
-    char acLocalSDP[5*1024];
-    
-    if(i_iAnswerMaxLen <= 0||NULL == o_strAnswerMsg ||NULL==i_ptVideoInfo)
-    {
-        printf("GetAnswerMsg NULL \r\n");
-        return iRet;
-    }
-    memset(acLocalSDP,0,sizeof(acLocalSDP));
-    //m_Libnice.GetLocalSDP(acLocalSDP,sizeof(acLocalSDP));//local sdp缺少信息只好自己组包
-    iRet=GenerateLocalSDP(i_ptVideoInfo,acLocalSDP,sizeof(acLocalSDP));
-    cJSON * root = cJSON_CreateObject();
-    cJSON_AddStringToObject(root,"sdp",acLocalSDP);
-    cJSON_AddStringToObject(root,"type","answer");
-    char * buf = cJSON_PrintUnformatted(root);
-    if(buf)
-    {
-        snprintf(o_strAnswerMsg,i_iAnswerMaxLen,"%s",buf);
-        free(buf);
-    }
-    cJSON_Delete(root);
     return iRet;
 }
 
@@ -460,6 +352,249 @@ bool WebRTC::IsDtls(char *buf)
 }
 
 
+/*****************************************************************************
+-Fuction        : WebRtcOffer
+-Description    : 
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+WebRtcOffer::WebRtcOffer(char * i_strStunAddr,unsigned int i_dwStunPort,E_IceControlRole i_eControlling):WebRTC(i_strStunAddr,i_dwStunPort,i_eControlling)
+{
+}
 
+/*****************************************************************************
+-Fuction        : ~WebRtcOffer
+-Description    : ~WebRtcOffer
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+WebRtcOffer::~WebRtcOffer()
+{
+}
+
+/*****************************************************************************
+-Fuction        : HandleMsg
+-Description    : 
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+int WebRtcOffer::HandleMsg(char * i_strAnswerMsg)
+{
+    int iRet = -1;
+    cJSON * ptAnswerJson = NULL;
+    cJSON * ptNode = NULL;
+    char acRemoteSDP[5*1024];
+    
+    if(NULL == i_strAnswerMsg)
+    {
+        printf("WebRtcOffer HandleMsg NULL \r\n");
+        return iRet;
+    }
+    ptAnswerJson = cJSON_Parse(i_strAnswerMsg);
+    if(NULL != ptAnswerJson)
+    {
+        ptNode = cJSON_GetObjectItem(ptAnswerJson,"type");
+        if(NULL != ptNode && NULL != ptNode->valuestring)
+        {
+            if(0 == strcmp(ptNode->valuestring,"answer"))
+            {
+                iRet = 0;
+            }
+            ptNode = NULL;
+        }
+        ptNode = cJSON_GetObjectItem(ptAnswerJson,"sdp");
+        if(NULL != ptNode && NULL != ptNode->valuestring)
+        {
+            if(sizeof(acRemoteSDP)<strlen(ptNode->valuestring))
+            {
+                printf("cJSON_GetObjectItem sdp err \r\n");
+            }
+            memset(acRemoteSDP,0,sizeof(acRemoteSDP));
+            strncpy(acRemoteSDP,ptNode->valuestring,sizeof(acRemoteSDP));
+            ptNode = NULL;
+        }
+        cJSON_Delete(ptAnswerJson);
+    }
+    if(0 != iRet)
+    {
+    }
+    else
+    {
+        iRet=m_Libnice.SaveRemoteSDP(acRemoteSDP);
+    }
+    return iRet;
+}
+
+/*****************************************************************************
+-Fuction        : GenerateLocalMsg
+-Description    : 
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+int WebRtcOffer::GenerateLocalMsg(T_VideoInfo *i_ptVideoInfo,char * o_strOfferMsg,int i_iOfferMaxLen)
+{
+    int iRet = -1;
+    cJSON * ptNode = NULL;
+    char acLocalSDP[5*1024];
+    
+    if(i_iOfferMaxLen <= 0||NULL == o_strOfferMsg ||NULL==i_ptVideoInfo)
+    {
+        printf("WebRtcOffer GenerateLocalMsg NULL \r\n");
+        return iRet;
+    }
+    memset(acLocalSDP,0,sizeof(acLocalSDP));
+    //m_Libnice.GetLocalSDP(acLocalSDP,sizeof(acLocalSDP));//local sdp缺少信息只好自己组包
+    iRet=GenerateLocalSDP(i_ptVideoInfo,acLocalSDP,sizeof(acLocalSDP));
+    cJSON * root = cJSON_CreateObject();
+    cJSON_AddStringToObject(root,"sdp",acLocalSDP);
+    cJSON_AddStringToObject(root,"type","offer");
+    char * buf = cJSON_PrintUnformatted(root);
+    if(buf)
+    {
+        snprintf(o_strOfferMsg,i_iOfferMaxLen,"%s",buf);
+        free(buf);
+    }
+    cJSON_Delete(root);
+    return iRet;
+}
+
+/*****************************************************************************
+-Fuction        : WebRtcAnswer
+-Description    : 
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+WebRtcAnswer::WebRtcAnswer(char * i_strStunAddr,unsigned int i_dwStunPort,E_IceControlRole i_eControlling):WebRTC(i_strStunAddr,i_dwStunPort,i_eControlling)
+{
+}
+
+/*****************************************************************************
+-Fuction        : ~~WebRtcAnswer
+-Description    : ~~WebRtcAnswer
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+WebRtcAnswer::~WebRtcAnswer()
+{
+}
+
+/*****************************************************************************
+-Fuction        : HandleOfferMsg
+-Description    : 收到offer还是发wait消息，只有收到Candidate才发answer
+消息
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+int WebRtcAnswer::HandleMsg(char * i_strOfferMsg)
+{
+    int iRet = -1;
+    cJSON * ptOfferJson = NULL;
+    cJSON * ptNode = NULL;
+    char acRemoteSDP[5*1024];
+    
+    if(NULL == i_strOfferMsg)
+    {
+        printf("HandleOfferMsg NULL \r\n");
+        return iRet;
+    }
+    ptOfferJson = cJSON_Parse(i_strOfferMsg);
+    if(NULL != ptOfferJson)
+    {
+        ptNode = cJSON_GetObjectItem(ptOfferJson,"type");
+        if(NULL != ptNode && NULL != ptNode->valuestring)
+        {
+            if(0 == strcmp(ptNode->valuestring,"offer"))
+            {
+                iRet = 0;
+            }
+            ptNode = NULL;
+        }
+        ptNode = cJSON_GetObjectItem(ptOfferJson,"sdp");
+        if(NULL != ptNode && NULL != ptNode->valuestring)
+        {
+            if(sizeof(acRemoteSDP)<strlen(ptNode->valuestring))
+            {
+                printf("cJSON_GetObjectItem sdp err \r\n");
+            }
+            memset(acRemoteSDP,0,sizeof(acRemoteSDP));
+            strncpy(acRemoteSDP,ptNode->valuestring,sizeof(acRemoteSDP));
+            ptNode = NULL;
+        }
+        cJSON_Delete(ptOfferJson);
+    }
+    if(0 != iRet)
+    {
+    }
+    else
+    {
+        iRet=m_Libnice.SaveRemoteSDP(acRemoteSDP);
+    }
+    return iRet;
+}
+
+/*****************************************************************************
+-Fuction        : GenerateLocalMsg
+-Description    : 
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+int WebRtcAnswer::GenerateLocalMsg(T_VideoInfo *i_ptVideoInfo,char * o_strAnswerMsg,int i_iAnswerMaxLen)
+{
+    int iRet = -1;
+    cJSON * ptNode = NULL;
+    char acLocalSDP[5*1024];
+    
+    if(i_iAnswerMaxLen <= 0||NULL == o_strAnswerMsg ||NULL==i_ptVideoInfo)
+    {
+        printf("GetAnswerMsg NULL \r\n");
+        return iRet;
+    }
+    memset(acLocalSDP,0,sizeof(acLocalSDP));
+    //m_Libnice.GetLocalSDP(acLocalSDP,sizeof(acLocalSDP));//local sdp缺少信息只好自己组包
+    iRet=GenerateLocalSDP(i_ptVideoInfo,acLocalSDP,sizeof(acLocalSDP));
+    cJSON * root = cJSON_CreateObject();
+    cJSON_AddStringToObject(root,"sdp",acLocalSDP);
+    cJSON_AddStringToObject(root,"type","answer");
+    char * buf = cJSON_PrintUnformatted(root);
+    if(buf)
+    {
+        snprintf(o_strAnswerMsg,i_iAnswerMaxLen,"%s",buf);
+        free(buf);
+    }
+    cJSON_Delete(root);
+    return iRet;
+}
 
 
