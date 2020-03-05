@@ -189,7 +189,17 @@ int WebRTC::GetSendReadyFlag()
 
 /*****************************************************************************
 -Fuction        : GenerateLocalSDP
--Description    : GenerateLocalSDP
+-Description    : 
+// 'setup' attribute can take in an offer/answer exchange:
+//       Offer      Answer
+//      ________________
+//      active     passive / holdconn
+//      passive    active / holdconn
+//      actpass    active / passive / holdconn
+//      holdconn   holdconn
+
+
+
 -Input          : 
 -Output         : 
 -Return         : 
@@ -227,11 +237,11 @@ int WebRTC::GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int i_iSd
     strSdpFmt.assign("v=0\r\n"
         "o=- %ld%06ld %d IN IP4 %s\r\n"//o=<username><session id> <version> <network type> <address type><address> Origin ,给定了会话的发起者信息
         "s=ywf webrtc\r\n"//s=<sessionname> ;给定了Session Name
-        "t=0 0\r\na=group:BUNDLE %s\r\n"//t=<start time><stop time> ;Time
+        "t=0 0\r\na=group:BUNDLE %d\r\n"//t=<start time><stop time> ;Time 与sdpMLineIndex sdpMid里的一致
         "a=msid-semantic: WMS ywf\r\n"
-        "m=%s %u RTP/SAVPF %d\r\n"
+        "m=%s %u UDP/TLS/RTP/SAVPF %d\r\n"
         "c=IN IP4 %s\r\n"
-        "a=mid:%s\r\n"
+        "a=mid:%d\r\n"//与sdpMLineIndex sdpMid里的一致
         "a=sendrecv\r\n"
         "a=rtcp-mux\r\n"
         "a=ice-ufrag:%s\r\n"
@@ -254,10 +264,10 @@ int WebRTC::GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int i_iSd
 
     iRet=snprintf(o_strSDP,i_iSdpMaxLen,strSdpFmt.c_str(),
         tCreateTime.tv_sec,tCreateTime.tv_usec,1,tLocalCandidate.strIP[i-1],
-        strStreamType,
+        i_ptVideoInfo->iID,
         strStreamType,i_ptVideoInfo->wPortNumForSDP,i_ptVideoInfo->ucRtpPayloadType,
         tLocalCandidate.strIP[i-1],//"0.0.0.0"还是失败，多个也是失败
-        strStreamType,
+        i_ptVideoInfo->iID,
         tLocalCandidate.strUfrag, 
         tLocalCandidate.strPassword,
         strLocalFingerprint,
@@ -527,6 +537,98 @@ int WebRtcOffer::GenerateLocalMsg(T_VideoInfo *i_ptVideoInfo,char * o_strOfferMs
 }
 
 /*****************************************************************************
+-Fuction        : GenerateLocalSDP
+-Description    : 
+// From RFC 4145, section-4.1, The following are the values that the
+// 'setup' attribute can take in an offer/answer exchange:
+//       Offer      Answer
+//      ________________
+//      active     passive / holdconn
+//      passive    active / holdconn
+//      actpass    active / passive / holdconn
+//      holdconn   holdconn
+
+
+
+
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+int WebRtcOffer::GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int i_iSdpMaxLen)
+{
+	int iRet=-1;
+    struct timeval tCreateTime;
+    T_LocalCandidate tLocalCandidate;
+    char strLocalFingerprint[160];
+    char strCandidate[128];
+    const char *strStreamType="video";
+    string strSdpFmt("");
+    int i=0;
+    
+    if (o_strSDP == NULL || NULL==i_ptVideoInfo || i_iSdpMaxLen <= 0) 
+    {
+		printf("GenerateLocalSDP NULL\r\n");
+		return iRet;
+    }
+    memset(&tLocalCandidate,0,sizeof(T_LocalCandidate));
+    m_Libnice.GetLocalCandidate(&tLocalCandidate);
+	if(tLocalCandidate.iGatheringDoneFlag == 0)
+	{
+		printf("GenerateLocalSDP err\r\n");
+		return iRet;
+	}
+    memset(&tCreateTime,0,sizeof(struct timeval));
+    gettimeofday(&tCreateTime, NULL);
+    memset(strLocalFingerprint,0,sizeof(strLocalFingerprint));
+    m_pDtlsOnlyHandshake->GetLocalFingerprint(strLocalFingerprint,sizeof(strLocalFingerprint));
+    strSdpFmt.assign("v=0\r\n"
+        "o=- %ld%06ld %d IN IP4 %s\r\n"//o=<username><session id> <version> <network type> <address type><address> Origin ,给定了会话的发起者信息
+        "s=ywf webrtc\r\n"//s=<sessionname> ;给定了Session Name
+        "t=0 0\r\na=group:BUNDLE %d\r\n"//t=<start time><stop time> ;Time 与sdpMLineIndex sdpMid里的一致
+        "a=msid-semantic: WMS ywf\r\n"
+        "m=%s %u UDP/TLS/RTP/SAVPF %d\r\n"
+        "c=IN IP4 %s\r\n"
+        "a=setup:actpass\r\n"
+        "a=mid:%d\r\n"//与sdpMLineIndex sdpMid里的一致
+        "a=sendrecv\r\n"
+        "a=rtcp-mux\r\n"
+        "a=ice-ufrag:%s\r\n"
+        "a=ice-pwd:%s\r\n"
+        "a=ice-options:trickle\r\n"
+        "a=fingerprint:sha-256 %s\r\n"
+        "a=setup:actpass\r\n"
+        "a=connection:new\r\n"
+        "a=rtpmap:%d %s/%d\r\n"
+        "a=ssrc:%ld cname:ywf%s\r\n"
+        "a=ssrc:%ld msid:janus janusa0\r\n"
+        "a=ssrc:%ld mslabel:janus\r\n"
+        "a=ssrc:%ld label:janusa0\r\n");
+    for(i=0;i<tLocalCandidate.iCurCandidateNum;i++)
+    {//iCurCandidateNum目前为1个，多个也是失败
+        memset(strCandidate,0,sizeof(strCandidate));
+        snprintf(strCandidate,sizeof(strCandidate),"a=%s\r\n",tLocalCandidate.strCandidateData[i]);
+        strSdpFmt.append(strCandidate);
+    }
+
+    iRet=snprintf(o_strSDP,i_iSdpMaxLen,strSdpFmt.c_str(),
+        tCreateTime.tv_sec,tCreateTime.tv_usec,1,tLocalCandidate.strIP[i-1],
+        i_ptVideoInfo->iID,
+        strStreamType,i_ptVideoInfo->wPortNumForSDP,i_ptVideoInfo->ucRtpPayloadType,
+        tLocalCandidate.strIP[i-1],//"0.0.0.0"还是失败，多个也是失败
+        i_ptVideoInfo->iID,
+        tLocalCandidate.strUfrag, 
+        tLocalCandidate.strPassword,
+        strLocalFingerprint,
+        i_ptVideoInfo->ucRtpPayloadType,i_ptVideoInfo->pstrFormatName,i_ptVideoInfo->dwTimestampFrequency,
+        tCreateTime.tv_sec, strStreamType,tCreateTime.tv_sec, tCreateTime.tv_sec, tCreateTime.tv_sec);
+
+	return iRet;
+}
+/*****************************************************************************
 -Fuction        : WebRtcAnswer
 -Description    : 
 -Input          : 
@@ -649,4 +751,96 @@ int WebRtcAnswer::GenerateLocalMsg(T_VideoInfo *i_ptVideoInfo,char * o_strAnswer
     return iRet;
 }
 
+/*****************************************************************************
+-Fuction        : GenerateLocalSDP
+-Description    : 
+// From RFC 4145, section-4.1, The following are the values that the
+// 'setup' attribute can take in an offer/answer exchange:
+//       Offer      Answer
+//      ________________
+//      active     passive / holdconn
+//      passive    active / holdconn
+//      actpass    active / passive / holdconn
+//      holdconn   holdconn
+
+
+
+
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+int WebRtcAnswer::GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int i_iSdpMaxLen)
+{
+	int iRet=-1;
+    struct timeval tCreateTime;
+    T_LocalCandidate tLocalCandidate;
+    char strLocalFingerprint[160];
+    char strCandidate[128];
+    const char *strStreamType="video";
+    string strSdpFmt("");
+    int i=0;
+    
+    if (o_strSDP == NULL || NULL==i_ptVideoInfo || i_iSdpMaxLen <= 0) 
+    {
+		printf("GenerateLocalSDP NULL\r\n");
+		return iRet;
+    }
+    memset(&tLocalCandidate,0,sizeof(T_LocalCandidate));
+    m_Libnice.GetLocalCandidate(&tLocalCandidate);
+	if(tLocalCandidate.iGatheringDoneFlag == 0)
+	{
+		printf("GenerateLocalSDP err\r\n");
+		return iRet;
+	}
+    memset(&tCreateTime,0,sizeof(struct timeval));
+    gettimeofday(&tCreateTime, NULL);
+    memset(strLocalFingerprint,0,sizeof(strLocalFingerprint));
+    m_pDtlsOnlyHandshake->GetLocalFingerprint(strLocalFingerprint,sizeof(strLocalFingerprint));
+    strSdpFmt.assign("v=0\r\n"
+        "o=- %ld%06ld %d IN IP4 %s\r\n"//o=<username><session id> <version> <network type> <address type><address> Origin ,给定了会话的发起者信息
+        "s=ywf webrtc\r\n"//s=<sessionname> ;给定了Session Name
+        "t=0 0\r\na=group:BUNDLE %d\r\n"//t=<start time><stop time> ;Time 与sdpMLineIndex sdpMid里的一致
+        "a=msid-semantic: WMS ywf\r\n"
+        "m=%s %u UDP/TLS/RTP/SAVPF %d\r\n"
+        "c=IN IP4 %s\r\n"
+        "a=setup:active\r\n"
+        "a=mid:%d\r\n"//与sdpMLineIndex sdpMid里的一致
+        "a=sendrecv\r\n"
+        "a=rtcp-mux\r\n"
+        "a=ice-ufrag:%s\r\n"
+        "a=ice-pwd:%s\r\n"
+        "a=ice-options:trickle\r\n"
+        "a=fingerprint:sha-256 %s\r\n"
+        "a=setup:actpass\r\n"
+        "a=connection:new\r\n"
+        "a=rtpmap:%d %s/%d\r\n"
+        "a=ssrc:%ld cname:ywf%s\r\n"
+        "a=ssrc:%ld msid:janus janusa0\r\n"
+        "a=ssrc:%ld mslabel:janus\r\n"
+        "a=ssrc:%ld label:janusa0\r\n");
+    for(i=0;i<tLocalCandidate.iCurCandidateNum;i++)
+    {//iCurCandidateNum目前为1个，多个也是失败
+        memset(strCandidate,0,sizeof(strCandidate));
+        snprintf(strCandidate,sizeof(strCandidate),"a=%s\r\n",tLocalCandidate.strCandidateData[i]);
+        strSdpFmt.append(strCandidate);
+    }
+
+    iRet=snprintf(o_strSDP,i_iSdpMaxLen,strSdpFmt.c_str(),
+        tCreateTime.tv_sec,tCreateTime.tv_usec,1,tLocalCandidate.strIP[i-1],
+        i_ptVideoInfo->iID,
+        strStreamType,i_ptVideoInfo->wPortNumForSDP,i_ptVideoInfo->ucRtpPayloadType,
+        tLocalCandidate.strIP[i-1],//"0.0.0.0"还是失败，多个也是失败
+        i_ptVideoInfo->iID,
+        tLocalCandidate.strUfrag, 
+        tLocalCandidate.strPassword,
+        strLocalFingerprint,
+        i_ptVideoInfo->ucRtpPayloadType,i_ptVideoInfo->pstrFormatName,i_ptVideoInfo->dwTimestampFrequency,
+        tCreateTime.tv_sec, strStreamType,tCreateTime.tv_sec, tCreateTime.tv_sec, tCreateTime.tv_sec);
+
+	return iRet;
+}
 

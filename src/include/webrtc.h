@@ -50,7 +50,7 @@ public:
     static void HandleRecvDataCb(char * i_acData,int i_iLen,void * pArg);//后续可以改为private试试
 	static int SendDataOutCb(char * i_acData,int i_iLen,void * pArg);
 protected:
-    int GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int i_iSdpMaxLen);
+    virtual int GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int i_iSdpMaxLen);
     static bool IsDtls(char *buf);
     
     Libnice m_Libnice;
@@ -78,6 +78,9 @@ public:
 	virtual ~WebRtcOffer();
     int HandleMsg(char * i_strAnswerMsg);
     int GenerateLocalMsg(T_VideoInfo *i_ptVideoInfo,char * o_strOfferMsg,int i_iOfferMaxLen);
+
+protected:
+    int GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int i_iSdpMaxLen);
 };
 
 
@@ -96,6 +99,9 @@ public:
 	
     int HandleMsg(char * i_strOfferMsg);
     int GenerateLocalMsg(T_VideoInfo *i_ptVideoInfo,char * o_strAnswerMsg,int i_iAnswerMaxLen);
+
+protected:
+    int GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int i_iSdpMaxLen);
 };
 
 

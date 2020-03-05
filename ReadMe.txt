@@ -162,7 +162,10 @@ answer端：
 
 
 
-
+offer端错误：
+不回复answer信息
+(peerconnection.cc:5345): UseCandidatesInSessionDescription: Not ready to use candidate.
+(peerconnection.cc:4762): Non-rejected SCTP m= section is needed to get the SSL Role of the SCTP transport.
 
 
 
