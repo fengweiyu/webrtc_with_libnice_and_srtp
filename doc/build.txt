@@ -10,6 +10,20 @@ tar -xzf cJSON_v2.3.0.tar.gz
 cmake .
 make
 
+usrsctp 
+wget https://github.com/sctplab/usrsctp/archive/0.9.3.0.tar.gz
+mv 0.9.3.0.tar.gz usrsctp_0.9.3.0.tar.gz
+tar -xzf usrsctp_0.9.3.0.tar.gz
+#cmake CMAKE_INSTALL_PREFIX=/work/workspace/install/usrsctp_0.9.3.0 .
+cmake -DCMAKE_INSTALL_PREFIX=/work/workspace/install/usrsctp_0.9.3.0 .
+直接改
+make
+make install
+#make DESTDIR=/home/john install
+
+
+
+
 
 1.libstrp libsrtp-2.3.0
 wget https://github.com/cisco/libsrtp/archive/v2.3.0.tar.gz
