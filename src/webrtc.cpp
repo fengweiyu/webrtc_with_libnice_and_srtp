@@ -256,10 +256,14 @@ int WebRTC::GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int i_iSd
         "a=ssrc:%ld mslabel:janus\r\n"
         "a=ssrc:%ld label:janusa0\r\n");
     for(i=0;i<tLocalCandidate.iCurCandidateNum;i++)
-    {//iCurCandidateNum目前为1个，多个也是失败
-        memset(strCandidate,0,sizeof(strCandidate));
-        snprintf(strCandidate,sizeof(strCandidate),"a=%s\r\n",tLocalCandidate.strCandidateData[i]);
-        strSdpFmt.append(strCandidate);
+    {//目前为1个，多个也是失败
+        if(NULL!= strstr(tLocalCandidate.strCandidateData[i],"udp")&&NULL!= strstr(tLocalCandidate.strCandidateData[i],"."))
+        {//后续可以优化为全部取出来放到数组中,sdp中的ip填0.0.0.0
+            memset(strCandidate,0,sizeof(strCandidate));
+            snprintf(strCandidate,sizeof(strCandidate),"a=%s\r\n",tLocalCandidate.strCandidateData[i]);
+            strSdpFmt.append(strCandidate);
+            break;
+        }
     }
 
     iRet=snprintf(o_strSDP,i_iSdpMaxLen,strSdpFmt.c_str(),
@@ -309,10 +313,14 @@ int WebRTC::GenerateLocalCandidateMsg(T_VideoInfo *i_ptVideoInfo,char * o_strCan
 		return iRet;
 	}
     for(i=0;i<tLocalCandidate.iCurCandidateNum;i++)
-    {//iCurCandidateNum目前为1个，多个也是失败
-        memset(strCandidate,0,sizeof(strCandidate));
-        snprintf(strCandidate,sizeof(strCandidate),"%s",
-        tLocalCandidate.strCandidateData[i]);
+    {//选出最优的一个
+        if(NULL!= strstr(tLocalCandidate.strCandidateData[i],"udp")&&NULL!= strstr(tLocalCandidate.strCandidateData[i],"."))
+        {//后续可以优化为全部取出来放到数组中,sdp中的ip填0.0.0.0
+            memset(strCandidate,0,sizeof(strCandidate));
+            snprintf(strCandidate,sizeof(strCandidate),"%s",
+            tLocalCandidate.strCandidateData[i]);
+            break;
+        }
     }
     snprintf(strID,sizeof(strID),"%d",i_ptVideoInfo->iID);
     cJSON * root = cJSON_CreateObject();
@@ -608,10 +616,14 @@ int WebRtcOffer::GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int 
         "a=ssrc:%ld mslabel:janus\r\n"
         "a=ssrc:%ld label:janusa0\r\n");
     for(i=0;i<tLocalCandidate.iCurCandidateNum;i++)
-    {//iCurCandidateNum目前为1个，多个也是失败
-        memset(strCandidate,0,sizeof(strCandidate));
-        snprintf(strCandidate,sizeof(strCandidate),"a=%s\r\n",tLocalCandidate.strCandidateData[i]);
-        strSdpFmt.append(strCandidate);
+    {//目前为1个，多个也是失败
+        if(NULL!= strstr(tLocalCandidate.strCandidateData[i],"udp")&&NULL!= strstr(tLocalCandidate.strCandidateData[i],"."))
+        {//后续可以优化为全部取出来放到数组中,sdp中的ip填0.0.0.0
+            memset(strCandidate,0,sizeof(strCandidate));
+            snprintf(strCandidate,sizeof(strCandidate),"a=%s\r\n",tLocalCandidate.strCandidateData[i]);
+            strSdpFmt.append(strCandidate);
+            break;
+        }
     }
 
     iRet=snprintf(o_strSDP,i_iSdpMaxLen,strSdpFmt.c_str(),
@@ -823,12 +835,16 @@ int WebRtcAnswer::GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int
         "a=ssrc:%ld mslabel:janus\r\n"
         "a=ssrc:%ld label:janusa0\r\n");
     for(i=0;i<tLocalCandidate.iCurCandidateNum;i++)
-    {//iCurCandidateNum目前为1个，多个也是失败
-        memset(strCandidate,0,sizeof(strCandidate));
-        snprintf(strCandidate,sizeof(strCandidate),"a=%s\r\n",tLocalCandidate.strCandidateData[i]);
-        strSdpFmt.append(strCandidate);
+    {//目前为1个，多个也是失败
+        if(NULL!= strstr(tLocalCandidate.strCandidateData[i],"udp")&&NULL!= strstr(tLocalCandidate.strCandidateData[i],"."))
+        {//后续可以优化为全部取出来放到数组中,sdp中的ip填0.0.0.0
+            memset(strCandidate,0,sizeof(strCandidate));
+            snprintf(strCandidate,sizeof(strCandidate),"a=%s\r\n",tLocalCandidate.strCandidateData[i]);
+            strSdpFmt.append(strCandidate);
+            break;
+        }
     }
-
+    
     iRet=snprintf(o_strSDP,i_iSdpMaxLen,strSdpFmt.c_str(),
         tCreateTime.tv_sec,tCreateTime.tv_usec,1,tLocalCandidate.strIP[i-1],
         i_ptVideoInfo->iID,

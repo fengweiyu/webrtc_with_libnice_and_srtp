@@ -611,16 +611,17 @@ void Libnice::CandidateGatheringDone(NiceAgent *i_ptAgent, guint i_dwStreamID,gp
 		c->foundation,c->component_id,transport_name[c->transport],c->priority,
 		ipaddr,nice_address_get_port(&c->addr),m_astrCandidateTypeName[c->type]);
         snprintf(pLibnice->m_tLocalCandidate.strIP[i],sizeof(pLibnice->m_tLocalCandidate.strIP[i]),"%s",ipaddr);
-        /*i++;
+        i++;
         if(i>=MAX_CANDIDATE_NUM)
         {
+            printf("m_tLocalCandidate too more \r\n");
             break;
-        }*/
-        if(NULL!= strstr(pLibnice->m_tLocalCandidate.strCandidateData[i],"udp")&&NULL!= strstr(pLibnice->m_tLocalCandidate.strCandidateData[i],"."))
+        }
+        /*if(NULL!= strstr(pLibnice->m_tLocalCandidate.strCandidateData[i],"udp")&&NULL!= strstr(pLibnice->m_tLocalCandidate.strCandidateData[i],"."))
         {//后续可以优化为全部取出来放到数组中,sdp中的ip填0.0.0.0
             i=1;
             break;//或者试试(NiceCandidate *)g_slist_nth(cands, 0)->data;可能是最优路径
-        }
+        }*/
 	}
 	pLibnice->m_tLocalCandidate.iCurCandidateNum=i;
 	printf("CandidateGatheringDone:%d ,%s %s\r\n",pLibnice->m_tLocalCandidate.iCurCandidateNum,strLocalUfrag, strLocalPassword);

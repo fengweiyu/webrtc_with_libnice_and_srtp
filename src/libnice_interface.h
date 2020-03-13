@@ -20,7 +20,7 @@
 
 using std::string;
 
-#define MAX_CANDIDATE_NUM 8
+#define MAX_CANDIDATE_NUM 10
 
 typedef enum IceControlRole
 {
