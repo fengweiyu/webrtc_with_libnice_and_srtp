@@ -68,6 +68,17 @@ else
 	fi
 	cd ..	
 	
+	cp usrsctp_build.sh ./usrsctp-0.9.3.0/build.sh
+#	cp usrsctp_CMakeLists.txt ./usrsctp-0.9.3.0/CMakeLists.txt 内部自带的cmakelists已经够用 ，交叉编译使用传参方式实现
+	cd usrsctp-0.9.3.0
+	sh build.sh $1
+	if [ $? -ne 0 ]; then
+		exit -1
+	fi
+	cd ..	
+	
+	
+	
 fi
 
 
