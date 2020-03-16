@@ -593,6 +593,7 @@ int WebRtcOffer::GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int 
     gettimeofday(&tCreateTime, NULL);
     memset(strLocalFingerprint,0,sizeof(strLocalFingerprint));
     m_pDtlsOnlyHandshake->GetLocalFingerprint(strLocalFingerprint,sizeof(strLocalFingerprint));
+#if 0    
     strSdpFmt.assign("v=0\r\n"
         "o=- %ld%06ld %d IN IP4 %s\r\n"//o=<username><session id> <version> <network type> <address type><address> Origin ,给定了会话的发起者信息
         "s=ywf webrtc\r\n"//s=<sessionname> ;给定了Session Name
@@ -600,7 +601,6 @@ int WebRtcOffer::GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int 
         "a=msid-semantic: WMS ywf\r\n"
         "m=%s %u UDP/TLS/RTP/SAVPF %d\r\n"
         "c=IN IP4 %s\r\n"
-        "a=setup:actpass\r\n"
         "a=mid:%d\r\n"//与sdpMLineIndex sdpMid里的一致
         "a=sendrecv\r\n"
         "a=rtcp-mux\r\n"
@@ -625,7 +625,6 @@ int WebRtcOffer::GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int 
             break;
         }
     }
-
     iRet=snprintf(o_strSDP,i_iSdpMaxLen,strSdpFmt.c_str(),
         tCreateTime.tv_sec,tCreateTime.tv_usec,1,tLocalCandidate.strIP[i-1],
         i_ptVideoInfo->iID,
@@ -637,6 +636,67 @@ int WebRtcOffer::GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int 
         strLocalFingerprint,
         i_ptVideoInfo->ucRtpPayloadType,i_ptVideoInfo->pstrFormatName,i_ptVideoInfo->dwTimestampFrequency,
         tCreateTime.tv_sec, strStreamType,tCreateTime.tv_sec, tCreateTime.tv_sec, tCreateTime.tv_sec);
+#endif
+
+    strSdpFmt.assign("v=0\r\n"
+        "o=- %ld%06ld %d IN IP4 %s\r\n"//o=<username><session id> <version> <network type> <address type><address> Origin ,给定了会话的发起者信息
+        "s=ywf webrtc\r\n"//s=<sessionname> ;给定了Session Name
+        "t=0 0\r\na=group:BUNDLE %d\r\n"//t=<start time><stop time> ;Time 与sdpMLineIndex sdpMid里的一致
+        "a=msid-semantic: WMS ywf\r\n"
+        "m=%s %u RTP/SAVPF %d\r\n"
+        "c=IN IP4 %s\r\n"
+        "a=mid:%d\r\n"//与sdpMLineIndex sdpMid里的一致
+        "a=sendrecv\r\n"
+        "a=rtcp-mux\r\n"
+        "a=ice-ufrag:%s\r\n"
+        "a=ice-pwd:%s\r\n"
+        "a=ice-options:trickle\r\n"
+        "a=fingerprint:sha-256 %s\r\n"
+        "a=setup:actpass\r\n"
+        "a=connection:new\r\n"
+        "a=rtpmap:%d %s/%d\r\n"
+        "a=ssrc:%ld cname:ywf%s\r\n"
+        "a=ssrc:%ld msid:janus janusa0\r\n"
+        "a=ssrc:%ld mslabel:janus\r\n"
+        "a=ssrc:%ld label:janusa0\r\n");
+    for(i=0;i<tLocalCandidate.iCurCandidateNum;i++)
+    {
+        memset(strCandidate,0,sizeof(strCandidate));
+        snprintf(strCandidate,sizeof(strCandidate),"a=%s\r\n",tLocalCandidate.strCandidateData[i]);
+        strSdpFmt.append(strCandidate);
+    }
+    strSdpFmt.append("m=%s %u DTLS/SCTP\r\n"
+        "c=IN IP4 %s\r\n"
+        "a=mid:%d\r\n"//与sdpMLineIndex sdpMid里的加1
+        "a=sendrecv\r\n"
+        "a=ice-ufrag:%s\r\n"
+        "a=ice-pwd:%s\r\n"
+        "a=fingerprint:sha-256 %s\r\n"
+        "a=setup:actpass\r\n");
+    for(i=0;i<tLocalCandidate.iCurCandidateNum;i++)
+    {
+        memset(strCandidate,0,sizeof(strCandidate));
+        snprintf(strCandidate,sizeof(strCandidate),"a=%s\r\n",tLocalCandidate.strCandidateData[i]);
+        strSdpFmt.append(strCandidate);
+    }
+    
+    iRet=snprintf(o_strSDP,i_iSdpMaxLen,strSdpFmt.c_str(),
+        tCreateTime.tv_sec,tCreateTime.tv_usec,1,"0.0.0.0",
+        i_ptVideoInfo->iID,
+        strStreamType,i_ptVideoInfo->wPortNumForSDP,i_ptVideoInfo->ucRtpPayloadType,
+        "0.0.0.0",//"0.0.0.0"还是失败，多个也是失败
+        i_ptVideoInfo->iID,
+        tLocalCandidate.strUfrag, 
+        tLocalCandidate.strPassword,
+        strLocalFingerprint,
+        i_ptVideoInfo->ucRtpPayloadType,i_ptVideoInfo->pstrFormatName,i_ptVideoInfo->dwTimestampFrequency,
+        tCreateTime.tv_sec, strStreamType,tCreateTime.tv_sec, tCreateTime.tv_sec, tCreateTime.tv_sec,
+        "application",i_ptVideoInfo->wPortNumForSDP,
+        "0.0.0.0",
+        i_ptVideoInfo->iID+1,
+        tLocalCandidate.strUfrag, 
+        tLocalCandidate.strPassword,
+        strLocalFingerprint);
 
 	return iRet;
 }
@@ -812,6 +872,7 @@ int WebRtcAnswer::GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int
     gettimeofday(&tCreateTime, NULL);
     memset(strLocalFingerprint,0,sizeof(strLocalFingerprint));
     m_pDtlsOnlyHandshake->GetLocalFingerprint(strLocalFingerprint,sizeof(strLocalFingerprint));
+#if 0    
     strSdpFmt.assign("v=0\r\n"
         "o=- %ld%06ld %d IN IP4 %s\r\n"//o=<username><session id> <version> <network type> <address type><address> Origin ,给定了会话的发起者信息
         "s=ywf webrtc\r\n"//s=<sessionname> ;给定了Session Name
@@ -844,7 +905,6 @@ int WebRtcAnswer::GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int
             break;
         }
     }
-    
     iRet=snprintf(o_strSDP,i_iSdpMaxLen,strSdpFmt.c_str(),
         tCreateTime.tv_sec,tCreateTime.tv_usec,1,tLocalCandidate.strIP[i-1],
         i_ptVideoInfo->iID,
@@ -856,6 +916,67 @@ int WebRtcAnswer::GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int
         strLocalFingerprint,
         i_ptVideoInfo->ucRtpPayloadType,i_ptVideoInfo->pstrFormatName,i_ptVideoInfo->dwTimestampFrequency,
         tCreateTime.tv_sec, strStreamType,tCreateTime.tv_sec, tCreateTime.tv_sec, tCreateTime.tv_sec);
+#endif
+    strSdpFmt.assign("v=0\r\n"
+        "o=- %ld%06ld %d IN IP4 %s\r\n"//o=<username><session id> <version> <network type> <address type><address> Origin ,给定了会话的发起者信息
+        "s=ywf webrtc\r\n"//s=<sessionname> ;给定了Session Name
+        "t=0 0\r\na=group:BUNDLE %d\r\n"//t=<start time><stop time> ;Time 与sdpMLineIndex sdpMid里的一致
+        "a=msid-semantic: WMS ywf\r\n"
+        "m=%s %u RTP/SAVPF %d\r\n"
+        "c=IN IP4 %s\r\n"
+        "a=mid:%d\r\n"//与sdpMLineIndex sdpMid里的一致
+        "a=sendrecv\r\n"
+        "a=rtcp-mux\r\n"
+        "a=ice-ufrag:%s\r\n"
+        "a=ice-pwd:%s\r\n"
+        "a=ice-options:trickle\r\n"
+        "a=fingerprint:sha-256 %s\r\n"
+        "a=setup:passive\r\n"
+        "a=connection:new\r\n"
+        "a=rtpmap:%d %s/%d\r\n"
+        "a=ssrc:%ld cname:ywf%s\r\n"
+        "a=ssrc:%ld msid:janus janusa0\r\n"
+        "a=ssrc:%ld mslabel:janus\r\n"
+        "a=ssrc:%ld label:janusa0\r\n");
+    for(i=0;i<tLocalCandidate.iCurCandidateNum;i++)
+    {
+        memset(strCandidate,0,sizeof(strCandidate));
+        snprintf(strCandidate,sizeof(strCandidate),"a=%s\r\n",tLocalCandidate.strCandidateData[i]);
+        strSdpFmt.append(strCandidate);
+    }
+    strSdpFmt.append("m=%s %u DTLS/SCTP\r\n"
+        "c=IN IP4 %s\r\n"
+        "a=mid:%d\r\n"//与sdpMLineIndex sdpMid里的加1
+        "a=sendrecv\r\n"
+        "a=ice-ufrag:%s\r\n"
+        "a=ice-pwd:%s\r\n"
+        "a=fingerprint:sha-256 %s\r\n"
+        "a=setup:passive\r\n");
+    for(i=0;i<tLocalCandidate.iCurCandidateNum;i++)
+    {
+        memset(strCandidate,0,sizeof(strCandidate));
+        snprintf(strCandidate,sizeof(strCandidate),"a=%s\r\n",tLocalCandidate.strCandidateData[i]);
+        strSdpFmt.append(strCandidate);
+    }
+    
+    iRet=snprintf(o_strSDP,i_iSdpMaxLen,strSdpFmt.c_str(),
+        tCreateTime.tv_sec,tCreateTime.tv_usec,1,"0.0.0.0",
+        i_ptVideoInfo->iID,
+        strStreamType,i_ptVideoInfo->wPortNumForSDP,i_ptVideoInfo->ucRtpPayloadType,
+        "0.0.0.0",//"0.0.0.0"还是失败，多个也是失败
+        i_ptVideoInfo->iID,
+        tLocalCandidate.strUfrag, 
+        tLocalCandidate.strPassword,
+        strLocalFingerprint,
+        i_ptVideoInfo->ucRtpPayloadType,i_ptVideoInfo->pstrFormatName,i_ptVideoInfo->dwTimestampFrequency,
+        tCreateTime.tv_sec, strStreamType,tCreateTime.tv_sec, tCreateTime.tv_sec, tCreateTime.tv_sec
+        "application",i_ptVideoInfo->wPortNumForSDP,
+        "0.0.0.0",
+        i_ptVideoInfo->iID+1,
+        tLocalCandidate.strUfrag, 
+        tLocalCandidate.strPassword,
+        strLocalFingerprint);
+
 
 	return iRet;
 }
