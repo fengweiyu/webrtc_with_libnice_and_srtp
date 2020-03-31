@@ -20,6 +20,24 @@ sctp传输自定义应用数据相关协议，
 #include <string.h>
 #include "usrsctp.h"
 
+// DataMessageType is used for the SCTP "Payload Protocol Identifier", as
+// defined in http://tools.ietf.org/html/rfc4960#section-14.4
+//
+// For the list of IANA approved values see:
+// http://www.iana.org/assignments/sctp-parameters/sctp-parameters.xml
+// The value is not used by SCTP itself. It indicates the protocol running
+// on top of SCTP.
+enum PayloadProtocolIdentifier {
+  PPID_NONE = 0,  // No protocol is specified.
+  // Matches the PPIDs in mozilla source and
+  // https://datatracker.ietf.org/doc/draft-ietf-rtcweb-data-protocol Sec. 9
+  // They're not yet assigned by IANA.
+  PPID_CONTROL = 50,
+  PPID_BINARY_PARTIAL = 52,
+  PPID_BINARY_LAST = 53,
+  PPID_TEXT_PARTIAL = 54,
+  PPID_TEXT_LAST = 51
+};
 
 
 /*****************************************************************************
@@ -32,12 +50,12 @@ sctp传输自定义应用数据相关协议，
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-Sctp::Sctp()
+Sctp::Sctp(T_SctpCb *i_ptSctpCb)
 {
     m_ptSocket=NULL:
     memset(&m_tSctpCb,0,sizeof(m_tSctpCb));
 
-    
+    memcpy(&m_tSctpCb,i_ptSctpCb,sizeof(m_tSctpCb));
     usrsctp_init(0, &Sctp::SendCb, &Sctp::Debug);
 
     // To turn on/off detailed SCTP debugging. You will also need to have the
@@ -61,7 +79,7 @@ Sctp::~Sctp()
     int i;
 
 
-	usrsctp_shutdown(s, SHUT_WR);
+	usrsctp_shutdown(m_ptSocket, SHUT_WR);
     for (i = 0; i < 300; ++i) 
     {  
         if (usrsctp_finish() == 0) 
@@ -133,7 +151,7 @@ int Sctp::Init()
     remote_sconn.sconn_len = sizeof(sockaddr_conn);
 #endif
     // Note: conversion from int to uint16_t happens here.
-    remote_sconn.sconn_port = htons(5000);//?
+    remote_sconn.sconn_port = htons(5000);//? ，先随便填
     remote_sconn.sconn_addr = this;
     int connect_result = usrsctp_connect(m_ptSocket,(struct sockaddr *)&remote_sconn, sizeof(struct sockaddr_conn));
     if (connect_result < 0 && errno != SCTP_EINPROGRESS) 
@@ -162,11 +180,21 @@ int Sctp::Init()
 int Sctp::SendToOut(char * i_acSendBuf,int i_iSendLen)
 {
     int iRet = -1;
-    ssize_t send_res = usrsctp_sendv(
-        sock_, message->data(), message->size(), NULL, 0, &spa,
-        rtc::checked_cast<socklen_t>(sizeof(spa)), SCTP_SENDV_SPA, 0);
+    //void *info 参数有些类似透传,会在RecvFromOutCb中sctp_rcvinfo参数再次出现
+    //参考webrtc官方源码
+    struct sctp_sendv_spa spa;
 
-    iRet=0;
+    memset(&spa,0,sizeof(struct sctp_sendv_spa));
+    spa.sendv_flags |= SCTP_SEND_SNDINFO_VALID;
+    spa.sendv_sndinfo.snd_sid = 0;
+    spa.sendv_sndinfo.snd_ppid = htonl(PPID_TEXT_LAST);//
+    // Explicitly marking the EOR flag turns the usrsctp_sendv call below into a
+    // non atomic operation. This means that the sctp lib might only accept the
+    // message partially. This is done in order to improve throughput, so that we
+    // don't have to wait for an empty buffer to send the max message length, for
+    // example.
+    spa.sendv_sndinfo.snd_flags |= SCTP_EOR;
+    iRet = usrsctp_sendv(m_ptSocket,i_acSendBuf,i_iSendLen,NULL,0,&spa,(socklen_t)sizeof(spa),SCTP_SENDV_SPA,0);
     return iRet;
 }
 /*****************************************************************************
@@ -183,9 +211,24 @@ int Sctp::SendToOut(char * i_acSendBuf,int i_iSendLen)
 int Sctp::SendToOutCb(void *addr, void *buffer, int length, unsigned char tos, unsigned char set_df)
 {
     int iRet = -1;
+    Sctp *pSctp=NULL;
     
-    m_tSctpCb.SendToOut(buffer,length);
-    iRet=0;
+    pSctp= (Sctp*)(addr);
+    if(NULL == pSctp)
+    {
+        printf("SendToOutCb err\r\n");
+        return iRet;
+    }
+
+    if(NULL == pSctp->m_tSctpCb.SendToOut)
+    {
+        printf("pSctp->m_tSctpCb.SendToOut err\r\n");
+        return iRet;
+    }
+    else
+    {
+        iRet=pSctp->m_tSctpCb.SendToOut(buffer,length);
+    }
     return iRet;
 }
 /*****************************************************************************
@@ -201,6 +244,8 @@ int Sctp::SendToOutCb(void *addr, void *buffer, int length, unsigned char tos, u
 int Sctp::RecvFromOut(char * i_acRecvBuf,int i_iRecvLen)
 {
     usrsctp_conninput(this, i_acRecvBuf, i_iRecvLen, 0);
+
+    return 0;
 }
 /*****************************************************************************
 -Fuction        : RecvFromOutCb
@@ -216,10 +261,24 @@ int Sctp::RecvFromOut(char * i_acRecvBuf,int i_iRecvLen)
 ******************************************************************************/
 int Sctp::RecvFromOutCb(struct socket *sock, union sctp_sockstore addr, void *data,int datalen, struct sctp_rcvinfo, int flags, void *ulp_info) 
 {
-
-
-
-    m_tSctpCb.RecvFromOut(data,datalen);
+    int iRet = -1;
+    Sctp *pSctp=NULL;
+    
+    pSctp= (Sctp*)(ulp_info);
+    if(NULL == pSctp)
+    {
+        printf("RecvFromOutCb err\r\n");
+        return iRet;
+    }
+    if(NULL == pSctp->m_tSctpCb.RecvFromOut)
+    {
+        printf("pSctp->m_tSctpCb.RecvFromOut err\r\n");
+    }
+    else
+    {
+        iRet=pSctp->m_tSctpCb.RecvFromOut(data,datalen);
+    }
+    return iRet;
 }
 
 

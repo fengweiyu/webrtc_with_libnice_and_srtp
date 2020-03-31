@@ -35,13 +35,13 @@ typedef struct SctpCb
 class Sctp
 {
 public:
-	Sctp();
+	Sctp(T_SctpCb *i_ptSctpCb);
 	~Sctp();
 	int Init();
     int SendToOut(char * i_acSendBuf,int i_iSendLen);
     int RecvFromOut(char * i_acRecvBuf,int i_iRecvLen);
 
-    
+	T_SctpCb m_tSctpCb;//静态函数需要访问
 private:
     static int SendToOutCb(void *addr, void *buffer, int length, unsigned char tos, unsigned char set_df);
     static int RecvFromOutCb(struct socket *sock, union sctp_sockstore addr, void *data,int datalen, struct sctp_rcvinfo, int flags, void *ulp_info); 
@@ -50,7 +50,6 @@ private:
 
 
     struct socket *m_ptSocket;
-    T_SctpCb m_tSctpCb;
 
 };
 
