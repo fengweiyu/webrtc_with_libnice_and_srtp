@@ -32,7 +32,7 @@ typedef enum IceControlRole
 typedef struct StreamInfo
 {
 	char strName[16];
-	int iID;
+	int iID;//通道id(指示哪一路通道，如视频通道，音频通道，数据通道)
 	int iNum;//(视音频)流的路数，如表示视频流有几路，一般只有1路视频流
 }T_StreamInfo;
 

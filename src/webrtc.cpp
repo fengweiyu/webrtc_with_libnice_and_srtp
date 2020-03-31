@@ -641,7 +641,7 @@ int WebRtcOffer::GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int 
     strSdpFmt.assign("v=0\r\n"
         "o=- %ld%06ld %d IN IP4 %s\r\n"//o=<username><session id> <version> <network type> <address type><address> Origin ,给定了会话的发起者信息
         "s=ywf webrtc\r\n"//s=<sessionname> ;给定了Session Name
-        "t=0 0\r\na=group:BUNDLE %d\r\n"//t=<start time><stop time> ;Time 与sdpMLineIndex sdpMid里的一致
+        "t=0 0\r\na=group:BUNDLE %d %d\r\n"//t=<start time><stop time> ;BUNDLE 与sdpMLineIndex sdpMid里的一致
         "a=msid-semantic: WMS ywf\r\n"
         "m=%s %u RTP/SAVPF %d\r\n"
         "c=IN IP4 %s\r\n"
@@ -682,7 +682,7 @@ int WebRtcOffer::GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int 
     
     iRet=snprintf(o_strSDP,i_iSdpMaxLen,strSdpFmt.c_str(),
         tCreateTime.tv_sec,tCreateTime.tv_usec,1,"0.0.0.0",
-        i_ptVideoInfo->iID,
+        i_ptVideoInfo->iID,i_ptVideoInfo->iID+1,
         strStreamType,i_ptVideoInfo->wPortNumForSDP,i_ptVideoInfo->ucRtpPayloadType,
         "0.0.0.0",//"0.0.0.0"还是失败，多个也是失败
         i_ptVideoInfo->iID,
@@ -920,7 +920,7 @@ int WebRtcAnswer::GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int
     strSdpFmt.assign("v=0\r\n"
         "o=- %ld%06ld %d IN IP4 %s\r\n"//o=<username><session id> <version> <network type> <address type><address> Origin ,给定了会话的发起者信息
         "s=ywf webrtc\r\n"//s=<sessionname> ;给定了Session Name
-        "t=0 0\r\na=group:BUNDLE %d\r\n"//t=<start time><stop time> ;Time 与sdpMLineIndex sdpMid里的一致
+        "t=0 0\r\na=group:BUNDLE %d %d\r\n"//t=<start time><stop time> ;BUNDLE 与sdpMLineIndex sdpMid里的一致
         "a=msid-semantic: WMS ywf\r\n"
         "m=%s %u RTP/SAVPF %d\r\n"
         "c=IN IP4 %s\r\n"
@@ -961,7 +961,7 @@ int WebRtcAnswer::GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int
     
     iRet=snprintf(o_strSDP,i_iSdpMaxLen,strSdpFmt.c_str(),
         tCreateTime.tv_sec,tCreateTime.tv_usec,1,"0.0.0.0",
-        i_ptVideoInfo->iID,
+        i_ptVideoInfo->iID,i_ptVideoInfo->iID+1,
         strStreamType,i_ptVideoInfo->wPortNumForSDP,i_ptVideoInfo->ucRtpPayloadType,
         "0.0.0.0",//"0.0.0.0"还是失败，多个也是失败
         i_ptVideoInfo->iID,

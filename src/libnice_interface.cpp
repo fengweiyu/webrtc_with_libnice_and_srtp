@@ -721,7 +721,7 @@ int Libnice::AddVideoStream(NiceAgent *i_ptNiceAgent,char *i_strName, int i_iNum
 }
 
 int Libnice::AddAudioStream(NiceAgent *i_ptNiceAgent,char *i_strName, int i_iNum)
-{
+{//暂时用来传输应用数据,防止出错
     int iRet = -1;
 	if (NULL == i_ptNiceAgent||NULL == i_strName ||i_iNum <1)
     {
