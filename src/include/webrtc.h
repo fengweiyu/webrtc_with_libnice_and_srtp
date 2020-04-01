@@ -15,12 +15,15 @@
 #include "libnice_interface.h"
 #include "srtp_interface.h"
 #include "dtls_only_handshake.h"
+#include "sctp_interface.h"
 
 typedef struct VideoInfo
 {
     const char *pstrFormatName;
     unsigned int dwTimestampFrequency;
-    unsigned short wPortNumForSDP;
+    //9代表视频使用端口9来传输,但在webrtc中现在一般不使用
+	//如果设置为0，代表不传输视频
+    unsigned short wPortNumForSDP;//端口,官方demo都是 9
     unsigned char ucRtpPayloadType;
     unsigned char res;
 	int iID;
@@ -48,19 +51,21 @@ public:
     
     static void HandshakeCb(void * pArg);//放到上层的目的是为了底层模块之间不要相互依赖
     static void HandleRecvDataCb(char * i_acData,int i_iLen,void * pArg);//后续可以改为private试试
-	static int SendDataOutCb(char * i_acData,int i_iLen,void * pArg);
+	static int SendVideoDataOutCb(char * i_acData,int i_iLen,void * pArg);
 protected:
     virtual int GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int i_iSdpMaxLen);
     static bool IsDtls(char *buf);
     
     Libnice m_Libnice;
 	Srtp m_Srtp;
-    DtlsOnlyHandshake * m_pDtlsOnlyHandshake;
-
+    DtlsOnlyHandshake * m_pDtlsOnlyHandshake;//只在视频通道这一个通道内协商
+    Sctp * m_pSctp;//应用数据和视频数据共用一个通道传输
+    
     T_DtlsOnlyHandshakeCb m_tDtlsOnlyHandshakeCb;
     T_LibniceCb m_tLibniceCb;
+    T_SctpCb m_tSctpCb;
 	int m_iSrtpCreatedFlag;//0未创建,1已经创建
-
+	int m_iSendReadyFlag;//0 no ready,1 ready
     
 };
 

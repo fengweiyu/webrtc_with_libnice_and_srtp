@@ -31,7 +31,7 @@ WebRTC::WebRTC(char * i_strStunAddr,unsigned int i_dwStunPort,E_IceControlRole i
 {
     m_pDtlsOnlyHandshake = NULL;
     memset(&m_tDtlsOnlyHandshakeCb,0,sizeof(T_DtlsOnlyHandshakeCb));
-    m_tDtlsOnlyHandshakeCb.SendDataOut=&WebRTC::SendDataOutCb;
+    m_tDtlsOnlyHandshakeCb.SendDataOut=&WebRTC::SendVideoDataOutCb;
     m_tDtlsOnlyHandshakeCb.pObj=&m_Libnice;
     m_pDtlsOnlyHandshake = new DtlsOnlyHandshake(m_tDtlsOnlyHandshakeCb);
     
@@ -42,6 +42,12 @@ WebRTC::WebRTC(char * i_strStunAddr,unsigned int i_dwStunPort,E_IceControlRole i
     m_Libnice.SetCallback(&m_tLibniceCb);
 
     m_iSrtpCreatedFlag = 0;
+    m_iSendReadyFlag = 0;
+    m_pSctp = NULL;
+    memset(&m_tSctpCb,0,sizeof(m_tSctpCb));
+    m_tSctpCb.SendToOut = NULL;//没有应用数据通过sctp发暂时不用
+    m_tSctpCb.RecvFromOut = NULL;
+    m_pSctp = new Sctp(&m_tSctpCb);
 
 
     m_pDtlsOnlyHandshake->Init();
@@ -183,6 +189,11 @@ int WebRTC::GetSendReadyFlag()
     {
         memset(&tPolicyInfo,0,sizeof(T_PolicyInfo));
         iRet=m_pDtlsOnlyHandshake->GetPolicyInfo(&tPolicyInfo);//获取成功表示通道协商成功了
+    }
+    if(iRet == 0 && m_iSendReadyFlag == 0)
+    {
+        m_pSctp->Init();
+        m_iSendReadyFlag = 1;
     }
     return iRet;
 }
@@ -393,7 +404,7 @@ void WebRTC::HandleRecvDataCb(char * i_acData,int i_iLen,void * pArg)
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int WebRTC::SendDataOutCb(char * i_acData,int i_iLen,void * pArg)
+int WebRTC::SendVideoDataOutCb(char * i_acData,int i_iLen,void * pArg)
 {
     int iRet=-1;
     Libnice *pLibnice=NULL;
