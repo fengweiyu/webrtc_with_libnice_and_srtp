@@ -20,6 +20,10 @@ sctp传输自定义应用数据相关协议，
 #include <string.h>
 #include "usrsctp.h"
 
+#include <pthread.h>
+#include <stdarg.h>
+#include <unistd.h>
+
 // DataMessageType is used for the SCTP "Payload Protocol Identifier", as
 // defined in http://tools.ietf.org/html/rfc4960#section-14.4
 //
@@ -52,11 +56,11 @@ enum PayloadProtocolIdentifier {
 ******************************************************************************/
 Sctp::Sctp(T_SctpCb *i_ptSctpCb)
 {
-    m_ptSocket=NULL:
+    m_ptSocket=NULL;
     memset(&m_tSctpCb,0,sizeof(m_tSctpCb));
 
     memcpy(&m_tSctpCb,i_ptSctpCb,sizeof(m_tSctpCb));
-    usrsctp_init(0, &Sctp::SendCb, &Sctp::Debug);
+    usrsctp_init(0, &Sctp::SendToOutCb, &Sctp::Debug);
 
     // To turn on/off detailed SCTP debugging. You will also need to have the
     // SCTP_DEBUG cpp defines flag, which can be turned on in media/BUILD.gn.
@@ -106,7 +110,7 @@ Sctp::~Sctp()
 int Sctp::Init()
 {
     int ret = -1;
-    m_ptSocket = usrsctp_socket(AF_CONN, SOCK_STREAM, IPPROTO_SCTP, &Sctp::RecvFromOutCb,NULL,0,this);
+    m_ptSocket = usrsctp_socket(AF_CONN, SOCK_STREAM, IPPROTO_SCTP, &Sctp::RecvFromOutCb,NULL,(unsigned int)0,this);
     if(NULL == m_ptSocket)
     {
         printf("Sctp usrsctp_socket err \r\n");
@@ -154,7 +158,7 @@ int Sctp::Init()
     remote_sconn.sconn_port = htons(5000);//? ，先随便填
     remote_sconn.sconn_addr = this;
     int connect_result = usrsctp_connect(m_ptSocket,(struct sockaddr *)&remote_sconn, sizeof(struct sockaddr_conn));
-    if (connect_result < 0 && errno != SCTP_EINPROGRESS) 
+    if (connect_result < 0) 
     {
         usrsctp_close(m_ptSocket);
         m_ptSocket = NULL;
@@ -208,7 +212,7 @@ int Sctp::SendToOut(char * i_acSendBuf,int i_iSendLen)
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int Sctp::SendToOutCb(void *addr, void *buffer, int length, unsigned char tos, unsigned char set_df)
+int Sctp::SendToOutCb(void *addr, void *buffer, long unsigned int length, unsigned char tos, unsigned char set_df)
 {
     int iRet = -1;
     Sctp *pSctp=NULL;
@@ -227,7 +231,7 @@ int Sctp::SendToOutCb(void *addr, void *buffer, int length, unsigned char tos, u
     }
     else
     {
-        iRet=pSctp->m_tSctpCb.SendToOut(buffer,length);
+        iRet=pSctp->m_tSctpCb.SendToOut((char *)buffer,length);
     }
     return iRet;
 }
@@ -259,7 +263,7 @@ int Sctp::RecvFromOut(char * i_acRecvBuf,int i_iRecvLen)
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int Sctp::RecvFromOutCb(struct socket *sock, union sctp_sockstore addr, void *data,int datalen, struct sctp_rcvinfo, int flags, void *ulp_info) 
+int Sctp::RecvFromOutCb(struct socket *sock, union sctp_sockstore addr, void *data,long unsigned int datalen, struct sctp_rcvinfo, int flags, void *ulp_info) 
 {
     int iRet = -1;
     Sctp *pSctp=NULL;
@@ -276,7 +280,7 @@ int Sctp::RecvFromOutCb(struct socket *sock, union sctp_sockstore addr, void *da
     }
     else
     {
-        iRet=pSctp->m_tSctpCb.RecvFromOut(data,datalen);
+        iRet=pSctp->m_tSctpCb.RecvFromOut((char *)data,datalen);
     }
     return iRet;
 }

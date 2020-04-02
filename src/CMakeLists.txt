@@ -15,6 +15,7 @@ SET(src_list
     dtls_only_handshake.cpp
 	libnice_interface.cpp
     srtp_interface.cpp
+	sctp_interface.cpp
 	webrtc.cpp	
 	)		
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}
@@ -24,6 +25,7 @@ INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}
 	${PROJECT_SOURCE_DIR}/../lib/${CMAKE_ToolChain}/libsrtp_v2.3.0/include/srtp2
 	${PROJECT_SOURCE_DIR}/../lib/${CMAKE_ToolChain}/glib_2.48.0/include/glib-2.0
 	${PROJECT_SOURCE_DIR}/third_src/cJSON-1.7.12
+	${PROJECT_SOURCE_DIR}/third_src/usrsctp-0.9.3.0/usrsctplib
 	)
 ADD_LIBRARY(webrtc_static STATIC ${src_list})
 SET_TARGET_PROPERTIES(webrtc_static PROPERTIES OUTPUT_NAME webrtc)

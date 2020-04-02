@@ -43,9 +43,9 @@ public:
 
 	T_SctpCb m_tSctpCb;//静态函数需要访问
 private:
-    static int SendToOutCb(void *addr, void *buffer, int length, unsigned char tos, unsigned char set_df);
-    static int RecvFromOutCb(struct socket *sock, union sctp_sockstore addr, void *data,int datalen, struct sctp_rcvinfo, int flags, void *ulp_info); 
-    void Debug(const char *fmt, ...);
+    static int SendToOutCb(void *addr, void *buffer,long unsigned int length, unsigned char tos, unsigned char set_df);
+    static int RecvFromOutCb(struct socket *sock, union sctp_sockstore addr, void *data,long unsigned int datalen, struct sctp_rcvinfo, int flags, void *ulp_info); 
+    static void Debug(const char *fmt, ...);
     int ConfigureSocket(struct socket * i_ptSocket);
 
 

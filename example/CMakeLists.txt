@@ -51,6 +51,7 @@ TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/h
 #第三方库
 TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/third_lib/cJSON/libcjson.a)
 TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/third_lib/libsrtp/lib/libsrtp2.a)
+TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/third_lib/usrsctp/lib/libusrsctp.a)
 #so
 #//初始脚本ln -s到libglib-2.0.so快捷方式操作，或者直接拷贝成libglib-2.0.so
 TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/third_lib/libnice/lib/libnice.a)
