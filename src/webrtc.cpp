@@ -672,11 +672,14 @@ int WebRtcOffer::GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int 
         "a=ssrc:%ld label:janusa0\r\n");
     for(i=0;i<tLocalCandidate.iCurCandidateNum;i++)
     {
-        memset(strCandidate,0,sizeof(strCandidate));
-        snprintf(strCandidate,sizeof(strCandidate),"a=%s\r\n",tLocalCandidate.strCandidateData[i]);
-        strSdpFmt.append(strCandidate);
+        if(NULL!= strstr(tLocalCandidate.strCandidateData[i],"udp"))
+        {//webrtc官方只支持:udp tcp ssltcp tls ，所以相同的只有udp
+            memset(strCandidate,0,sizeof(strCandidate));
+            snprintf(strCandidate,sizeof(strCandidate),"a=%s\r\n",tLocalCandidate.strCandidateData[i]);
+            strSdpFmt.append(strCandidate);
+        }
     }
-    strSdpFmt.append("m=%s %u DTLS/SCTP\r\n"
+    strSdpFmt.append("m=%s %u DTLS/SCTP %d\r\n"
         "c=IN IP4 %s\r\n"
         "a=mid:%d\r\n"//与sdpMLineIndex sdpMid里的加1
         "a=sendrecv\r\n"
@@ -686,9 +689,12 @@ int WebRtcOffer::GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int 
         "a=setup:actpass\r\n");
     for(i=0;i<tLocalCandidate.iCurCandidateNum;i++)
     {
-        memset(strCandidate,0,sizeof(strCandidate));
-        snprintf(strCandidate,sizeof(strCandidate),"a=%s\r\n",tLocalCandidate.strCandidateData[i]);
-        strSdpFmt.append(strCandidate);
+        if(NULL!= strstr(tLocalCandidate.strCandidateData[i],"udp"))
+        {//webrtc官方只支持:udp tcp ssltcp tls ，所以相同的只有udp
+            memset(strCandidate,0,sizeof(strCandidate));
+            snprintf(strCandidate,sizeof(strCandidate),"a=%s\r\n",tLocalCandidate.strCandidateData[i]);
+            strSdpFmt.append(strCandidate);
+        }
     }
     
     iRet=snprintf(o_strSDP,i_iSdpMaxLen,strSdpFmt.c_str(),
@@ -702,7 +708,7 @@ int WebRtcOffer::GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int 
         strLocalFingerprint,
         i_ptVideoInfo->ucRtpPayloadType,i_ptVideoInfo->pstrFormatName,i_ptVideoInfo->dwTimestampFrequency,
         tCreateTime.tv_sec, strStreamType,tCreateTime.tv_sec, tCreateTime.tv_sec, tCreateTime.tv_sec,
-        "application",i_ptVideoInfo->wPortNumForSDP,
+        "application",i_ptVideoInfo->wPortNumForSDP,102,//"m=application 9 DTLS/SCTP". Reason: Expects at least 4 fields
         "0.0.0.0",
         i_ptVideoInfo->iID+1,
         tLocalCandidate.strUfrag, 
@@ -951,11 +957,14 @@ int WebRtcAnswer::GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int
         "a=ssrc:%ld label:janusa0\r\n");
     for(i=0;i<tLocalCandidate.iCurCandidateNum;i++)
     {
-        memset(strCandidate,0,sizeof(strCandidate));
-        snprintf(strCandidate,sizeof(strCandidate),"a=%s\r\n",tLocalCandidate.strCandidateData[i]);
-        strSdpFmt.append(strCandidate);
+        if(NULL!= strstr(tLocalCandidate.strCandidateData[i],"udp"))
+        {//webrtc官方只支持:udp tcp ssltcp tls ，所以相同的只有udp
+            memset(strCandidate,0,sizeof(strCandidate));
+            snprintf(strCandidate,sizeof(strCandidate),"a=%s\r\n",tLocalCandidate.strCandidateData[i]);
+            strSdpFmt.append(strCandidate);
+        }
     }
-    strSdpFmt.append("m=%s %u DTLS/SCTP\r\n"
+    strSdpFmt.append("m=%s %u DTLS/SCTP %d\r\n"
         "c=IN IP4 %s\r\n"
         "a=mid:%d\r\n"//与sdpMLineIndex sdpMid里的加1
         "a=sendrecv\r\n"
@@ -965,9 +974,12 @@ int WebRtcAnswer::GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int
         "a=setup:passive\r\n");
     for(i=0;i<tLocalCandidate.iCurCandidateNum;i++)
     {
-        memset(strCandidate,0,sizeof(strCandidate));
-        snprintf(strCandidate,sizeof(strCandidate),"a=%s\r\n",tLocalCandidate.strCandidateData[i]);
-        strSdpFmt.append(strCandidate);
+        if(NULL!= strstr(tLocalCandidate.strCandidateData[i],"udp"))
+        {//webrtc官方只支持:udp tcp ssltcp tls ，所以相同的只有udp
+            memset(strCandidate,0,sizeof(strCandidate));
+            snprintf(strCandidate,sizeof(strCandidate),"a=%s\r\n",tLocalCandidate.strCandidateData[i]);
+            strSdpFmt.append(strCandidate);
+        }
     }
     
     iRet=snprintf(o_strSDP,i_iSdpMaxLen,strSdpFmt.c_str(),
@@ -981,7 +993,7 @@ int WebRtcAnswer::GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int
         strLocalFingerprint,
         i_ptVideoInfo->ucRtpPayloadType,i_ptVideoInfo->pstrFormatName,i_ptVideoInfo->dwTimestampFrequency,
         tCreateTime.tv_sec, strStreamType,tCreateTime.tv_sec, tCreateTime.tv_sec, tCreateTime.tv_sec,
-        "application",i_ptVideoInfo->wPortNumForSDP,
+        "application",i_ptVideoInfo->wPortNumForSDP,102,//"m=application 9 DTLS/SCTP". Reason: Expects at least 4 fields
         "0.0.0.0",
         i_ptVideoInfo->iID+1,
         tLocalCandidate.strUfrag, 
