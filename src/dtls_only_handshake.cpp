@@ -61,8 +61,8 @@ DtlsOnlyHandshake::DtlsOnlyHandshake(T_DtlsOnlyHandshakeCb i_tDtlsOnlyHandshakeC
     memset(&m_tDtlsOnlyHandshakeCb,0,sizeof(T_DtlsOnlyHandshakeCb));
     memcpy(&m_tDtlsOnlyHandshakeCb,&i_tDtlsOnlyHandshakeCb,sizeof(T_DtlsOnlyHandshakeCb));
     memset(&m_tPolicyInfo,0,sizeof(T_PolicyInfo));
-
-    
+    m_iShakeEndFlag = 0;
+    m_iShakeStartedFlag = 0;
 }
 
 /*****************************************************************************
@@ -77,7 +77,6 @@ DtlsOnlyHandshake::DtlsOnlyHandshake(T_DtlsOnlyHandshakeCb i_tDtlsOnlyHandshakeC
 ******************************************************************************/
 DtlsOnlyHandshake::~DtlsOnlyHandshake()
 {
-    m_iShakeEndFlag = 0;
 
     /* Destroy DTLS stack and free resources */
     if(m_ptSsl != NULL) 
@@ -248,6 +247,7 @@ void DtlsOnlyHandshake::Handshake()
 	}
 	SSL_do_handshake(m_ptSsl);
 	SendDataOut();
+	m_iShakeStartedFlag = 1;
 }
 
 /*****************************************************************************
@@ -261,7 +261,7 @@ void DtlsOnlyHandshake::Handshake()
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
 void DtlsOnlyHandshake::HandleRecvData(char *buf,int len)
-{        
+{       
     printf("DTLS stuff for HandleRecvData\n");
     if(!m_ptSsl || !m_ptReadBio) 
     {

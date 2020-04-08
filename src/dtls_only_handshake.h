@@ -105,7 +105,7 @@ private:
     T_DtlsOnlyHandshakeCb m_tDtlsOnlyHandshakeCb;
     T_PolicyInfo m_tPolicyInfo;
 	int m_iShakeEndFlag;//协商结束标记,0未结束,1结束
-
+    int m_iShakeStartedFlag;
 
 
 	
