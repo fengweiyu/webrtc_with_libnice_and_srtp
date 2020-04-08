@@ -177,6 +177,14 @@ libnice会创建多个通道，分别用于视频，音频，数据传输，创�
 
 
 
+offer端错误：
+webrtc demo在libnice还没有ready的时候就发出client hello，这时候程序是没法回应的，回应是需要收到answer的，但是webrtc不知为何没发，
+所以逻辑走不通
+
+
+
+
+
 
 
 

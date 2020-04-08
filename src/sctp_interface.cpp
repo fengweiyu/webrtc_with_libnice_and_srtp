@@ -18,7 +18,7 @@ sctp传输自定义应用数据相关协议，
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "usrsctp.h"
+
 
 #include <pthread.h>
 #include <stdarg.h>
@@ -212,7 +212,7 @@ int Sctp::SendToOut(char * i_acSendBuf,int i_iSendLen)
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int Sctp::SendToOutCb(void *addr, void *buffer, long unsigned int length, unsigned char tos, unsigned char set_df)
+int Sctp::SendToOutCb(void *addr, void *buffer,size_t length, uint8_t tos, uint8_t set_df)
 {
     int iRet = -1;
     Sctp *pSctp=NULL;
@@ -263,7 +263,7 @@ int Sctp::RecvFromOut(char * i_acRecvBuf,int i_iRecvLen)
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int Sctp::RecvFromOutCb(struct socket *sock, union sctp_sockstore addr, void *data,long unsigned int datalen, struct sctp_rcvinfo, int flags, void *ulp_info) 
+int Sctp::RecvFromOutCb(struct socket *sock, union sctp_sockstore addr, void *data,size_t datalen, struct sctp_rcvinfo, int flags, void *ulp_info) 
 {
     int iRet = -1;
     Sctp *pSctp=NULL;

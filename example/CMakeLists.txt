@@ -35,6 +35,7 @@ INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}
 	${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/rtp
 #	${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/third_lib/glib/include
 #.h中又依赖
+	${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/third_lib/usrsctp/include
 	${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/third_lib/libnice/include/nice
 	${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/third_lib/glib/include/glib-2.0
 	${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/third_lib/libsrtp/include/srtp2
@@ -69,7 +70,7 @@ TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/t
 TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/third_lib/zlib/lib/libz.a)
 #TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/third_lib/glib/libglib-2.0.so) #优化后才这个路径
 
-TARGET_LINK_LIBRARIES(webrtc -pthread -lm -lrt -ldl -lresolv)
+TARGET_LINK_LIBRARIES(webrtc -pthread -lm -lrt -ldl -lresolv -static)
 
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/build)
 #TARGET_LINK_LIBRARIES(crnode log4cpp thrift)
