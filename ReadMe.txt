@@ -179,13 +179,14 @@ libnice会创建多个通道，分别用于视频，音频，数据传输，创�
 
 offer端错误：
 webrtc demo在libnice还没有ready的时候就发出client hello，这时候程序是没法回应的，回应是需要收到answer的，但是webrtc不知为何没发，
-所以逻辑走不通
+所以逻辑走不通。为何不回answer?日志看不出来 对比正确answer日志
 
 
-
-
-
-
+answer端错误：
+(peer_connection.cc:6820): The order of m-lines in answer doesn't match order in offer. Rejecting answer. (INVALID_PARAMETER)
+(peer_connection.cc:2646): Failed to set remote answer sdp: The order of m-lines in answer doesn't match order in offer. Rejecting answer.
+//可能是顺序不一致，m=video要在后面，m=audio要在前面
+虚拟机不支持视频没有camera，可以虚拟摄像头
 
 
 试试私有静态成员函数是否能被直接访问

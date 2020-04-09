@@ -20,7 +20,7 @@ endif()
 SET(SRC_LIST
     rtp_interface.cpp
 	signalling_interface.cpp
-	main.cpp	
+	peerconnection_client_main.cpp	
 	)
 		
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}
