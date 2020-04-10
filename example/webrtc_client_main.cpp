@@ -204,6 +204,7 @@ static int OfferProc(WebRTC * i_pWebRTC,char * i_strServerIp, int i_iServerPort,
                 else
                 {
                     printf("pSignalingInf->GenerateLocalSDP err\r\n");
+                    sleep(2);
                 }
                 break;
             }
@@ -226,6 +227,7 @@ static int OfferProc(WebRTC * i_pWebRTC,char * i_strServerIp, int i_iServerPort,
                 else
                 {
                     printf("pWebRtcClientOffer->GetMsg GetMsg err\r\n");
+                    sleep(1);
                 }
                 break;
             }
