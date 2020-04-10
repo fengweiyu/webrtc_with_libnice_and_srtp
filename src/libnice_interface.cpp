@@ -282,20 +282,22 @@ int Libnice::SetRemoteCandidateToGlist(char * i_strCandidate)
     unsigned int i=0;
 	if(NULL == i_strCandidate || 0==m_tVideoStream.iID)
 	{
-        g_message("line must have at least ufrag, password, and one candidate");
+        printf("line must have at least ufrag, password, and one candidate\r\n");
         return iRet;
 	}
+	//candidate:31 1 udp 21 40e-6e07 50803 typ host generation 0 ufrag 5E1n network-cost
 	// Remaining args are serialized canidates (at least one is required)
-    tokens = g_strsplit (i_strCandidate, " ", 5);
+    tokens = g_strsplit (i_strCandidate+strlen("candidate:"), " ", 0);//分割成8个部分
     for (i = 0; tokens[i]; i++);
-	if (i != 5)
+	if (i <8)
 	{
         g_strfreev(tokens);
+        printf("g_strsplit i_strCandidate err:%d\r\n",i);
         return iRet;
 	}
 	for (i = 0; i < G_N_ELEMENTS (m_astrCandidateTypeName); i++) 
 	{
-		if (strcmp(tokens[4], m_astrCandidateTypeName[i]) == 0)
+		if (strcmp(tokens[7], m_astrCandidateTypeName[i]) == 0)
 		{
 			ntype = (NiceCandidateType)i;
 			break;
@@ -304,6 +306,7 @@ int Libnice::SetRemoteCandidateToGlist(char * i_strCandidate)
 	if (i == G_N_ELEMENTS (m_astrCandidateTypeName))
     {
         g_strfreev(tokens);
+        printf("G_N_ELEMENTS m_astrCandidateTypeName err:%d\r\n",i);
         return iRet;
     }    
 	ptCand = nice_candidate_new(ntype);
@@ -312,20 +315,20 @@ int Libnice::SetRemoteCandidateToGlist(char * i_strCandidate)
 	ptCand->transport = NICE_CANDIDATE_TRANSPORT_UDP;
 	strncpy(ptCand->foundation, tokens[0], NICE_CANDIDATE_MAX_FOUNDATION);
 	ptCand->foundation[NICE_CANDIDATE_MAX_FOUNDATION - 1] = 0;
-	ptCand->priority = atoi (tokens[1]);
-	if (!nice_address_set_from_string(&ptCand->addr, tokens[2])) 
+	ptCand->priority = atoi (tokens[3]);
+	if (!nice_address_set_from_string(&ptCand->addr, tokens[4])) 
 	{
-		g_message("failed to parse addr: %s", tokens[2]);
+		printf("failed to parse addr: %s\r\n", tokens[4]);
 		nice_candidate_free(ptCand);
 		ptCand = NULL;
         g_strfreev(tokens);
         return iRet;
 	}
-    nice_address_set_port(&ptCand->addr, atoi (tokens[3]));
+    nice_address_set_port(&ptCand->addr, atoi (tokens[5]));
     
 	if (ptCand == NULL) 
 	{
-		g_message("failed to parse candidate: %s", i_strCandidate);
+		printf("failed to parse candidate: %s\r\n", i_strCandidate);
         g_strfreev(tokens);
 	    return iRet;
 	}
@@ -421,12 +424,16 @@ int Libnice::SetRemoteCandidateAndSDP(char * i_strCandidate)
 		printf("Libnice SetRemoteCandidateAndSDP m_ptAgent null \r\n");
 		return iRet;
     }
-    m_strRemoteSDP.append("a=");//webrtc对方sdp中没有包含candidate,所以只好组合起来
-    m_strRemoteSDP.append(i_strCandidate);
-    m_strRemoteSDP.append("\r\n");
+    if(string::npos==m_strRemoteSDP.find("candidate:"))
+    {
+        m_strRemoteSDP.append("a=");//webrtc对方sdp中没有包含candidate,所以只好组合起来
+        m_strRemoteSDP.append(i_strCandidate);
+        m_strRemoteSDP.append("\r\n");
+    }
     char* ufrag = NULL;
     char* pwd = NULL;
-    GSList * plist = nice_agent_parse_remote_stream_sdp (m_ptAgent, m_tVideoStream.iID, m_strRemoteSDP.c_str(), &ufrag, &pwd);
+    GSList * plist = NULL;
+    plist = nice_agent_parse_remote_stream_sdp (m_ptAgent, m_tVideoStream.iID, m_strRemoteSDP.c_str(), &ufrag, &pwd);
     if (ufrag && pwd && g_slist_length(plist) > 0)
     {//audio streamid暂时不处理,
         ufrag[strlen(ufrag)-1] = 0;
@@ -457,6 +464,17 @@ int Libnice::SetRemoteCandidateAndSDP(char * i_strCandidate)
         g_free(pwd);
         //g_slist_free(plist);
         g_slist_free_full(plist, (GDestroyNotify)&nice_candidate_free);
+    }
+    else if(NULL !=ufrag && NULL!=pwd)
+    {
+        SetRemoteCredentials(ufrag, pwd);
+        SetRemoteCandidateToGlist(i_strCandidate);
+        iRet = SetRemoteCandidates();
+    }
+    else
+    {
+        printf("1111failed to set remote candidates:%p,%p,%p,%d\r\n",ufrag,pwd,plist,g_slist_length(plist));
+        printf("##########RemoteSDP:%s##########\r\n",m_strRemoteSDP.c_str());
     }
 	return iRet;
 }
