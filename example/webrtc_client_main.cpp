@@ -243,6 +243,7 @@ static int OfferProc(WebRTC * i_pWebRTC,char * i_strServerIp, int i_iServerPort,
                 else
                 {
                     printf("i_pWebRTC->HandleCandidateMsg err\r\n");
+                    sleep(2);
                 }
                 break;
             }
@@ -256,6 +257,7 @@ static int OfferProc(WebRTC * i_pWebRTC,char * i_strServerIp, int i_iServerPort,
                 else
                 {
                     printf("WEBRTC_SEND_READY......\r\n");
+                    sleep(1);
                 }
                 break;
             }
