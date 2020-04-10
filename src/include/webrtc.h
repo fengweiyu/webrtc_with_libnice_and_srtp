@@ -42,18 +42,18 @@ public:
 	WebRTC(char * i_strStunAddr,unsigned int i_dwStunPort,E_IceControlRole i_eControlling);//:m_Libnice(i_strStunAddr,i_dwStunPort,i_iControlling),m_Srtp()
 	virtual ~WebRTC();
     int Proc();
-    virtual int HandleMsg(char * i_strMsg)=0;
-    int HandleCandidateMsg(char * i_strCandidateMsg);
+    virtual int HandleMsg(char * i_strMsg,int i_iNotJsonMsgFlag=0)=0;
+    int HandleCandidateMsg(char * i_strCandidateMsg,int i_iNotJsonMsgFlag=0);
     int GetSendReadyFlag();
     int SendProtectedRtp(char * i_acRtpBuf,int i_iRtpBufLen);
     virtual int GenerateLocalMsg(T_VideoInfo *i_ptVideoInfo,char * o_strMsg,int i_iMaxLen)=0;
     int GenerateLocalCandidateMsg(T_VideoInfo *i_ptVideoInfo,char * o_strCandidateMsg,int i_iCandidateMaxLen);
+    virtual int GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int i_iSdpMaxLen);//webrtc_client使用
     
     static void HandshakeCb(void * pArg);//放到上层的目的是为了底层模块之间不要相互依赖
     static void HandleRecvDataCb(char * i_acData,int i_iLen,void * pArg);//后续可以改为private试试
 	static int SendVideoDataOutCb(char * i_acData,int i_iLen,void * pArg);
 protected:
-    virtual int GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int i_iSdpMaxLen);
     static bool IsDtls(char *buf);
     
     Libnice m_Libnice;
@@ -81,11 +81,10 @@ class WebRtcOffer : public WebRTC
 public:
 	WebRtcOffer(char * i_strStunAddr,unsigned int i_dwStunPort,E_IceControlRole i_eControlling);
 	virtual ~WebRtcOffer();
-    int HandleMsg(char * i_strAnswerMsg);
+    int HandleMsg(char * i_strAnswerMsg,int i_iNotJsonMsgFlag=0);
     int GenerateLocalMsg(T_VideoInfo *i_ptVideoInfo,char * o_strOfferMsg,int i_iOfferMaxLen);
-
-protected:
     int GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int i_iSdpMaxLen);
+
 };
 
 
@@ -102,10 +101,9 @@ public:
 	WebRtcAnswer(char * i_strStunAddr,unsigned int i_dwStunPort,E_IceControlRole i_eControlling);
 	virtual ~WebRtcAnswer();
 	
-    int HandleMsg(char * i_strOfferMsg);
+    int HandleMsg(char * i_strOfferMsg,int i_iNotJsonMsgFlag=0);
     int GenerateLocalMsg(T_VideoInfo *i_ptVideoInfo,char * o_strAnswerMsg,int i_iAnswerMaxLen);
 
-protected:
     int GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int i_iSdpMaxLen);
 };
 

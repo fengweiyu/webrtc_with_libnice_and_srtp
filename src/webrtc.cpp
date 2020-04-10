@@ -87,14 +87,14 @@ int WebRTC::Proc()
 -Fuction        : HandleCandidateMsg
 -Description    : Offer消息必须是是在Candidate之前的，有这样的时序要求
 这是webrtc抓包发现的，所以不符合这个时序则返回错误
--Input          : 
+-Input          : i_iNotJsonMsgFlag 1表示非json
 -Output         : 
 -Return         : 
 * Modify Date     Version             Author           Modification
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int WebRTC::HandleCandidateMsg(char * i_strCandidateMsg)
+int WebRTC::HandleCandidateMsg(char * i_strCandidateMsg,int i_iNotJsonMsgFlag)
 {
     int iRet = -1;
     cJSON * ptCandidateJson = NULL;
@@ -106,6 +106,13 @@ int WebRTC::HandleCandidateMsg(char * i_strCandidateMsg)
         printf("HandleOfferMsg NULL \r\n");
         return iRet;
     }
+    if(1 == i_iNotJsonMsgFlag)
+    {
+        iRet=m_Libnice.SetRemoteCandidateAndSDP(i_strCandidateMsg);//
+        return iRet;
+    }
+
+    
     ptCandidateJson = cJSON_Parse(i_strCandidateMsg);
     if(NULL != ptCandidateJson)
     {
@@ -464,14 +471,14 @@ WebRtcOffer::~WebRtcOffer()
 /*****************************************************************************
 -Fuction        : HandleMsg
 -Description    : 
--Input          : 
+-Input          : i_iNotJsonMsgFlag 1表示非json
 -Output         : 
 -Return         : 
 * Modify Date     Version             Author           Modification
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int WebRtcOffer::HandleMsg(char * i_strAnswerMsg)
+int WebRtcOffer::HandleMsg(char * i_strAnswerMsg,int i_iNotJsonMsgFlag)
 {
     int iRet = -1;
     cJSON * ptAnswerJson = NULL;
@@ -483,6 +490,12 @@ int WebRtcOffer::HandleMsg(char * i_strAnswerMsg)
         printf("WebRtcOffer HandleMsg NULL \r\n");
         return iRet;
     }
+    if(1 == i_iNotJsonMsgFlag)
+    {
+        iRet=m_Libnice.SaveRemoteSDP(i_strAnswerMsg);
+        return iRet;
+    }
+    
     ptAnswerJson = cJSON_Parse(i_strAnswerMsg);
     if(NULL != ptAnswerJson)
     {
@@ -756,7 +769,7 @@ WebRtcAnswer::~WebRtcAnswer()
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int WebRtcAnswer::HandleMsg(char * i_strOfferMsg)
+int WebRtcAnswer::HandleMsg(char * i_strOfferMsg,int i_iNotJsonMsgFlag)
 {
     int iRet = -1;
     cJSON * ptOfferJson = NULL;
