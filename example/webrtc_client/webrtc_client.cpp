@@ -139,18 +139,29 @@ int WebRtcClientOffer :: GetMsg()
     int iRet = -1;
     char acRecvBuf[3*2048];
     int iRecvLen=0;
-
-
+    char *pCandidate=NULL;
+    char acSdpBuf[3*2048];
+    
     memset(acRecvBuf,0,sizeof(acRecvBuf));
     if(0==m_pTcpClient->Recv(acRecvBuf,&iRecvLen,sizeof(acRecvBuf)))
     {
-        if(NULL != strstr(acRecvBuf,"candidate"))
+        pCandidate = strstr(acRecvBuf,"candidate");
+        if(NULL != pCandidate)
         {
-            m_Candidate.assign(acRecvBuf);
+            m_Candidate.assign(pCandidate);
+            printf("recv candidate:%s\r\n",m_Candidate.c_str());
+            if(pCandidate-acRecvBuf>0)
+            {
+                memset(acSdpBuf,0,sizeof(acSdpBuf));
+                memcpy(acSdpBuf,acRecvBuf,pCandidate-acRecvBuf);
+                m_SDP.assign(acSdpBuf);
+                printf("recv m_SDP:%s\r\n",m_SDP.c_str());
+            }
         }
         else
         {
             m_SDP.assign(acRecvBuf);
+            printf("recv m_SDP1:%s\r\n",m_SDP.c_str());
         }
     } 
     if(m_Candidate.length()>0 && m_SDP.length()>0)
