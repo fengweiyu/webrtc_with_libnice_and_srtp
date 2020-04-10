@@ -19,15 +19,14 @@ endif()
 
 SET(SRC_LIST
     rtp_interface.cpp
-	signalling_interface.cpp
-	peerconnection_client_main.cpp	
+	webrtc_client_main.cpp	
 	)
 		
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}
     ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/lib/include
 #webrtc.h又依赖其内部头文件	
 	${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/lib
-	${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/peerconnection_client/include
+	${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/webrtc_client/include
 #peerconnection_client中又依赖http	
 	${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/http/include
 	${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/rtp/include
@@ -45,7 +44,7 @@ INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}
 ADD_EXECUTABLE(webrtc ${SRC_LIST})
 
 TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/lib/libwebrtc.a)
-TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/peerconnection_client/libpeerconnection_client.a)
+TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/webrtc_client/libwebrtc_client.a)
 TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/rtp/librtp.a)
 TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/http/libhttp.a)
 

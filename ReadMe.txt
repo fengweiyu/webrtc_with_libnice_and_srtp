@@ -1,4 +1,6 @@
-﻿
+﻿需要和webrtc_server()配合使用
+
+
 1.编译：
 	使用cmake进行编译，必须先安装cmake，安装后：
 	ywf@ywf-pc:/work/workspace/webrtc_with_libnice_and_srtp$ ./build.sh x86
