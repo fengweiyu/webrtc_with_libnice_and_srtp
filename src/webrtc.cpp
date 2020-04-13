@@ -51,7 +51,10 @@ WebRTC::WebRTC(char * i_strStunAddr,unsigned int i_dwStunPort,E_IceControlRole i
 
 
     m_pDtlsOnlyHandshake->Init();
-    m_pDtlsOnlyHandshake->Create();
+    if(ICE_CONTROLLED_ROLE == i_eControlling)
+        m_pDtlsOnlyHandshake->Create(DTLS_ROLE_CLIENT);//后续可以抽象出一个角色放webrtc.h
+    else
+        m_pDtlsOnlyHandshake->Create(DTLS_ROLE_SERVER);//offer端，使用sever
 }
 /*****************************************************************************
 -Fuction        : ~WebRTC
@@ -167,7 +170,7 @@ int WebRTC::SendProtectedRtp(char * i_acRtpBuf,int i_iRtpBufLen)
     if(0 == m_iSrtpCreatedFlag)
     {
         memset(&tPolicyInfo,0,sizeof(T_PolicyInfo));
-        m_pDtlsOnlyHandshake->GetPolicyInfo(&tPolicyInfo);
+        m_pDtlsOnlyHandshake->GetLocalPolicyInfo(&tPolicyInfo);
         m_Srtp.Create(tPolicyInfo.key, sizeof(tPolicyInfo.key), SRTP_SSRC_PROTECT);
         m_iSrtpCreatedFlag = 1;
     }
@@ -195,12 +198,18 @@ int WebRTC::GetSendReadyFlag()
     if(0!= m_Libnice.GetSendReadyFlag())
     {
         memset(&tPolicyInfo,0,sizeof(T_PolicyInfo));
-        iRet=m_pDtlsOnlyHandshake->GetPolicyInfo(&tPolicyInfo);//获取成功表示通道协商成功了
+        iRet=m_pDtlsOnlyHandshake->GetLocalPolicyInfo(&tPolicyInfo);//获取成功表示通道协商成功了
     }
+	else
+	{
+	    printf("GetSendReadyFlag err\r\n");
+	}
+
+    
     if(iRet == 0 && m_iSendReadyFlag == 0)
     {
-        m_pSctp->Init();
-        m_iSendReadyFlag = 1;
+        //m_pSctp->Init();
+        //m_iSendReadyFlag = 1;
     }
     return iRet;
 }
@@ -666,27 +675,21 @@ int WebRtcOffer::GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int 
         "o=- %ld%06ld %d IN IP4 %s\r\n"//o=<username><session id> <version> <network type> <address type><address> Origin ,给定了会话的发起者信息
         "s=ywf webrtc\r\n"//s=<sessionname> ;给定了Session Name
         "t=0 0\r\na=group:BUNDLE %d %d\r\n"//t=<start time><stop time> ;BUNDLE 与sdpMLineIndex sdpMid里的一致
-        "a=msid-semantic: WMS ywf\r\n"
         "m=%s %u RTP/SAVPF %d\r\n"
         "c=IN IP4 %s\r\n"
         "a=mid:%d\r\n"//与sdpMLineIndex sdpMid里的一致
-        "a=sendrecv\r\n"
+        "a=sendonly\r\n"
         "a=rtcp-mux\r\n"
         "a=ice-ufrag:%s\r\n"
         "a=ice-pwd:%s\r\n"
         "a=ice-options:trickle\r\n"
         "a=fingerprint:sha-256 %s\r\n"
         "a=setup:actpass\r\n"
-        "a=connection:new\r\n"
-        "a=rtpmap:%d %s/%d\r\n"
-        "a=ssrc:%ld cname:ywf%s\r\n"
-        "a=ssrc:%ld msid:janus janusa0\r\n"
-        "a=ssrc:%ld mslabel:janus\r\n"
-        "a=ssrc:%ld label:janusa0\r\n");
+        "a=rtpmap:%d %s/%d\r\n");
     for(i=0;i<tLocalCandidate.iCurCandidateNum;i++)
     {
         if(NULL!= strstr(tLocalCandidate.strCandidateData[i],"udp"))
-        {//webrtc官方只支持:udp tcp ssltcp tls ，所以相同的只有udp
+        {//webrtc官方包括浏览器只支持:udp tcp ssltcp tls ，所以相同的只有udp
             memset(strCandidate,0,sizeof(strCandidate));
             snprintf(strCandidate,sizeof(strCandidate),"a=%s\r\n",tLocalCandidate.strCandidateData[i]);
             strSdpFmt.append(strCandidate);
@@ -703,7 +706,7 @@ int WebRtcOffer::GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int 
     for(i=0;i<tLocalCandidate.iCurCandidateNum;i++)
     {
         if(NULL!= strstr(tLocalCandidate.strCandidateData[i],"udp"))
-        {//webrtc官方只支持:udp tcp ssltcp tls ，所以相同的只有udp
+        {//webrtc官方包括浏览器只支持:udp tcp ssltcp tls ，所以相同的只有udp
             memset(strCandidate,0,sizeof(strCandidate));
             snprintf(strCandidate,sizeof(strCandidate),"a=%s\r\n",tLocalCandidate.strCandidateData[i]);
             strSdpFmt.append(strCandidate);
@@ -720,7 +723,6 @@ int WebRtcOffer::GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int 
         tLocalCandidate.strPassword,
         strLocalFingerprint,
         i_ptVideoInfo->ucRtpPayloadType,i_ptVideoInfo->pstrFormatName,i_ptVideoInfo->dwTimestampFrequency,
-        tCreateTime.tv_sec, strStreamType,tCreateTime.tv_sec, tCreateTime.tv_sec, tCreateTime.tv_sec,
         "application",i_ptVideoInfo->wPortNumForSDP,102,//"m=application 9 DTLS/SCTP". Reason: Expects at least 4 fields
         "0.0.0.0",
         i_ptVideoInfo->iID+1,
