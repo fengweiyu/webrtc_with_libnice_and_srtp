@@ -466,7 +466,8 @@ int Libnice::SetRemoteCandidateAndSDP(char * i_strCandidate)
         g_slist_free_full(plist, (GDestroyNotify)&nice_candidate_free);
     }
     else if(NULL !=ufrag && NULL!=pwd)
-    {
+    {//nice_agent_parse_remote_stream_sdp部分失败则用自己的逻辑
+        printf("failed to set remote candidates:%p,%p,%p,%d....use local\r\n",ufrag,pwd,plist,g_slist_length(plist));
         SetRemoteCredentials(ufrag, pwd);
         SetRemoteCandidateToGlist(i_strCandidate);
         iRet = SetRemoteCandidates();
@@ -663,6 +664,8 @@ void Libnice::NewSelectPair(NiceAgent *agent, guint _stream_id,guint component_i
     pLibnice = (Libnice *)data;
 	if (NULL != pLibnice)
 	{
+	    //放在后面也能发出握手包，结果也一样
+        //pLibnice->m_iLibniceSendReadyFlag = 1;
         if (NULL != pLibnice->m_tLibniceCb.Handshake)
         {//这里接收浏览器发出的报文(包括dtls协商报文)
              //pLibnice->m_tLibniceCb.Handshake(pLibnice->m_tLibniceCb.pObjCb);//ready才能发送报文
@@ -682,8 +685,8 @@ void Libnice::ComponentStateChanged(NiceAgent *agent, guint _stream_id,guint com
 	{//协商成功
         if (NULL != pLibnice)
         {
+            //放在前面也能发出握手包，结果也一样
             pLibnice->m_iLibniceSendReadyFlag = 1;
-            
             if (NULL != pLibnice->m_tLibniceCb.Handshake)
             {//这里接收浏览器发出的报文(包括dtls协商报文)
                  pLibnice->m_tLibniceCb.Handshake(pLibnice->m_tLibniceCb.pObjCb);
