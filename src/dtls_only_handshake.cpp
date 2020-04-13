@@ -60,9 +60,12 @@ DtlsOnlyHandshake::DtlsOnlyHandshake(T_DtlsOnlyHandshakeCb i_tDtlsOnlyHandshakeC
 
     memset(&m_tDtlsOnlyHandshakeCb,0,sizeof(T_DtlsOnlyHandshakeCb));
     memcpy(&m_tDtlsOnlyHandshakeCb,&i_tDtlsOnlyHandshakeCb,sizeof(T_DtlsOnlyHandshakeCb));
-    memset(&m_tPolicyInfo,0,sizeof(T_PolicyInfo));
+    memset(&m_tOutPolicyInfo,0,sizeof(T_PolicyInfo));
+    memset(&m_tInPolicyInfo,0,sizeof(T_PolicyInfo));
     m_iShakeEndFlag = 0;
     m_iShakeStartedFlag = 0;
+
+    m_eDtlsRole = DTLS_ROLE_SERVER;//默认server对应offer端
 }
 
 /*****************************************************************************
@@ -170,7 +173,7 @@ int DtlsOnlyHandshake::Init()
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int DtlsOnlyHandshake::Create()
+int DtlsOnlyHandshake::Create(E_DtlsRole i_eDtlsRole)
 {
     int iRet = -1;
     
@@ -208,8 +211,19 @@ int DtlsOnlyHandshake::Create()
 	BIO_push(m_ptFilterBio, m_ptWriteBio);
 	/* Set the filter as the BIO to use for outgoing data */
 	SSL_set_bio(m_ptSsl, m_ptReadBio, m_ptFilterBio);
+
+	m_eDtlsRole = i_eDtlsRole;
+	if(m_eDtlsRole == DTLS_ROLE_CLIENT) 
+    {
+		printf("Setting connect state (DTLS client)\n");
+        SSL_set_connect_state(m_ptSsl);
+	}
+    else 
+    {
+		printf("Setting accept state (DTLS server)\n");
+		SSL_set_accept_state(m_ptSsl);
+	}
 	
-    SSL_set_connect_state(m_ptSsl);
 	/* https://code.google.com/p/chromium/issues/detail?id=406458
 	 * Specify an ECDH group for ECDHE ciphers, otherwise they cannot be
 	 * negotiated when acting as the server. Use NIST's P-256 which is
@@ -262,12 +276,19 @@ void DtlsOnlyHandshake::Handshake()
 ******************************************************************************/
 void DtlsOnlyHandshake::HandleRecvData(char *buf,int len)
 {       
-    printf("DTLS stuff for HandleRecvData\n");
+    printf("DtlsOnlyHandshake HandleRecvData:%d\n",len);
     if(!m_ptSsl || !m_ptReadBio) 
     {
-        printf("No DTLS stuff for HandleRecvData\n");
+        printf("No DtlsOnlyHandshake HandleRecvData\n");
         return;
     }
+    if(0 ==m_iShakeStartedFlag) 
+    {//防止ssl阻塞导致libnice线程阻塞从而导致不打洞
+        printf("No m_iShakeStartedFlag\n");//上述应该是死锁导致已经解决
+        return;//还没握手，就收到握手包，则丢弃
+    }
+
+    
     SendDataOut();
     int written = BIO_write(m_ptReadBio, buf, len);
     if(written != len) 
@@ -362,13 +383,27 @@ void DtlsOnlyHandshake::HandleRecvData(char *buf,int len)
                 return;
             }
             /* Key derivation (http://tools.ietf.org/html/rfc5764#section-4.2) */
-            local_key = material;
-            remote_key = local_key + DTLS_MASTER_KEY_LENGTH;
-            local_salt = remote_key + DTLS_MASTER_KEY_LENGTH;
-            remote_salt = local_salt + DTLS_MASTER_SALT_LENGTH;
+            /* Key derivation (http://tools.ietf.org/html/rfc5764#section-4.2) */
+            if(m_eDtlsRole == DTLS_ROLE_CLIENT) 
+            {
+                local_key = material;
+                remote_key = local_key + DTLS_MASTER_KEY_LENGTH;
+                local_salt = remote_key + DTLS_MASTER_KEY_LENGTH;
+                remote_salt = local_salt + DTLS_MASTER_SALT_LENGTH;
+            }
+            else 
+            {
+                remote_key = material;
+                local_key = remote_key + DTLS_MASTER_KEY_LENGTH;
+                remote_salt = local_key + DTLS_MASTER_KEY_LENGTH;
+                local_salt = remote_salt + DTLS_MASTER_SALT_LENGTH;
+            }
 
-            memcpy(m_tPolicyInfo.key, local_key, DTLS_MASTER_KEY_LENGTH);
-            memcpy(m_tPolicyInfo.key + DTLS_MASTER_KEY_LENGTH, local_salt, DTLS_MASTER_SALT_LENGTH);
+            memcpy(m_tInPolicyInfo.key, remote_key, DTLS_MASTER_KEY_LENGTH);
+            memcpy(m_tInPolicyInfo.key + DTLS_MASTER_KEY_LENGTH, remote_salt, DTLS_MASTER_SALT_LENGTH);
+
+            memcpy(m_tOutPolicyInfo.key, local_key, DTLS_MASTER_KEY_LENGTH);
+            memcpy(m_tOutPolicyInfo.key + DTLS_MASTER_KEY_LENGTH, local_salt, DTLS_MASTER_SALT_LENGTH);
             
             m_iShakeEndFlag = 1;
         }
@@ -376,7 +411,7 @@ void DtlsOnlyHandshake::HandleRecvData(char *buf,int len)
 }
 /*****************************************************************************
 -Fuction        : GetPolicyInfo
--Description    : 获取创建srtp需要的信息
+-Description    : 获取本地的创建srtp需要的信息，用于加密
 -Input          : 
 -Output         : 
 -Return         : 
@@ -384,7 +419,7 @@ void DtlsOnlyHandshake::HandleRecvData(char *buf,int len)
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int DtlsOnlyHandshake::GetPolicyInfo(T_PolicyInfo *i_ptPolicyInfo) 
+int DtlsOnlyHandshake::GetLocalPolicyInfo(T_PolicyInfo *i_ptPolicyInfo) 
 {
     int iRet = -1;
 	if(i_ptPolicyInfo == NULL) 
@@ -394,10 +429,10 @@ int DtlsOnlyHandshake::GetPolicyInfo(T_PolicyInfo *i_ptPolicyInfo)
 	}
 	if(0 == m_iShakeEndFlag) 
 	{
-	    //printf("GetPolicyInfo err\r\n");
+	    printf("GetPolicyInfo err\r\n");
         return iRet;
 	}
-    memcpy(i_ptPolicyInfo,&m_tPolicyInfo,sizeof(T_PolicyInfo));
+    memcpy(i_ptPolicyInfo,&m_tOutPolicyInfo,sizeof(T_PolicyInfo));
     iRet = 0;
     return iRet;
 }
@@ -694,7 +729,11 @@ long DtlsOnlyHandshake::BioFilterCrtl(BIO *bio, int cmd, long num, void *ptr)
             pthread_mutex_lock(&filter->mutex);
 
             //mutex_lock(&filter->mutex);
-            if(0 == filter->packets.size()) {return 0;}            
+            if(0 == filter->packets.size()) 
+            {
+                pthread_mutex_unlock(&filter->mutex);
+                return 0;
+            }            
             
             /*GList *first = g_list_first(filter->packets);
             filter->packets = g_list_remove_link(filter->packets, first);

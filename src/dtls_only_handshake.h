@@ -26,6 +26,14 @@
 #define DTLS_MASTER_SALT_LENGTH	14
 #define DTLS_MASTER_LENGTH (DTLS_MASTER_KEY_LENGTH + DTLS_MASTER_SALT_LENGTH)
 
+typedef enum DtlsRole 
+{
+    DTLS_ROLE_ACTPASS = -1,
+    DTLS_ROLE_SERVER,
+    DTLS_ROLE_CLIENT,
+} E_DtlsRole;
+
+
 typedef struct DtlsOnlyHandshakeCb
 {
 	int (* SendDataOut)(char * i_acData,int i_iLen,void *pArg);
@@ -72,10 +80,10 @@ public:
 	DtlsOnlyHandshake(T_DtlsOnlyHandshakeCb i_tDtlsOnlyHandshakeCb);
 	~DtlsOnlyHandshake();
 	int Init();
-    int Create();
+    int Create(E_DtlsRole i_eDtlsRole);
     void Handshake();
     void HandleRecvData(char *buf,int len);
-    int GetPolicyInfo(T_PolicyInfo *i_ptPolicyInfo);
+    int GetLocalPolicyInfo(T_PolicyInfo *i_ptPolicyInfo);
     int GetLocalFingerprint(char * i_strLocalFingerprint,int i_iFingerprintMaxLen);
 	static int VerifyCallback(int i_iPreverifyOk, X509_STORE_CTX *ctx);//被其他c函数访问就不是只有本类访问了
 	
@@ -103,12 +111,17 @@ private:
     BIO *m_ptFilterBio;//(fix MTU fragmentation on outgoing DTLS data, if required)
 
     T_DtlsOnlyHandshakeCb m_tDtlsOnlyHandshakeCb;
-    T_PolicyInfo m_tPolicyInfo;
+    
+    /*! \brief libsrtp policy for incoming SRTP packets */
+    T_PolicyInfo m_tInPolicyInfo;//用于接收数据，即解密数据
+    /*! \brief libsrtp policy for outgoing SRTP packets */
+    T_PolicyInfo m_tOutPolicyInfo;//用于发数据，即加密数据
+    
 	int m_iShakeEndFlag;//协商结束标记,0未结束,1结束
     int m_iShakeStartedFlag;
 
 
-	
+	E_DtlsRole m_eDtlsRole;
 };
 
 
