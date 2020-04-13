@@ -130,7 +130,14 @@ else
 		exit -1
 	fi
 	cd ..	
-		
+	
+	cd base64
+	sh build.sh $1
+	if [ $? -ne 0 ]; then
+		exit -1
+	fi
+	cd ..
+	
 #	GenerateCmakeFile $1
 	CopyLib ../build/$1 $1
 	Build $1
