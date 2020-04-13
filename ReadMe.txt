@@ -1,6 +1,17 @@
 ﻿需要和webrtc_server()配合使用
 
+https://www.apachehaus.com/cgi-bin/download.plx
 
+
+
+先说解决办法:   chrome://flags/#enable-webrtc-hide-local-ips-with-mdns 中将 Anonymize local IPs exposed by WebRTC. 
+选项设置成disable 即可恢复原来ip地址， 不再使用 xxx.local地址.
+
+
+httpd.conf
+httpd-ahssl.conf
+https://www.cnblogs.com/pdspkj/p/8044072.html
+servertwo serverone
 1.编译：
 	使用cmake进行编译，必须先安装cmake，安装后：
 	ywf@ywf-pc:/work/workspace/webrtc_with_libnice_and_srtp$ ./build.sh x86
