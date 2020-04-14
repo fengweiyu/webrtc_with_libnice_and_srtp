@@ -19,6 +19,7 @@
 #include "webrtc.h"
 #include "webrtc_client.h"
 #include "rtp_interface.h"
+#include "Base64.h"
 
 #define WEBRTC_RTP_MAX_PACKET_NUM	(300)
 #define WEBRTC_RTP_MAX_PACKET_SIZE	((1500-42)/4*4)//MTU
@@ -195,15 +196,36 @@ static int OfferProc(WebRTC * i_pWebRTC,char * i_strServerIp, int i_iServerPort,
                 tVideoInfo.ucRtpPayloadType=WEBRTC_RTP_PAYLOAD_H264;
                 tVideoInfo.wPortNumForSDP=9;
                 tVideoInfo.iID=0;
+                unsigned char           abSPS[64]={0};
+                unsigned char           abPPS[64]={0};
+                int                     iSPS_Len=0;
+                int                     iPPS_Len=0;
+                pRtpInterface->GetSPS_PPS(abSPS, &iSPS_Len, abPPS, &iPPS_Len);
+                unsigned char abSPS_WEB[SPS_PPS_BUF_MAX_LEN]={0};// "WEB" means "Without Emulation Bytes"
+                int iSPS_WEB_Len= pRtpInterface->RemoveH264EmulationBytes(abSPS_WEB, iSPS_Len, abSPS, iSPS_Len);
+                if (iSPS_WEB_Len < 4) 
+                { // Bad SPS size => assume our source isn't ready
+                    printf("Bad SPS size:%d \r\n",iSPS_WEB_Len);
+                }
+                unsigned int dwProfileLevelId = (abSPS_WEB[1]<<16) | (abSPS_WEB[2]<<8) | abSPS_WEB[3];
+                char * strSPS_Base64 = base64Encode((char*)abSPS, iSPS_Len);//可以考虑放到代码内部
+                char * strPPS_Base64 = base64Encode((char*)abPPS, iPPS_Len);//但会多依赖base64
+                tVideoInfo.dwProfileLevelId = dwProfileLevelId;
+                tVideoInfo.strSPS_Base64 = strSPS_Base64;
+                tVideoInfo.strPPS_Base64= strPPS_Base64;
                 memset(acGetMsg,0,sizeof(acGetMsg));
                 if(i_pWebRTC->GenerateLocalSDP(&tVideoInfo,acGetMsg,sizeof(acGetMsg))>=0)
                 {
                     pWebRtcClientOffer->PostSdpMsg(acGetMsg);
                     eWebRtcStatus=WEBRTC_OFFER_HANDLE_SDP;
+                    delete[] strSPS_Base64;
+                    delete[] strPPS_Base64;
                 }
                 else
                 {
                     printf("pSignalingInf->GenerateLocalSDP err\r\n");
+                    delete[] strSPS_Base64;
+                    delete[] strPPS_Base64;
                     sleep(2);
                 }
                 break;

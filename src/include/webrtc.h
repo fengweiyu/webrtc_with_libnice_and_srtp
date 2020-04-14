@@ -27,6 +27,9 @@ typedef struct VideoInfo
     unsigned char ucRtpPayloadType;
     unsigned char res;
 	int iID;
+	unsigned int dwProfileLevelId;
+	char * strSPS_Base64;
+	char * strPPS_Base64;
 }T_VideoInfo;
 
 /*****************************************************************************
