@@ -25,7 +25,7 @@ using std::string;
 #define RTP_MAX_PACKET_NUM	(300)
 
 
-#define RTP_PAYLOAD_H264    96
+#define RTP_PAYLOAD_H264    102
 #define RTP_PAYLOAD_G711    97
 
 //后续放到音视频处理类中
