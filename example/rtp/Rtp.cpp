@@ -150,5 +150,43 @@ int Rtp :: GetRtpData(unsigned char **o_ppbPacketBuf,int *o_aiEveryPacketLen,int
     return iPacketNum;
 }
 
+/*****************************************************************************
+-Fuction		: VideoHandle::RemoveH264EmulationBytes
+-Description	: 
+-Input			: 
+-Output 		: 
+-Return 		: 
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2017/09/21	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
+int Rtp::RemoveH264EmulationBytes(unsigned char *o_pbNaluBuf,int i_iMaxNaluBufLen,unsigned char *i_pbNaluBuf,int i_iNaluLen)
+{
+    int iNaluLen=0;
+    if(NULL !=m_pVideoHandle)
+    {
+        iNaluLen=m_pVideoHandle->RemoveH264EmulationBytes(o_pbNaluBuf,i_iMaxNaluBufLen,i_pbNaluBuf,i_iNaluLen);
+    }
+	return iNaluLen;
+}
 
+/*****************************************************************************
+-Fuction		: VideoHandle::GetSPS_PPS
+-Description	: 
+-Input			: 
+-Output 		: 
+-Return 		: 
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2017/09/21	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
+int Rtp::GetSPS_PPS(unsigned char *o_pbSpsBuf,int *o_piSpsBufLen,unsigned char *o_pbPpsBuf,int *o_piPpsBufLen)
+{
+    int iRet=FALSE;
+    if(NULL !=m_pVideoHandle)
+    {
+        iRet=m_pVideoHandle->GetSPS_PPS(o_pbSpsBuf,o_piSpsBufLen,o_pbPpsBuf,o_piPpsBufLen);
+    }
+	return iRet;
+}
 
