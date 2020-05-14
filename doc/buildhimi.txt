@@ -1,0 +1,315 @@
+﻿#第三方库安装目录要带版本号(lib目录下要，third_lib由于有源码所以不要)，后续优化
+
+
+
+
+rm install.tar.gz
+tar -czf install.tar.gz install
+
+cjson
+wget https://github.com/DaveGamble/cJSON/archive/v1.7.12.tar.gz
+mv v1.7.12.tar.gz cJSON_v1.7.12.tar.gz
+tar -xzf cJSON_v2.3.0.tar.gz
+cmake .
+make
+
+usrsctp 
+wget https://github.com/sctplab/usrsctp/archive/0.9.3.0.tar.gz
+mv 0.9.3.0.tar.gz usrsctp_0.9.3.0.tar.gz
+tar -xzf usrsctp_0.9.3.0.tar.gz
+#cmake CMAKE_INSTALL_PREFIX=/work/workspace/install/usrsctp_0.9.3.0 .
+cmake -DCMAKE_INSTALL_PREFIX=/work/workspace/install/usrsctp_0.9.3.0 .
+直接改
+make
+make install
+#make DESTDIR=/home/john install
+
+
+
+
+
+1.libsrtp libsrtp-2.3.0
+wget https://github.com/cisco/libsrtp/archive/v2.3.0.tar.gz
+mv v2.3.0.tar.gz libsrtp_v2.3.0.tar.gz
+tar -xzf libsrtp_v2.3.0.tar.gz
+./configure --prefix=/work/workspace/install/libsrtp --host=arm-hisiv200-linux
+//./configure --host=arm-hisiv200-linux
+./configure --prefix=/work/workspace/installhimi/libsrtp_v2.3.0 --host=arm-himix200-linux
+make
+make runtest
+make install
+
+2.libnice  参考
+
+Requirements
+------------
+
+ glib >= 2.44
+ pkg-config
+ gnutls >= 2.12.0 or OpenSSL
+ gupnp-igd >= 0.1.2 (optional)
+ gstreamer-0.10 >= 0.10.0 (optional)
+ gstreamer-1.0 (optional)
+ 
+2.1.准备：
+wget https://github.com/GNOME/glib/archive/2.48.0.tar.gz
+mv 2.48.0.tar.gz glib_2.48.0.tar.gz
+tar -xzf glib_2.48.0.tar.gz 
+
+wget https://github.com/libffi/libffi/archive/v3.2.1.tar.gz
+mv v3.2.1.tar.gz libffi_v3.2.1.tar.gz
+tar -xzf libffi_v3.2.1.tar.gz
+
+wget https://github.com/libnice/libnice/archive/0.1.16.tar.gz
+mv 0.1.16.tar.gz libnice_0.1.16.tar.gz
+tar -xzf libnice_0.1.16.tar.gz
+
+wget https://github.com/madler/zlib/archive/v1.2.11.tar.gz
+mv v1.2.11.tar.gz zlib_v1.2.11.tar.gz
+tar -xzf zlib_v1.2.11.tar.gz
+
+wget https://www.openssl.org/source/old/1.0.2/openssl-1.0.2j.tar.gz
+tar -xzf openssl-1.0.2j.tar.gz
+wget https://www.openssl.org/source/openssl-1.1.1d.tar.gz
+tar -xzf openssl-1.1.1d.tar.gz 
+
+
+2.2.glib glib-glib-2-54
+ywf@ywf-pc:/work/workspace/webrtc_nice/glib-glib-2-54$ ./autogen.sh
+You don't have gtk-doc installed, and thus won't be able to generate the documentation.
+*** No autoreconf found, please install it ***
+sudo apt-get install gtk-doc-tools
+
+linux.cache
+glib_cv_long_long_format=ll
+glib_cv_stack_grows=no
+glib_cv_have_strlcpy=no
+glib_cv_have_qsort_r=yes
+glib_cv_va_val_copy=yes
+glib_cv_uscore=no
+glib_cv_rtldglobal_broken=no
+ac_cv_func_posix_getpwuid_r=yes
+ac_cv_func_posix_getgrgid_r=yes
+
+./configure --prefix=/work/workspace/install/glib --host=arm-hisiv200-linux CC=arm-hisiv200-linux-gcc --cache-file=linux.cache --enable-libmount=no --with-pcre=internal LIBFFI_CFLAGS=-I/work/workspace/install/libffi/lib/libffi-3.2.1/include
+ LIBFFI_LIBS="-L/work/workspace/install/libffi/lib/-lffi" ZLIB_CFLAGS=-I/work/workspace/install/zlib/include ZLIB_LIBS="-L/work/workspace/install/zlib/lib/-lz"
+
+2.2.1 zlib
+./configure --prefix=/work/workspace/install/zlib
+修改makefile gcc , ar,ranlib
+make
+make install
+
+./configure --prefix=/work/workspace/install/zlib_v1.2.11
+修改makefile gcc , ar,ranlib
+make
+make install
+
+2.2.2 libffi
+./autogen.sh
+./configure --prefix=/work/workspace/install/libffi --host=arm-hisiv200-linux CC=arm-hisiv200-linux-gcc
+make
+make install
+make[3]: *** [../doc/libffi.info] 错误 127
+make[3]:正在离开目录 `/work/workspace/webrtc_libnice/libffi-3.2.1/arm-hisiv200-linux-gnu'
+make[2]: *** [all-recursive] 错误 1
+make[2]:正在离开目录 `/work/workspace/webrtc_libnice/libffi-3.2.1/arm-hisiv200-linux-gnu'
+make[1]: *** [all] 错误 2
+make[1]:正在离开目录 `/work/workspace/webrtc_libnice/libffi-3.2.1/arm-hisiv200-linux-gnu'
+make: *** [all-all] 错误 2
+
+sudo apt-get install texinfo
+source /etc/profile
+还报错
+sudo apt-get install libtool
+sudo apt-get install libsysfs-dev
+source /etc/profile
+./autogen.sh
+./configure --prefix=/work/workspace/install/libffi --host=arm-hisiv200-linux CC=arm-hisiv200-linux-gcc
+make
+make install
+
+./configure --prefix=/work/workspace/install/libffi_v3.2.1 --host=arm-hisiv200-linux CC=arm-hisiv200-linux-gcc
+make
+make install
+
+2.2.3 编译glib
+./autogen.sh
+./configure --prefix=/work/workspace/install/glib --host=arm-hisiv200-linux CC=/opt/hisi-linux/x86-arm/arm-hisiv200-linux/target/bin/arm-hisiv200-linux-gcc --cache-file=linux.cache --enable-libmount=no --with-pcre=internal LIBFFI_CFLAGS=-I/work/workspace/install/libffi/lib/libffi-3.2.1/include LIBFFI_LIBS="-L/work/workspace/install/libffi/lib/-lffi" ZLIB_CFLAGS=-I/work/workspace/install/zlib/include ZLIB_LIBS="-L/work/workspace/install/zlib/lib/-lz"
+make
+./.libs/libgobject-2.0.so: undefined reference to `ffi_type_pointer'
+./.libs/libgobject-2.0.so: undefined reference to `ffi_type_float'
+///////
+你该复制到哪里，你可以在你的交叉编译器目录下找以下libc.so.*，比如find /opt/freescale -name libc.so.*，看libc.so.*放哪你就放哪。
+find . -name libc.so.*
+sudo cp /work/workspace/install/zlib/lib/libz.so.1 /opt/hisi-linux/x86-arm/arm-hisiv200-linux/target/lib/
+sudo cp /work/workspace/install/libffi/lib/libffi.so.6 /opt/hisi-linux/x86-arm/arm-hisiv200-linux/target/lib/
+sudo cp /work/workspace/install/zlib/lib/libz.so /opt/hisi-linux/x86-arm/arm-hisiv200-linux/target/lib/
+sudo cp /work/workspace/install/libffi/lib/libffi.so /opt/hisi-linux/x86-arm/arm-hisiv200-linux/target/lib/
+sudo cp /work/workspace/install/zlib/lib/libz.so.1.* /opt/hisi-linux/x86-arm/arm-hisiv200-linux/target/lib/
+sudo cp /work/workspace/install/libffi/lib/libffi.so.6.* /opt/hisi-linux/x86-arm/arm-hisiv200-linux/target/lib/
+sudo cp /work/workspace/install/zlib/lib/libz.so.1 /usr/local/lib/
+sudo cp /work/workspace/install/libffi/lib/libffi.so.6 /usr/local/lib/
+sudo cp /work/workspace/install/zlib/lib/libz.so /opt/hisi-linux/x86-arm/arm-hisiv200-linux/arm-hisiv200-linux-gnueabi/lib/
+sudo cp /work/workspace/install/libffi/lib/libffi.so /opt/hisi-linux/x86-arm/arm-hisiv200-linux/arm-hisiv200-linux-gnueabi/lib/
+sudo cp /work/workspace/install/zlib/lib/libz.so.1.* /opt/hisi-linux/x86-arm/arm-hisiv200-linux/arm-hisiv200-linux-gnueabi/lib/
+sudo cp /work/workspace/install/libffi/lib/libffi.so.6.* /opt/hisi-linux/x86-arm/arm-hisiv200-linux/arm-hisiv200-linux-gnueabi/lib/
+
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/work/workspace/install/zlib/lib
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/work/workspace/install/libffi/lib
+export LD_LIBRARY_PATH=/work/workspace/install/libffi/lib
+*******
+sudo cp /work/workspace/install/zlib/lib/libz.so* /opt/hisi-linux/x86-arm/arm-hisiv200-linux/libc/lib/
+sudo cp /work/workspace/install/libffi/lib/libffi.so* /opt/hisi-linux/x86-arm/arm-hisiv200-linux/libc/lib/
+sudo cp /work/workspace/install/zlib/lib/libz.* /opt/hisi-linux/x86-arm/arm-hisiv200-linux/libc/lib/
+
+**************
+export无效
+sudo cp /work/workspace/webrtc_libnice/build/arm-himix200-linux/libffi_v3.2.1/lib/libffi.* /opt/hisi-linux/x86-arm/arm-himix200-linux/target/lib/
+sudo cp /work/workspace/webrtc_libnice/build/arm-himix200-linux/zlib_v1.2.11/lib/libz.* /opt/hisi-linux/x86-arm/arm-himix200-linux/target/lib/
+生成的makefile中
+LDFLAGS = 
+LIBELF_CFLAGS = 
+LIBELF_LIBS = 
+LIBFFI_CFLAGS = -I/work/workspace/webrtc_libnice/build/arm-himix200-linux/libffi_v3.2.1/lib/libffi-3.2.1/include
+LIBFFI_LIBS = -L"/work/workspace/webrtc_libnice/build/arm-himix200-linux/libffi_v3.2.1/lib/" -lffi
+LDFLAGS没有才导致的，应该或者.a库可能就不用这么拷贝
+重新拷贝刚才的linux.cache文件
+./configure --prefix=/work/workspace/install/glib --host=arm-hisiv200-linux CC=/opt/hisi-linux/x86-arm/arm-hisiv200-linux/target/bin/arm-hisiv200-linux-gcc --cache-file=linux.cache --enable-libmount=no --with-pcre=internal LIBFFI_CFLAGS=-I/work/workspace/install/libffi/lib/libffi-3.2.1/include LIBFFI_LIBS="-L/work/workspace/install/libffi/lib/-lffi" ZLIB_CFLAGS=-I/work/workspace/install/zlib/include ZLIB_LIBS="-L/work/workspace/install/zlib/lib/-lz"
+//./configure --prefix=/work/workspace/install/glib --host=arm-hisiv200-linux CC=/opt/hisi-linux/x86-arm/arm-hisiv200-linux/target/bin/arm-hisiv200-linux-gcc LD=/opt/hisi-linux/x86-arm/arm-hisiv200-linux/target/bin/arm-hisiv200-linux-ld --cache-file=linux.cache --enable-libmount=no --with-pcre=internal LIBFFI_CFLAGS=-I/work/workspace/install/libffi/lib/libffi-3.2.1/include LIBFFI_LIBS="-L/work/workspace/install/libffi/lib/-lffi" ZLIB_CFLAGS=-I/work/workspace/install/zlib/include ZLIB_LIBS="-L/work/workspace/install/zlib/lib/-lz"
+./configure --prefix=/work/workspace/install/glib --host=arm-hisiv200-linux \
+CC=/opt/hisi-linux/x86-arm/arm-hisiv200-linux/target/bin/arm-hisiv200-linux-gcc \
+--cache-file=linux.cache --enable-libmount=no --with-pcre=internal --disable-selinux  --disable-xattr --disable-libelf \
+LIBFFI_CFLAGS=-I/work/workspace/install/libffi/lib/libffi-3.2.1/include LIBFFI_LIBS="-L/work/workspace/install/libffi/lib/ -lffi" LIBFFI_LDFLAGS=-L/work/workspace/install/libffi/lib \
+ZLIB_CFLAGS=-I/work/workspace/install/zlib/include ZLIB_LIBS="-L/work/workspace/install/zlib/lib/ -lz" ZLIB_LDFLAGS=-L/work/workspace/install/zlib/lib
+make 
+make install
+
+
+./configure --prefix=/work/workspace/install/glib_2.48.0 --host=arm-hisiv200-linux \
+CC=/opt/hisi-linux/x86-arm/arm-hisiv200-linux/target/bin/arm-hisiv200-linux-gcc \
+--cache-file=linux.cache --enable-libmount=no --with-pcre=internal --disable-selinux  --disable-xattr --disable-libelf --enable-static --disable-shared CFLAGS="-static" \
+LIBFFI_CFLAGS=-I/work/workspace/install/libffi/lib/libffi-3.2.1/include LIBFFI_LIBS="-L/work/workspace/install/libffi/lib/ -lffi" LIBFFI_LDFLAGS=-L/work/workspace/install/libffi/lib \
+ZLIB_CFLAGS=-I/work/workspace/install/zlib/include ZLIB_LIBS="-L/work/workspace/install/zlib/lib/ -lz" ZLIB_LDFLAGS=-L/work/workspace/install/zlib/lib
+make 
+make install
+
+**************
+export无效
+sudo cp /work/workspace/webrtc_libnice/build/arm-himix200-linux/libffi_v3.2.1/lib/libffi.* /opt/hisi-linux/x86-arm/arm-himix200-linux/target/lib/
+sudo cp /work/workspace/webrtc_libnice/build/arm-himix200-linux/zlib_v1.2.11/lib/libz.* /opt/hisi-linux/x86-arm/arm-himix200-linux/target/lib/
+生成的makefile中
+LDFLAGS = 
+LIBELF_CFLAGS = 
+LIBELF_LIBS = 
+LIBFFI_CFLAGS = -I/work/workspace/webrtc_libnice/build/arm-himix200-linux/libffi_v3.2.1/lib/libffi-3.2.1/include
+LIBFFI_LIBS = -L"/work/workspace/webrtc_libnice/build/arm-himix200-linux/libffi_v3.2.1/lib/" -lffi
+LDFLAGS没有才导致的，应该或者.a库可能就不用这么拷贝
+
+run `make distclean' and/or `rm linux.cache' 
+cp linux.cache
+#相对前面少了--disable-shared CFLAGS="-static"，结果编译出来.a库大小是前面的两倍多，但是最后编译的应用程序(现在没strip是11MB,strip后是5MB。前面没strip是7.6MB,strip后是6MB)
+./configure --prefix=/work/workspace/install/glib_2.48.0 --host=arm-hisiv200-linux \
+CC=/opt/hisi-linux/x86-arm/arm-hisiv200-linux/target/bin/arm-hisiv200-linux-gcc \
+--cache-file=linux.cache --enable-libmount=no --with-pcre=internal --disable-selinux  --disable-xattr --disable-libelf --enable-static \
+LIBFFI_CFLAGS=-I/work/workspace/install/libffi_v3.2.1/lib/libffi-3.2.1/include LIBFFI_LIBS="-L/work/workspace/install/libffi_v3.2.1/lib/ -lffi" LIBFFI_LDFLAGS=-L/work/workspace/install/libffi_v3.2.1/lib \
+ZLIB_CFLAGS=-I/work/workspace/install/zlib_v1.2.11/include ZLIB_LIBS="-L/work/workspace/install/zlib_v1.2.11/lib/ -lz" ZLIB_LDFLAGS=-L/work/workspace/install/zlib_v1.2.11/lib
+make 
+make install
+
+2.3.openssl
+#./config --prefix=
+./Configure shared --prefix=/work/workspace/install/openssl-1.1.1d --cross-compile-prefix=arm-hisiv200-linux- linux-elf no-asm
+make 
+make install
+
+
+
+ 
+
+2.4.编译libnice
+
+./autogen.sh
+./configure --prefix=/work/workspace/install/libnice --host=arm-hisiv200-linux CC=arm-hisiv200-linux-gcc \
+AR=arm-hisiv200-linux-ar RANLIB=arm-hisiv200-linux-ranlib \
+GLIB_CFLAGS=-I/work/workspace/install/glib/include/glib-2.0 GLIB_LIBS="-L/work/workspace/install/glib/lib/ -lglib-2.0 -lgio-2.0 -lgmodule-2.0 -lgobject-2.0 -lgthread-2.0" \
+--disable-gupnp --with-openssl=/work/workspace/install/openssl --with-crypto-library=openssl
+make
+/work/workspace/install/glib/include/glib-2.0/glib/gtypes.h:32: fatal error: glibconfig.h: No such file or directory
+cp /work/workspace/install/glib/lib/glib-2.0/include/*.h /work/workspace/install/glib/include/glib-2.0
+
+make
+/bin/sh: 行 1: --fhead: 未找到命令
+
+sudo apt-get install libglib2.0-dev
+./configure --prefix=/work/workspace/install/libnice_0.1.16 --host=arm-hisiv200-linux CC=arm-hisiv200-linux-gcc \
+AR=arm-hisiv200-linux-ar RANLIB=arm-hisiv200-linux-ranlib \
+GLIB_CFLAGS=-I/work/workspace/install/glib/include/glib-2.0 GLIB_LIBS="-L/work/workspace/install/glib/lib/ -lglib-2.0 -lgio-2.0 -lgmodule-2.0 -lgobject-2.0 -lgthread-2.0" \
+--disable-gupnp --with-openssl=/work/workspace/install/openssl-1.1.1d --with-crypto-library=openssl
+make
+make install
+
+cp /work/workspace/install/glib_2.48.0/lib/glib-2.0/include/*.h /work/workspace/install/glib_2.48.0/include/glib-2.0
+./configure --prefix=/work/workspace/install/libnice_0.1.16 --host=arm-hisiv200-linux CC=arm-hisiv200-linux-gcc \
+AR=arm-hisiv200-linux-ar RANLIB=arm-hisiv200-linux-ranlib \
+GLIB_CFLAGS=-I/work/workspace/install/glib_2.48.0/include/glib-2.0 GLIB_LIBS="-L/work/workspace/install/glib_2.48.0/lib/ -lglib-2.0 -lgio-2.0 -lgmodule-2.0 -lgobject-2.0 -lgthread-2.0" \
+--disable-gupnp --enable-static --with-openssl=/work/workspace/install/openssl-1.1.1d --with-crypto-library=openssl
+make
+make install
+
+./configure --prefix=/work/workspace/installx86/libnice_debug0.1.16 \
+GLIB_CFLAGS=-I/work/workspace/installx86/glib_2.48.0/include/glib-2.0 GLIB_LIBS="-L/work/workspace/installx86/glib_2.48.0/lib/ -lglib-2.0 -lgio-2.0 -lgmodule-2.0 -lgobject-2.0 -lgthread-2.0" \
+--disable-gupnp --enable-assert=no --enable-static --with-openssl=/work/workspace/installx86/openssl-1.1.1d --with-crypto-library=openssl
+或修改config.h中/* #undef NDEBUG */ 为#define NDEBUG 1 
+//不起作用,由于函数空：
+static inline void nice_debug (const char *fmt, ...) { }
+static inline void nice_debug_verbose (const char *fmt, ...) { }
+修改
+#define nice_debug printf
+#define nice_debug_verbose printf
+
+或者：
+./configure --prefix=/work/workspace/installx86/libnice_0.1.16 \
+GLIB_CFLAGS=-I/work/workspace/installx86/glib_2.48.0/include/glib-2.0 GLIB_LIBS="-L/work/workspace/installx86/glib_2.48.0/lib/ -lglib-2.0 -lgio-2.0 -lgmodule-2.0 -lgobject-2.0 -lgthread-2.0" \
+--disable-gupnp --enable-static --with-openssl=/work/workspace/installx86/openssl-1.1.1d --with-crypto-library=openssl
+void nice_debug (const char *fmt, ...)
+{
+  char temp[8*1024];
+  va_list ap;
+  if (debug_enabled) {
+    va_start (ap, fmt);
+    vsnprintf(temp,sizeof(temp),fmt,ap);
+    va_end (ap);
+	printf("%s\r\n",temp);
+  }
+}
+void nice_debug_verbose (const char *fmt, ...)
+{
+  char temp[8*1024];
+  va_list ap;
+  if (debug_verbose_enabled) {
+    va_start (ap, fmt);
+    vsnprintf(temp,sizeof(temp),fmt,ap);
+    va_end (ap);
+	printf("%s\r\n",temp);
+  }
+}
+make
+make install
+
+优化
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
