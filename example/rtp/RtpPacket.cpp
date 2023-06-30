@@ -16,6 +16,7 @@
 #include <iostream>//不加.h,c++新的头文件
 #include <time.h>
 #include <sys/time.h>
+#include <arpa/inet.h>
 
 #include "RtpPacket.h"
 #include "Definition.h"
@@ -101,9 +102,9 @@ int RtpPacket :: GenerateRtpHeader(T_RtpPacketParam *i_ptParam,T_RtpHeader *o_pt
         tRtpHeader.CsrcCount=0;
         tRtpHeader.Mark=0;
         tRtpHeader.PayloadType=i_ptParam->wPayloadType;
-        tRtpHeader.wSeq=i_ptParam->wSeq++;
-        tRtpHeader.dwTimestamp=dwTimestamp;
-        tRtpHeader.dwSSRC=i_ptParam->dwSSRC;
+        tRtpHeader.wSeq=htons(i_ptParam->wSeq++);
+        tRtpHeader.dwTimestamp=htonl(dwTimestamp);
+        tRtpHeader.dwSSRC=htonl(i_ptParam->dwSSRC);
 
         memcpy(o_ptRtpHeader,&tRtpHeader,sizeof(T_RtpHeader));
         iRet=TRUE;
@@ -165,8 +166,8 @@ int RtpPacket :: Packet(unsigned char *i_pbFrameBuf,int i_iFrameLen,unsigned cha
 ******************************************************************************/
 unsigned int RtpPacket:: GetSSRC(void)
 {
-	static unsigned int s_wSSRC = 0x22345678;
-	return s_wSSRC++;
+	static unsigned int s_wSSRC = 22345678;
+	return s_wSSRC;
 }
 /*****************************************************************************
 -Fuction		: GetSysTime
