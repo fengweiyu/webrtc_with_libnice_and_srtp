@@ -30,6 +30,7 @@ typedef struct VideoInfo
 	unsigned int dwProfileLevelId;
 	char * strSPS_Base64;
 	char * strPPS_Base64;
+	unsigned int dwSSRC;
 }T_VideoInfo;
 
 /*****************************************************************************

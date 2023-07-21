@@ -307,7 +307,7 @@ int WebRTC::GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int i_iSd
         tLocalCandidate.strPassword,
         strLocalFingerprint,
         i_ptVideoInfo->ucRtpPayloadType,i_ptVideoInfo->pstrFormatName,i_ptVideoInfo->dwTimestampFrequency,
-        tCreateTime.tv_sec, strStreamType,tCreateTime.tv_sec, tCreateTime.tv_sec, tCreateTime.tv_sec);
+        i_ptVideoInfo->dwSSRC, strStreamType,i_ptVideoInfo->dwSSRC, i_ptVideoInfo->dwSSRC, i_ptVideoInfo->dwSSRC);
 
 	return iRet;
 }
@@ -678,19 +678,27 @@ int WebRtcOffer::GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int 
     strSdpFmt.assign("v=0\r\n"
         "o=- %ld%06ld %d IN IP4 %s\r\n"//o=<username><session id> <version> <network type> <address type><address> Origin ,给定了会话的发起者信息
         "s=ywf webrtc\r\n"//s=<sessionname> ;给定了Session Name
-        "t=0 0\r\na=group:BUNDLE %d %d\r\n"//t=<start time><stop time> ;BUNDLE 与sdpMLineIndex sdpMid里的一致
+        "t=0 0\r\na=group:BUNDLE %d\r\n"//t=<start time><stop time> ;BUNDLE 与sdpMLineIndex sdpMid里的一致
         "m=%s %u RTP/SAVPF %d\r\n"//不带dtls还是要srtp加密的
         "c=IN IP4 %s\r\n"
         "a=mid:%d\r\n"//与sdpMLineIndex sdpMid里的一致
         "a=sendonly\r\n"
-        "a=rtcp-mux\r\n"
+        "a=rtcp-mux\r\n"//a=group:BUNDLE要求必须有这一行,https://blog.csdn.net/Rin_Cherish/article/details/86677126
         "a=ice-ufrag:%s\r\n"
         "a=ice-pwd:%s\r\n"
         "a=ice-options:trickle\r\n"
         "a=fingerprint:sha-256 %s\r\n"
         "a=rtpmap:%d %s/%d\r\n"
-        "a=fmtp:%d level-asymmetry-allowed=1;packetization-mode=1\r\n"//加了sps也一样播放不出
-        //"a=fmtp:%d level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=%06X;sprop-parameter-sets=%s,%s\r\n"
+        /*2.packetization-mode:packetization-mode表示图像数据包分拆发送的方式。
+        0: Single NAL (Network Abstraction Layer)，每帧图像数据全部放在一个NAL单元传送；
+        1: Not Interleaved，每帧图像数据被拆放到多个NAL单元传送，这些NAL单元传送的顺序是按照解码的顺序发送；
+        2: Interleaved，每帧图像数据被拆放到多个NAL单元传送，但是这些NAL单元传送的顺序可以不按照解码的顺序发送
+        实际上，只有I帧可以被拆分发送，P帧和B帧都不能被拆分发送。
+        所以如果packetization-mode=1，则意味着I帧会被拆分发送。
+        level-asymmetry-allowed表示是否允许两端编码的Level不一致。注意必须两端的SDP中该值都为1才生效。*/
+        //"a=fmtp:%d level-asymmetry-allowed=1;packetization-mode=1\r\n"//需要sps,pps，否则花屏无法解码
+        "a=fmtp:%d level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=%06X;sprop-parameter-sets=%s,%s\r\n"
+        "a=ssrc:%ld msid:janus janusv0\r\n"//与rtp中的SSRC 一致
         "a=setup:actpass\r\n");
     for(i=0;i<tLocalCandidate.iCurCandidateNum;i++)
     {
@@ -700,8 +708,8 @@ int WebRtcOffer::GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int 
             snprintf(strCandidate,sizeof(strCandidate),"a=%s\r\n",tLocalCandidate.strCandidateData[i]);
             strSdpFmt.append(strCandidate);
         }
-    }
-    strSdpFmt.append("m=%s %u DTLS/SCTP %d\r\n"
+    }//去掉sctp一样可以通道打通
+    /*strSdpFmt.append("m=%s %u DTLS/SCTP %d\r\n"
         "c=IN IP4 %s\r\n"
         "a=mid:%d\r\n"//与sdpMLineIndex sdpMid里的加1
         "a=sendrecv\r\n"
@@ -717,11 +725,11 @@ int WebRtcOffer::GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int 
             snprintf(strCandidate,sizeof(strCandidate),"a=%s\r\n",tLocalCandidate.strCandidateData[i]);
             strSdpFmt.append(strCandidate);
         }
-    }
+    }*/
     
     iRet=snprintf(o_strSDP,i_iSdpMaxLen,strSdpFmt.c_str(),
         tCreateTime.tv_sec,tCreateTime.tv_usec,1,"0.0.0.0",
-        i_ptVideoInfo->iID,i_ptVideoInfo->iID+1,
+        i_ptVideoInfo->iID,//i_ptVideoInfo->iID+1,
         strStreamType,i_ptVideoInfo->wPortNumForSDP,i_ptVideoInfo->ucRtpPayloadType,
         "0.0.0.0",//"0.0.0.0"还是失败，多个也是失败
         i_ptVideoInfo->iID,
@@ -729,14 +737,13 @@ int WebRtcOffer::GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int 
         tLocalCandidate.strPassword,
         strLocalFingerprint,
         i_ptVideoInfo->ucRtpPayloadType,i_ptVideoInfo->pstrFormatName,i_ptVideoInfo->dwTimestampFrequency,
-        i_ptVideoInfo->ucRtpPayloadType,
-        //i_ptVideoInfo->ucRtpPayloadType,i_ptVideoInfo->dwProfileLevelId,i_ptVideoInfo->strSPS_Base64,i_ptVideoInfo->strPPS_Base64,
-        "application",i_ptVideoInfo->wPortNumForSDP,102,//"m=application 9 DTLS/SCTP". Reason: Expects at least 4 fields
+        i_ptVideoInfo->ucRtpPayloadType,i_ptVideoInfo->dwProfileLevelId,i_ptVideoInfo->strSPS_Base64,i_ptVideoInfo->strPPS_Base64,i_ptVideoInfo->dwSSRC);
+        /*"application",i_ptVideoInfo->wPortNumForSDP,102,//"m=application 9 DTLS/SCTP". Reason: Expects at least 4 fields
         "0.0.0.0",
         i_ptVideoInfo->iID+1,
         tLocalCandidate.strUfrag, 
         tLocalCandidate.strPassword,
-        strLocalFingerprint);
+        strLocalFingerprint);*/
 
 	return iRet;
 }

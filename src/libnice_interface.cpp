@@ -707,7 +707,7 @@ void Libnice::RecvVideoData(NiceAgent *agent, guint _stream_id, guint component_
              pLibnice->m_tLibniceCb.HandleRecvData(buf,len,pLibnice->m_tLibniceCb.pObjCb);
         }
 	}
-	printf("%.*s", len, buf);
+	printf("%d,%.*s\r\n", len,len, buf);
 	//fflush(stdout);
 }
 
