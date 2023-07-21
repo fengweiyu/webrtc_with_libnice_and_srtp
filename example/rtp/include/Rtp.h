@@ -12,8 +12,8 @@
 #ifndef RTP_H
 #define RTP_H
 
-#include "VideoHandle.h"
 #include "RtpPacket.h"
+#include "RtpSession.h"
 
 /*****************************************************************************
 -Class			: RtpInterface
@@ -27,15 +27,18 @@ class Rtp
 public:
 	Rtp();
 	~Rtp();
-    int Init(char *i_strPath);
+    int Init(unsigned char **m_ppPackets,int i_iMaxPacketNum,char *i_strPath);
+    int DeInit(unsigned char **m_ppPackets,int i_iMaxPacketNum);
     int GetSPS_PPS(unsigned char *o_pbSpsBuf,int *o_piSpsBufLen,unsigned char *o_pbPpsBuf,int *o_piPpsBufLen);
-    int RemoveH264EmulationBytes(unsigned char *o_pbNaluBuf,int i_iMaxNaluBufLen,unsigned char *i_pbNaluBuf,int i_iNaluLen);
-    int GetRtpData(unsigned char **o_ppbPacketBuf,int *o_aiEveryPacketLen,int i_iEveryRtpBufMaxSize,int i_iPacketBufMaxNum);
+    int GetRtpData(unsigned char **o_ppbPacketBuf,int *o_aiEveryPacketLen,int i_iPacketBufMaxNum);
+    unsigned int GetSSRC();
 private:
-    VideoHandle             *m_pVideoHandle;
-	RtpPacket               *m_pRtpPacket;
-
+    void                    *m_pMediaHandle;
+	RtpPacket               m_RtpPacket;
+    void                    *m_ptMediaFrameParam;
+    RtpSession              *m_pVideoRtpSession;
     
+    unsigned int 	        m_dwLastTimestamp;//Á÷¿ØÐèÒª
 };
 
 

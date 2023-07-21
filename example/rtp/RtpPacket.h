@@ -18,35 +18,42 @@
 #include <string>
 
 
-
 using std::string;
 
-#define RTP_MAX_PACKET_SIZE	((1500-42)/4*4)//MTU
+#define IP_MAX_LEN 				(42)
+#define RTP_MAX_PACKET_SIZE	((1500-IP_MAX_LEN)/4*4)//MTU
 #define RTP_MAX_PACKET_NUM	(300)
+#define RTP_HEADER_LEN 			(12)
 
 
-#define RTP_PAYLOAD_H264    102
-#define RTP_PAYLOAD_G711    97
+#define RTP_PAYLOAD_H264    96
+#define RTP_PAYLOAD_H265    97
+#define RTP_PAYLOAD_G711    104
+#define RTP_PAYLOAD_VIDEO    106 //由于是动态的，所以先直接使用,webrtc baseline106
+#define RTP_PAYLOAD_AUDIO    104 //后续做成映射表
 
-//后续放到音视频处理类中
-#define VIDEO_H264_SAMPLE_RATE 90000
-#define AUDIO_G711_SAMPLE_RATE 8000
-typedef enum RtpPacketType
+typedef enum
 {
-	RTP_PACKET_H264=1,
-	RTP_PACKET_G711,
-
+	RTP_PACKET_TYPE_H264 = 0,
+    RTP_PACKET_TYPE_H265,
+    RTP_PACKET_TYPE_G711U,
+    RTP_PACKET_TYPE_G711A,
+    RTP_PACKET_TYPE_G726,
+    RTP_PACKET_TYPE_AAC
+        
 }E_RtpPacketType;
+
+
 
 typedef struct RtpPacketParam
 {
     unsigned int    dwSSRC;
+    unsigned short  wSeq;
     unsigned int    dwTimestampFreq;
     unsigned int    wPayloadType;
-    E_RtpPacketType  eType;
-    unsigned short  wSeq;
-    unsigned short  res;
+    unsigned int    dwTimestamp;
 }T_RtpPacketParam;//这些参数在每个rtp会话中都不一样，即唯一的。
+
 
 typedef struct RtpHeader
 {
@@ -72,6 +79,7 @@ typedef struct RtpHeader
 	unsigned int dwSSRC;//同步源标识符(SSRC)：占32位，用于标识同步信源，同步源就是指RTP包流的来源。在同一个RTP会话中不能有两个相同的SSRC值
 }T_RtpHeader;//size 12
 
+
 /*****************************************************************************
 -Class			: RtpPacket
 -Description	: 
@@ -82,19 +90,18 @@ typedef struct RtpHeader
 class RtpPacket
 {
 public:
-    RtpPacket(E_RtpPacketType i_eRtpPacketType);
-    ~RtpPacket();
+    RtpPacket();
+    virtual ~RtpPacket();
+    int Init(unsigned char **m_ppPackets,int i_iMaxPacketNum);
+    int DeInit(unsigned char **m_ppPackets,int i_iMaxPacketNum);
     int GenerateRtpHeader(T_RtpPacketParam *i_ptParam,T_RtpHeader *o_ptRtpHeader);
-    virtual int Packet(unsigned char *i_pbFrameBuf,int i_iFrameLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,T_RtpPacketParam *i_ptParam=NULL);
+    int GenerateRtpHeader(T_RtpPacketParam *i_ptParam,int i_iPaddingLen,int i_iMark,unsigned char *o_bRtpHeader);
+    virtual int Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbFrameBuf,int i_iFrameLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iRtpPacketType=0);
 
 protected:
-    unsigned int GetSSRC(void);
-    unsigned long long GetSysTime (void);
-    T_RtpPacketParam m_tParam;
-    E_RtpPacketType m_eRtpPacketType;
+	int m_iRtpType;
+
 private:
-
-
     RtpPacket *m_pRtpPacket;
 };
 
@@ -109,11 +116,105 @@ private:
 class RtpPacketH264 : public RtpPacket
 {
 public:
-    RtpPacketH264(E_RtpPacketType i_eRtpPacketType);
-    ~RtpPacketH264();
-    virtual int Packet(unsigned char *i_pbNaluBuf,int i_iNaluLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,T_RtpPacketParam *i_ptParam=NULL);//不为NULL是否就不是复写?
+    RtpPacketH264();
+    virtual ~RtpPacketH264();
+    virtual int Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,int i_iNaluLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iRtpPacketType=0);
+
+protected:
+	int m_iRtpVideoType;
+
 private:
-    RtpPacketH264 *m_pRtpPacketH264;
+    RtpPacketH264 *m_pRtpPacketNALU;
+    RtpPacketH264 *m_pRtpPacketFU_A;
+};
+
+/*****************************************************************************
+-Class			: NALU
+-Description	: NALU载荷类型的RTP包
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2017/09/21	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
+class H264NALU : public RtpPacketH264
+{
+public:
+    H264NALU();
+    virtual ~H264NALU();
+    int Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,int i_iNaluLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iRtpPacketType=0);
+
+};
+
+/*****************************************************************************
+-Class			: FU_A
+-Description	: FU_A载荷类型的RTP包
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2017/09/21	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
+class H264FU_A : public RtpPacketH264
+{
+public:
+    H264FU_A();
+    virtual ~H264FU_A();
+    int Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,int i_iNaluLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iRtpPacketType=0);
+    static const unsigned char FU_A_TYPE;
+    static const unsigned char FU_A_HEADER_LEN;
+};
+
+
+/*****************************************************************************
+-Class			: RtpPacketH264
+-Description	: 
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2017/09/21	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
+class RtpPacketH265 : public RtpPacket
+{
+public:
+    RtpPacketH265();
+    virtual ~RtpPacketH265();
+    virtual int Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,int i_iNaluLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iRtpPacketType=0);
+
+protected:
+	int m_iRtpVideoType;
+
+private:
+    RtpPacketH265 *m_pRtpPacketNALU;
+    RtpPacketH265 *m_pRtpPacketFU_A;
+};
+
+/*****************************************************************************
+-Class			: NALU
+-Description	: NALU载荷类型的RTP包
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2017/09/21	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
+class H265NALU : public RtpPacketH265
+{
+public:
+    H265NALU();
+    virtual ~H265NALU();
+    int Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,int i_iNaluLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iRtpPacketType=0);
+
+};
+
+/*****************************************************************************
+-Class			: FU_A
+-Description	: FU_A载荷类型的RTP包
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2017/09/21	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
+class H265FU_A : public RtpPacketH265
+{
+public:
+    H265FU_A();
+    virtual ~H265FU_A();
+    int Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,int i_iNaluLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iRtpPacketType=0);
+    static const unsigned char FU_A_TYPE;
+    static const unsigned char FU_A_HEADER_LEN;
 };
 
 
@@ -127,44 +228,47 @@ private:
 class RtpPacketG711 : public RtpPacket
 {
 public:
-    RtpPacketG711(E_RtpPacketType i_eRtpPacketType);
-    ~RtpPacketG711();
-    virtual int Packet(unsigned char *i_pbFrameBuf,int i_iFrameLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,T_RtpPacketParam *i_ptParam=NULL);
+    RtpPacketG711();
+    virtual ~RtpPacketG711();
+    virtual int Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbFrameBuf,int i_iFrameLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iRtpPacketType=0);
 private:
     RtpPacketG711 *m_pRtpPacketG711;
 };
 
+
 /*****************************************************************************
--Class			: NALU
--Description	: NALU载荷类型的RTP包
+-Class			: RtpPacketG726
+-Description	: 
 * Modify Date	  Version		 Author 		  Modification
 * -----------------------------------------------
 * 2017/09/21	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-class NALU : public RtpPacketH264
+class RtpPacketG726 : public RtpPacket
 {
 public:
-    NALU(E_RtpPacketType i_eRtpPacketType);
-    ~NALU();
-    int Packet(unsigned char *i_pbNaluBuf,int i_iNaluLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,T_RtpPacketParam *i_ptParam=NULL);
-
+    RtpPacketG726();
+    virtual ~RtpPacketG726();
+    virtual int Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbFrameBuf,int i_iFrameLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iRtpPacketType=0);
+private:
+    RtpPacketG726 *m_pRtpPacketG726;
 };
 
+
 /*****************************************************************************
--Class			: FU_A
--Description	: FU_A载荷类型的RTP包
+-Class			: RtpPacketAAC
+-Description	: 
 * Modify Date	  Version		 Author 		  Modification
 * -----------------------------------------------
 * 2017/09/21	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-class FU_A : public RtpPacketH264
+class RtpPacketAAC : public RtpPacket
 {
 public:
-    FU_A(E_RtpPacketType i_eRtpPacketType);
-    ~FU_A();
-    int Packet(unsigned char *i_pbNaluBuf,int i_iNaluLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,T_RtpPacketParam *i_ptParam=NULL);
-    static const unsigned char FU_A_TYPE;
-
+    RtpPacketAAC();
+    virtual ~RtpPacketAAC();
+    virtual int Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbFrameBuf,int i_iFrameLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iRtpPacketType=0);
+private:
+    RtpPacketAAC *m_pRtpPacketAAC;
 };
 
 

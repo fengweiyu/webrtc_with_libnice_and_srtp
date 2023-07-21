@@ -15,6 +15,7 @@
 #include <string.h>
 #include <iostream>//不加.h,c++新的头文件
 #include "Definition.h"
+#include "MediaHandle.h"
 
 
 using std::cout;//需要<iostream>
@@ -32,10 +33,9 @@ using std::endl;
 ******************************************************************************/
 Rtp :: Rtp()
 {
-    m_pVideoHandle = NULL;
-    m_pRtpPacket = NULL;
-    m_pRtpPacket = new RtpPacket(RTP_PACKET_H264);
-
+    m_pMediaHandle = NULL;
+    m_dwLastTimestamp = 0;
+    m_ptMediaFrameParam = NULL;
 }
 
 /*****************************************************************************
@@ -50,19 +50,39 @@ Rtp :: Rtp()
 ******************************************************************************/
 Rtp :: ~Rtp()
 {
-    if(NULL !=m_pRtpPacket)
+    if(NULL !=m_pMediaHandle)
     {
-
-        delete m_pRtpPacket;
+        delete ((MediaHandle *)m_pMediaHandle);
     }
-
-    if(NULL !=m_pVideoHandle)
+    if(NULL !=m_pVideoRtpSession)
     {
-
-        delete m_pVideoHandle;
+        delete m_pVideoRtpSession;
     }
 }
 
+
+/*****************************************************************************
+-Fuction		: ~Rtp
+-Description	: ~Rtp
+-Input			: 
+-Output 		: 
+-Return 		: 
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
+int Rtp :: DeInit(unsigned char **m_ppPackets,int i_iMaxPacketNum)
+{
+    if(NULL!= m_ptMediaFrameParam && NULL!= ((T_MediaFrameParam *)m_ptMediaFrameParam)->pbFrameBuf)
+    {
+        delete ((T_MediaFrameParam *)m_ptMediaFrameParam)->pbFrameBuf;
+    }
+    if(NULL!= m_ptMediaFrameParam)
+    {
+        delete (T_MediaFrameParam *)m_ptMediaFrameParam;
+    }
+    return m_RtpPacket.DeInit(m_ppPackets, i_iMaxPacketNum);
+}
 
 /*****************************************************************************
 -Fuction		: RtpInterface::Init
@@ -74,20 +94,43 @@ Rtp :: ~Rtp()
 * -----------------------------------------------
 * 2017/09/21	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-int Rtp::Init(char *i_strPath)
+int Rtp::Init(unsigned char **m_ppPackets,int i_iMaxPacketNum,char *i_strPath)
 {
     int iRet=FALSE;
+    
     if(NULL == i_strPath)
     {
         cout<<"Init NULL"<<endl;
     }
     else
     {
-        m_pVideoHandle=new VideoHandle();
-        if(NULL !=m_pVideoHandle)
-            iRet=m_pVideoHandle->Init(i_strPath);
+        m_pMediaHandle=new MediaHandle();
+        if(NULL !=m_pMediaHandle)
+            iRet=((MediaHandle *)m_pMediaHandle)->Init(i_strPath);
     }
-    
+
+    m_pVideoRtpSession = new RtpSession(RTP_PAYLOAD_VIDEO,0);//i_dwSampleRate 暂时用不上先填0 tMediaInfo.dwVideoSampleRate
+
+    iRet=m_RtpPacket.Init(m_ppPackets, i_iMaxPacketNum);
+    if(FALSE == iRet)
+    {
+        cout<<"m_pRtpPacket->Init NULL"<<endl;
+        return iRet;
+    }
+    m_ptMediaFrameParam = new T_MediaFrameParam();
+    if(NULL == m_ptMediaFrameParam)
+    {
+        cout<<"m_ptMediaFrameParam malloc NULL"<<endl;
+        return iRet;
+    }
+    memset((T_MediaFrameParam *)m_ptMediaFrameParam,0,sizeof(T_MediaFrameParam));
+    ((T_MediaFrameParam *)m_ptMediaFrameParam)->pbFrameBuf = new unsigned char[FRAME_BUFFER_MAX_SIZE];
+    if(NULL == ((T_MediaFrameParam *)m_ptMediaFrameParam)->pbFrameBuf)
+    {
+        cout<<"pbFrameBuf malloc NULL"<<endl;
+        delete (T_MediaFrameParam *)m_ptMediaFrameParam;
+        return iRet;
+    }
 	return iRet;
 }
 
@@ -101,73 +144,76 @@ int Rtp::Init(char *i_strPath)
 * -----------------------------------------------
 * 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-int Rtp :: GetRtpData(unsigned char **o_ppbPacketBuf,int *o_aiEveryPacketLen,int i_iEveryRtpBufMaxSize,int i_iPacketBufMaxNum)
+int Rtp :: GetRtpData(unsigned char **o_ppbPacketBuf,int *o_aiEveryPacketLen,int i_iPacketBufMaxNum)
 {
     int iPacketNum = -1;
-
+    int i;
+    int iRet = FALSE;
+    T_RtpPacketParam tRtpPacketParam;
+    unsigned int dwDiffTimestamp = 0;
+    unsigned int dwNaluOffset = 0;
     unsigned char *pbNaluStartPos=NULL;
-    int iNaluLen=0;
-    unsigned char bNaluType=0;
-    if(NULL == o_ppbPacketBuf ||NULL == o_aiEveryPacketLen ||NULL == m_pVideoHandle )
+    
+    if(NULL == o_ppbPacketBuf ||NULL == o_aiEveryPacketLen ||NULL == m_pMediaHandle )
     {
         cout<<"GetRtpData NULL"<<endl;
         return iPacketNum;
     }
     
-    unsigned char * pbVideoBuf=(unsigned char * )malloc(VIDEO_BUFFER_MAX_SIZE);
-    int iVideoBufLen=0;
-    memset(pbVideoBuf,0,VIDEO_BUFFER_MAX_SIZE);
-    iPacketNum=m_pVideoHandle->GetNextVideoFrame(pbVideoBuf,&iVideoBufLen,VIDEO_BUFFER_MAX_SIZE);
-    if(FALSE == iPacketNum)
+    ((T_MediaFrameParam *)m_ptMediaFrameParam)->eFrameType = FRAME_TYPE_UNKNOW;
+    memset(((T_MediaFrameParam *)m_ptMediaFrameParam)->pbFrameBuf,0,FRAME_BUFFER_MAX_SIZE);
+    ((T_MediaFrameParam *)m_ptMediaFrameParam)->iFrameBufMaxLen = FRAME_BUFFER_MAX_SIZE;
+    iRet=((MediaHandle *)m_pMediaHandle)->GetNextFrame((T_MediaFrameParam *)m_ptMediaFrameParam);
+    if(FALSE == iRet)
     {
+        cout<<"m_MediaHandle.GetNextFrame err"<<endl;
+        return iPacketNum;
+    }
+
+    memset(&tRtpPacketParam,0,sizeof(T_RtpPacketParam));
+    m_pVideoRtpSession->GetRtpPacketParam(&tRtpPacketParam);
+    if (0 == m_dwLastTimestamp)
+    {
+        dwDiffTimestamp = 0;
     }
     else
     {
-        iPacketNum=m_pVideoHandle->FindH264Nalu(pbVideoBuf, iVideoBufLen,&pbNaluStartPos, &iNaluLen,&bNaluType);
-        if(FALSE== iPacketNum || NULL == pbNaluStartPos ||0==iNaluLen)
-        {
-            cout<<"FindH264Nalu err:"<<iPacketNum<<" iNaluLen:"<<iNaluLen<<" iVideoBufLen:"<<iVideoBufLen<<endl;
-        }
-        else
-        {
-            m_pVideoHandle->TrySetSPS_PPS(pbNaluStartPos,iNaluLen);
-            iPacketNum=m_pRtpPacket->Packet(pbNaluStartPos,iNaluLen,o_ppbPacketBuf,o_aiEveryPacketLen);
-            if(iPacketNum<=0 || iPacketNum>i_iPacketBufMaxNum)
-            {
-                cout<<"m_pRtpPacket->Packet err"<<iPacketNum<<endl;
-                iPacketNum =-1;
-            }
-            else
-            {
-            
-            }
-        }
-
+        dwDiffTimestamp = ((T_MediaFrameParam *)m_ptMediaFrameParam)->dwTimeStamp - m_dwLastTimestamp;
     }
-    free(pbVideoBuf);
+    tRtpPacketParam.dwTimestamp += dwDiffTimestamp;//这样做的目的是让rtp的时间戳从0开始，
+    m_dwLastTimestamp = ((T_MediaFrameParam *)m_ptMediaFrameParam)->dwTimeStamp;//不然也可以直接用m_tMediaFrameParam.dwTimeStamp
+    
+    pbNaluStartPos = ((T_MediaFrameParam *)m_ptMediaFrameParam)->pbFrameStartPos;
+    dwNaluOffset = 0;
+    iPacketNum = 0;
 
-        
-    return iPacketNum;
-}
-
-/*****************************************************************************
--Fuction		: VideoHandle::RemoveH264EmulationBytes
--Description	: 
--Input			: 
--Output 		: 
--Return 		: 
-* Modify Date	  Version		 Author 		  Modification
-* -----------------------------------------------
-* 2017/09/21	  V1.0.0		 Yu Weifeng 	  Created
-******************************************************************************/
-int Rtp::RemoveH264EmulationBytes(unsigned char *o_pbNaluBuf,int i_iMaxNaluBufLen,unsigned char *i_pbNaluBuf,int i_iNaluLen)
-{
-    int iNaluLen=0;
-    if(NULL !=m_pVideoHandle)
+    /*if(1== ((T_MediaFrameParam *)m_ptMediaFrameParam)->dwNaluCount && FRAME_TYPE_VIDEO_I_FRAME == ((T_MediaFrameParam *)m_ptMediaFrameParam)->eFrameType)
+    {//修正i帧没有pps以及sps情况，前面的参数集不一定适用后面的i帧
+        T_VideoEncodeParam tVideoEncodeParam;
+        iRet=((MediaHandle *)m_pMediaHandle)->GetVideoEncParam(&tVideoEncodeParam);
+        iPacketNum+=m_RtpPacket.Packet(&tRtpPacketParam,tVideoEncodeParam.abSPS,tVideoEncodeParam.iSizeOfSPS,&o_ppbPacketBuf[iPacketNum],&o_aiEveryPacketLen[iPacketNum]);
+        m_pVideoRtpSession->SetRtpPacketParam(&tRtpPacketParam);
+        iPacketNum+=m_RtpPacket.Packet(&tRtpPacketParam,tVideoEncodeParam.abPPS,tVideoEncodeParam.iSizeOfPPS,&o_ppbPacketBuf[iPacketNum],&o_aiEveryPacketLen[iPacketNum]);
+        m_pVideoRtpSession->SetRtpPacketParam(&tRtpPacketParam);
+    }*/
+    
+    for(i=0;i<((T_MediaFrameParam *)m_ptMediaFrameParam)->dwNaluCount;i++)
     {
-        iNaluLen=m_pVideoHandle->RemoveH264EmulationBytes(o_pbNaluBuf,i_iMaxNaluBufLen,i_pbNaluBuf,i_iNaluLen);
+        iPacketNum+=m_RtpPacket.Packet(&tRtpPacketParam,pbNaluStartPos,((T_MediaFrameParam *)m_ptMediaFrameParam)->a_dwNaluEndOffset[i]-dwNaluOffset,&o_ppbPacketBuf[iPacketNum],&o_aiEveryPacketLen[iPacketNum]);
+        m_pVideoRtpSession->SetRtpPacketParam(&tRtpPacketParam);
+        if(iPacketNum<=0 || iPacketNum>i_iPacketBufMaxNum)
+        {
+            cout<<"m_pRtpPacket->Packet err"<<iPacketNum<<endl;
+            iPacketNum =-1;
+            return iPacketNum;
+        }
+
+        pbNaluStartPos = ((T_MediaFrameParam *)m_ptMediaFrameParam)->pbFrameStartPos +((T_MediaFrameParam *)m_ptMediaFrameParam)->a_dwNaluEndOffset[i];
+        dwNaluOffset =((T_MediaFrameParam *)m_ptMediaFrameParam)->a_dwNaluEndOffset[i];
     }
-	return iNaluLen;
+
+    cout<<"m_ptMediaFrameParam)->dwNaluCount"<<((T_MediaFrameParam *)m_ptMediaFrameParam)->dwNaluCount<<" eFrameType "<<((T_MediaFrameParam *)m_ptMediaFrameParam)->eFrameType<<endl;
+    return iPacketNum;
 }
 
 /*****************************************************************************
@@ -183,10 +229,44 @@ int Rtp::RemoveH264EmulationBytes(unsigned char *o_pbNaluBuf,int i_iMaxNaluBufLe
 int Rtp::GetSPS_PPS(unsigned char *o_pbSpsBuf,int *o_piSpsBufLen,unsigned char *o_pbPpsBuf,int *o_piPpsBufLen)
 {
     int iRet=FALSE;
-    if(NULL !=m_pVideoHandle)
+    T_VideoEncodeParam tVideoEncodeParam;
+    
+    if(NULL !=m_pMediaHandle)
     {
-        iRet=m_pVideoHandle->GetSPS_PPS(o_pbSpsBuf,o_piSpsBufLen,o_pbPpsBuf,o_piPpsBufLen);
+        memset(&tVideoEncodeParam,0,sizeof(T_VideoEncodeParam));
+        iRet=((MediaHandle *)m_pMediaHandle)->GetVideoEncParam(&tVideoEncodeParam);
+        memcpy(o_pbSpsBuf,tVideoEncodeParam.abSPS,tVideoEncodeParam.iSizeOfSPS);
+        *o_piSpsBufLen = tVideoEncodeParam.iSizeOfSPS;
+        memcpy(o_pbPpsBuf,tVideoEncodeParam.abPPS,tVideoEncodeParam.iSizeOfPPS);
+        *o_piPpsBufLen = tVideoEncodeParam.iSizeOfPPS;
+    }
+    if(0 == tVideoEncodeParam.iSizeOfSPS ||0 == tVideoEncodeParam.iSizeOfPPS)
+    {
+        iRet=FALSE;
     }
 	return iRet;
+}
+
+/*****************************************************************************
+-Fuction		: VideoHandle::GetSPS_PPS
+-Description	: 
+-Input			: 
+-Output 		: 
+-Return 		: 
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2017/09/21	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
+unsigned int Rtp::GetSSRC()
+{
+    T_RtpPacketParam tRtpPacketParam;
+    
+    memset(&tRtpPacketParam,0,sizeof(T_RtpPacketParam));
+    if(NULL !=m_pVideoRtpSession)
+    {
+        m_pVideoRtpSession->GetRtpPacketParam(&tRtpPacketParam);
+    }
+    
+	return tRtpPacketParam.dwSSRC;
 }
 
