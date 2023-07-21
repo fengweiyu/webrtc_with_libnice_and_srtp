@@ -30,9 +30,11 @@ INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}
 	${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/base64/include
 #peerconnection_client中又依赖http	
 	${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/http/include
+    ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/rtp/media/include
 	${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/rtp/include
 #rtp.h又依赖其内部头文件		
 	${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/rtp
+    ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/rtp/media/include
 #	${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/third_lib/glib/include
 #.h中又依赖
 	${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/third_lib/usrsctp/include

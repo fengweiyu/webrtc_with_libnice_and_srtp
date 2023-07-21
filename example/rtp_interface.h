@@ -24,12 +24,13 @@
 class RtpInterface
 {
 public:
-	RtpInterface(char *i_strPath);
+	RtpInterface(unsigned char **m_ppPackets,int i_iMaxPacketNum,char *i_strPath);
 	~RtpInterface();
+    int DeInit(unsigned char **m_ppPackets,int i_iMaxPacketNum);
     int GetSPS_PPS(unsigned char *o_pbSpsBuf,int *o_piSpsBufLen,unsigned char *o_pbPpsBuf,int *o_piPpsBufLen);
     int RemoveH264EmulationBytes(unsigned char *o_pbNaluBuf,int i_iMaxNaluBufLen,unsigned char *i_pbNaluBuf,int i_iNaluLen);
-    int GetRtpData(unsigned char **o_ppbPacketBuf,int *o_aiEveryPacketLen,int i_iEveryRtpBufMaxSize,int i_iPacketBufMaxNum);
-
+    int GetRtpData(unsigned char **o_ppbPacketBuf,int *o_aiEveryPacketLen,int i_iPacketBufMaxNum);
+    unsigned int GetSSRC();
 
 private:
 	Rtp               *m_pRtp;

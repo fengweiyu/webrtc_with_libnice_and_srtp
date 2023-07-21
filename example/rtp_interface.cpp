@@ -21,10 +21,10 @@
 * -----------------------------------------------
 * 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-RtpInterface :: RtpInterface(char * i_strPath)
+RtpInterface :: RtpInterface(unsigned char **m_ppPackets,int i_iMaxPacketNum,char * i_strPath)
 {
     m_pRtp = new Rtp();
-    m_pRtp->Init(i_strPath);
+    m_pRtp->Init(m_ppPackets,i_iMaxPacketNum,i_strPath);
 }
 
 /*****************************************************************************
@@ -47,6 +47,24 @@ RtpInterface :: ~RtpInterface()
 }
 
 /*****************************************************************************
+-Fuction		: ~RtpInterface
+-Description	: ~RtpInterface
+-Input			: 
+-Output 		: 
+-Return 		: 
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
+int RtpInterface :: DeInit(unsigned char **m_ppPackets,int i_iMaxPacketNum)
+{
+    if(NULL !=m_pRtp)
+    {
+        m_pRtp->DeInit(m_ppPackets,i_iMaxPacketNum);
+    }
+}
+
+/*****************************************************************************
 -Fuction		: GetRtpData
 -Description	: GetRtpData
 -Input			: 
@@ -56,9 +74,9 @@ RtpInterface :: ~RtpInterface()
 * -----------------------------------------------
 * 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-int RtpInterface :: GetRtpData(unsigned char **o_ppbPacketBuf,int *o_aiEveryPacketLen,int i_iEveryRtpBufMaxSize,int i_iPacketBufMaxNum)
+int RtpInterface :: GetRtpData(unsigned char **o_ppbPacketBuf,int *o_aiEveryPacketLen,int i_iPacketBufMaxNum)
 {
-    return m_pRtp->GetRtpData(o_ppbPacketBuf,o_aiEveryPacketLen,i_iEveryRtpBufMaxSize,i_iPacketBufMaxNum);
+    return m_pRtp->GetRtpData(o_ppbPacketBuf,o_aiEveryPacketLen,i_iPacketBufMaxNum);
 }
 
 /*****************************************************************************
@@ -73,7 +91,7 @@ int RtpInterface :: GetRtpData(unsigned char **o_ppbPacketBuf,int *o_aiEveryPack
 ******************************************************************************/
 int RtpInterface :: RemoveH264EmulationBytes(unsigned char *o_pbNaluBuf,int i_iMaxNaluBufLen,unsigned char *i_pbNaluBuf,int i_iNaluLen)
 {
-    return m_pRtp->RemoveH264EmulationBytes(o_pbNaluBuf,i_iMaxNaluBufLen,i_pbNaluBuf,i_iNaluLen);
+    return -1;
 }
 
 /*****************************************************************************
@@ -89,6 +107,22 @@ int RtpInterface :: RemoveH264EmulationBytes(unsigned char *o_pbNaluBuf,int i_iM
 int RtpInterface::GetSPS_PPS(unsigned char *o_pbSpsBuf,int *o_piSpsBufLen,unsigned char *o_pbPpsBuf,int *o_piPpsBufLen)
 {
     return m_pRtp->GetSPS_PPS(o_pbSpsBuf,o_piSpsBufLen,o_pbPpsBuf,o_piPpsBufLen);
+}
+
+
+/*****************************************************************************
+-Fuction		: VideoHandle::GetSPS_PPS
+-Description	: 
+-Input			: 
+-Output 		: 
+-Return 		: 
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2017/09/21	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
+unsigned int RtpInterface::GetSSRC()
+{
+	return m_pRtp->GetSSRC();
 }
 
 

@@ -24,7 +24,7 @@
 #define WEBRTC_RTP_MAX_PACKET_NUM	(300)
 #define WEBRTC_RTP_MAX_PACKET_SIZE	((1500-42)/4*4)//MTU
 
-#define WEBRTC_RTP_PAYLOAD_H264 102 //webrtc中是102
+#define WEBRTC_RTP_PAYLOAD_H264 106 //webrtc对参数集有有要求，所以中是106
 #define WEBRTC_VIDEO_ENCODE_FORMAT_NAME "H264"
 #define WEBRTC_H264_TIMESTAMP_FREQUENCY 90000
 
@@ -157,18 +157,18 @@ static int OfferProc(WebRTC * i_pWebRTC,char * i_strServerIp, int i_iServerPort,
     WebRtcClientOffer *pWebRtcClientOffer=NULL;
     int iRecvLen=0;
     int iRet=0;
-
-    pWebRtcClientOffer = new WebRtcClientOffer();
-    pRtpInterface = new RtpInterface(i_strVideoPath);
+    int i;
     int iPacketNum=0;
     unsigned char *ppbPacketBuf[WEBRTC_RTP_MAX_PACKET_NUM]={0};
-    int aiEveryPacketLen[WEBRTC_RTP_MAX_PACKET_NUM]={0};
-    int i=0;
-    for(i=0;i<WEBRTC_RTP_MAX_PACKET_NUM;i++)
-    {
-        ppbPacketBuf[i]=(unsigned char *)malloc(WEBRTC_RTP_MAX_PACKET_SIZE);//
-        memset(ppbPacketBuf[i],0,WEBRTC_RTP_MAX_PACKET_SIZE);
-    }
+    int aiEveryPacketLen[WEBRTC_RTP_MAX_PACKET_NUM]={0};//验证地址加1是下一个元素还是下一个字节?
+    unsigned char           abSPS[64]={0};
+    unsigned char           abPPS[64]={0};
+    int                     iSPS_Len=0;
+    int                     iPPS_Len=0;
+    
+    pWebRtcClientOffer = new WebRtcClientOffer();
+    pRtpInterface = new RtpInterface(ppbPacketBuf,WEBRTC_RTP_MAX_PACKET_NUM,i_strVideoPath);
+
     E_WebRtcOfferStatus eWebRtcStatus=WEBRTC_OFFER_INIT;
     while(1)
     {
@@ -176,7 +176,13 @@ static int OfferProc(WebRTC * i_pWebRTC,char * i_strServerIp, int i_iServerPort,
         {
             case WEBRTC_OFFER_INIT:
             {
-                iPacketNum = pRtpInterface->GetRtpData(ppbPacketBuf,aiEveryPacketLen,WEBRTC_RTP_MAX_PACKET_SIZE,WEBRTC_RTP_MAX_PACKET_NUM);//第一次会失败
+                iPacketNum = pRtpInterface->GetRtpData(ppbPacketBuf,aiEveryPacketLen,WEBRTC_RTP_MAX_PACKET_NUM);//第一次会失败
+                iRet = pRtpInterface->GetSPS_PPS(abSPS, &iSPS_Len, abPPS, &iPPS_Len);
+                if(iRet < 0 )
+                {
+                    printf("pRtpInterface->GetSPS_PPS err\r\n");
+                    break;
+                }
                 iRet = pWebRtcClientOffer->Login(i_strServerIp,i_iServerPort);
                 if(iRet >= 0)
                 {
@@ -193,26 +199,16 @@ static int OfferProc(WebRTC * i_pWebRTC,char * i_strServerIp, int i_iServerPort,
                 memset(&tVideoInfo,0,sizeof(tVideoInfo));
                 tVideoInfo.pstrFormatName=WEBRTC_VIDEO_ENCODE_FORMAT_NAME;
                 tVideoInfo.dwTimestampFrequency=WEBRTC_H264_TIMESTAMP_FREQUENCY;  
-                tVideoInfo.ucRtpPayloadType=WEBRTC_RTP_PAYLOAD_H264;
+                tVideoInfo.ucRtpPayloadType=WEBRTC_RTP_PAYLOAD_H264;//;-96
                 tVideoInfo.wPortNumForSDP=9;
                 tVideoInfo.iID=0;
-                unsigned char           abSPS[64]={0};
-                unsigned char           abPPS[64]={0};
-                int                     iSPS_Len=0;
-                int                     iPPS_Len=0;
-                pRtpInterface->GetSPS_PPS(abSPS, &iSPS_Len, abPPS, &iPPS_Len);
-                unsigned char abSPS_WEB[SPS_PPS_BUF_MAX_LEN]={0};// "WEB" means "Without Emulation Bytes"
-                int iSPS_WEB_Len= pRtpInterface->RemoveH264EmulationBytes(abSPS_WEB, iSPS_Len, abSPS, iSPS_Len);
-                if (iSPS_WEB_Len < 4) 
-                { // Bad SPS size => assume our source isn't ready
-                    printf("Bad SPS size:%d \r\n",iSPS_WEB_Len);
-                }
-                unsigned int dwProfileLevelId = (abSPS_WEB[1]<<16) | (abSPS_WEB[2]<<8) | abSPS_WEB[3];
+                unsigned int dwProfileLevelId = (abSPS[1]<<16) | (abSPS[2]<<8) | abSPS[3];
                 char * strSPS_Base64 = base64Encode((char*)abSPS, iSPS_Len);//可以考虑放到代码内部
                 char * strPPS_Base64 = base64Encode((char*)abPPS, iPPS_Len);//但会多依赖base64
                 tVideoInfo.dwProfileLevelId = dwProfileLevelId;
                 tVideoInfo.strSPS_Base64 = strSPS_Base64;
                 tVideoInfo.strPPS_Base64= strPPS_Base64;
+                tVideoInfo.dwSSRC= pRtpInterface->GetSSRC();
                 memset(acGetMsg,0,sizeof(acGetMsg));
                 if(i_pWebRTC->GenerateLocalSDP(&tVideoInfo,acGetMsg,sizeof(acGetMsg))>=0)
                 {
@@ -299,7 +295,8 @@ static int OfferProc(WebRTC * i_pWebRTC,char * i_strServerIp, int i_iServerPort,
                     printf("pRtpInterface->GetRtpData err\r\n");
                     eWebRtcStatus=WEBRTC_OFFER_SEND_RTP;
                 }
-                iPacketNum = pRtpInterface->GetRtpData(ppbPacketBuf,aiEveryPacketLen,WEBRTC_RTP_MAX_PACKET_SIZE,WEBRTC_RTP_MAX_PACKET_NUM);
+                iPacketNum = pRtpInterface->GetRtpData(ppbPacketBuf,aiEveryPacketLen,WEBRTC_RTP_MAX_PACKET_NUM);
+                usleep(40*1000);//25帧率
                 break;
             }
             
@@ -321,8 +318,9 @@ static int OfferProc(WebRTC * i_pWebRTC,char * i_strServerIp, int i_iServerPort,
             break;
         }
     }
-    for(i=0;i<WEBRTC_RTP_MAX_PACKET_NUM;i++)
-        free(ppbPacketBuf[i]);
+    pRtpInterface->DeInit(ppbPacketBuf,WEBRTC_RTP_MAX_PACKET_NUM);
+    delete pRtpInterface;
+    delete pWebRtcClientOffer;
 
     return iRet;
 }
