@@ -1,4 +1,43 @@
-﻿需要和webrtc_server()配合使用
+﻿
+1.编译：
+	使用cmake进行编译，必须先安装cmake，安装后：
+	ywf@ywf-pc:/work/workspace/webrtc_with_libnice_and_srtp$ ./build.sh x86
+	编译成功后，会在如下路径生成webrtc应用程序：
+	ywf@ywf-pc:/work/workspace/webrtc_with_libnice_and_srtp/build/x86$ ls webrtc
+	webrtc
+
+
+2.使用：
+    1.启动web服务器
+        一般第一次启动后，后面就不需要再次启动，开机自动运行的。
+        https://github.com/fengweiyu/webrtc_server/tree/master/Apache24/bin
+        https://github.com/fengweiyu/webrtc_server/tree/master/webrtchtml
+    1.启动信令服务器
+        https://github.com/fengweiyu/webrtc_server/tree/master/webrtcgateway
+    2.启动offer端(StunIP StunPort 就是信令服务器webrtcgateway)，即推流端
+        ./webrtc StunIP StunPort SelfName VideoFile offer/answer
+        eg:
+        ./webrtc 192.168.2.111 9898 ywf test.h264 offer
+    3.启动谷歌浏览器，即拉流端
+        输入第一步web服务器的ip地址访问网页，然后点击call出图
+
+******************************************************************************
+
+1.compile
+	before compile,must install cmake,then 
+	eg:
+	ywf@ywf-pc:/work/workspace/webrtc_with_libnice_and_srtp$ ./build.sh x86
+	after make success:
+	ywf@ywf-pc:/work/workspace/webrtc_with_libnice_and_srtp/build/x86$ ls webrtc
+	webrtc
+2.usage	
+	./webrtc StunIP StunPort SelfName VideoFile offer/answer
+	eg:
+	./webrtc 192.168.0.103 9898 ywf555 sintel.h264 offer
+ 
+	
+******************************************************************************
+需要和webrtc_server()配合使用
 
 https://www.apachehaus.com/cgi-bin/download.plx
 
@@ -12,35 +51,9 @@ httpd.conf
 httpd-ahssl.conf
 https://www.cnblogs.com/pdspkj/p/8044072.html
 servertwo serverone
-1.编译：
-	使用cmake进行编译，必须先安装cmake，安装后：
-	ywf@ywf-pc:/work/workspace/webrtc_with_libnice_and_srtp$ ./build.sh x86
-	编译成功后，会在如下路径生成webrtc应用程序：
-	ywf@ywf-pc:/work/workspace/webrtc_with_libnice_and_srtp/build/x86$ ls webrtc
-	webrtc
 
 
-2.使用：
-	./webrtc StunIP StunPort SelfName VideoFile offer/answer
-	eg:
-	./webrtc 192.168.0.103 8888 ywf555 sintel.h264 answer
-	
-******************************************************************************
 
-1.compile
-	before compile,must install cmake,then 
-	eg:
-	ywf@ywf-pc:/work/workspace/webrtc_with_libnice_and_srtp$ ./build.sh x86
-	after make success:
-	ywf@ywf-pc:/work/workspace/webrtc_with_libnice_and_srtp/build/x86$ ls webrtc
-	webrtc
-2.usage	
-	./webrtc StunIP StunPort SelfName VideoFile offer/answer
-	eg:
-	./webrtc 192.168.0.103 8888 ywf555 sintel.h264 answer
- 
-	
-******************************************************************************
 目前实现的是客户端，并且是answer端，作为answer必须对方offer支持h264
 	
 lib目录是已经编译(编译安装)好的
