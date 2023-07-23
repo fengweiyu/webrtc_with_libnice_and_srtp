@@ -112,7 +112,7 @@ int main(int argc, char* argv[])
 static void PrintUsage(char *i_strProcName)
 {
     printf("Usage: %s StunIP StunPort SelfName VideoFile offer/answer\r\n",i_strProcName);
-    printf("eg: %s 192.168.7.199 9898 ywf sintel.h264 offer\r\n",i_strProcName);
+    printf("eg: %s 192.168.2.111 9898 ywf test.h264 offer\r\n",i_strProcName);
 }
 
 /*****************************************************************************
