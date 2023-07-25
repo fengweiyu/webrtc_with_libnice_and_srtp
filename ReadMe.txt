@@ -12,15 +12,17 @@
         一般第一次启动后，后面就不需要再次启动，开机自动运行的。
         https://github.com/fengweiyu/webrtc_server/tree/master/Apache24/bin
         https://github.com/fengweiyu/webrtc_server/tree/master/webrtchtml
-    1.启动信令服务器
-        https://github.com/fengweiyu/webrtc_server/tree/master/webrtcgateway
-    2.启动offer端(StunIP StunPort 就是信令服务器webrtcgateway)，即推流端
+    2.启动信令服务器
+        https://github.com/fengweiyu/webrtc_with_libnice_and_srtp/tree/master/doc/webrtcgateway32.exe或webrtcgateway64.exe
+    3.启动offer端(StunIP StunPort 就是信令服务器webrtcgateway)，即推流端
         ./webrtc StunIP StunPort SelfName VideoFile offer/answer
         eg:
         ./webrtc 192.168.2.111 9898 ywf test.h264 offer
-    3.启动谷歌浏览器，即拉流端
+    4.启动谷歌浏览器，即拉流端
         输入第一步web服务器的ip地址访问网页，然后点击call出图
-
+    5.查看WebRTC运行状态
+        直接在地址栏输入：chrome://webrtc-internals/
+    6.参考 https://www.cnblogs.com/yuweifeng/p/17578695.html
 ******************************************************************************
 
 1.compile
