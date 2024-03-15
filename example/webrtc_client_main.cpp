@@ -12,11 +12,12 @@
 #include <stdio.h>  
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include <pthread.h>
 #include <sys/prctl.h>
 
-#include "webrtc.h"
+#include "webrtc_interface.h"
 #include "webrtc_client.h"
 #include "rtp_interface.h"
 #include "Base64.h"
@@ -42,7 +43,7 @@ typedef enum WebRtcOfferStatus
 
 static void PrintUsage(char *i_strProcName);
 static void * WebRtcProc(void *pArg);
-static int OfferProc(WebRTC * i_pWebRTC,char * i_strServerIp, int i_iServerPort, char * i_strSelfName,char *i_strVideoPath);
+static int OfferProc(WebRtcInterface * i_pWebRTC,char * i_strServerIp, int i_iServerPort, char * i_strSelfName,char *i_strVideoPath);
 
 /*****************************************************************************
 -Fuction        : main
@@ -58,7 +59,7 @@ int main(int argc, char* argv[])
 {
     char strSeverIp[20];
     int dwPort;
-    WebRTC * pWebRTC=NULL;
+    WebRtcInterface * pWebRTC=NULL;
     pthread_t tWebRtcID;
 
     int iRet = -1;
@@ -75,7 +76,13 @@ int main(int argc, char* argv[])
     //简单点，又因为没有ui，所以offer 和answer不能共存
     if(0 == strcmp(argv[5],"offer"))
     {
-        pWebRTC = new WebRtcOffer(strSeverIp,dwPort,ICE_CONTROLLING_ROLE);
+        T_WebRtcCfg tWebRtcCfg;
+        snprintf(tWebRtcCfg.strStunAddr,sizeof(tWebRtcCfg.strStunAddr),"%s",strSeverIp);
+        tWebRtcCfg.dwStunPort = dwPort;
+        tWebRtcCfg.eWebRtcRole= WEBRTC_OFFER_ROLE;
+        tWebRtcCfg.eControlling= ICE_CONTROLLING_ROLE;
+        T_WebRtcCb tWebRtcCb;
+        pWebRTC = new WebRtcInterface(tWebRtcCfg,tWebRtcCb);
     }
     else
     {
@@ -129,11 +136,11 @@ static void * WebRtcProc(void *pArg)
 {
     //设置线程名字,以便让系统知道,
     prctl(15,(unsigned long)"WebRtcProc");
-    WebRTC * pWebRTC=NULL;
+    WebRtcInterface * pWebRTC=NULL;
     
     if(NULL != pArg)
     {
-        pWebRTC = (WebRTC *)pArg;
+        pWebRTC = (WebRtcInterface *)pArg;
         pWebRTC->Proc();
     }
     return NULL;
@@ -149,7 +156,7 @@ static void * WebRtcProc(void *pArg)
 * -----------------------------------------------
 * 2020/01/01      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-static int OfferProc(WebRTC * i_pWebRTC,char * i_strServerIp, int i_iServerPort, char * i_strSelfName,char *i_strVideoPath)
+static int OfferProc(WebRtcInterface * i_pWebRTC,char * i_strServerIp, int i_iServerPort, char * i_strSelfName,char *i_strVideoPath)
 {
     T_VideoInfo tVideoInfo;
     char acGetMsg[6*1024];

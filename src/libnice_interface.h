@@ -12,6 +12,9 @@
 #ifndef LIBNICE_INTERFACE_H
 #define LIBNICE_INTERFACE_H
 
+
+#include "webrtc_common.h"
+
 #include <string>
 #include "ctype.h"
 #include "agent.h"
@@ -22,11 +25,6 @@ using std::string;
 
 #define MAX_CANDIDATE_NUM 10
 
-typedef enum IceControlRole
-{
-    ICE_CONTROLLED_ROLE=0,//使用这个失败
-    ICE_CONTROLLING_ROLE
-}E_IceControlRole;
 
 
 typedef struct StreamInfo

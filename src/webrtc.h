@@ -16,22 +16,8 @@
 #include "srtp_interface.h"
 #include "dtls_only_handshake.h"
 #include "sctp_interface.h"
+#include "webrtc_common.h"
 
-typedef struct VideoInfo
-{
-    const char *pstrFormatName;
-    unsigned int dwTimestampFrequency;
-    //9代表视频使用端口9来传输,但在webrtc中现在一般不使用
-	//如果设置为0，代表不传输视频
-    unsigned short wPortNumForSDP;//端口,官方demo都是 9
-    unsigned char ucRtpPayloadType;
-    unsigned char res;
-	int iID;
-	unsigned int dwProfileLevelId;
-	char * strSPS_Base64;
-	char * strPPS_Base64;
-	unsigned int dwSSRC;
-}T_VideoInfo;
 
 /*****************************************************************************
 -Class          : WebRTC

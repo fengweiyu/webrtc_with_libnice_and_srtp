@@ -59,13 +59,13 @@ function BuildLib()
 #		mkdir $OutputPath/lib
 	fi	
 	mkdir $OutputPath
-	mkdir $OutputPath/lib
+	#mkdir $OutputPath/lib
 	
 	GenerateCmakeFile $1 $OutputPath	
 	cd $OutputPath
 #在cmakelist.txt中set CMAKE_TOOLCHAIN_FILE	变量无用，所以只好外面传入(可能是该库分两个目录需要环境变量的缘故)
 #加了CMAKE_TOOLCHAIN_FILE，即使该变量指向的文件已经包含了 CMAKE_INSTALL_PREFIX ，但cmake不去用，所以还要加CMAKE_INSTALL_PREFIX
-	cmake -DCMAKE_TOOLCHAIN_FILE=build/ToolChain.cmake -DCMAKE_INSTALL_PREFIX=../../../../build/$1/third_lib/usrsctp ..
+	cmake -DCMAKE_TOOLCHAIN_FILE=build/ToolChain.cmake -DCMAKE_INSTALL_PREFIX=. ..
 	if [ -e "Makefile" ]; then	
 		make clean
 		make -j4 > /dev/null
@@ -102,10 +102,10 @@ function CopyLib()
 	fi
 	
 	cd usrsctp
-#	cp $CurPwd/build/lib/libcjson.a .
+	cp $CurPwd/build/lib . -rf
 	
 
-#	cp $CurPwd/cJSON.h .
+	cp $CurPwd/build/include . -rf
 
 }
 

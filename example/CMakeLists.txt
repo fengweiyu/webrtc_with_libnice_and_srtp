@@ -4,6 +4,7 @@ SET(CMAKE_TOOLCHAIN_FILE "build/ToolChain.cmake")
 #SET(CMAKE_SYSTEM_NAME "Linux")
 #SET(CMAKE_C_COMPILER "gcc")
 #SET(CMAKE_CXX_COMPILER "g++")
+#SET(CMAKE_ToolChain "x64")
 
 project (WebRTC)
 SET(USE_STATIC_LIB_LINKAGE ON)
@@ -25,7 +26,7 @@ SET(SRC_LIST
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}
     ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/lib/include
 #webrtc.h又依赖其内部头文件	
-	${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/lib
+#	${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/lib
 	${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/webrtc_client/include
 	${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/base64/include
 #peerconnection_client中又依赖http	
@@ -37,11 +38,11 @@ INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}
     ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/rtp/media/include
 #	${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/third_lib/glib/include
 #.h中又依赖
-	${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/third_lib/usrsctp/include
-	${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/third_lib/libnice/include/nice
-	${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/third_lib/glib/include/glib-2.0
-	${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/third_lib/libsrtp/include/srtp2
-	${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/third_lib/openssl/include
+#	${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/third_lib/usrsctp/include
+#	${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/third_lib/libnice/include/nice
+#	${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/third_lib/glib/include/glib-2.0
+#	${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/third_lib/libsrtp/include/srtp2
+#	${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/third_lib/openssl/include
 	)
 
 ADD_EXECUTABLE(webrtc ${SRC_LIST})
@@ -52,7 +53,9 @@ TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/w
 TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/rtp/librtp.a)
 TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/http/libhttp.a)
 
-#第三方库
+#第三方库(libwebrtc.a中包含了这些库暂时注释掉)
+if(${CMAKE_ToolChain} STREQUAL "")
+
 TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/third_lib/cJSON/libcjson.a)
 TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/third_lib/libsrtp/lib/libsrtp2.a)
 TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/third_lib/usrsctp/lib/libusrsctp.a)
@@ -72,6 +75,9 @@ TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/t
 TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/third_lib/libffi/lib/libffi.a)
 TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/third_lib/zlib/lib/libz.a)
 #TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/third_lib/glib/libglib-2.0.so) #优化后才这个路径
+
+endif()
+
 
 TARGET_LINK_LIBRARIES(webrtc -pthread -lm -lrt -ldl -lresolv -static)
 
