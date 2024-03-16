@@ -33,7 +33,7 @@ wget https://github.com/cisco/libsrtp/archive/v2.3.0.tar.gz
 mv v2.3.0.tar.gz libsrtp_v2.3.0.tar.gz
 tar -xzf libsrtp_v2.3.0.tar.gz
 ./configure --prefix=/work/workspace/install/libsrtp --host=arm-hisiv200-linux
-//./configure --host=arm-hisiv200-linux
+//./configure --host =arm-hisiv200-linux
 ./configure --prefix=/work/workspace/installhimi/libsrtp_v2.3.0 --host=arm-himix200-linux
 make
 make runtest
