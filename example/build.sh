@@ -61,7 +61,9 @@ function CopyLib()
 #	CurPwd = $PWD
 	CurPwd=$PWD
 	cd $1
-
+    
+    rm ./third_lib -rf
+<<COMMENT
 #拷贝固定早就编译好的第三方so库
 #暂时没时间优化直接使用所有编译结果也可以，libnice依赖架构，所以拷贝所有的，不调整架构
 #加了删除操作第二次及以后编译会变慢但是这样更整洁
@@ -80,6 +82,7 @@ function CopyLib()
 	cp $CurPwd/../lib/$2/libsrtp_v2.3.0 ./third_lib/libsrtp -rf	
 #cp两次 libnice下会出现libnice_0.1.16，后续处理	
 #拷贝目的保持和源码编译结果一样,后续源码编译就可以不用从lib拷贝(直接删除如下语句)
+COMMENT
 	cd $CurPwd
 }
 function CopyEXE()

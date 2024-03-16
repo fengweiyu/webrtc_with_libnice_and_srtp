@@ -74,9 +74,36 @@ function CopyLib()
 	fi
 	
 	cd lib
-	cp $CurPwd/build/lib/libwebrtc.a .
+	#cp $CurPwd/build/lib/libwebrtc.a .
 	
-
+    rm tmp -rf
+    mkdir tmp
+    cd tmp
+    ar x $CurPwd/build/lib/libwebrtc_tmp.a
+    ar x $CurPwd/third_src/cJSON-1.7.12/build/lib/libcjson.a
+#指定cd到指定目录，没法指定目录,如果放到同一个目录，同名文件就被替换了
+    rm libsrtp -rf
+    mkdir libsrtp
+    cd libsrtp
+    ar x $CurPwd/../lib/$2/libsrtp_v2.3.0/lib/libsrtp2.a
+    cd ..
+    ar x $CurPwd/third_src/usrsctp-0.9.3.0/build/lib/libusrsctp.a
+    ar x $CurPwd/../lib/$2/libnice_0.1.16/lib/libnice.a
+    ar x $CurPwd/../lib/$2/openssl-1.1.1d/lib/libssl.a
+    ar x $CurPwd/../lib/$2/openssl-1.1.1d/lib/libcrypto.a
+    ar x $CurPwd/../lib/$2/glib_2.48.0/lib/libgio-2.0.a
+    ar x $CurPwd/../lib/$2/glib_2.48.0/lib/libgobject-2.0.a
+    ar x $CurPwd/../lib/$2/glib_2.48.0/lib/libgthread-2.0.a
+    ar x $CurPwd/../lib/$2/glib_2.48.0/lib/libgmodule-2.0.a
+    ar x $CurPwd/../lib/$2/glib_2.48.0/lib/libglib-2.0.a
+    ar x $CurPwd/../lib/$2/libffi_v3.2.1/lib/libffi.a
+    ar x $CurPwd/../lib/$2/zlib_v1.2.11/lib/libz.a
+#使用q参数代替r参数，r参数会把同名的.o替换，而q参数不会(-s参数打包出来也仅仅是索引不是完整的)
+    ar -cqv libwebrtc.a ./*.o ./libsrtp/*.o
+    ranlib libwebrtc.a
+    cd ..
+    cp ./tmp/libwebrtc.a .
+    rm tmp -rf
 	cp $CurPwd/include . -rf
 #由于对外头文件又依赖内部头文件，所以要拷贝，暂时这么处理后续优化	
 #	cp $CurPwd/*.h . 已优化
@@ -96,7 +123,7 @@ else
 	
 #	GenerateCmakeFile $1
 	BuildLib $1
-	CopyLib ../build/$1
+	CopyLib ../build/$1 $1
 fi
 
 
