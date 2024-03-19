@@ -34,9 +34,9 @@ SET_TARGET_PROPERTIES(webrtc_static PROPERTIES OUTPUT_NAME webrtc_tmp)
 
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/build/lib)
 
-#必须DEPENDS webrtc_static，否则会先执行下面的语句，调整顺序也没用
+#必须DEPENDS webrtc_static，否则会先执行下面的语句，调整顺序也没用,必须ar x解析出来再打包，否则去掉-s参数打包出来也仅仅是索引不是完整的
 add_custom_command(OUTPUT libwebrtc
-    COMMAND ar crsT ${PROJECT_SOURCE_DIR}/build/lib/libwebrtc.a ${PROJECT_SOURCE_DIR}/build/lib/libwebrtc_tmp.a
+    COMMAND ar -crsT ${PROJECT_SOURCE_DIR}/build/lib/libwebrtc.a ${PROJECT_SOURCE_DIR}/build/lib/libwebrtc_tmp.a
     ${PROJECT_SOURCE_DIR}/third_src/cJSON-1.7.12/build/lib/libcjson.a
     ${PROJECT_SOURCE_DIR}/../lib/${CMAKE_ToolChain}/libsrtp_v2.3.0/lib/libsrtp2.a
     ${PROJECT_SOURCE_DIR}/third_src/usrsctp-0.9.3.0/build/lib/libusrsctp.a
