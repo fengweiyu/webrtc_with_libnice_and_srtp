@@ -12,19 +12,15 @@ project (WebRTC)
 
 
 SET(src_list
-    rtp_interface.cpp
-    Rtp.cpp
-	RtpSession.cpp
-	RtpPacket.cpp
-    UdpSocket.cpp
+    MediaHandle.cpp
+    RawVideoHandle.cpp
+    RawAudioHandle.cpp
 	)		
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}
 	${PROJECT_SOURCE_DIR}/include
-    ${PROJECT_SOURCE_DIR}/../media/include
-    ${PROJECT_SOURCE_DIR}/../http/include
 	)
-ADD_LIBRARY(rtp_static STATIC ${src_list})
-SET_TARGET_PROPERTIES(rtp_static PROPERTIES OUTPUT_NAME rtp)
+ADD_LIBRARY(media_static STATIC ${src_list})
+SET_TARGET_PROPERTIES(media_static PROPERTIES OUTPUT_NAME media)
 
 
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/build/lib)

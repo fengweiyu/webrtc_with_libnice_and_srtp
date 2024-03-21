@@ -12,7 +12,7 @@
 #include "MediaHandle.h"
 #include <string.h>
 #include <iostream>
-#include "Definition.h"
+#include "MediaAdapter.h"
 #include "RawVideoHandle.h"
 #include "RawAudioHandle.h"
 

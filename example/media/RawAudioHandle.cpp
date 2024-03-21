@@ -11,7 +11,7 @@
 ******************************************************************************/
 #include <string.h>
 #include <iostream>
-#include "Definition.h"
+#include "MediaAdapter.h"
 #include "RawAudioHandle.h"
 
 

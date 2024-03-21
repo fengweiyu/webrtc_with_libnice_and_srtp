@@ -19,7 +19,6 @@ else()
 endif()
 
 SET(SRC_LIST
-    rtp_interface.cpp
 	webrtc_client_main.cpp	
 	)
 		
@@ -31,11 +30,11 @@ INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}
 	${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/base64/include
 #peerconnection_client中又依赖http	
 	${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/http/include
-    ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/rtp/media/include
+#    ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/rtp/media/include
 	${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/rtp/include
 #rtp.h又依赖其内部头文件		
-	${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/rtp
-    ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/rtp/media/include
+#	${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/rtp
+#    ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/media/include
 #	${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/third_lib/glib/include
 #.h中又依赖
 #	${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/third_lib/usrsctp/include
@@ -51,6 +50,7 @@ TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/l
 TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/base64/libbase64.a)
 TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/webrtc_client/libwebrtc_client.a)
 TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/rtp/librtp.a)
+TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/media/libmedia.a)
 TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/http/libhttp.a)
 
 #第三方库(libwebrtc.a中包含了这些库暂时注释掉)

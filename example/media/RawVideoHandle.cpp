@@ -9,7 +9,7 @@
 * Last Modified 	: 	
 * History			: 	
 ******************************************************************************/
-#include "Definition.h"
+#include "MediaAdapter.h"
 #include "RawVideoHandle.h"
 #include <string.h>
 #include <iostream>

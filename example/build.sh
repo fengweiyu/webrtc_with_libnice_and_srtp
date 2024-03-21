@@ -127,6 +127,13 @@ else
     fi
     cd ..
     
+    cd media
+    sh build.sh $1
+    if [ $? -ne 0 ]; then
+        exit -1
+    fi
+    cd ..   
+    
     cd rtp
     sh build.sh $1
     if [ $? -ne 0 ]; then
