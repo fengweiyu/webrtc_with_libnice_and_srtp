@@ -506,6 +506,10 @@ int WebRtcOffer::HandleMsg(char * i_strAnswerMsg,int i_iNotJsonMsgFlag)
     if(1 == i_iNotJsonMsgFlag)
     {
         iRet=m_Libnice.SaveRemoteSDP(i_strAnswerMsg);
+        if(NULL != strstr(i_strAnswerMsg,"candidate:"))
+        {
+            iRet=m_Libnice.SetRemoteCandidateAndSDP(NULL);//
+        }
         return iRet;
     }
     
@@ -540,6 +544,10 @@ int WebRtcOffer::HandleMsg(char * i_strAnswerMsg,int i_iNotJsonMsgFlag)
     else
     {
         iRet=m_Libnice.SaveRemoteSDP(acRemoteSDP);
+        if(NULL != strstr(acRemoteSDP,"candidate:"))
+        {
+            iRet=m_Libnice.SetRemoteCandidateAndSDP(NULL);//
+        }
     }
     return iRet;
 }
@@ -798,6 +806,16 @@ int WebRtcAnswer::HandleMsg(char * i_strOfferMsg,int i_iNotJsonMsgFlag)
         printf("HandleOfferMsg NULL \r\n");
         return iRet;
     }
+    if(1 == i_iNotJsonMsgFlag)
+    {
+        iRet=m_Libnice.SaveRemoteSDP(i_strOfferMsg);
+        if(NULL != strstr(i_strOfferMsg,"candidate:"))
+        {
+            iRet=m_Libnice.SetRemoteCandidateAndSDP(NULL);//
+        }
+        return iRet;
+    }
+
     ptOfferJson = cJSON_Parse(i_strOfferMsg);
     if(NULL != ptOfferJson)
     {
@@ -829,6 +847,10 @@ int WebRtcAnswer::HandleMsg(char * i_strOfferMsg,int i_iNotJsonMsgFlag)
     else
     {
         iRet=m_Libnice.SaveRemoteSDP(acRemoteSDP);
+        if(NULL != strstr(acRemoteSDP,"candidate:"))
+        {
+            iRet=m_Libnice.SetRemoteCandidateAndSDP(NULL);//
+        }
     }
     return iRet;
 }
@@ -967,8 +989,8 @@ int WebRtcAnswer::GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int
     strSdpFmt.assign("v=0\r\n"
         "o=- %ld%06ld %d IN IP4 %s\r\n"//o=<username><session id> <version> <network type> <address type><address> Origin ,给定了会话的发起者信息
         "s=ywf webrtc\r\n"//s=<sessionname> ;给定了Session Name
-        "t=0 0\r\na=group:BUNDLE %d %d\r\n"//t=<start time><stop time> ;BUNDLE 与sdpMLineIndex sdpMid里的一致
-        "a=msid-semantic: WMS ywf\r\n"
+        "t=0 0\r\na=group:BUNDLE %d\r\n"//"t=0 0\r\na=group:BUNDLE %d %d\r\n" sctp暂不需要去掉一个%d//t=<start time><stop time> ;BUNDLE 与sdpMLineIndex sdpMid里的一致
+        //"a=msid-semantic: WMS ywf\r\n"
         "m=%s %u RTP/SAVPF %d\r\n"
         "c=IN IP4 %s\r\n"
         "a=mid:%d\r\n"//与sdpMLineIndex sdpMid里的一致
@@ -978,13 +1000,16 @@ int WebRtcAnswer::GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int
         "a=ice-pwd:%s\r\n"
         "a=ice-options:trickle\r\n"
         "a=fingerprint:sha-256 %s\r\n"
-        "a=setup:passive\r\n"
-        "a=connection:new\r\n"
+        //"a=setup:passive\r\n"
+        //"a=connection:new\r\n"
         "a=rtpmap:%d %s/%d\r\n"
-        "a=ssrc:%ld cname:ywf%s\r\n"
+        "a=fmtp:%d level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=%06X;sprop-parameter-sets=%s,%s\r\n"
+        "a=ssrc:%ld msid:janus janusv0\r\n"//与rtp中的SSRC 一致
+        "a=setup:actpass\r\n");
+        /*"a=ssrc:%ld cname:ywf%s\r\n"
         "a=ssrc:%ld msid:janus janusa0\r\n"
         "a=ssrc:%ld mslabel:janus\r\n"
-        "a=ssrc:%ld label:janusa0\r\n");
+        "a=ssrc:%ld label:janusa0\r\n");*/
     for(i=0;i<tLocalCandidate.iCurCandidateNum;i++)
     {
         if(NULL!= strstr(tLocalCandidate.strCandidateData[i],"udp"))
@@ -994,7 +1019,8 @@ int WebRtcAnswer::GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int
             strSdpFmt.append(strCandidate);
         }
     }
-    strSdpFmt.append("m=%s %u DTLS/SCTP %d\r\n"
+    //去掉sctp一样可以通道打通
+    /*strSdpFmt.append("m=%s %u DTLS/SCTP %d\r\n"
         "c=IN IP4 %s\r\n"
         "a=mid:%d\r\n"//与sdpMLineIndex sdpMid里的加1
         "a=sendrecv\r\n"
@@ -1010,11 +1036,11 @@ int WebRtcAnswer::GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int
             snprintf(strCandidate,sizeof(strCandidate),"a=%s\r\n",tLocalCandidate.strCandidateData[i]);
             strSdpFmt.append(strCandidate);
         }
-    }
+    }*/
     
     iRet=snprintf(o_strSDP,i_iSdpMaxLen,strSdpFmt.c_str(),
         tCreateTime.tv_sec,tCreateTime.tv_usec,1,"0.0.0.0",
-        i_ptVideoInfo->iID,i_ptVideoInfo->iID+1,
+        i_ptVideoInfo->iID,/*i_ptVideoInfo->iID+1,*/
         strStreamType,i_ptVideoInfo->wPortNumForSDP,i_ptVideoInfo->ucRtpPayloadType,
         "0.0.0.0",//"0.0.0.0"还是失败，多个也是失败
         i_ptVideoInfo->iID,
@@ -1022,13 +1048,15 @@ int WebRtcAnswer::GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int
         tLocalCandidate.strPassword,
         strLocalFingerprint,
         i_ptVideoInfo->ucRtpPayloadType,i_ptVideoInfo->pstrFormatName,i_ptVideoInfo->dwTimestampFrequency,
-        tCreateTime.tv_sec, strStreamType,tCreateTime.tv_sec, tCreateTime.tv_sec, tCreateTime.tv_sec,
+        i_ptVideoInfo->ucRtpPayloadType,i_ptVideoInfo->dwProfileLevelId,i_ptVideoInfo->strSPS_Base64,i_ptVideoInfo->strPPS_Base64,
+        i_ptVideoInfo->dwSSRC);
+        /*tCreateTime.tv_sec, strStreamType,tCreateTime.tv_sec, tCreateTime.tv_sec, tCreateTime.tv_sec,
         "application",i_ptVideoInfo->wPortNumForSDP,102,//"m=application 9 DTLS/SCTP". Reason: Expects at least 4 fields
         "0.0.0.0",
         i_ptVideoInfo->iID+1,
         tLocalCandidate.strUfrag, 
         tLocalCandidate.strPassword,
-        strLocalFingerprint);
+        strLocalFingerprint);*/
 
 
 	return iRet;

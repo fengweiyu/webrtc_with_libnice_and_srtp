@@ -419,13 +419,18 @@ int Libnice::SetRemoteCandidateAndSDP(char * i_strCandidate)
 {
 	int iRet = -1;
 	int i=0;
-    if (m_ptAgent == NULL || i_strCandidate == NULL ||m_strRemoteSDP.length()<=0) 
+    if (m_ptAgent == NULL ||m_strRemoteSDP.length()<=0) 
     {
 		printf("Libnice SetRemoteCandidateAndSDP m_ptAgent null \r\n");
 		return iRet;
     }
     if(string::npos==m_strRemoteSDP.find("candidate:"))
     {
+        if (i_strCandidate == NULL) 
+        {
+            printf("Libnice SetRemoteCandidateAndSDP i_strCandidate null \r\n");
+            return iRet;
+        }
         m_strRemoteSDP.append("a=");//webrtc对方sdp中没有包含candidate,所以只好组合起来
         m_strRemoteSDP.append(i_strCandidate);
         m_strRemoteSDP.append("\r\n");
