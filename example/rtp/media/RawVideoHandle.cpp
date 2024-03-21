@@ -74,7 +74,7 @@ int H264Handle::Init(char *i_strPath)
         return iRet;
     }
     m_tMediaInfo.dwVideoSampleRate = VIDEO_H264_SAMPLE_RATE;
-    m_tMediaInfo.eVideoEncType = VIDEO_ENCODE_TYPE_H264;
+    m_tMediaInfo.eVideoEncType = MEDIA_ENCODE_TYPE_H264;
     m_tMediaInfo.eStreamType = STREAM_TYPE_VIDEO_STREAM;
     iRet = TRUE;
 	return iRet;
@@ -351,6 +351,221 @@ int H264Handle::RemoveH264EmulationBytes(unsigned char *o_pbNaluBuf,int i_iMaxNa
     
     return iNaluLen;
 }
+
+/*****************************************************************************
+-Fuction        : ParseNaluFromFrame
+-Description    : ParseNaluFromFrame
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version        Author           Modification
+* -----------------------------------------------
+* 2023/09/21      V1.0.0         Yu Weifeng       Created
+******************************************************************************/
+int H264Handle::GetFrame(T_MediaFrameInfo *m_ptFrame)
+{
+    int iRet = -1;
+    unsigned char *pcNaluStartPos = NULL;
+    unsigned char *pcNaluEndPos = NULL;
+    unsigned char *pcFrameData = NULL;
+    int iRemainDataLen = 0;
+    unsigned char bNaluType = 0;
+    unsigned char bStartCodeLen = 0;
+    
+    if(NULL == m_ptFrame || NULL == m_ptFrame->pbFrameBuf ||m_ptFrame->iFrameBufLen <= 4)
+    {
+        MH_LOGE("GetFrame NULL %d\r\n", m_ptFrame->iFrameBufLen);
+        return iRet;
+    }
+	
+	pcFrameData = m_ptFrame->pbFrameBuf;
+	iRemainDataLen = m_ptFrame->iFrameBufLen;
+    m_ptFrame->dwNaluCount = 0;
+    m_ptFrame->iFrameLen = 0;
+    while(iRemainDataLen > 0)
+    {
+        if (iRemainDataLen >= 3 && pcFrameData[0] == 0 && pcFrameData[1] == 0 && pcFrameData[2] == 1)
+        {
+            if(pcNaluStartPos != NULL)
+            {
+                pcNaluEndPos = pcFrameData;//此时是一个nalu的结束
+            }
+            else
+            {
+                pcNaluStartPos = pcFrameData;//此时是一个nalu的开始
+                bStartCodeLen = 3;
+                bNaluType = pcNaluStartPos[3] & 0x1f;
+            }
+            if(pcNaluEndPos != NULL)
+            {
+                if(pcNaluEndPos - pcNaluStartPos > 3)
+                {
+                    iRet=SetH264NaluData(bNaluType,bStartCodeLen,pcNaluStartPos,pcNaluEndPos - pcNaluStartPos,m_ptFrame);
+                    if(iRet < 0)
+                    {
+                        MH_LOGE("SetH264NaluData err %d %d\r\n", m_ptFrame->dwNaluCount,m_ptFrame->iFrameLen);
+                        return iRet;
+                    }
+                }
+                pcNaluStartPos = pcNaluEndPos;//上一个nalu的结束为下一个nalu的开始
+                bStartCodeLen = 3;
+                bNaluType = pcNaluStartPos[3] & 0x1f;
+                pcNaluEndPos = NULL;
+            }
+            pcFrameData += 3;
+            iRemainDataLen -= 3;
+        }
+        else if (iRemainDataLen >= 4 && pcFrameData[0] == 0 && pcFrameData[1] == 0 && pcFrameData[2] == 0 && pcFrameData[3] == 1)
+        {
+            if(pcNaluStartPos != NULL)
+            {
+                pcNaluEndPos = pcFrameData;
+            }
+            else
+            {
+                pcNaluStartPos = pcFrameData;
+                bStartCodeLen = 4;
+                bNaluType = pcNaluStartPos[4] & 0x1f;
+            }
+            if(pcNaluEndPos != NULL)
+            {
+                if(pcNaluEndPos - pcNaluStartPos > 4)
+                {
+                    iRet=SetH264NaluData(bNaluType,bStartCodeLen,pcNaluStartPos,pcNaluEndPos - pcNaluStartPos,m_ptFrame);
+                    if(iRet < 0)
+                    {
+                        MH_LOGE("SetH264NaluData err %d %d\r\n", m_ptFrame->dwNaluCount,m_ptFrame->iFrameLen);
+                        return iRet;
+                    }
+                }
+                pcNaluStartPos = pcNaluEndPos;
+                bStartCodeLen = 4;
+                bNaluType = pcNaluStartPos[4] & 0x1f;
+                pcNaluEndPos = NULL;
+            }
+            pcFrameData += 4;
+            iRemainDataLen -= 4;
+        }
+        else
+        {
+            pcFrameData ++;
+            iRemainDataLen --;
+        }
+    }
+    if(pcNaluStartPos != NULL)
+    {
+        iRet=SetH264NaluData(bNaluType,bStartCodeLen,pcNaluStartPos,pcFrameData - pcNaluStartPos,m_ptFrame);
+        if(iRet < 0)
+        {
+            MH_LOGE("SetH264NaluData err %d %d\r\n", m_ptFrame->dwNaluCount,m_ptFrame->iFrameLen);
+            return iRet;
+        }
+    }
+    
+	if(NULL != m_ptFrame->pbFrameStartPos)
+	{
+        m_ptFrame->iFrameProcessedLen += m_ptFrame->pbFrameStartPos - m_ptFrame->pbFrameBuf + m_ptFrame->iFrameLen;
+	}
+    if(m_ptFrame->eFrameType > FRAME_TYPE_UNKNOW)
+    {
+        iRet = TRUE;
+    }
+    return 0;
+}
+
+
+/*****************************************************************************
+-Fuction        : RtmpMediaHandle
+-Description    : 
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version        Author           Modification
+* -----------------------------------------------
+* 2023/09/21      V1.0.0         Yu Weifeng       Created
+******************************************************************************/
+int H264Handle::SetH264NaluData(unsigned char i_bNaluType,unsigned char i_bStartCodeLen,unsigned char *i_pbNaluData,int i_iNaluDataLen,T_MediaFrameInfo *m_ptFrame)
+{
+    int iRet = -1;
+    unsigned char * pbNaluData = NULL;//去掉00 00 00 01
+    int iNaluDataLen=0;
+    E_FrameType eFrameType = FRAME_TYPE_UNKNOW;
+    
+    if(NULL == i_pbNaluData || NULL == m_ptFrame)
+    {
+        MH_LOGE("SetH264NaluData NULL %d \r\n", i_iNaluDataLen);
+        return iRet;
+    }
+    
+    if(m_ptFrame->pbFrameStartPos == NULL)
+    {
+        m_ptFrame->pbFrameStartPos = i_pbNaluData;
+    }
+    m_ptFrame->iFrameLen += i_iNaluDataLen;
+    m_ptFrame->adwNaluEndOffset[m_ptFrame->dwNaluCount] = (i_pbNaluData+i_iNaluDataLen - m_ptFrame->pbFrameStartPos);
+    m_ptFrame->dwNaluCount++;
+
+    iNaluDataLen = i_iNaluDataLen-i_bStartCodeLen;//包括类型减开始码
+    pbNaluData = i_pbNaluData+i_bStartCodeLen;
+    switch(i_bNaluType)//取nalu类型
+    {
+        case 0x7:
+        {
+            memset(m_ptFrame->tVideoEncodeParam.abSPS,0,sizeof(m_ptFrame->tVideoEncodeParam.abSPS));
+            m_ptFrame->tVideoEncodeParam.iSizeOfSPS= iNaluDataLen;//包括类型(减3开始码)
+            memcpy(m_ptFrame->tVideoEncodeParam.abSPS,pbNaluData,m_ptFrame->tVideoEncodeParam.iSizeOfSPS);
+            break;
+        }
+        case 0x8:
+        {
+            memset(m_ptFrame->tVideoEncodeParam.abPPS,0,sizeof(m_ptFrame->tVideoEncodeParam.abPPS));
+            m_ptFrame->tVideoEncodeParam.iSizeOfPPS = iNaluDataLen;//包括类型减3开始码
+            memcpy(m_ptFrame->tVideoEncodeParam.abPPS,pbNaluData,m_ptFrame->tVideoEncodeParam.iSizeOfPPS);
+            break;
+        }
+        case 0x1:
+        {
+            eFrameType = FRAME_TYPE_VIDEO_P_FRAME;
+            break;
+        }
+        case 0x5:
+        {
+            eFrameType = FRAME_TYPE_VIDEO_I_FRAME;
+            break;
+        }
+        default:
+        {
+            break;
+        }
+    }
+
+    if(FRAME_TYPE_UNKNOW != eFrameType)
+    {
+        if(FRAME_TYPE_UNKNOW == m_ptFrame->eFrameType)
+        {
+            m_ptFrame->eFrameType = eFrameType;
+        }
+        if(0 == m_ptFrame->dwTimeStamp)
+        {
+            //时间戳的单位是1/VIDEO_H264_SAMPLE_RATE(s),频率的倒数
+            m_ptFrame->dwTimeStamp += VIDEO_H264_FRAME_INTERVAL*VIDEO_H264_SAMPLE_RATE/1000;
+        }
+        if(0 == m_ptFrame->dwSampleRate)
+        {
+            m_ptFrame->dwSampleRate= VIDEO_H264_SAMPLE_RATE;
+        }
+        if(STREAM_TYPE_UNKNOW == m_ptFrame->eStreamType)
+        {
+            m_ptFrame->eStreamType = STREAM_TYPE_VIDEO_STREAM;
+        }
+        if(MEDIA_ENCODE_TYPE_UNKNOW == m_ptFrame->eEncType)
+        {
+            m_ptFrame->eEncType = MEDIA_ENCODE_TYPE_H264;
+        }
+    }
+    return 0;
+}
+
 char * H265Handle::m_strVideoFormatName=(char *)VIDEO_ENC_FORMAT_H265_NAME;
 /*****************************************************************************
 -Fuction		: H264Handle
@@ -401,7 +616,7 @@ int H265Handle::Init(char *i_strPath)
     }
     iRet = TRUE;
     m_tMediaInfo.dwVideoSampleRate = VIDEO_H265_SAMPLE_RATE;
-    m_tMediaInfo.eVideoEncType = VIDEO_ENCODE_TYPE_H265;
+    m_tMediaInfo.eVideoEncType = MEDIA_ENCODE_TYPE_H265;
     m_tMediaInfo.eStreamType = STREAM_TYPE_VIDEO_STREAM;
 	return iRet;
 }
@@ -567,5 +782,177 @@ int H265Handle::GetMediaInfo(T_MediaInfo *o_ptMediaInfo)
     return TRUE;
 }
 
+/*****************************************************************************
+-Fuction        : ParseNaluFromFrame
+-Description    : ParseNaluFromFrame
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version        Author           Modification
+* -----------------------------------------------
+* 2023/09/21      V1.0.0         Yu Weifeng       Created
+******************************************************************************/
+int H265Handle::GetFrame(T_MediaFrameInfo *m_ptFrame)
+{
+    int iRet = -1;
+    unsigned char *pcNaluStartPos = NULL;
+    unsigned char *pcNaluEndPos = NULL;
+    unsigned char *pcFrameData = NULL;
+    int iRemainDataLen = 0;
+    unsigned char bNaluType = 0;
+    
+    if(NULL == m_ptFrame || NULL == m_ptFrame->pbFrameBuf ||m_ptFrame->iFrameBufLen <= 4)
+    {
+        MH_LOGE("GetFrame NULL %d\r\n", m_ptFrame->iFrameBufLen);
+        return iRet;
+    }
+	
+	pcFrameData = m_ptFrame->pbFrameBuf;
+	iRemainDataLen = m_ptFrame->iFrameBufLen;
+    m_ptFrame->dwNaluCount = 0;
+    m_ptFrame->iFrameLen = 0;
+    while(iRemainDataLen > 0)
+    {
+        if (iRemainDataLen >= 4 && pcFrameData[0] == 0 && pcFrameData[1] == 0 && pcFrameData[2] == 0 && pcFrameData[3] == 1)
+        {
+            if(pcNaluStartPos != NULL)
+            {
+                pcNaluEndPos = pcFrameData;
+            }
+            else
+            {
+                pcNaluStartPos = pcFrameData;
+                bNaluType = (pcNaluStartPos[4] & 0x7E)>>1;//取nalu类型
+            }
+            if(pcNaluEndPos != NULL)
+            {
+                if(pcNaluEndPos - pcNaluStartPos > 4)
+                {
+                    iRet = SetH265NaluData(bNaluType,4,pcNaluStartPos,pcNaluEndPos - pcNaluStartPos,m_ptFrame);//包括类型减4//去掉00 00 00 01
+                    if(iRet < 0)
+                    {
+                        MH_LOGE("SetH265NaluData err %d %d\r\n", m_ptFrame->dwNaluCount,m_ptFrame->iFrameLen);
+                        return iRet;
+                    }
+                }
+                pcNaluStartPos = pcNaluEndPos;
+                bNaluType = (pcNaluStartPos[4] & 0x7E)>>1;//取nalu类型
+                pcNaluEndPos = NULL;
+            }
+            pcFrameData += 4;
+            iRemainDataLen -= 4;
+        }
+        else
+        {
+            pcFrameData ++;
+            iRemainDataLen --;
+        }
+    }
+    if(pcNaluStartPos != NULL)
+    {
+        iRet=SetH265NaluData(bNaluType,4,pcNaluStartPos,pcFrameData - pcNaluStartPos,m_ptFrame);//包括类型减4开始码
+        if(iRet < 0)
+        {
+            MH_LOGE("SetH265NaluData err %d %d\r\n", m_ptFrame->dwNaluCount,m_ptFrame->iFrameLen);
+            return iRet;
+        }
+    }
+    
+	if(NULL != m_ptFrame->pbFrameStartPos)
+	{
+        m_ptFrame->iFrameProcessedLen += m_ptFrame->pbFrameStartPos - m_ptFrame->pbFrameBuf + m_ptFrame->iFrameLen;
+	}
+    if(m_ptFrame->eFrameType > FRAME_TYPE_UNKNOW)
+    {
+        iRet = TRUE;
+    }
+    return 0;
+}
+/*****************************************************************************
+-Fuction        : SetH265NaluData
+-Description    : 
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version        Author           Modification
+* -----------------------------------------------
+* 2023/09/21      V1.0.0         Yu Weifeng       Created
+******************************************************************************/
+int H265Handle::SetH265NaluData(unsigned char i_bNaluType,unsigned char i_bStartCodeLen,unsigned char *i_pbNaluData,int i_iNaluDataLen,T_MediaFrameInfo *m_ptFrame)
+{
+    int iRet = -1;
+    unsigned char * pbNaluData = NULL;//去掉00 00 00 01
+    int iNaluDataLen=0;
+    E_FrameType eFrameType = FRAME_TYPE_UNKNOW;
+    
+    if(NULL == i_pbNaluData || NULL == m_ptFrame)
+    {
+        MH_LOGE("SetH265NaluData NULL %d \r\n", iRet);
+        return iRet;
+    }
+    
+    if(m_ptFrame->pbFrameStartPos == NULL)
+    {
+        m_ptFrame->pbFrameStartPos = i_pbNaluData;
+    }
+    m_ptFrame->iFrameLen += i_iNaluDataLen;
+    m_ptFrame->adwNaluEndOffset[m_ptFrame->dwNaluCount] = (i_pbNaluData+i_iNaluDataLen - m_ptFrame->pbFrameStartPos);
+    m_ptFrame->dwNaluCount++;
 
+    iNaluDataLen = i_iNaluDataLen-i_bStartCodeLen;//包括类型减开始码
+    pbNaluData = i_pbNaluData+i_bStartCodeLen;
+
+    if(i_bNaluType >= 0 && i_bNaluType <= 9)// p slice 片
+    {
+        eFrameType = FRAME_TYPE_VIDEO_P_FRAME;
+    }
+    else if(i_bNaluType >= 16 && i_bNaluType <= 21)// IRAP 等同于i帧
+    {
+        eFrameType = FRAME_TYPE_VIDEO_I_FRAME;
+    }
+    else if(i_bNaluType == 32)//VPS
+    {
+        memset(m_ptFrame->tVideoEncodeParam.abVPS,0,sizeof(m_ptFrame->tVideoEncodeParam.abVPS));
+        m_ptFrame->tVideoEncodeParam.iSizeOfVPS= iNaluDataLen;//包括类型减4
+        memcpy(m_ptFrame->tVideoEncodeParam.abVPS,pbNaluData,m_ptFrame->tVideoEncodeParam.iSizeOfVPS);
+    }
+    else if(i_bNaluType == 33)//SPS
+    {
+        memset(m_ptFrame->tVideoEncodeParam.abSPS,0,sizeof(m_ptFrame->tVideoEncodeParam.abSPS));
+        m_ptFrame->tVideoEncodeParam.iSizeOfSPS= iNaluDataLen;//包括类型减4
+        memcpy(m_ptFrame->tVideoEncodeParam.abSPS,pbNaluData,m_ptFrame->tVideoEncodeParam.iSizeOfSPS);
+    }
+    else if(i_bNaluType == 34)//PPS
+    {
+        memset(m_ptFrame->tVideoEncodeParam.abPPS,0,sizeof(m_ptFrame->tVideoEncodeParam.abPPS));
+        m_ptFrame->tVideoEncodeParam.iSizeOfPPS= iNaluDataLen;//包括类型减4
+        memcpy(m_ptFrame->tVideoEncodeParam.abPPS,pbNaluData,m_ptFrame->tVideoEncodeParam.iSizeOfPPS);
+    }
+    
+    if(FRAME_TYPE_UNKNOW != eFrameType)
+    {
+        if(FRAME_TYPE_UNKNOW == m_ptFrame->eFrameType)
+        {
+            m_ptFrame->eFrameType = eFrameType;
+        }
+        if(0 == m_ptFrame->dwTimeStamp)
+        {
+            //时间戳的单位是1/VIDEO_H265_SAMPLE_RATE(s),频率的倒数
+            m_ptFrame->dwTimeStamp += VIDEO_H265_FRAME_INTERVAL*VIDEO_H265_SAMPLE_RATE/1000;
+        }
+        if(0 == m_ptFrame->dwSampleRate)
+        {
+            m_ptFrame->dwSampleRate= VIDEO_H265_SAMPLE_RATE;
+        }
+        if(STREAM_TYPE_UNKNOW == m_ptFrame->eStreamType)
+        {
+            m_ptFrame->eStreamType = STREAM_TYPE_VIDEO_STREAM;
+        }
+        if(MEDIA_ENCODE_TYPE_UNKNOW == m_ptFrame->eEncType)
+        {
+            m_ptFrame->eEncType = MEDIA_ENCODE_TYPE_H265;
+        }
+    }
+    return 0;
+}
 

@@ -20,7 +20,7 @@ using std::string;
 
 
 #define FRAME_BUFFER_MAX_SIZE               (2*1024*1024)   //2m
-#define MAX_NALU_CNT_ONE_FRAME              8
+#define MAX_NALU_CNT_ONE_FRAME              12
 #define VIDEO_ENC_PARAM_BUF_MAX_LEN     	64
 
 typedef enum
@@ -28,24 +28,22 @@ typedef enum
 	STREAM_TYPE_UNKNOW = 0,
     STREAM_TYPE_VIDEO_STREAM,
     STREAM_TYPE_AUDIO_STREAM,
-    STREAM_TYPE_MUX_STREAM,
+    STREAM_TYPE_MUX_STREAM,//包含音视频两路裸流
+    STREAM_TYPE_FLV_STREAM,
 }E_StreamType;
 
 typedef enum
 {
-	VIDEO_ENCODE_TYPE_H264 = 0,
-    VIDEO_ENCODE_TYPE_H265,
-    VIDEO_ENCODE_TYPE_VP8,
-    VIDEO_ENCODE_TYPE_VP9,
-}E_VideoEncodeType;
-
-typedef enum
-{
-	AUDIO_ENCODE_TYPE_AAC = 0,
-    AUDIO_ENCODE_TYPE_G711U,
-    AUDIO_ENCODE_TYPE_G711A,
-    AUDIO_ENCODE_TYPE_G726,
-}E_AudioEncodeType;
+	MEDIA_ENCODE_TYPE_UNKNOW = 0,
+	MEDIA_ENCODE_TYPE_H264,
+    MEDIA_ENCODE_TYPE_H265,
+    MEDIA_ENCODE_TYPE_VP8,
+    MEDIA_ENCODE_TYPE_VP9,
+    MEDIA_ENCODE_TYPE_AAC,
+    MEDIA_ENCODE_TYPE_G711U,
+    MEDIA_ENCODE_TYPE_G711A,
+    MEDIA_ENCODE_TYPE_G726,
+}E_MediaEncodeType;
 
 typedef enum
 {
@@ -61,9 +59,9 @@ typedef enum
 typedef struct MediaInfo
 {
     E_StreamType eStreamType;
-    E_VideoEncodeType eVideoEncType;
+    E_MediaEncodeType eVideoEncType;
     unsigned int dwVideoSampleRate;
-    E_AudioEncodeType eAudioEncType;
+    E_MediaEncodeType eAudioEncType;
     unsigned int dwAudioSampleRate;
 }T_MediaInfo;
 
@@ -99,8 +97,37 @@ typedef struct VideoEncodeParam
 }T_VideoEncodeParam;
 
 
+typedef struct MediaFrameBufInfo
+{
+    unsigned char *pbFrameBuf;//缓冲区
+    int iFrameBufMaxLen;//缓冲区总大小
+    int iFrameBufLen;//缓冲区读到数据的总大小
+    int iFrameProcessedLen;
+    
+    E_StreamType eStreamType;//裸流的帧数据时，这个需要外部赋值然后传入
+    E_MediaEncodeType eEncType;//裸流的帧数据时，这个需要外部赋值然后传入
+}T_MediaFrameBufInfo;
 
+typedef struct MediaFrameInfo
+{
+    unsigned char *pbFrameBuf;//缓冲区
+    int iFrameBufMaxLen;//缓冲区总大小
+    int iFrameBufLen;//缓冲区读到数据的总大小
+    int iFrameProcessedLen;
+    
+    E_StreamType eStreamType;//裸流的帧数据时，这个需要外部赋值然后传入
+    E_MediaEncodeType eEncType;//裸流的帧数据时，这个需要外部赋值然后传入
+    unsigned int dwTimeStamp;//裸流的帧数据时，这个外部会赋值然后传入
+    unsigned int dwSampleRate;//内部判断到不为0，则不会再去赋值
+    E_FrameType eFrameType;
 
+	//输出1帧数据结果
+    unsigned char *pbFrameStartPos;
+    int iFrameLen;
+    unsigned int dwNaluCount;//包括sps,pps等参数集对应的nalu
+    unsigned int adwNaluEndOffset[MAX_NALU_CNT_ONE_FRAME];
+    T_VideoEncodeParam tVideoEncodeParam;
+}T_MediaFrameInfo;
 
 /*****************************************************************************
 -Class			: MediaHandle
@@ -115,15 +142,20 @@ public:
     MediaHandle();
     virtual ~MediaHandle();
     virtual int Init(char *i_strPath);
+    virtual int Init(E_StreamType i_eStreamType,E_MediaEncodeType i_eVideoEncType,E_MediaEncodeType i_eAudioEncType);
+    
     virtual int GetNextFrame(T_MediaFrameParam *m_ptMediaFrameParam);
     virtual int GetVideoEncParam(T_VideoEncodeParam *o_ptVideoEncodeParam);
     virtual int GetMediaInfo(T_MediaInfo *o_ptMediaInfo);
-
+    //一个接口可以取代前面3个接口，包含Init GetNextFrame GetVideoEncParam GetMediaInfo 功能
+    virtual int GetFrame(T_MediaFrameInfo *m_ptFrame);//
 protected:
 	T_MediaInfo m_tMediaInfo;
 	
 private:
-    MediaHandle             *m_pMediaHandle;
+    MediaHandle             *m_pMediaHandle;//默认VideoHandle(裸流时，表示视频裸数据处理)
+    MediaHandle             *m_pMediaAudioHandle;//音视频两路裸流时,这个会被赋值表示音频裸数据处理
+    
 	FILE                    *m_pMediaFile;
 	//unsigned int 			m_dwFileReadOffset;
 	

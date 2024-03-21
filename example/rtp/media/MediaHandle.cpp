@@ -32,6 +32,7 @@ using std::endl;
 MediaHandle::MediaHandle()
 {
 	m_pMediaHandle =NULL;
+	m_pMediaAudioHandle =NULL;
     m_pMediaFile = NULL;
 	
 }
@@ -116,6 +117,84 @@ int MediaHandle::Init(char *i_strPath)
 }
 
 /*****************************************************************************
+-Fuction		: VideoHandle::Init
+-Description	: 
+-Input			: 
+-Output 		: 
+-Return 		: 
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2017/09/21	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
+int MediaHandle::Init(E_StreamType i_eStreamType,E_MediaEncodeType i_eVideoEncType,E_MediaEncodeType i_eAudioEncType)
+{
+    int iRet=FALSE;
+
+    
+    if(STREAM_TYPE_VIDEO_STREAM == i_eStreamType ||STREAM_TYPE_MUX_STREAM == i_eStreamType)
+    {
+        if(MEDIA_ENCODE_TYPE_H264 == i_eVideoEncType)
+        {
+            if(NULL != m_pMediaHandle)
+            {
+                delete m_pMediaHandle;
+            }
+            m_pMediaHandle=new H264Handle();
+        } 
+        if(MEDIA_ENCODE_TYPE_H265 == i_eVideoEncType)
+        {
+            if(NULL != m_pMediaHandle)
+            {
+                delete m_pMediaHandle;
+            }
+            m_pMediaHandle=new H265Handle();
+        } 
+        iRet=TRUE;
+    } 
+    if(STREAM_TYPE_MUX_STREAM == i_eStreamType)
+    {
+        if(MEDIA_ENCODE_TYPE_G711U == i_eAudioEncType ||MEDIA_ENCODE_TYPE_G711A == i_eAudioEncType)
+        {
+            if(NULL != m_pMediaAudioHandle)
+            {
+                delete m_pMediaAudioHandle;
+            }
+            m_pMediaAudioHandle=new G711Handle();
+        } 
+        if(MEDIA_ENCODE_TYPE_AAC == i_eAudioEncType)
+        {
+            if(NULL != m_pMediaAudioHandle)
+            {
+                delete m_pMediaAudioHandle;
+            }
+            m_pMediaAudioHandle=new AACHandle();
+        } 
+        iRet=TRUE;
+    }
+    if(STREAM_TYPE_AUDIO_STREAM == i_eStreamType)
+    {
+        if(MEDIA_ENCODE_TYPE_G711U == i_eAudioEncType ||MEDIA_ENCODE_TYPE_G711A == i_eAudioEncType)
+        {
+            if(NULL != m_pMediaHandle)
+            {
+                delete m_pMediaHandle;
+            }
+            m_pMediaHandle=new G711Handle();
+        } 
+        if(MEDIA_ENCODE_TYPE_AAC == i_eAudioEncType)
+        {
+            if(NULL != m_pMediaHandle)
+            {
+                delete m_pMediaHandle;
+            }
+            m_pMediaHandle=new AACHandle();
+        } 
+        iRet=TRUE;
+    }
+	return iRet;
+}
+
+/*****************************************************************************
 -Fuction		: VideoHandle::GetNextVideoFrame
 -Description	: 
 -Input			: 
@@ -132,6 +211,11 @@ int MediaHandle::GetNextFrame(T_MediaFrameParam *m_ptMediaFrameParam)
     if(NULL == m_ptMediaFrameParam)
     {
         cout<<"GetNextFrame NULL"<<endl;
+        return iRet;
+    }
+    if(NULL == m_pMediaFile)
+    {
+        cout<<"GetNextFrame m_pMediaFile NULL"<<endl;
         return iRet;
     }
     iReadLen = fread(m_ptMediaFrameParam->pbFrameBuf, 1, m_ptMediaFrameParam->iFrameBufMaxLen, m_pMediaFile);
@@ -199,6 +283,117 @@ int MediaHandle::GetMediaInfo(T_MediaInfo *o_ptMediaInfo)
     if(NULL !=m_pMediaHandle)
     {
         iRet=m_pMediaHandle->GetMediaInfo(o_ptMediaInfo);
+    }
+	return iRet;
+}
+
+/*****************************************************************************
+-Fuction		: GetFrame
+-Description	: 
+-Input			: 
+-Output 		: 
+-Return 		: 
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2017/09/21	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
+int MediaHandle::GetFrame(T_MediaFrameInfo *m_ptFrame)
+{
+    int iRet=FALSE;
+    int iReadLen = 0;
+    
+    if(NULL == m_ptFrame)
+    {
+        MH_LOGE("GetNextFrame NULL\r\n");
+        return iRet;
+    }
+    
+    if(NULL != m_pMediaFile)
+    {
+        iReadLen = fread(m_ptFrame->pbFrameBuf, 1, m_ptFrame->iFrameBufMaxLen, m_pMediaFile);
+        if(iReadLen <= 0)
+        {
+            MH_LOGE("fread err %d iReadLen%d\r\n",m_ptFrame->iFrameBufMaxLen,iReadLen);
+            return iRet;
+        }
+        m_ptFrame->iFrameBufLen = iReadLen;
+        iRet = m_pMediaHandle->GetFrame(m_ptFrame);
+        if(TRUE == iRet)
+        {
+            fseek(m_pMediaFile,m_ptFrame->iFrameProcessedLen,SEEK_SET);
+            //cout<<"fseek m_pMediaFile "<<m_ptMediaFrameParam->iFrameProcessedLen<<m_pMediaFile<<endl;
+        }
+        else
+        {
+            MH_LOGE("fseek err m_pMediaFile %d\r\n",m_ptFrame->iFrameProcessedLen);
+        }
+        return iRet;
+    }
+    if(STREAM_TYPE_VIDEO_STREAM == m_ptFrame->eStreamType ||STREAM_TYPE_MUX_STREAM == m_ptFrame->eStreamType)
+    {
+        if(MEDIA_ENCODE_TYPE_H264 == m_ptFrame->eEncType)
+        {
+            if(NULL == m_pMediaHandle)
+            {
+                m_pMediaHandle=new H264Handle();
+            }
+        } 
+        if(MEDIA_ENCODE_TYPE_H265 == m_ptFrame->eEncType)
+        {
+            if(NULL == m_pMediaHandle)
+            {
+                m_pMediaHandle=new H265Handle();
+            }
+        } 
+    } 
+    if(STREAM_TYPE_MUX_STREAM == m_ptFrame->eStreamType)
+    {
+        if(MEDIA_ENCODE_TYPE_G711U == m_ptFrame->eEncType ||MEDIA_ENCODE_TYPE_G711A == m_ptFrame->eEncType)
+        {
+            if(NULL == m_pMediaAudioHandle)
+            {
+                m_pMediaAudioHandle=new G711Handle();
+            }
+        } 
+        if(MEDIA_ENCODE_TYPE_AAC == m_ptFrame->eEncType)
+        {
+            if(NULL == m_pMediaAudioHandle)
+            {
+                m_pMediaAudioHandle=new AACHandle();
+            }
+        } 
+    }
+    if(STREAM_TYPE_AUDIO_STREAM == m_ptFrame->eStreamType)
+    {
+        if(MEDIA_ENCODE_TYPE_G711U == m_ptFrame->eEncType ||MEDIA_ENCODE_TYPE_G711A == m_ptFrame->eEncType)
+        {
+            if(NULL == m_pMediaHandle)
+            {
+                m_pMediaHandle=new G711Handle();
+            }
+        } 
+        if(MEDIA_ENCODE_TYPE_AAC == m_ptFrame->eEncType)
+        {
+            if(NULL == m_pMediaHandle)
+            {
+                m_pMediaHandle=new AACHandle();
+            }
+        } 
+    }
+
+    if(STREAM_TYPE_MUX_STREAM == m_ptFrame->eStreamType && (MEDIA_ENCODE_TYPE_G711U == m_ptFrame->eEncType||
+    MEDIA_ENCODE_TYPE_G711A == m_ptFrame->eEncType||MEDIA_ENCODE_TYPE_AAC == m_ptFrame->eEncType))
+    {
+        if(NULL != m_pMediaAudioHandle)
+        {
+            iRet = m_pMediaAudioHandle->GetFrame(m_ptFrame);
+        }
+        return iRet;
+    } 
+
+    if(NULL != m_pMediaHandle)
+    {
+        iRet = m_pMediaHandle->GetFrame(m_ptFrame);
     }
 	return iRet;
 }

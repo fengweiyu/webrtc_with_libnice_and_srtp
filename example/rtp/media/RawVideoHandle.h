@@ -41,8 +41,12 @@ public:
     virtual int GetVideoEncParam(T_VideoEncodeParam *o_ptVideoEncodeParam);
     virtual int GetMediaInfo(T_MediaInfo *o_ptMediaInfo);
     
+    virtual int GetFrame(T_MediaFrameInfo *m_ptFrame);//
+    
     static char *m_strVideoFormatName;
 private:
+    int SetH264NaluData(unsigned char i_bNaluType,unsigned char i_bStartCodeLen,unsigned char *i_pbNaluData,int i_iNaluDataLen,T_MediaFrameInfo *m_ptFrame);
+
     int RemoveH264EmulationBytes(unsigned char *o_pbNaluBuf,int i_iMaxNaluBufLen,unsigned char *i_pbNaluBuf,int i_iNaluLen);
 	T_VideoEncodeParam      m_tVideoEncodeParam;
 };
@@ -66,8 +70,12 @@ public:
     virtual int GetVideoEncParam(T_VideoEncodeParam *o_ptVideoEncodeParam);
     virtual int GetMediaInfo(T_MediaInfo *o_ptMediaInfo);
     
+    virtual int GetFrame(T_MediaFrameInfo *m_ptFrame);//
+    
     static char *m_strVideoFormatName;
 private:
+    int SetH265NaluData(unsigned char i_bNaluType,unsigned char i_bStartCodeLen,unsigned char *i_pbNaluData,int i_iNaluDataLen,T_MediaFrameInfo *m_ptFrame);
+
 	T_VideoEncodeParam      m_tVideoEncodeParam;
 };
 

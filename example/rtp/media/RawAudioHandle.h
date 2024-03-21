@@ -42,6 +42,8 @@ public:
     virtual int GetNextFrame(T_MediaFrameParam *m_ptMediaFrameParam);
     virtual int GetMediaInfo(T_MediaInfo *o_ptMediaInfo);
     
+    virtual int GetFrame(T_MediaFrameInfo *m_ptFrame);//
+    
     static char  *m_strAudioFormatName;
     static int    m_iAudioFixLen;
 private:
@@ -66,6 +68,8 @@ public:
     virtual int Init(char *i_strPath);
     virtual int GetNextFrame(T_MediaFrameParam *m_ptMediaFrameParam);
     virtual int GetMediaInfo(T_MediaInfo *o_ptMediaInfo);
+    
+    virtual int GetFrame(T_MediaFrameInfo *m_ptFrame);//
     
     static char  *m_strAudioFormatName;
 private:

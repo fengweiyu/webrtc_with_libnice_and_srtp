@@ -72,7 +72,7 @@ int G711Handle::Init(char *i_strPath)
         return iRet;
     }
     m_tMediaInfo.dwAudioSampleRate = AUDIO_G711_SAMPLE_RATE;
-    m_tMediaInfo.eAudioEncType = AUDIO_ENCODE_TYPE_G711U;
+    m_tMediaInfo.eAudioEncType = MEDIA_ENCODE_TYPE_G711U;
     m_tMediaInfo.eStreamType = STREAM_TYPE_AUDIO_STREAM;
     iRet = TRUE;
 	return iRet;
@@ -128,6 +128,56 @@ int G711Handle::GetNextFrame(T_MediaFrameParam *m_ptMediaFrameParam)
         m_ptMediaFrameParam->iFrameProcessedLen = m_ptMediaFrameParam->pbFrameStartPos - m_ptMediaFrameParam->pbFrameBuf + m_ptMediaFrameParam->iFrameLen;
         m_ptMediaFrameParam->eFrameType = FRAME_TYPE_AUDIO_FRAME;
         m_ptMediaFrameParam->dwTimeStamp += AUDIO_G711_A_FRAME_SAMPLE_POINT_NUM;
+        iRet = TRUE;
+	}
+	return iRet;
+}
+
+/*****************************************************************************
+-Fuction		: VideoHandle::GetFrame
+-Description	: 
+-Input			: 
+-Output 		: 
+-Return 		: 
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2017/09/21	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
+int G711Handle::GetFrame(T_MediaFrameInfo *m_ptFrame)
+{
+    int iRet=FALSE;
+	
+	if(m_ptFrame == NULL ||m_ptFrame->iFrameBufLen < G711Handle::m_iAudioFixLen)
+	{
+        cout<<"G711Handle GetNextFrame err:"<<m_ptFrame->iFrameBufLen<<endl;
+        return iRet;
+    }
+    m_ptFrame->pbFrameStartPos = m_ptFrame->pbFrameBuf;
+    m_ptFrame->iFrameLen = m_iAudioFixLen;
+	if(NULL != m_ptFrame->pbFrameStartPos)
+	{
+        if(FRAME_TYPE_UNKNOW == m_ptFrame->eFrameType)
+        {
+            m_ptFrame->eFrameType = FRAME_TYPE_AUDIO_FRAME;
+        }
+        if(0 == m_ptFrame->dwTimeStamp)
+        {
+            m_ptFrame->dwTimeStamp += AUDIO_G711_A_FRAME_SAMPLE_POINT_NUM;
+        }
+        if(0 == m_ptFrame->dwSampleRate)
+        {
+            m_ptFrame->dwSampleRate= AUDIO_G711_SAMPLE_RATE;
+        }
+        if(STREAM_TYPE_UNKNOW == m_ptFrame->eStreamType)
+        {
+            m_ptFrame->eStreamType = STREAM_TYPE_AUDIO_STREAM;
+        }
+        if(MEDIA_ENCODE_TYPE_UNKNOW == m_ptFrame->eEncType)
+        {
+            m_ptFrame->eEncType = MEDIA_ENCODE_TYPE_G711U;
+        }
+	
+        m_ptFrame->iFrameProcessedLen = m_ptFrame->pbFrameStartPos - m_ptFrame->pbFrameBuf + m_ptFrame->iFrameLen;
         iRet = TRUE;
 	}
 	return iRet;
@@ -240,7 +290,7 @@ int AACHandle::Init(char *i_strPath)
         return iRet;
     }
     m_tMediaInfo.dwAudioSampleRate = AUDIO_AAC_DEFAULT_SAMPLE_RATE;
-    m_tMediaInfo.eAudioEncType = AUDIO_ENCODE_TYPE_AAC;
+    m_tMediaInfo.eAudioEncType = MEDIA_ENCODE_TYPE_AAC;
     m_tMediaInfo.eStreamType = STREAM_TYPE_AUDIO_STREAM;
     iRet = TRUE;
 	return iRet;
@@ -335,4 +385,87 @@ int AACHandle::GetNextFrame(T_MediaFrameParam *m_ptMediaFrameParam)
     return iRet;
 }
 
+/*****************************************************************************
+-Fuction		: GetFrame
+-Description	: 
+-Input			: 
+-Output 		: 
+-Return 		: 
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2017/09/21	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
+int AACHandle::GetFrame(T_MediaFrameInfo *m_ptFrame)
+{
+    int iRet=FALSE;
+    int iFramMark = 0;
+    unsigned char *pcFrameStartPos = NULL;
+    unsigned char *pcFrameData = NULL;
+    int iRemainDataLen = 0;
+    int iSampleRateIndex = 0;
+    
+    if(m_ptFrame == NULL ||m_ptFrame->iFrameBufLen <= 7)
+    {
+        cout<<"GetNextFrame err:"<<m_ptFrame->iFrameBufLen<<endl;
+        return iRet;
+    }
+    
+    pcFrameData = m_ptFrame->pbFrameBuf;
+    iRemainDataLen = m_ptFrame->iFrameBufLen;
+    m_ptFrame->iFrameLen = 0;
+    while(iRemainDataLen > 0)
+    {
+        if (iRemainDataLen >= 7 && pcFrameData[0] == 0xFF && ((pcFrameData[1] & 0xF0) == 0xF0))
+        {
+            pcFrameStartPos = pcFrameData;
+            iFramMark = 1;
+            iSampleRateIndex = (int)((pcFrameStartPos[2]&0x3C)>>2);
+            m_ptFrame->pbFrameStartPos = pcFrameStartPos;
+            m_ptFrame->iFrameLen = (int)((pcFrameStartPos[3]&0x03)<<11|pcFrameStartPos[4]<<3|(pcFrameStartPos[5]&0xE0)>>5);
+            
+            if(FRAME_TYPE_UNKNOW == m_ptFrame->eFrameType)
+            {
+                m_ptFrame->eFrameType = FRAME_TYPE_AUDIO_FRAME;
+            }
+            if(0 == m_ptFrame->dwTimeStamp)
+            {
+                if(0 != iFramMark)
+                {
+                    //AAC定义每1024个采样点为1帧
+                    //采样点的时间单位与时间戳一样
+                    //因此时间戳的增量为1024(1/采样率)
+                    m_ptFrame->dwTimeStamp += AUDIO_AAC_A_FRAME_SAMPLE_POINT_NUM;
+                }
+            }
+            if(0 == m_ptFrame->dwSampleRate)
+            {
+                if(iSampleRateIndex>=0&&iSampleRateIndex<sizeof(g_aiAACSamplingFreqIndexValue)/sizeof(int));
+                    m_ptFrame->dwSampleRate = g_aiAACSamplingFreqIndexValue[iSampleRateIndex];
+            }
+            if(STREAM_TYPE_UNKNOW == m_ptFrame->eStreamType)
+            {
+                m_ptFrame->eStreamType = STREAM_TYPE_AUDIO_STREAM;
+            }
+            if(MEDIA_ENCODE_TYPE_UNKNOW == m_ptFrame->eEncType)
+            {
+                m_ptFrame->eEncType = MEDIA_ENCODE_TYPE_AAC;
+            }
+            break;
+        }
+        else
+        {
+            pcFrameData ++;
+            iRemainDataLen --;
+        }
+    }
+    if(NULL != m_ptFrame->pbFrameStartPos)
+    {
+        m_ptFrame->iFrameProcessedLen += m_ptFrame->pbFrameStartPos - m_ptFrame->pbFrameBuf + m_ptFrame->iFrameLen;
+    }
+    if(0 != iFramMark)
+    {
+        iRet = TRUE;
+    }
+    return iRet;
+}
 

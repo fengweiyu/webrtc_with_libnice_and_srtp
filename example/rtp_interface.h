@@ -12,7 +12,6 @@
 #ifndef RTP_INTERFACE_H
 #define RTP_INTERFACE_H
 
-#include "Rtp.h"
 
 /*****************************************************************************
 -Class			: RtpInterface
@@ -31,9 +30,10 @@ public:
     int RemoveH264EmulationBytes(unsigned char *o_pbNaluBuf,int i_iMaxNaluBufLen,unsigned char *i_pbNaluBuf,int i_iNaluLen);
     int GetRtpData(unsigned char **o_ppbPacketBuf,int *o_aiEveryPacketLen,int i_iPacketBufMaxNum);
     unsigned int GetSSRC();
-
+    
+    int GetRtpPackets(void *m_ptFrame,unsigned char **o_ppbPacketBuf,int *o_aiEveryPacketLen,int i_iPacketBufMaxNum);
 private:
-	Rtp               *m_pRtp;
+	void               *m_pRtp;
 
     
 };
