@@ -12,24 +12,17 @@
 #ifndef RTP_ADAPTER_H
 #define RTP_ADAPTER_H
 
-#ifndef TRUE
-#define TRUE        0
-#endif
-
-#ifndef FALSE
-#define FALSE       -1
-#endif
 
 #if 0
-#define  MH_LOGW(...)     logi(MediaHandle) << lformat(MediaHandle,__VA_ARGS__) << lend 
-#define  MH_LOGE(...)     loge(MediaHandle) << lformat(MediaHandle,__VA_ARGS__) << lend
-#define  MH_LOGD(...)     logd(MediaHandle) << lformat(MediaHandle,__VA_ARGS__) << lend
-#define  MH_LOGI(...)     logi(MediaHandle) << lformat(MediaHandle,__VA_ARGS__) << lend
+#define  RTP_LOGW(...)     logi(MediaHandle) << lformat(MediaHandle,__VA_ARGS__) << lend 
+#define  RTP_LOGE(...)     loge(MediaHandle) << lformat(MediaHandle,__VA_ARGS__) << lend
+#define  RTP_LOGD(...)     logd(MediaHandle) << lformat(MediaHandle,__VA_ARGS__) << lend
+#define  RTP_LOGI(...)     logi(MediaHandle) << lformat(MediaHandle,__VA_ARGS__) << lend
 #else
-#define  MH_LOGW(...)     printf(__VA_ARGS__)
-#define  MH_LOGE(...)     printf(__VA_ARGS__)
-#define  MH_LOGD(...)     printf(__VA_ARGS__)
-#define  MH_LOGI(...)     printf(__VA_ARGS__)
+#define  RTP_LOGW(...)     printf(__VA_ARGS__)
+#define  RTP_LOGE(...)     printf(__VA_ARGS__)
+#define  RTP_LOGD(...)     printf(__VA_ARGS__)
+#define  RTP_LOGI(...)     printf(__VA_ARGS__)
 #endif
 
 #endif //RTP_ADAPTER_H

@@ -16,7 +16,7 @@
 #include <iostream>//不加.h,c++新的头文件
 #include "Definition.h"
 #include "MediaHandle.h"
-
+#include "rtp_adapter.h"
 
 using std::cout;//需要<iostream>
 using std::endl;
@@ -50,7 +50,7 @@ Rtp :: Rtp(unsigned char **m_ppPackets,int i_iMaxPacketNum,char *i_strPath)
     iRet=m_RtpPacket.Init(m_ppPackets, i_iMaxPacketNum);
     if(FALSE == iRet)
     {
-        MH_LOGE("m_pRtpPacket->Init NULL\r\n");
+        RTP_LOGE("m_pRtpPacket->Init NULL\r\n");
     }
 }
 
@@ -193,7 +193,7 @@ int Rtp :: GetRtpData(unsigned char **o_ppbPacketBuf,int *o_aiEveryPacketLen,int
         return iPacketNum;
     }
     
-    m_ptMediaFrameParam->eFrameType = FRAME_TYPE_UNKNOW;
+    m_ptMediaFrameParam->eFrameType = MEDIA_FRAME_TYPE_UNKNOW;
     memset(m_ptMediaFrameParam->pbFrameBuf,0,FRAME_BUFFER_MAX_SIZE);
     m_ptMediaFrameParam->iFrameBufMaxLen = FRAME_BUFFER_MAX_SIZE;
     iRet=m_pMediaHandle->GetNextFrame(m_ptMediaFrameParam);
@@ -325,14 +325,14 @@ int Rtp :: GetRtpPackets(T_MediaFrameInfo *m_ptFrame,unsigned char **o_ppbPacket
     
     if(NULL == o_ppbPacketBuf ||NULL == o_aiEveryPacketLen ||NULL == m_pMediaHandle )
     {
-        MH_LOGE("GetRtpPackets NULL\r\n");
+        RTP_LOGE("GetRtpPackets NULL\r\n");
         return iPacketNum;
     }
     
     iRet=m_pMediaHandle->GetFrame(m_ptFrame);
     if(FALSE == iRet)
     {
-        MH_LOGE("GetFrame err \r\n");
+        RTP_LOGE("GetFrame err \r\n");
         return iPacketNum;
     }
 
@@ -359,7 +359,7 @@ int Rtp :: GetRtpPackets(T_MediaFrameInfo *m_ptFrame,unsigned char **o_ppbPacket
         m_pVideoRtpSession->SetRtpPacketParam(&tRtpPacketParam);
         if(iPacketNum<=0 || iPacketNum>i_iPacketBufMaxNum)
         {
-            MH_LOGE("m_pRtpPacket->Packet  err %d \r\n",iPacketNum);
+            RTP_LOGE("m_pRtpPacket->Packet  err %d \r\n",iPacketNum);
             iPacketNum = -1;
             return iPacketNum;
         }
@@ -367,7 +367,7 @@ int Rtp :: GetRtpPackets(T_MediaFrameInfo *m_ptFrame,unsigned char **o_ppbPacket
         pbNaluStartPos = m_ptFrame->pbFrameStartPos +m_ptFrame->adwNaluEndOffset[i];
         dwNaluOffset =m_ptFrame->adwNaluEndOffset[i];
     }
-    MH_LOGW("m_ptMediaFrameParam)->dwNaluCount %d eFrameType %d iPacketNum %d\r\n",m_ptFrame->dwNaluCount,m_ptFrame->eFrameType,iPacketNum);
+    RTP_LOGW("m_ptMediaFrameParam)->dwNaluCount %d eFrameType %d iPacketNum %d\r\n",m_ptFrame->dwNaluCount,m_ptFrame->eFrameType,iPacketNum);
     return iPacketNum;
 }
 

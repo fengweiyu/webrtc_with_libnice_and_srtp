@@ -47,13 +47,13 @@ typedef enum
 
 typedef enum
 {
-	FRAME_TYPE_UNKNOW = 0,
-    FRAME_TYPE_VIDEO_I_FRAME,
-    FRAME_TYPE_VIDEO_P_FRAME,
-    FRAME_TYPE_VIDEO_B_FRAME,
-    FRAME_TYPE_AUDIO_FRAME,
+	MEDIA_FRAME_TYPE_UNKNOW = 0,
+    MEDIA_FRAME_TYPE_VIDEO_I_FRAME,
+    MEDIA_FRAME_TYPE_VIDEO_P_FRAME,
+    MEDIA_FRAME_TYPE_VIDEO_B_FRAME,
+    MEDIA_FRAME_TYPE_AUDIO_FRAME,
         
-}E_FrameType;
+}E_MediaFrameType;
 
 
 typedef struct MediaInfo
@@ -79,7 +79,7 @@ typedef struct MediaFrameParam
     unsigned int dwNaluCount;
     unsigned int a_dwNaluEndOffset[MAX_NALU_CNT_ONE_FRAME];
 
-    E_FrameType eFrameType;
+    E_MediaFrameType eFrameType;
     int iVideoEncType;
     int iAudioEncType;
     unsigned int dwTimeStamp;
@@ -119,7 +119,7 @@ typedef struct MediaFrameInfo
     E_MediaEncodeType eEncType;//裸流的帧数据时，这个需要外部赋值然后传入
     unsigned int dwTimeStamp;//裸流的帧数据时，这个外部会赋值然后传入
     unsigned int dwSampleRate;//内部判断到不为0，则不会再去赋值
-    E_FrameType eFrameType;
+    E_MediaFrameType eFrameType;
 
 	//输出1帧数据结果
     unsigned char *pbFrameStartPos;

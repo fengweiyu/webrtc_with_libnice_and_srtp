@@ -154,13 +154,13 @@ int H264Handle::GetNextFrame(T_MediaFrameParam *m_ptMediaFrameParam)
                         }
                         case 0x1:
                         {
-                            m_ptMediaFrameParam->eFrameType = FRAME_TYPE_VIDEO_P_FRAME;
+                            m_ptMediaFrameParam->eFrameType = MEDIA_FRAME_TYPE_VIDEO_P_FRAME;
                             iFramMark = 1;
                             break;
                         }
                         case 0x5:
                         {
-                            m_ptMediaFrameParam->eFrameType = FRAME_TYPE_VIDEO_I_FRAME;
+                            m_ptMediaFrameParam->eFrameType = MEDIA_FRAME_TYPE_VIDEO_I_FRAME;
                             iFramMark = 1;
                             break;
                         }
@@ -224,13 +224,13 @@ int H264Handle::GetNextFrame(T_MediaFrameParam *m_ptMediaFrameParam)
                         }
                         case 0x1:
                         {
-                            m_ptMediaFrameParam->eFrameType = FRAME_TYPE_VIDEO_P_FRAME;
+                            m_ptMediaFrameParam->eFrameType = MEDIA_FRAME_TYPE_VIDEO_P_FRAME;
                             iFramMark = 1;
                             break;
                         }
                         case 0x5:
                         {
-                            m_ptMediaFrameParam->eFrameType = FRAME_TYPE_VIDEO_I_FRAME;
+                            m_ptMediaFrameParam->eFrameType = MEDIA_FRAME_TYPE_VIDEO_I_FRAME;
                             iFramMark = 1;//i p b nalu才表示一帧的结束
                             break;
                         }
@@ -466,7 +466,7 @@ int H264Handle::GetFrame(T_MediaFrameInfo *m_ptFrame)
 	{
         m_ptFrame->iFrameProcessedLen += m_ptFrame->pbFrameStartPos - m_ptFrame->pbFrameBuf + m_ptFrame->iFrameLen;
 	}
-    if(m_ptFrame->eFrameType > FRAME_TYPE_UNKNOW)
+    if(m_ptFrame->eFrameType > MEDIA_FRAME_TYPE_UNKNOW)
     {
         iRet = TRUE;
     }
@@ -489,7 +489,7 @@ int H264Handle::SetH264NaluData(unsigned char i_bNaluType,unsigned char i_bStart
     int iRet = -1;
     unsigned char * pbNaluData = NULL;//去掉00 00 00 01
     int iNaluDataLen=0;
-    E_FrameType eFrameType = FRAME_TYPE_UNKNOW;
+    E_MediaFrameType eFrameType = MEDIA_FRAME_TYPE_UNKNOW;
     
     if(NULL == i_pbNaluData || NULL == m_ptFrame)
     {
@@ -525,12 +525,12 @@ int H264Handle::SetH264NaluData(unsigned char i_bNaluType,unsigned char i_bStart
         }
         case 0x1:
         {
-            eFrameType = FRAME_TYPE_VIDEO_P_FRAME;
+            eFrameType = MEDIA_FRAME_TYPE_VIDEO_P_FRAME;
             break;
         }
         case 0x5:
         {
-            eFrameType = FRAME_TYPE_VIDEO_I_FRAME;
+            eFrameType = MEDIA_FRAME_TYPE_VIDEO_I_FRAME;
             break;
         }
         default:
@@ -539,9 +539,9 @@ int H264Handle::SetH264NaluData(unsigned char i_bNaluType,unsigned char i_bStart
         }
     }
 
-    if(FRAME_TYPE_UNKNOW != eFrameType)
+    if(MEDIA_FRAME_TYPE_UNKNOW != eFrameType)
     {
-        if(FRAME_TYPE_UNKNOW == m_ptFrame->eFrameType)
+        if(MEDIA_FRAME_TYPE_UNKNOW == m_ptFrame->eFrameType)
         {
             m_ptFrame->eFrameType = eFrameType;
         }
@@ -679,12 +679,12 @@ int H265Handle::GetNextFrame(T_MediaFrameParam *m_ptMediaFrameParam)
                 {
                     if(bNaluType >= 0 && bNaluType <= 9)// p slice 片
                     {
-                        m_ptMediaFrameParam->eFrameType = FRAME_TYPE_VIDEO_P_FRAME;
+                        m_ptMediaFrameParam->eFrameType = MEDIA_FRAME_TYPE_VIDEO_P_FRAME;
                         iFramMark = 1;//i p b nalu才表示一帧的结束
                     }
                     else if(bNaluType >= 16 && bNaluType <= 21)// IRAP 等同于i帧
                     {
-                        m_ptMediaFrameParam->eFrameType = FRAME_TYPE_VIDEO_I_FRAME;
+                        m_ptMediaFrameParam->eFrameType = MEDIA_FRAME_TYPE_VIDEO_I_FRAME;
                         iFramMark = 1;//i p b nalu才表示一帧的结束
                     }
                     else if(bNaluType == 32)//VPS
@@ -862,7 +862,7 @@ int H265Handle::GetFrame(T_MediaFrameInfo *m_ptFrame)
 	{
         m_ptFrame->iFrameProcessedLen += m_ptFrame->pbFrameStartPos - m_ptFrame->pbFrameBuf + m_ptFrame->iFrameLen;
 	}
-    if(m_ptFrame->eFrameType > FRAME_TYPE_UNKNOW)
+    if(m_ptFrame->eFrameType > MEDIA_FRAME_TYPE_UNKNOW)
     {
         iRet = TRUE;
     }
@@ -883,7 +883,7 @@ int H265Handle::SetH265NaluData(unsigned char i_bNaluType,unsigned char i_bStart
     int iRet = -1;
     unsigned char * pbNaluData = NULL;//去掉00 00 00 01
     int iNaluDataLen=0;
-    E_FrameType eFrameType = FRAME_TYPE_UNKNOW;
+    E_MediaFrameType eFrameType = MEDIA_FRAME_TYPE_UNKNOW;
     
     if(NULL == i_pbNaluData || NULL == m_ptFrame)
     {
@@ -904,11 +904,11 @@ int H265Handle::SetH265NaluData(unsigned char i_bNaluType,unsigned char i_bStart
 
     if(i_bNaluType >= 0 && i_bNaluType <= 9)// p slice 片
     {
-        eFrameType = FRAME_TYPE_VIDEO_P_FRAME;
+        eFrameType = MEDIA_FRAME_TYPE_VIDEO_P_FRAME;
     }
     else if(i_bNaluType >= 16 && i_bNaluType <= 21)// IRAP 等同于i帧
     {
-        eFrameType = FRAME_TYPE_VIDEO_I_FRAME;
+        eFrameType = MEDIA_FRAME_TYPE_VIDEO_I_FRAME;
     }
     else if(i_bNaluType == 32)//VPS
     {
@@ -929,9 +929,9 @@ int H265Handle::SetH265NaluData(unsigned char i_bNaluType,unsigned char i_bStart
         memcpy(m_ptFrame->tVideoEncodeParam.abPPS,pbNaluData,m_ptFrame->tVideoEncodeParam.iSizeOfPPS);
     }
     
-    if(FRAME_TYPE_UNKNOW != eFrameType)
+    if(MEDIA_FRAME_TYPE_UNKNOW != eFrameType)
     {
-        if(FRAME_TYPE_UNKNOW == m_ptFrame->eFrameType)
+        if(MEDIA_FRAME_TYPE_UNKNOW == m_ptFrame->eFrameType)
         {
             m_ptFrame->eFrameType = eFrameType;
         }

@@ -126,7 +126,7 @@ int G711Handle::GetNextFrame(T_MediaFrameParam *m_ptMediaFrameParam)
 	if(NULL != m_ptMediaFrameParam->pbFrameStartPos)
 	{
         m_ptMediaFrameParam->iFrameProcessedLen = m_ptMediaFrameParam->pbFrameStartPos - m_ptMediaFrameParam->pbFrameBuf + m_ptMediaFrameParam->iFrameLen;
-        m_ptMediaFrameParam->eFrameType = FRAME_TYPE_AUDIO_FRAME;
+        m_ptMediaFrameParam->eFrameType = MEDIA_FRAME_TYPE_AUDIO_FRAME;
         m_ptMediaFrameParam->dwTimeStamp += AUDIO_G711_A_FRAME_SAMPLE_POINT_NUM;
         iRet = TRUE;
 	}
@@ -156,9 +156,9 @@ int G711Handle::GetFrame(T_MediaFrameInfo *m_ptFrame)
     m_ptFrame->iFrameLen = m_iAudioFixLen;
 	if(NULL != m_ptFrame->pbFrameStartPos)
 	{
-        if(FRAME_TYPE_UNKNOW == m_ptFrame->eFrameType)
+        if(MEDIA_FRAME_TYPE_UNKNOW == m_ptFrame->eFrameType)
         {
-            m_ptFrame->eFrameType = FRAME_TYPE_AUDIO_FRAME;
+            m_ptFrame->eFrameType = MEDIA_FRAME_TYPE_AUDIO_FRAME;
         }
         if(0 == m_ptFrame->dwTimeStamp)
         {
@@ -356,7 +356,7 @@ int AACHandle::GetNextFrame(T_MediaFrameParam *m_ptMediaFrameParam)
             iSampleRateIndex = (int)((pcFrameStartPos[2]&0x3C)>>2);
             m_ptMediaFrameParam->pbFrameStartPos = pcFrameStartPos;
             m_ptMediaFrameParam->iFrameLen = (int)((pcFrameStartPos[3]&0x03)<<11|pcFrameStartPos[4]<<3|(pcFrameStartPos[5]&0xE0)>>5);
-            m_ptMediaFrameParam->eFrameType = FRAME_TYPE_AUDIO_FRAME;
+            m_ptMediaFrameParam->eFrameType = MEDIA_FRAME_TYPE_AUDIO_FRAME;
             if(iSampleRateIndex>=0&&iSampleRateIndex<sizeof(g_aiAACSamplingFreqIndexValue)/sizeof(int));
                 m_tMediaInfo.dwAudioSampleRate = g_aiAACSamplingFreqIndexValue[iSampleRateIndex];
             if(0 != iFramMark)
@@ -423,9 +423,9 @@ int AACHandle::GetFrame(T_MediaFrameInfo *m_ptFrame)
             m_ptFrame->pbFrameStartPos = pcFrameStartPos;
             m_ptFrame->iFrameLen = (int)((pcFrameStartPos[3]&0x03)<<11|pcFrameStartPos[4]<<3|(pcFrameStartPos[5]&0xE0)>>5);
             
-            if(FRAME_TYPE_UNKNOW == m_ptFrame->eFrameType)
+            if(MEDIA_FRAME_TYPE_UNKNOW == m_ptFrame->eFrameType)
             {
-                m_ptFrame->eFrameType = FRAME_TYPE_AUDIO_FRAME;
+                m_ptFrame->eFrameType = MEDIA_FRAME_TYPE_AUDIO_FRAME;
             }
             if(0 == m_ptFrame->dwTimeStamp)
             {
