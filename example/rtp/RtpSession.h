@@ -16,7 +16,7 @@
 #include <stdio.h>
 #include <string>
 #include "UdpSocket.h"
-#include "TcpSocket.h"
+//#include "TcpSocket.h"
 #include "RtpPacket.h"
 
 using std::string;
@@ -48,8 +48,8 @@ public:
 private:
     UdpClient   *m_pRtpClientOverUDP;
     UdpClient   *m_pRtcpClientOverUDP;
-    TcpClient   *m_pRtpClientOverTCP;
-    TcpClient   *m_pRtcpClientOverTCP;
+    //TcpClient   *m_pRtpClientOverTCP;//暂时不引用，后续独立出去来实现和http模块解耦
+    //TcpClient   *m_pRtcpClientOverTCP;//后续独立出去来实现和http模块解耦
     T_RtpPacketParam m_tRtpPacketParam;
 };
 

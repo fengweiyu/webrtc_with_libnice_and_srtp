@@ -33,8 +33,8 @@ using std::endl;
 RtpSession :: RtpSession(int i_wPayloadType,unsigned int i_dwSampleRate)
 {
     m_pRtpClientOverUDP = NULL;
-    m_pRtpClientOverTCP = NULL;
-    m_pRtcpClientOverTCP = NULL;
+    //m_pRtpClientOverTCP = NULL;
+    //m_pRtcpClientOverTCP = NULL;
     m_pRtcpClientOverUDP = NULL;
     memset(&m_tRtpPacketParam,0,sizeof(m_tRtpPacketParam));
     m_tRtpPacketParam.dwSSRC=GetSSRC();
@@ -66,7 +66,7 @@ RtpSession :: ~RtpSession()
         m_pRtcpClientOverUDP = NULL;
     }
         
-    if(NULL != m_pRtpClientOverTCP)
+    /*if(NULL != m_pRtpClientOverTCP)
     {
         delete m_pRtpClientOverTCP;
         m_pRtpClientOverTCP = NULL;
@@ -76,7 +76,7 @@ RtpSession :: ~RtpSession()
     {
         delete m_pRtcpClientOverTCP;
         m_pRtcpClientOverTCP = NULL;
-    }
+    }*/
 }
 
 /*****************************************************************************
@@ -123,12 +123,12 @@ int RtpSession :: Init(bool i_blIsTcp,string i_strLocalIP,string i_strIP,unsigne
     }
     else
     {
-        if(NULL == m_pRtpClientOverTCP)
+        /*if(NULL == m_pRtpClientOverTCP)
             m_pRtpClientOverTCP = new TcpClient();
         if(NULL == m_pRtcpClientOverTCP)
             m_pRtcpClientOverTCP = new TcpClient();
         iRet=m_pRtpClientOverTCP->Init(i_strIP,i_wRtpPort);
-        iRet|=m_pRtcpClientOverTCP->Init(i_strIP,i_wRtcpPort);
+        iRet|=m_pRtcpClientOverTCP->Init(i_strIP,i_wRtcpPort);*/
     }
     if(iRet!=TRUE)
     {
@@ -152,7 +152,7 @@ int RtpSession::SendRtpData(char * i_acSendBuf,int i_iSendLen)
     int iRet=FALSE;
     if(NULL == m_pRtpClientOverUDP)
     {
-        iRet=m_pRtpClientOverTCP->Send(i_acSendBuf,i_iSendLen);
+        //iRet=m_pRtpClientOverTCP->Send(i_acSendBuf,i_iSendLen);
     }
     else
     {
@@ -177,7 +177,7 @@ int RtpSession::GetRtpSocket()
     int iRet=FALSE;
     if(NULL == m_pRtpClientOverUDP)
     {
-        iRet=m_pRtpClientOverTCP->GetClientSocket();
+        //iRet=m_pRtpClientOverTCP->GetClientSocket();
     }
     else
     {
@@ -202,7 +202,7 @@ int RtpSession::GetRtcpSocket()
     int iRet=FALSE;
     if(NULL == m_pRtcpClientOverUDP)
     {
-        iRet=m_pRtcpClientOverTCP->GetClientSocket();
+        //iRet=m_pRtcpClientOverTCP->GetClientSocket();
     }
     else
     {
@@ -290,7 +290,7 @@ void RtpSession::Close()
 {
     if(NULL == m_pRtpClientOverUDP)
     {
-        m_pRtpClientOverTCP->Close();
+        //m_pRtpClientOverTCP->Close();
     }
     else
     {
@@ -299,7 +299,7 @@ void RtpSession::Close()
 
     if(NULL == m_pRtcpClientOverUDP)
     {
-        m_pRtcpClientOverTCP->Close();
+        //m_pRtcpClientOverTCP->Close();
     }
     else
     {
