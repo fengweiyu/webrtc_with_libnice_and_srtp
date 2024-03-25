@@ -14,7 +14,7 @@ function GenerateCmakeFile()
 #   mkdir -p build
     CmakeFile="$2/ToolChain.cmake"
     echo "SET(CMAKE_SYSTEM_NAME \"Linux\")" > $CmakeFile
-    if [ $1 == x86 ]; then
+    if [ $1 == x86 -o $1 == x64 ]; then
         echo "SET(CMAKE_C_COMPILER \"gcc\")" >> $CmakeFile  
         echo "SET(CMAKE_CXX_COMPILER \"g++\")" >> $CmakeFile        
     else
@@ -80,7 +80,7 @@ function CopyLib()
     mkdir tmp
     cd tmp
     ar x $CurPwd/build/lib/libwebrtc_tmp.a
-    ar x $CurPwd/third_src/cJSON-1.7.12/build/lib/libcjson.a
+#    ar x $CurPwd/third_src/cJSON-1.7.12/build/lib/libcjson.a //暂未使用，防止和外部的cjson库重复定义
 #指定cd到指定目录，没法指定目录,如果放到同一个目录，同名文件就被替换了
     rm libsrtp -rf
     mkdir libsrtp

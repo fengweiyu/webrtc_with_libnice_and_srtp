@@ -14,7 +14,7 @@
 ******************************************************************************/
 #include "webrtc.h"
 #include <sys/time.h>
-#include "cJSON.h"
+//#include "cJSON.h"
 
 
 /*****************************************************************************
@@ -110,8 +110,6 @@ int WebRTC::Proc()
 int WebRTC::HandleCandidateMsg(char * i_strCandidateMsg,int i_iNotJsonMsgFlag)
 {
     int iRet = -1;
-    cJSON * ptCandidateJson = NULL;
-    cJSON * ptNode = NULL;
     char acRemoteCandidate[1024];
     
     if(NULL == i_strCandidateMsg)
@@ -124,8 +122,11 @@ int WebRTC::HandleCandidateMsg(char * i_strCandidateMsg,int i_iNotJsonMsgFlag)
         iRet=m_Libnice.SetRemoteCandidateAndSDP(i_strCandidateMsg);//
         return iRet;
     }
-
-    
+    printf("HandleOfferMsg no sup \r\n");
+    return iRet;
+/*
+    cJSON * ptCandidateJson = NULL;
+    cJSON * ptNode = NULL;
     ptCandidateJson = cJSON_Parse(i_strCandidateMsg);
     if(NULL != ptCandidateJson)
     {
@@ -153,7 +154,7 @@ int WebRTC::HandleCandidateMsg(char * i_strCandidateMsg,int i_iNotJsonMsgFlag)
     {
         iRet=m_Libnice.SetRemoteCandidateAndSDP(acRemoteCandidate);//
     }
-    return iRet;
+    return iRet;*/
 }
 
 /*****************************************************************************
@@ -335,7 +336,8 @@ int WebRTC::GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int i_iSd
 int WebRTC::GenerateLocalCandidateMsg(T_VideoInfo *i_ptVideoInfo,char * o_strCandidateMsg,int i_iCandidateMaxLen)
 {
     int iRet = -1;
-    cJSON * ptNode = NULL;
+#if 0    
+    cJSON * ptNode = NULL;//暂未使用，防止和外部的cjson库重复定义
     T_LocalCandidate tLocalCandidate;
     char strCandidate[128];
     int i;
@@ -375,6 +377,7 @@ int WebRTC::GenerateLocalCandidateMsg(T_VideoInfo *i_ptVideoInfo,char * o_strCan
         free(buf);
     }
     cJSON_Delete(root);
+#endif    
     return iRet;
 }
 
@@ -504,8 +507,6 @@ WebRtcOffer::~WebRtcOffer()
 int WebRtcOffer::HandleMsg(char * i_strAnswerMsg,int i_iNotJsonMsgFlag)
 {
     int iRet = -1;
-    cJSON * ptAnswerJson = NULL;
-    cJSON * ptNode = NULL;
     char acRemoteSDP[5*1024];
     
     if(NULL == i_strAnswerMsg)
@@ -522,7 +523,11 @@ int WebRtcOffer::HandleMsg(char * i_strAnswerMsg,int i_iNotJsonMsgFlag)
         }
         return iRet;
     }
-    
+
+    printf("HandleMsg cJSON no sup \r\n");
+    return iRet;
+    /*cJSON * ptAnswerJson = NULL;
+    cJSON * ptNode = NULL;
     ptAnswerJson = cJSON_Parse(i_strAnswerMsg);
     if(NULL != ptAnswerJson)
     {
@@ -559,7 +564,7 @@ int WebRtcOffer::HandleMsg(char * i_strAnswerMsg,int i_iNotJsonMsgFlag)
             iRet=m_Libnice.SetRemoteCandidateAndSDP(NULL);//
         }
     }
-    return iRet;
+    return iRet;*/
 }
 
 /*****************************************************************************
@@ -575,7 +580,7 @@ int WebRtcOffer::HandleMsg(char * i_strAnswerMsg,int i_iNotJsonMsgFlag)
 int WebRtcOffer::GenerateLocalMsg(T_VideoInfo *i_ptVideoInfo,char * o_strOfferMsg,int i_iOfferMaxLen)
 {
     int iRet = -1;
-    cJSON * ptNode = NULL;
+    /*cJSON * ptNode = NULL;
     char acLocalSDP[5*1024];
     
     if(i_iOfferMaxLen <= 0||NULL == o_strOfferMsg ||NULL==i_ptVideoInfo)
@@ -595,7 +600,7 @@ int WebRtcOffer::GenerateLocalMsg(T_VideoInfo *i_ptVideoInfo,char * o_strOfferMs
         snprintf(o_strOfferMsg,i_iOfferMaxLen,"%s",buf);
         free(buf);
     }
-    cJSON_Delete(root);
+    cJSON_Delete(root);*/
     return iRet;
 }
 
@@ -807,8 +812,6 @@ WebRtcAnswer::~WebRtcAnswer()
 int WebRtcAnswer::HandleMsg(char * i_strOfferMsg,int i_iNotJsonMsgFlag)
 {
     int iRet = -1;
-    cJSON * ptOfferJson = NULL;
-    cJSON * ptNode = NULL;
     char acRemoteSDP[5*1024];
     
     if(NULL == i_strOfferMsg)
@@ -825,7 +828,11 @@ int WebRtcAnswer::HandleMsg(char * i_strOfferMsg,int i_iNotJsonMsgFlag)
         }
         return iRet;
     }
-
+    
+    printf("HandleMsg cJSON no sup \r\n");
+    return iRet;
+    /*cJSON * ptOfferJson = NULL;
+    cJSON * ptNode = NULL;
     ptOfferJson = cJSON_Parse(i_strOfferMsg);
     if(NULL != ptOfferJson)
     {
@@ -862,7 +869,7 @@ int WebRtcAnswer::HandleMsg(char * i_strOfferMsg,int i_iNotJsonMsgFlag)
             iRet=m_Libnice.SetRemoteCandidateAndSDP(NULL);//
         }
     }
-    return iRet;
+    return iRet;*/
 }
 
 /*****************************************************************************
@@ -878,7 +885,7 @@ int WebRtcAnswer::HandleMsg(char * i_strOfferMsg,int i_iNotJsonMsgFlag)
 int WebRtcAnswer::GenerateLocalMsg(T_VideoInfo *i_ptVideoInfo,char * o_strAnswerMsg,int i_iAnswerMaxLen)
 {
     int iRet = -1;
-    cJSON * ptNode = NULL;
+    /*cJSON * ptNode = NULL;
     char acLocalSDP[5*1024];
     
     if(i_iAnswerMaxLen <= 0||NULL == o_strAnswerMsg ||NULL==i_ptVideoInfo)
@@ -898,7 +905,7 @@ int WebRtcAnswer::GenerateLocalMsg(T_VideoInfo *i_ptVideoInfo,char * o_strAnswer
         snprintf(o_strAnswerMsg,i_iAnswerMaxLen,"%s",buf);
         free(buf);
     }
-    cJSON_Delete(root);
+    cJSON_Delete(root);*/
     return iRet;
 }
 
