@@ -118,7 +118,7 @@ int Libnice::LibniceProc()
 	// Create the nice agent
 	m_ptAgent = nice_agent_new(g_main_loop_get_context (ptLoop),NICE_COMPATIBILITY_RFC5245);
 	if (m_ptAgent == NULL)
-		g_error("Failed to create agent");
+		WEBRTC_LOGE("Failed to create agent\r\n");//g_error
 
 	// Set the STUN settings and controlling mode
 	if (strlen(m_tLibniceDepData.strStunAddr)>0) 
@@ -150,9 +150,9 @@ int Libnice::LibniceProc()
 
 	// Start gathering local candidates
 	if (!nice_agent_gather_candidates(m_ptAgent, m_tVideoStream.iID))
-		g_error("Failed to start candidate gathering");
+		WEBRTC_LOGE("Failed to start candidate gathering");//g_error
 
-	g_debug("waiting for candidate-gathering-done signal...");
+	WEBRTC_LOGI("waiting for candidate-gathering-done signal...");//g_debug
 
 	// Run the mainloop. Everything else will happen asynchronously
 	// when the candidates are done gathering.
@@ -533,12 +533,12 @@ int Libnice::SendVideoData(char * i_acBuf,int i_iBufLen)
 	int i=0;
     if( m_ptAgent == NULL || m_tVideoStream.iID== 0 || i_acBuf == NULL) 
     {
-		printf("LibniceSendData m_ptAgent null \r\n");
+		WEBRTC_LOGE("LibniceSendData m_ptAgent null \r\n");
 		return iRet;
     }
     if(m_iLibniceSendReadyFlag == 0) //根据接口说明，这里必须ready才能发送成功
     {//发送标记由上层控制，因为发送协商报文也是这个接口但是还不是ready
-		printf("LibniceSendReady err \r\n");//上面注释机制修改为ready才协商
+		WEBRTC_LOGE("LibniceSend no Ready \r\n");//上面注释机制修改为ready才协商
 		return iRet;
     }
     for (i = 1; i <= m_tVideoStream.iNum; i++)

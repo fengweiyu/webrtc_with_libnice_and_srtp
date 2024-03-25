@@ -181,7 +181,7 @@ int DtlsOnlyHandshake::Create(E_DtlsRole i_eDtlsRole)
     if(!m_ptSsl) 
     {
         printf("Error creating DTLS session! (%s)\n", ERR_reason_error_string(ERR_get_error()));        
-        return iRet;
+        return -1;
     }
     SSL_set_ex_data(m_ptSsl, 0, this);
     SSL_set_info_callback(m_ptSsl, Callback);
@@ -190,14 +190,14 @@ int DtlsOnlyHandshake::Create(E_DtlsRole i_eDtlsRole)
     if(!m_ptReadBio) 
     {
         printf(" Error creating read BIO! (%s)\n",  ERR_reason_error_string(ERR_get_error()));      
-        return iRet;
+        return -2;
     }
     BIO_set_mem_eof_return(m_ptReadBio, -1);
 	m_ptWriteBio = BIO_new(BIO_s_mem());
 	if(!m_ptWriteBio) 
     {
 		printf("Error creating write BIO! (%s)\n", ERR_reason_error_string(ERR_get_error()));		
-        return iRet;
+        return -3;
 	}
 	BIO_set_mem_eof_return(m_ptWriteBio, -1);
 	/* The write BIO needs our custom filter, or fragmentation won't work */
@@ -205,7 +205,7 @@ int DtlsOnlyHandshake::Create(E_DtlsRole i_eDtlsRole)
 	if(!m_ptFilterBio) 
     {
 		printf("Error creating filter BIO! (%s)\n", ERR_reason_error_string(ERR_get_error()));		
-		return iRet;
+		return -4;
 	}
 	/* Chain filter and write BIOs */
 	BIO_push(m_ptFilterBio, m_ptWriteBio);
@@ -233,7 +233,7 @@ int DtlsOnlyHandshake::Create(E_DtlsRole i_eDtlsRole)
 	if(ecdh == NULL) 
     {
 		printf("Error creating ECDH group! (%s)\n", ERR_reason_error_string(ERR_get_error()));		
-        return iRet;
+        return -5;
 	}
 	SSL_set_options(m_ptSsl, SSL_OP_SINGLE_ECDH_USE);
 	SSL_set_tmp_ecdh(m_ptSsl, ecdh);

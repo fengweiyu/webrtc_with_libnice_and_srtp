@@ -49,12 +49,20 @@ WebRTC::WebRTC(char * i_strStunAddr,unsigned int i_dwStunPort,E_IceControlRole i
     m_tSctpCb.RecvFromOut = NULL;
     m_pSctp = new Sctp(&m_tSctpCb);
 
-
-    m_pDtlsOnlyHandshake->Init();
+    int iRet = 0;
+    iRet = m_pDtlsOnlyHandshake->Init();//可以放Proc()里
+    if(iRet < 0)
+    {
+        WEBRTC_LOGE("m_pDtlsOnlyHandshake->Init err%d",iRet);
+    }
     if(ICE_CONTROLLED_ROLE == i_eControlling)
-        m_pDtlsOnlyHandshake->Create(DTLS_ROLE_CLIENT);//后续可以抽象出一个角色放webrtc.h
+        iRet = m_pDtlsOnlyHandshake->Create(DTLS_ROLE_CLIENT);//后续可以抽象出一个角色放webrtc.h
     else
-        m_pDtlsOnlyHandshake->Create(DTLS_ROLE_SERVER);//offer端，使用sever
+        iRet = m_pDtlsOnlyHandshake->Create(DTLS_ROLE_SERVER);//offer端，使用sever
+    if(iRet < 0)//可以放Proc()里
+    {
+        WEBRTC_LOGE("m_pDtlsOnlyHandshake->Create err i_eControlling %d iRet %d",i_eControlling,iRet);
+    }
 }
 /*****************************************************************************
 -Fuction        : ~WebRTC
@@ -84,7 +92,9 @@ WebRTC::~WebRTC()
 ******************************************************************************/
 int WebRTC::Proc()
 {
-    return m_Libnice.LibniceProc();
+    int iRet = m_Libnice.LibniceProc();
+    WEBRTC_LOGW("WebRTC::Proc exit %d",iRet);
+    return iRet;
 }
 /*****************************************************************************
 -Fuction        : HandleCandidateMsg
@@ -163,7 +173,7 @@ int WebRTC::SendProtectedRtp(char * i_acRtpBuf,int i_iRtpBufLen)
     int iProtectRtpLen;
     if(NULL == i_acRtpBuf)
     {
-        printf("SendProtectedRtp NULL \r\n");
+        WEBRTC_LOGE("SendProtectedRtp NULL \r\n");
         return iRet;
     }
     
@@ -178,7 +188,7 @@ int WebRTC::SendProtectedRtp(char * i_acRtpBuf,int i_iRtpBufLen)
     iRet=m_Srtp.ProtectRtp(i_acRtpBuf,&iProtectRtpLen,i_iRtpBufLen);
     if (iRet) 
     {
-        printf("m_Srtp.ProtectRtp err \r\n");
+        WEBRTC_LOGE("m_Srtp.ProtectRtp err \r\n");
     }
     iRet=m_Libnice.SendVideoData(i_acRtpBuf, iProtectRtpLen);
 
@@ -206,7 +216,7 @@ int WebRTC::GetSendReadyFlag()
     }
 	else
 	{
-	    printf("GetSendReadyFlag err\r\n");
+	    WEBRTC_LOGW("GetSendReadyFlag 0\r\n");
 	}
 
     
@@ -803,7 +813,7 @@ int WebRtcAnswer::HandleMsg(char * i_strOfferMsg,int i_iNotJsonMsgFlag)
     
     if(NULL == i_strOfferMsg)
     {
-        printf("HandleOfferMsg NULL \r\n");
+        WEBRTC_LOGE("HandleOfferMsg NULL \r\n");
         return iRet;
     }
     if(1 == i_iNotJsonMsgFlag)
@@ -833,7 +843,7 @@ int WebRtcAnswer::HandleMsg(char * i_strOfferMsg,int i_iNotJsonMsgFlag)
         {
             if(sizeof(acRemoteSDP)<strlen(ptNode->valuestring))
             {
-                printf("cJSON_GetObjectItem sdp err \r\n");
+                WEBRTC_LOGE("cJSON_GetObjectItem sdp err \r\n");
             }
             memset(acRemoteSDP,0,sizeof(acRemoteSDP));
             strncpy(acRemoteSDP,ptNode->valuestring,sizeof(acRemoteSDP));
@@ -927,14 +937,14 @@ int WebRtcAnswer::GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int
     
     if (o_strSDP == NULL || NULL==i_ptVideoInfo || i_iSdpMaxLen <= 0) 
     {
-		printf("GenerateLocalSDP NULL\r\n");
+		WEBRTC_LOGE("GenerateLocalSDP NULL\r\n");
 		return iRet;
     }
     memset(&tLocalCandidate,0,sizeof(T_LocalCandidate));
     m_Libnice.GetLocalCandidate(&tLocalCandidate);
 	if(tLocalCandidate.iGatheringDoneFlag == 0)
 	{
-		printf("GenerateLocalSDP err\r\n");
+		WEBRTC_LOGE("GenerateLocalSDP err\r\n");
 		return iRet;
 	}
     memset(&tCreateTime,0,sizeof(struct timeval));
