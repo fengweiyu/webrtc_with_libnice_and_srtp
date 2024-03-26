@@ -12,8 +12,15 @@
 #ifndef RTP_ADAPTER_H
 #define RTP_ADAPTER_H
 
+#ifndef TRUE
+#define TRUE        0
+#endif
 
-#if 0
+#ifndef FALSE
+#define FALSE       -1
+#endif
+
+#ifdef MEDIA_SEVER_TYPE_WEBRTC //0
 #define  RTP_LOGW(...)     logi(MediaHandle) << lformat(MediaHandle,__VA_ARGS__) << lend 
 #define  RTP_LOGE(...)     loge(MediaHandle) << lformat(MediaHandle,__VA_ARGS__) << lend
 #define  RTP_LOGD(...)     logd(MediaHandle) << lformat(MediaHandle,__VA_ARGS__) << lend

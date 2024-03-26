@@ -20,7 +20,7 @@
 #define FALSE       -1
 #endif
 
-#if 0
+#ifdef MEDIA_SEVER_TYPE_WEBRTC //0
 #define  MH_LOGW(...)     logi(MediaHandle) << lformat(MediaHandle,__VA_ARGS__) << lend 
 #define  MH_LOGE(...)     loge(MediaHandle) << lformat(MediaHandle,__VA_ARGS__) << lend
 #define  MH_LOGD(...)     logd(MediaHandle) << lformat(MediaHandle,__VA_ARGS__) << lend

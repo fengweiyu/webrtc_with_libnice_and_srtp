@@ -27,6 +27,7 @@ typedef struct WebRtcCfg
     char strStunAddr[20];
     unsigned int dwStunPort;
     E_IceControlRole eControlling;
+    char strCandidateSDP[512];
 }T_WebRtcCfg;
 
 
