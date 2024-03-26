@@ -23,7 +23,7 @@
 
 using std::string;
 
-#define MAX_CANDIDATE_NUM 10
+#define MAX_CANDIDATE_NUM 20
 
 
 
@@ -72,6 +72,7 @@ public:
 	~Libnice();
     int SetCallback(T_LibniceCb *i_ptLibniceCb);
     int LibniceProc();
+    int StopProc();
     int GetLocalCandidate(T_LocalCandidate * i_ptLocalCandidate);
     int GetLocalSDP(char * i_strSDP,int i_iSdpLen);
     int SaveRemoteSDP(char * i_strSDP);
@@ -106,6 +107,8 @@ private:
     T_StreamInfo m_tAudioStream;
     T_LibniceDepData m_tLibniceDepData;
     string m_strRemoteSDP;
+    GMainLoop *m_ptLoop;//
+    GIOChannel* m_ptStdinIO;//
 };
 
 

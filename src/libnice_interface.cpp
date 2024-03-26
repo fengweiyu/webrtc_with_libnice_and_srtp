@@ -47,6 +47,9 @@ Libnice::Libnice(char * i_strStunAddr,unsigned int i_dwStunPort,E_IceControlRole
     memset(&m_tVideoStream,0,sizeof(T_StreamInfo));
     memset(&m_tAudioStream,0,sizeof(T_StreamInfo));
     m_strRemoteSDP.assign("");
+
+    m_ptLoop=NULL;//
+    m_ptStdinIO=NULL;//
 }
 
 /*****************************************************************************
@@ -111,12 +114,12 @@ int Libnice::LibniceProc()
     m_iLibniceSendReadyFlag = 0;
     memset(&m_tLocalCandidate,0,sizeof(T_LocalCandidate));
 	g_networking_init();//
-	ptLoop = g_main_loop_new(NULL, FALSE);//
-	ptStdinIO = g_io_channel_unix_new(fileno(stdin));//
+	m_ptLoop = g_main_loop_new(NULL, FALSE);//ptLoop
+	m_ptStdinIO = g_io_channel_unix_new(fileno(stdin));//ptStdinIO
 
     nice_debug_enable(1);//不起作用
 	// Create the nice agent
-	m_ptAgent = nice_agent_new(g_main_loop_get_context (ptLoop),NICE_COMPATIBILITY_RFC5245);
+	m_ptAgent = nice_agent_new(g_main_loop_get_context (m_ptLoop),NICE_COMPATIBILITY_RFC5245);
 	if (m_ptAgent == NULL)
 		WEBRTC_LOGE("Failed to create agent\r\n");//g_error
 
@@ -141,28 +144,45 @@ int Libnice::LibniceProc()
 	// Without this call, candidates cannot be gathered
     for (inx = 1; inx <= m_tVideoStream.iNum; inx++)
     {
-        nice_agent_attach_recv(m_ptAgent, m_tVideoStream.iID, inx, g_main_loop_get_context (ptLoop),&Libnice::RecvVideoData, this);
+        nice_agent_attach_recv(m_ptAgent, m_tVideoStream.iID, inx, g_main_loop_get_context (m_ptLoop),&Libnice::RecvVideoData, this);
     }
     for (inx = 1; inx <= m_tAudioStream.iNum; inx++)
     {
-        nice_agent_attach_recv(m_ptAgent, m_tAudioStream.iID, inx, g_main_loop_get_context (ptLoop),&Libnice::RecvAudioData, this);
+        nice_agent_attach_recv(m_ptAgent, m_tAudioStream.iID, inx, g_main_loop_get_context (m_ptLoop),&Libnice::RecvAudioData, this);
     }
 
 	// Start gathering local candidates
 	if (!nice_agent_gather_candidates(m_ptAgent, m_tVideoStream.iID))
-		WEBRTC_LOGE("Failed to start candidate gathering");//g_error
+		WEBRTC_LOGE("Failed to start candidate gathering\r\n");//g_error
 
-	WEBRTC_LOGI("waiting for candidate-gathering-done signal...");//g_debug
+	WEBRTC_LOGI("waiting for candidate-gathering-done signal...\r\n");//g_debug
 
 	// Run the mainloop. Everything else will happen asynchronously
 	// when the candidates are done gathering.
-	g_main_loop_run (ptLoop);////g_main_loop_quit (gloop);//
+	g_main_loop_run (m_ptLoop);////g_main_loop_quit (gloop);//
     
 
-	g_main_loop_unref(ptLoop);//
+	g_main_loop_unref(m_ptLoop);//ptLoop
 	g_object_unref(m_ptAgent);//
-	g_io_channel_unref (ptStdinIO);//
+	g_io_channel_unref (m_ptStdinIO);//ptStdinIO
 }
+
+/*****************************************************************************
+-Fuction        : StopProc
+-Description    : StopProc
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+int Libnice::StopProc()
+{
+    g_main_loop_quit (m_ptLoop);
+    return 0;
+}
+
 /*****************************************************************************
 -Fuction        : LibniceGetLocalCandidate
 -Description    : LibniceGetLocalCandidate
@@ -396,7 +416,7 @@ int Libnice::SaveRemoteSDP(char * i_strSDP)
 	int iRet = -1;
     if (m_ptAgent == NULL || i_strSDP == NULL) 
     {
-		printf("SaveRemoteSDP m_ptAgent null \r\n");
+		printf("SaveRemoteSDP null m_ptAgent %p i_strSDP %p\r\n",m_ptAgent,i_strSDP);
 		return iRet;
     }
     m_strRemoteSDP.assign(i_strSDP);
@@ -638,7 +658,7 @@ void Libnice::CandidateGatheringDone(NiceAgent *i_ptAgent, guint i_dwStreamID,gp
         i++;
         if(i>=MAX_CANDIDATE_NUM)
         {
-            printf("m_tLocalCandidate too more \r\n");
+            printf("m_tLocalCandidate too more %d,%d,\r\n",i,MAX_CANDIDATE_NUM);
             break;
         }
         /*if(NULL!= strstr(pLibnice->m_tLocalCandidate.strCandidateData[i],"udp")&&NULL!= strstr(pLibnice->m_tLocalCandidate.strCandidateData[i],"."))
