@@ -321,7 +321,7 @@ int MediaHandle::GetFrame(T_MediaFrameInfo *m_ptFrame)
         if(TRUE == iRet)
         {
             fseek(m_pMediaFile,m_ptFrame->iFrameProcessedLen,SEEK_SET);
-            //cout<<"fseek m_pMediaFile "<<m_ptMediaFrameParam->iFrameProcessedLen<<m_pMediaFile<<endl;
+            cout<<"fseek m_pMediaFile "<<m_ptMediaFrameParam->iFrameProcessedLen<<m_pMediaFile<<endl;
         }
         else
         {

@@ -156,29 +156,16 @@ int G711Handle::GetFrame(T_MediaFrameInfo *m_ptFrame)
     m_ptFrame->iFrameLen = m_iAudioFixLen;
 	if(NULL != m_ptFrame->pbFrameStartPos)
 	{
-        if(MEDIA_FRAME_TYPE_UNKNOW == m_ptFrame->eFrameType)
+        if(STREAM_TYPE_UNKNOW == m_ptFrame->eStreamType)//文件的时候才需要赋值，数据流的时候外部会赋值以外部为准
         {
             m_ptFrame->eFrameType = MEDIA_FRAME_TYPE_AUDIO_FRAME;
-        }
-        if(0 == m_ptFrame->dwTimeStamp)
-        {
             m_ptFrame->dwTimeStamp += AUDIO_G711_A_FRAME_SAMPLE_POINT_NUM;
-        }
-        if(0 == m_ptFrame->dwSampleRate)
-        {
             m_ptFrame->dwSampleRate= AUDIO_G711_SAMPLE_RATE;
-        }
-        if(STREAM_TYPE_UNKNOW == m_ptFrame->eStreamType)
-        {
-            m_ptFrame->eStreamType = STREAM_TYPE_AUDIO_STREAM;
-        }
-        if(MEDIA_ENCODE_TYPE_UNKNOW == m_ptFrame->eEncType)
-        {
             m_ptFrame->eEncType = MEDIA_ENCODE_TYPE_G711U;
         }
 	
         m_ptFrame->iFrameProcessedLen = m_ptFrame->pbFrameStartPos - m_ptFrame->pbFrameBuf + m_ptFrame->iFrameLen;
-        iRet = TRUE;
+        iRet = TRUE;//解析出一帧则退出
 	}
 	return iRet;
 }
@@ -422,13 +409,9 @@ int AACHandle::GetFrame(T_MediaFrameInfo *m_ptFrame)
             iSampleRateIndex = (int)((pcFrameStartPos[2]&0x3C)>>2);
             m_ptFrame->pbFrameStartPos = pcFrameStartPos;
             m_ptFrame->iFrameLen = (int)((pcFrameStartPos[3]&0x03)<<11|pcFrameStartPos[4]<<3|(pcFrameStartPos[5]&0xE0)>>5);
-            
-            if(MEDIA_FRAME_TYPE_UNKNOW == m_ptFrame->eFrameType)
+            if(STREAM_TYPE_UNKNOW == m_ptFrame->eStreamType)//文件的时候才需要赋值，数据流的时候外部会赋值以外部为准
             {
                 m_ptFrame->eFrameType = MEDIA_FRAME_TYPE_AUDIO_FRAME;
-            }
-            if(0 == m_ptFrame->dwTimeStamp)
-            {
                 if(0 != iFramMark)
                 {
                     //AAC定义每1024个采样点为1帧
@@ -436,18 +419,8 @@ int AACHandle::GetFrame(T_MediaFrameInfo *m_ptFrame)
                     //因此时间戳的增量为1024(1/采样率)
                     m_ptFrame->dwTimeStamp += AUDIO_AAC_A_FRAME_SAMPLE_POINT_NUM;
                 }
-            }
-            if(0 == m_ptFrame->dwSampleRate)
-            {
                 if(iSampleRateIndex>=0&&iSampleRateIndex<sizeof(g_aiAACSamplingFreqIndexValue)/sizeof(int));
                     m_ptFrame->dwSampleRate = g_aiAACSamplingFreqIndexValue[iSampleRateIndex];
-            }
-            if(STREAM_TYPE_UNKNOW == m_ptFrame->eStreamType)
-            {
-                m_ptFrame->eStreamType = STREAM_TYPE_AUDIO_STREAM;
-            }
-            if(MEDIA_ENCODE_TYPE_UNKNOW == m_ptFrame->eEncType)
-            {
                 m_ptFrame->eEncType = MEDIA_ENCODE_TYPE_AAC;
             }
             break;
@@ -464,7 +437,7 @@ int AACHandle::GetFrame(T_MediaFrameInfo *m_ptFrame)
     }
     if(0 != iFramMark)
     {
-        iRet = TRUE;
+        iRet = TRUE;//解析出一帧则退出
     }
     return iRet;
 }

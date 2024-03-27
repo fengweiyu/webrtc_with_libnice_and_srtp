@@ -115,10 +115,11 @@ typedef struct MediaFrameInfo
     int iFrameBufLen;//缓冲区读到数据的总大小
     int iFrameProcessedLen;
     
-    E_StreamType eStreamType;//裸流的帧数据时，这个需要外部赋值然后传入
-    E_MediaEncodeType eEncType;//裸流的帧数据时，这个需要外部赋值然后传入
-    unsigned int dwTimeStamp;//裸流的帧数据时，这个外部会赋值然后传入
-    unsigned int dwSampleRate;//内部判断到不为0，则不会再去赋值
+    //裸流的帧数据(数据流,eStreamType需要被赋值为对应的数据流格式)时，下面5个参数都需要外部赋值然后传入
+    E_StreamType eStreamType;//解析文件时,eStreamType外部赋值0(表示不是数据流(是文件)),下面4个参数则由内部赋值
+    E_MediaEncodeType eEncType;
+    unsigned int dwTimeStamp;
+    unsigned int dwSampleRate;
     E_MediaFrameType eFrameType;
 
 	//输出1帧数据结果
