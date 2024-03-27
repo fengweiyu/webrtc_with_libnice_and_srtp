@@ -43,6 +43,7 @@ RtpPacket :: RtpPacket()
 {
     m_pRtpPacket = NULL;
     m_iRtpType = 0;
+    m_iMaxPacketNum = 0;
 
 }
 
@@ -77,7 +78,7 @@ int RtpPacket :: GenerateRtpHeader(T_RtpPacketParam *i_ptParam,T_RtpHeader *o_pt
     int iRet=FALSE;
     if(NULL == i_ptParam || NULL == o_ptRtpHeader)
     {
-        cout<<"GenerateRtpHeader err NULL"<<endl;
+        printf("GenerateRtpHeader err NULL i_ptParam %p,o_ptRtpHeader %p \r\n",i_ptParam,o_ptRtpHeader);
     }
     else
     {
@@ -114,7 +115,7 @@ int RtpPacket :: GenerateRtpHeader(T_RtpPacketParam *i_ptParam,int i_iPaddingLen
     int iRet=FALSE;
     if(NULL == i_ptParam || NULL == o_bRtpHeader || RTP_MAX_PACKET_SIZE <= RTP_HEADER_LEN)
     {
-        cout<<"GenerateRtpHeader err NULL"<<endl;
+        printf("GenerateRtpHeader err NULL i_ptParam %p,o_bRtpHeader %p \r\n",i_ptParam,o_bRtpHeader);
     }
     else
     {
@@ -172,6 +173,7 @@ int RtpPacket :: Init(unsigned char **m_ppPackets,int i_iMaxPacketNum)
         }
         memset(m_ppPackets[i],0,RTP_MAX_PACKET_SIZE);//初始化放里面，多个nalu分别一起发
     }
+    m_iMaxPacketNum = i_iMaxPacketNum;
     return TRUE;
 }
 
@@ -549,7 +551,7 @@ int H264FU_A :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,in
 
     unsigned char bNaluHeader=i_pbNaluBuf[0];
     int iMark = 0;
-    while (iNaluLen> 0 && iPackNum < RTP_MAX_PACKET_NUM) 
+    while (iNaluLen> 0 && iPackNum < m_iMaxPacketNum) 
     {
         iMark = 0;
         if (iPackNum == 0) 
@@ -851,7 +853,7 @@ int H265FU_A :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,in
     unsigned char bNaluHeader1=i_pbNaluBuf[0];
     unsigned char bNaluHeader2=i_pbNaluBuf[1];
     int iMark = 0;
-    while (iNaluLen> 0 && iPackNum < RTP_MAX_PACKET_NUM) 
+    while (iNaluLen> 0 && iPackNum < m_iMaxPacketNum) 
     {
         iMark = 0;
         if (iPackNum == 0) 
@@ -980,7 +982,7 @@ int RtpPacketG711 :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbFrame
     }
     else
     {
-        while (iFrameLen> 0 && iPackNum < RTP_MAX_PACKET_NUM) 
+        while (iFrameLen> 0 && iPackNum < m_iMaxPacketNum) 
         {
             if ((unsigned int)iFrameLen <= RTP_MAX_PACKET_SIZE - RTP_HEADER_LEN) 
             {
@@ -1073,7 +1075,7 @@ int RtpPacketG726 :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbFrame
     }
     else
     {
-        while (iFrameLen> 0 && iPackNum < RTP_MAX_PACKET_NUM) 
+        while (iFrameLen> 0 && iPackNum < m_iMaxPacketNum) 
         {
             if ((unsigned int)iFrameLen <= RTP_MAX_PACKET_SIZE - RTP_HEADER_LEN) 
             {
@@ -1169,7 +1171,7 @@ int RtpPacketAAC :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbFrameB
     
     pbFrameBuf += 7;//aac 要偏移7字节头才是数据
     iFrameLen-=7;
-    while (iFrameLen> 0 && iPackNum < RTP_MAX_PACKET_NUM) 
+    while (iFrameLen> 0 && iPackNum < m_iMaxPacketNum) 
     {
         if ((unsigned int)iFrameLen <= RTP_MAX_PACKET_SIZE - RTP_HEADER_LEN-4) 
         {

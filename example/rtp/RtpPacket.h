@@ -22,7 +22,7 @@ using std::string;
 
 #define IP_MAX_LEN 				(40)
 #define RTP_MAX_PACKET_SIZE	((1500-IP_MAX_LEN)/4*4)//MTU (1514-54 以太网帧最大1514-mac头14-ip头20-tcp头20)
-#define RTP_MAX_PACKET_NUM	(300)
+#define RTP_MAX_PACKET_NUM	(300)//m_iMaxPacketNum
 #define RTP_HEADER_LEN 			(12)
 
 
@@ -100,7 +100,7 @@ public:
 
 protected:
 	int m_iRtpType;
-
+    int m_iMaxPacketNum;
 private:
     RtpPacket *m_pRtpPacket;
 };

@@ -352,7 +352,12 @@ int Rtp :: GetRtpPackets(T_MediaFrameInfo *m_ptFrame,unsigned char **o_ppbPacket
     pbNaluStartPos = m_ptFrame->pbFrameStartPos;
     dwNaluOffset = 0;
     iPacketNum = 0;
-
+    if (m_ptFrame->dwNaluCount > MAX_NALU_CNT_ONE_FRAME)
+    {
+        RTP_LOGE("m_ptFrame->dwNaluCount err %d ,%d\r\n",m_ptFrame->dwNaluCount,m_ptFrame->iFrameLen);
+        return iPacketNum;
+    }
+    RTP_LOGI("m_ptMediaFrameParam)->dwNaluCount %d iFrameLen %d dwTimeStamp%d\r\n",m_ptFrame->dwNaluCount,m_ptFrame->iFrameLen,m_ptFrame->dwTimeStamp);
     for(i=0;i<m_ptFrame->dwNaluCount;i++)
     {
         iPacketNum+=m_RtpPacket.Packet(&tRtpPacketParam,pbNaluStartPos,m_ptFrame->adwNaluEndOffset[i]-dwNaluOffset,&o_ppbPacketBuf[iPacketNum],&o_aiEveryPacketLen[iPacketNum]);
