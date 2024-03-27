@@ -97,6 +97,22 @@ int WebRTC::Proc()
     return iRet;
 }
 /*****************************************************************************
+-Fuction        : Proc
+-Description    : Proc
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+int WebRTC::StopProc()
+{
+    int iRet = m_Libnice.StopProc();
+    WEBRTC_LOGW("WebRTC::Proc StopProc %d",iRet);
+    return iRet;
+}
+/*****************************************************************************
 -Fuction        : HandleCandidateMsg
 -Description    : Offer消息必须是是在Candidate之前的，有这样的时序要求
 这是webrtc抓包发现的，所以不符合这个时序则返回错误

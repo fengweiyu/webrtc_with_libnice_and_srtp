@@ -32,6 +32,7 @@ public:
 	WebRTC(char * i_strStunAddr,unsigned int i_dwStunPort,E_IceControlRole i_eControlling);//:m_Libnice(i_strStunAddr,i_dwStunPort,i_iControlling),m_Srtp()
 	virtual ~WebRTC();
     int Proc();
+    int StopProc();
     virtual int HandleMsg(char * i_strMsg,int i_iNotJsonMsgFlag=0)=0;
     int HandleCandidateMsg(char * i_strCandidateMsg,int i_iNotJsonMsgFlag=0);
     int GetSendReadyFlag();
