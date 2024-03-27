@@ -47,6 +47,7 @@ public:
     int GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int i_iSdpMaxLen);//webrtc_client π”√
     int HandleMsg(char * i_strMsg,int i_iNotJsonMsgFlag=0);
     int HandleCandidateMsg(char * i_strCandidateMsg,int i_iNotJsonMsgFlag=0);
+    int GetGatheringDoneFlag();
     int GetSendReadyFlag();
     int SendProtectedRtp(char * i_acRtpBuf,int i_iRtpBufLen);
     

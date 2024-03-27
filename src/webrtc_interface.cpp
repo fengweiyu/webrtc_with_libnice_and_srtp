@@ -70,13 +70,8 @@ WebRtcInterface::~WebRtcInterface()
 ******************************************************************************/
 int WebRtcInterface::Proc()
 {
-    if(WEBRTC_OFFER_ROLE == m_tWebRtcCfg.eWebRtcRole)
-    {
-        WebRtcOffer *pWebRtcOffer = (WebRtcOffer *)m_pHandle;
-        return pWebRtcOffer->Proc();
-    }
-    WebRtcAnswer *pWebRtcAnswer = (WebRtcAnswer *)m_pHandle;
-    return pWebRtcAnswer->Proc();
+    WebRTC *pWebRTC = (WebRTC *)m_pHandle;
+    return pWebRTC->Proc();
 }
 
 
@@ -153,15 +148,25 @@ int WebRtcInterface::HandleCandidateMsg(char * i_strCandidateMsg,int i_iNotJsonM
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
+int WebRtcInterface::GetGatheringDoneFlag()
+{
+    WebRTC *pWebRTC = (WebRTC *)m_pHandle;
+    return pWebRTC->GetGatheringDoneFlag();
+}
+/*****************************************************************************
+-Fuction        : GetSendReadyFlag
+-Description    : -1不可发送,0准备好通道可以发送
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
 int WebRtcInterface::GetSendReadyFlag()
 {
-    if(WEBRTC_OFFER_ROLE == m_tWebRtcCfg.eWebRtcRole)
-    {
-        WebRtcOffer *pWebRtcOffer = (WebRtcOffer *)m_pHandle;
-        return pWebRtcOffer->GetSendReadyFlag();
-    }
-    WebRtcAnswer *pWebRtcAnswer = (WebRtcAnswer *)m_pHandle;
-    return pWebRtcAnswer->GetSendReadyFlag();
+    WebRTC *pWebRTC = (WebRTC *)m_pHandle;
+    return pWebRTC->GetSendReadyFlag();
 }
 
 /*****************************************************************************
@@ -176,13 +181,8 @@ int WebRtcInterface::GetSendReadyFlag()
 ******************************************************************************/
 int WebRtcInterface::SendProtectedRtp(char * i_acRtpBuf,int i_iRtpBufLen)
 {
-    if(WEBRTC_OFFER_ROLE == m_tWebRtcCfg.eWebRtcRole)
-    {
-        WebRtcOffer *pWebRtcOffer = (WebRtcOffer *)m_pHandle;
-        return pWebRtcOffer->SendProtectedRtp(i_acRtpBuf,i_iRtpBufLen);
-    }
-    WebRtcAnswer *pWebRtcAnswer = (WebRtcAnswer *)m_pHandle;
-    return pWebRtcAnswer->SendProtectedRtp(i_acRtpBuf,i_iRtpBufLen);
+    WebRTC *pWebRTC = (WebRTC *)m_pHandle;
+    return pWebRTC->SendProtectedRtp(i_acRtpBuf,i_iRtpBufLen);
 }
 
 

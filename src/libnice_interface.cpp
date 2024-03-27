@@ -271,7 +271,7 @@ int Libnice::SetRemoteCredentials(char * i_strUfrag,char * i_strPasswd)
 	int iRet = -1;
     if (i_strUfrag == NULL || i_strPasswd == NULL || m_ptAgent == NULL || m_tVideoStream.iID == 0) 
     {
-		g_message("line must have at least ufrag, password, and one candidate");
+		printf("line must have at least ufrag, password, and one candidate %p,%p,%p,%d\r\n",i_strUfrag,i_strPasswd,m_ptAgent,m_tVideoStream.iID);//g_message
 		return iRet;
     }
     

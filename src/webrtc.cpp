@@ -212,6 +212,29 @@ int WebRTC::SendProtectedRtp(char * i_acRtpBuf,int i_iRtpBufLen)
     return iRet;
 }
 /*****************************************************************************
+-Fuction        : GetGatheringDoneFlag
+-Description    : -1不可发送,0准备好通道可以发送
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+int WebRTC::GetGatheringDoneFlag()
+{
+    T_LocalCandidate tLocalCandidate;
+
+    memset(&tLocalCandidate,0,sizeof(T_LocalCandidate));
+    m_Libnice.GetLocalCandidate(&tLocalCandidate);
+	if(tLocalCandidate.iGatheringDoneFlag != 0)
+	{
+		return 0;
+	}
+    return -1;
+}
+
+/*****************************************************************************
 -Fuction        : GetSendReadyFlag
 -Description    : -1不可发送,0准备好通道可以发送
 -Input          : 
@@ -233,7 +256,7 @@ int WebRTC::GetSendReadyFlag()
     }
 	else
 	{
-	    WEBRTC_LOGW("GetSendReadyFlag 0\r\n");
+	    //WEBRTC_LOGW("GetSendReadyFlag 0\r\n");
 	}
 
     
@@ -1037,8 +1060,8 @@ int WebRtcAnswer::GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int
         //"a=connection:new\r\n"
         "a=rtpmap:%d %s/%d\r\n"
         "a=fmtp:%d level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=%06X;sprop-parameter-sets=%s,%s\r\n"
-        "a=ssrc:%ld msid:janus janusv0\r\n"//与rtp中的SSRC 一致
-        "a=setup:actpass\r\n");
+        "a=ssrc:%d msid:janus janusv0\r\n"//与rtp中的SSRC 一致
+        "a=setup:passive\r\n");//a=setup:actpass 浏览器会报错
         /*"a=ssrc:%ld cname:ywf%s\r\n"
         "a=ssrc:%ld msid:janus janusa0\r\n"
         "a=ssrc:%ld mslabel:janus\r\n"
