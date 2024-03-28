@@ -2,7 +2,7 @@
 * Copyright (C) 2020-2025 Hanson Yu  All rights reserved.
 ------------------------------------------------------------------------------
 * File Module           :       main.cpp
-* Description           : 	    stun:stun.oss.aliyuncs.com:3478
+* Description           : 	    stun:stun.oss.aliyuncs.com:3478 stun.voipbuster.com:3478
 * Created               :       2020.01.13.
 * Author                :       Yu Weifeng
 * Function List         : 	
@@ -76,8 +76,8 @@ int main(int argc, char* argv[])
     //简单点，又因为没有ui，所以offer 和answer不能共存
     if(0 == strcmp(argv[5],"offer"))
     {
-        T_WebRtcCfg tWebRtcCfg;
-        snprintf(tWebRtcCfg.strStunAddr,sizeof(tWebRtcCfg.strStunAddr),"%s",strSeverIp);
+        T_WebRtcCfg tWebRtcCfg;//stun.voipbuster.com:3478
+        snprintf(tWebRtcCfg.strStunAddr,sizeof(tWebRtcCfg.strStunAddr),"%s",strSeverIp);//"77.72.169.210");//不能使用域名，内部库不能解析
         tWebRtcCfg.dwStunPort = dwPort;
         tWebRtcCfg.eWebRtcRole= WEBRTC_OFFER_ROLE;
         tWebRtcCfg.eControlling= ICE_CONTROLLING_ROLE;
