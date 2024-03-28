@@ -173,7 +173,9 @@ int RtpPacket :: Init(unsigned char **m_ppPackets,int i_iMaxPacketNum)
         }
         memset(m_ppPackets[i],0,RTP_MAX_PACKET_SIZE);//初始化放里面，多个nalu分别一起发
     }
-    m_iMaxPacketNum = i_iMaxPacketNum;
+    m_iMaxPacketNum = i_iMaxPacketNum;//m_iMaxPacketNum无法传递到底下的对象里,故暂不使用
+    
+    printf("RtpPacket Init %d i_iMaxPacketNum %d \r\n",RTP_MAX_PACKET_NUM,i_iMaxPacketNum);
     return TRUE;
 }
 
@@ -551,7 +553,7 @@ int H264FU_A :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,in
 
     unsigned char bNaluHeader=i_pbNaluBuf[0];
     int iMark = 0;
-    while (iNaluLen> 0 && iPackNum < m_iMaxPacketNum) 
+    while (iNaluLen> 0 && iPackNum < RTP_MAX_PACKET_NUM) 
     {
         iMark = 0;
         if (iPackNum == 0) 
@@ -614,7 +616,6 @@ int H264FU_A :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,in
         iPackNum++;
     }
     iRet=iPackNum;        
-
     return iRet;
 }
 
@@ -853,7 +854,7 @@ int H265FU_A :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,in
     unsigned char bNaluHeader1=i_pbNaluBuf[0];
     unsigned char bNaluHeader2=i_pbNaluBuf[1];
     int iMark = 0;
-    while (iNaluLen> 0 && iPackNum < m_iMaxPacketNum) 
+    while (iNaluLen> 0 && iPackNum < RTP_MAX_PACKET_NUM) 
     {
         iMark = 0;
         if (iPackNum == 0) 
@@ -982,7 +983,7 @@ int RtpPacketG711 :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbFrame
     }
     else
     {
-        while (iFrameLen> 0 && iPackNum < m_iMaxPacketNum) 
+        while (iFrameLen> 0 && iPackNum < RTP_MAX_PACKET_NUM) 
         {
             if ((unsigned int)iFrameLen <= RTP_MAX_PACKET_SIZE - RTP_HEADER_LEN) 
             {
@@ -1075,7 +1076,7 @@ int RtpPacketG726 :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbFrame
     }
     else
     {
-        while (iFrameLen> 0 && iPackNum < m_iMaxPacketNum) 
+        while (iFrameLen> 0 && iPackNum < RTP_MAX_PACKET_NUM) 
         {
             if ((unsigned int)iFrameLen <= RTP_MAX_PACKET_SIZE - RTP_HEADER_LEN) 
             {
@@ -1171,7 +1172,7 @@ int RtpPacketAAC :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbFrameB
     
     pbFrameBuf += 7;//aac 要偏移7字节头才是数据
     iFrameLen-=7;
-    while (iFrameLen> 0 && iPackNum < m_iMaxPacketNum) 
+    while (iFrameLen> 0 && iPackNum < RTP_MAX_PACKET_NUM) 
     {
         if ((unsigned int)iFrameLen <= RTP_MAX_PACKET_SIZE - RTP_HEADER_LEN-4) 
         {
