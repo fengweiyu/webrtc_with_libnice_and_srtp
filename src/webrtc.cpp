@@ -1054,7 +1054,7 @@ int WebRtcAnswer::GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int
         "a=rtcp-mux\r\n"
         "a=ice-ufrag:%s\r\n"
         "a=ice-pwd:%s\r\n"
-        "a=ice-options:trickle\r\n"
+        //"a=ice-options:trickle\r\n"//表示ice的candidate分开传输，现在一起传输所以注释掉
         "a=fingerprint:sha-256 %s\r\n"
         //"a=setup:passive\r\n"
         //"a=connection:new\r\n"
