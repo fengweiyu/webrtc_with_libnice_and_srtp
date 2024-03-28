@@ -23,18 +23,28 @@
 #define  WEBRTC_LOGD(...)     logd(WEBRTC) << lformat(WEBRTC,__VA_ARGS__) << lend
 #define  WEBRTC_LOGI(...)     logi(WEBRTC) << lformat(WEBRTC,__VA_ARGS__) << lend
 #else
+#define  WEBRTC_LOGW2(val,...)      printf(__VA_ARGS__)
+#define  WEBRTC_LOGE2(val,...)      printf(__VA_ARGS__)
+#define  WEBRTC_LOGD2(val,...)      printf(__VA_ARGS__)
 #define  WEBRTC_LOGW(...)     printf(__VA_ARGS__)
 #define  WEBRTC_LOGE(...)     printf(__VA_ARGS__)
 #define  WEBRTC_LOGD(...)     printf(__VA_ARGS__)
 #define  WEBRTC_LOGI(...)     printf(__VA_ARGS__)
 #endif
 
-
+/*offer (主动发起)的一方为 controlling 角色
+answer (被动接受)的一方为 controlled 角色
+full ice agent 是 controlling role，lite ice agent 是 controlled ,srs 仅支持 lite ice*/
 typedef enum IceControlRole
 {
-    ICE_CONTROLLED_ROLE=0,//使用这个失败
+    ICE_CONTROLLED_ROLE=0,////使用这个失败
     ICE_CONTROLLING_ROLE
 }E_IceControlRole;
+/*ICE 模式FULL ICE，双方都要进行连通性检查；ice 客户端实现，该模式既可以收 binding request，
+也可以发 binding requestLite ICE，在 FULL ICE 和 Lite ICE 互通时，只需要 FULL ICE 一方进行连通性检查，
+Lite 一方只需回应 response 消息，该模式对于部署在公网的设备比较常用；
+只接受并回复 binding request 请求，不会主动发送 binding request 请求给对方
+sdp 中有 a=ice-lite 字样srs 服务器采用 lite-ice 模式 */
 
 typedef struct VideoInfo
 {

@@ -47,8 +47,8 @@ public:
     int GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int i_iSdpMaxLen);//webrtc_client使用
     int HandleMsg(char * i_strMsg,int i_iNotJsonMsgFlag=0);
     int HandleCandidateMsg(char * i_strCandidateMsg,int i_iNotJsonMsgFlag=0);
-    int GetGatheringDoneFlag();
-    int GetSendReadyFlag();
+    int GetGatheringDoneFlag();//-1还未收集好,0收集成功
+    int GetSendReadyFlag();//-1不可发送,0准备好通道可以发送
     int SendProtectedRtp(char * i_acRtpBuf,int i_iRtpBufLen);
     
 private:
