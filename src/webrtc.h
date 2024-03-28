@@ -35,8 +35,8 @@ public:
     int StopProc();
     virtual int HandleMsg(char * i_strMsg,int i_iNotJsonMsgFlag=0)=0;
     int HandleCandidateMsg(char * i_strCandidateMsg,int i_iNotJsonMsgFlag=0);
-    int GetGatheringDoneFlag();
-    int GetSendReadyFlag();
+    int GetGatheringDoneFlag();//-1还未收集好,0收集成功
+    int GetSendReadyFlag();//-1不可发送,0准备好通道可以发送
     int SendProtectedRtp(char * i_acRtpBuf,int i_iRtpBufLen);
     virtual int GenerateLocalMsg(T_VideoInfo *i_ptVideoInfo,char * o_strMsg,int i_iMaxLen)=0;
     int GenerateLocalCandidateMsg(T_VideoInfo *i_ptVideoInfo,char * o_strCandidateMsg,int i_iCandidateMaxLen);

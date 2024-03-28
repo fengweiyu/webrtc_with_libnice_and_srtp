@@ -20,6 +20,17 @@
 #include <string.h>
 #include "debug.h"
 
+/*Host (Host Candidate)，该地址是一个真实的主机，参数中的地址和端口对应一个真实的主机地址，
+该地址来源于本地的物理网卡或逻辑网卡上的地址，
+对于具有公网地址或者同一内网的端可以用；
+Srvflx (Server Reflexive Candidate)，该地址是通过 Cone NAT (锥形 NAT) 反射的类型，参数中的地址和端口
+是端发送 Binding 请求到 STUN/TURN server 经过 NAT 时，NAT 上分配的地址和端口
+Relay (Relayed Candidate)，该地址是端发送 Allocate 请求到 TURN server，由 TURN server 用于中继的地址和
+端口，该地址和端口是 TURN 服务用于在两个对等点之间转发数据的地址和端口，
+是一个中继地址端口；( 可能是本机或 NAT 地址)；
+Prflx(Peer Reflexive Candidate)，该地址是通过发送 STUN Binding 时，通过 Binding 获取到的地址；
+在建立连接检查期间新发生，参数中的地址和端口是端发送 Binding 请求到 
+STUN/TURN server 经过 NAT 时，NAT 上分配的地址和端口*/
 const char * Libnice::m_astrCandidateTypeName[] = {"host", "srflx", "prflx", "relay"};
 int Libnice::m_iLibniceSendReadyFlag = 0;//0不可发送,1准备好通道可以发送
 /*****************************************************************************
@@ -644,12 +655,15 @@ void Libnice::CandidateGatheringDone(NiceAgent *i_ptAgent, guint i_dwStreamID,gp
         //NiceCandidate *c = (NiceCandidate *)g_slist_nth(cands, 0)->data;//取列表第一个不一定是最好的那个
 		nice_address_to_string(&c->addr, ipaddr);
 
-		// RFC 5245
+		// RFC 5245 
 		// a=candidate:<foundation> <component-id> <transport> <priority>
 		// <connection-address> <port> typ <candidate-types>
 		// [raddr <connection-address>] [rport <port>]
 		// *(SP extension-att-name SP extension-att-value)
 		//"candidate:3442447574 1 udp 2122260223 192.168.0.170 54653 typ host generation 0 ufrag gX6M network-id 1"
+		//foundation 候选者的基础标识，用于唯一标识候选者
+		//component ID：组件ID，表示候选者属于ICE代理的哪个组件1 代表 RTP; 2 代表 RTCP 
+		//WebRTC 采用 Rtcp-mux 方式，也就是 RTP 和 RTCP 在同一通道内传输，减少 ICE 的协商和通道的保活 
 		snprintf(pLibnice->m_tLocalCandidate.strCandidateData[i],sizeof(pLibnice->m_tLocalCandidate.strCandidateData[i]),
 		"candidate:%s %u %s %u %s %u typ %s",
 		c->foundation,c->component_id,transport_name[c->transport],c->priority,
