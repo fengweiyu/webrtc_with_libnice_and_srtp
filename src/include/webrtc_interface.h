@@ -44,6 +44,7 @@ public:
 	WebRtcInterface(T_WebRtcCfg i_tWebRtcCfg,T_WebRtcCb i_tWebRtcCb);//:m_Libnice(i_strStunAddr,i_dwStunPort,i_iControlling),m_Srtp()
 	virtual ~WebRtcInterface();
     int Proc();
+    int StopProc();
     int GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int i_iSdpMaxLen);//webrtc_client π”√
     int HandleMsg(char * i_strMsg,int i_iNotJsonMsgFlag=0);
     int HandleCandidateMsg(char * i_strCandidateMsg,int i_iNotJsonMsgFlag=0);

@@ -74,6 +74,22 @@ int WebRtcInterface::Proc()
     return pWebRTC->Proc();
 }
 
+/*****************************************************************************
+-Fuction        : Proc
+-Description    : Proc
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+int WebRtcInterface::StopProc()
+{
+    WebRTC *pWebRTC = (WebRTC *)m_pHandle;
+    return pWebRTC->StopProc();
+}
+
 
 /*****************************************************************************
 -Fuction        : GenerateLocalSDP
