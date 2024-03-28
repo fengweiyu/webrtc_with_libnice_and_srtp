@@ -55,8 +55,8 @@ WebRTC::WebRTC(char * i_strStunAddr,unsigned int i_dwStunPort,E_IceControlRole i
     {
         WEBRTC_LOGE("m_pDtlsOnlyHandshake->Init err%d",iRet);
     }
-    if(ICE_CONTROLLED_ROLE == i_eControlling)
-        iRet = m_pDtlsOnlyHandshake->Create(DTLS_ROLE_CLIENT);//后续可以抽象出一个角色放webrtc.h
+    if(ICE_CONTROLLED_ROLE == i_eControlling)//后续可以抽象出一个角色放webrtc.h
+        iRet = m_pDtlsOnlyHandshake->Create(DTLS_ROLE_SERVER);//必须是DTLS_ROLE_SERVER，DTLS_ROLE_CLIENT实测失败
     else
         iRet = m_pDtlsOnlyHandshake->Create(DTLS_ROLE_SERVER);//offer端，使用sever
     if(iRet < 0)//可以放Proc()里
@@ -1075,6 +1075,9 @@ int WebRtcAnswer::GenerateLocalSDP(T_VideoInfo *i_ptVideoInfo,char *o_strSDP,int
             strSdpFmt.append(strCandidate);
         }
     }
+    //memset(strCandidate,0,sizeof(strCandidate));
+    //snprintf(strCandidate,sizeof(strCandidate),"a=%s\r\n","candidate:21 1 udp 110 139.9.149.150 9018 typ host");
+    //strSdpFmt.append(strCandidate);
     //去掉sctp一样可以通道打通
     /*strSdpFmt.append("m=%s %u DTLS/SCTP %d\r\n"
         "c=IN IP4 %s\r\n"

@@ -121,6 +121,7 @@ int Libnice::LibniceProc()
     static GMainLoop *ptLoop=NULL;//
     static GIOChannel* ptStdinIO=NULL;//
     int inx =0;
+    NiceAddress tBaseAddr;
 
     m_iLibniceSendReadyFlag = 0;
     memset(&m_tLocalCandidate,0,sizeof(T_LocalCandidate));
@@ -161,6 +162,15 @@ int Libnice::LibniceProc()
     {
         nice_agent_attach_recv(m_ptAgent, m_tAudioStream.iID, inx, g_main_loop_get_context (m_ptLoop),&Libnice::RecvAudioData, this);
     }
+    
+    // 设置本地网络地址和端口
+    //nice_address_set_from_string(&tBaseAddr, "139.9.149.150");
+    //nice_address_set_port(&tBaseAddr,9018);
+    // 添加候选地址（可以是对端地址）
+    //nice_agent_add_local_address(m_ptAgent,&tBaseAddr);//设置了地址则只有candidate:2 1 tcp_active 1015023359 139.9.149.150 0 typ host,没找到修改为udp的方法
+    
+    // 设置本地端口范围，一般不做限制
+    //nice_agent_set_port_range(m_ptAgent, m_tVideoStream.iID,NICE_COMPONENT_TYPE_RTP, 9018, 9900);//设置了无作用
 
 	// Start gathering local candidates
 	if (!nice_agent_gather_candidates(m_ptAgent, m_tVideoStream.iID))
@@ -669,6 +679,7 @@ void Libnice::CandidateGatheringDone(NiceAgent *i_ptAgent, guint i_dwStreamID,gp
 		c->foundation,c->component_id,transport_name[c->transport],c->priority,
 		ipaddr,nice_address_get_port(&c->addr),m_astrCandidateTypeName[c->type]);
         snprintf(pLibnice->m_tLocalCandidate.strIP[i],sizeof(pLibnice->m_tLocalCandidate.strIP[i]),"%s",ipaddr);
+        printf("strCandidateData %d,%s,\r\n",i,pLibnice->m_tLocalCandidate.strCandidateData[i]);
         i++;
         if(i>=MAX_CANDIDATE_NUM)
         {
@@ -736,7 +747,7 @@ void Libnice::ComponentStateChanged(NiceAgent *agent, guint _stream_id,guint com
 
 void Libnice::RecvVideoData(NiceAgent *agent, guint _stream_id, guint component_id,guint len, gchar *buf, gpointer data)
 {
-    printf("Libnice::RecvVideoData \n");
+    printf("Libnice::RecvVideoData %d,%#x\n",len,buf[0]);
     Libnice *pLibnice=NULL;
     pLibnice = (Libnice *)data;
 	if (NULL != pLibnice)
@@ -746,7 +757,7 @@ void Libnice::RecvVideoData(NiceAgent *agent, guint _stream_id, guint component_
              pLibnice->m_tLibniceCb.HandleRecvData(buf,len,pLibnice->m_tLibniceCb.pObjCb);
         }
 	}
-	printf("%d,%.*s\r\n", len,len, buf);
+	//printf("%d,%.*s\r\n", len,len, buf);
 	//fflush(stdout);
 }
 
