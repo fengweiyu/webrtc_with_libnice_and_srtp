@@ -27,7 +27,7 @@ class Rtp
 {
 public:
 	Rtp(unsigned char **m_ppPackets,int i_iMaxPacketNum,char *i_strPath);
-
+    Rtp(char *i_strPath);
 	Rtp();
 	~Rtp();
     int Init(unsigned char **m_ppPackets,int i_iMaxPacketNum,char *i_strPath);

@@ -12,6 +12,8 @@
 #ifndef RTP_INTERFACE_H
 #define RTP_INTERFACE_H
 
+#define RTP_PACKET_MAX_SIZE	((1500-40)/4*4)//MTU (RTP_MAX_PACKET_SIZE)
+#define RTP_PACKET_MAX_NUM	(300)//RTP_MAX_PACKET_NUM
 
 /*****************************************************************************
 -Class			: RtpInterface
@@ -23,6 +25,7 @@
 class RtpInterface
 {
 public:
+    RtpInterface(char * i_strPath);
 	RtpInterface(unsigned char **m_ppPackets,int i_iMaxPacketNum,char *i_strPath);
 	~RtpInterface();
     int DeInit(unsigned char **m_ppPackets,int i_iMaxPacketNum);

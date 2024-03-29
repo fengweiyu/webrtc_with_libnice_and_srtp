@@ -64,6 +64,34 @@ Rtp :: Rtp(unsigned char **m_ppPackets,int i_iMaxPacketNum,char *i_strPath)
 * -----------------------------------------------
 * 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
+Rtp :: Rtp(char *i_strPath)
+{
+    int iRet=FALSE;
+    
+    m_pMediaHandle = NULL;
+    m_dwLastTimestamp = 0;
+    m_ptMediaFrameParam = NULL;
+
+    m_pMediaHandle=new MediaHandle();
+    if(NULL !=m_pMediaHandle && NULL !=i_strPath)
+    {
+        m_pMediaHandle->Init(i_strPath);
+    }
+    
+    m_pVideoRtpSession = new RtpSession(RTP_PAYLOAD_VIDEO,0);//i_dwSampleRate 暂时用不上先填0 tMediaInfo.dwVideoSampleRate
+
+}
+
+/*****************************************************************************
+-Fuction		: Rtp
+-Description	: Rtp
+-Input			: 
+-Output 		: 
+-Return 		: 
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
 Rtp :: Rtp()
 {
     m_pMediaHandle = NULL;

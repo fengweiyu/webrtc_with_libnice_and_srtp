@@ -12,6 +12,22 @@
 #include "rtp_interface.h"
 #include "Rtp.h"
 
+
+/*****************************************************************************
+-Fuction		: RtpInterface
+-Description	: RtpInterface
+-Input			: 
+-Output 		: 
+-Return 		: 
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
+RtpInterface :: RtpInterface(char * i_strPath)
+{
+    m_pRtp = new Rtp(i_strPath);
+}
+
 /*****************************************************************************
 -Fuction		: RtpInterface
 -Description	: RtpInterface
