@@ -173,7 +173,7 @@ static int OfferProc(WebRtcInterface * i_pWebRTC,char * i_strServerIp, int i_iSe
     int                     iSPS_Len=0;
     int                     iPPS_Len=0;
     
-    pWebRtcClientOffer = new WebRtcClientOffer();
+    pWebRtcClientOffer = new WebRtcClientOffer();//ppbPacketBuf可外部分配，然后记录偏移地址
     pRtpInterface = new RtpInterface(ppbPacketBuf,WEBRTC_RTP_MAX_PACKET_NUM,i_strVideoPath);
 
     E_WebRtcOfferStatus eWebRtcStatus=WEBRTC_OFFER_INIT;
