@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string>
+#include <stdint.h>
 #include "MediaHandle.h"
 
 using std::string;
@@ -23,7 +24,6 @@ using std::string;
 //#define FLV_MUX_NAME        ".flv"
 
 
-//下面定义可以放到.cpp里面
 #define FLV_HEADER_LEN		    9	// DataOffset included
 #define FLV_PRE_TAG_LEN	        4	// previous tag size
 #define FLV_TAG_HEADER_LEN	    11	// StreamID included
@@ -55,6 +55,33 @@ typedef struct FlvTag
 	unsigned int dwDataMaxLen; //如果等于0,则pbTagData会被赋值为输入缓存数据的偏移地址
 	unsigned int dwDataCurLen; //否则，会把数据拷贝到pbTagData指向的缓存
 }T_FlvTag;
+
+typedef struct FlvHevcDecoderConfigurationRecord
+{
+    unsigned char  configurationVersion;    // 1-only
+    unsigned char  general_profile_space;   // 2bit,[0,3]
+    unsigned char  general_tier_flag;       // 1bit,[0,1]
+    unsigned char  general_profile_idc; // 5bit,[0,31]
+    unsigned int general_profile_compatibility_flags;//uint32_t
+    uint64_t general_constraint_indicator_flags;//uint64_t , uint64
+    unsigned char  general_level_idc;
+    unsigned short min_spatial_segmentation_idc;
+    unsigned char  parallelismType;     // 2bit,[0,3]
+    unsigned char  chromaFormat;            // 2bit,[0,3]
+    unsigned char  bitDepthLumaMinus8;  // 3bit,[0,7]
+    unsigned char  bitDepthChromaMinus8;    // 3bit,[0,7]
+    unsigned short avgFrameRate;
+    unsigned char  constantFrameRate;       // 2bit,[0,3]
+    unsigned char  numTemporalLayers;       // 3bit,[0,7]
+    unsigned char  temporalIdNested;        // 1bit,[0,1]
+    unsigned char  lengthSizeMinusOne;  // 2bit,[0,3]
+
+    unsigned char  numOfArrays;
+
+    unsigned int pic_width;
+    unsigned int pic_height;
+}T_FlvH265Extradata;
+
 
 /*****************************************************************************
 -Class			: H264Handle

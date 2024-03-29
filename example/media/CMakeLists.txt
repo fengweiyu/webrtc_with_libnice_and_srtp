@@ -13,11 +13,15 @@ project (WebRTC)
 
 SET(src_list
     MediaHandle.cpp
+    FLV/FlvHandleInterface.cpp
+    FLV/FlvHandle.cpp
     RawVideoHandle.cpp
     RawAudioHandle.cpp
 	)		
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}
 	${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/FLV/include
+    ${PROJECT_SOURCE_DIR}/FLV
 	)
 ADD_LIBRARY(media_static STATIC ${src_list})
 SET_TARGET_PROPERTIES(media_static PROPERTIES OUTPUT_NAME media)

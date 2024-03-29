@@ -18,7 +18,6 @@
 using std::cout;//ะ่าช<iostream>
 using std::endl;
 
-#define FLV_FRAME_BUF_MAX_LEN (1024*1024)
 
 
 char * FlvHandleInterface::m_strFormatName=(char *)FLV_MUX_NAME;

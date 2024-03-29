@@ -26,37 +26,14 @@ using std::endl;
 #define  Read32LE(ptr,val)     *val = (unsigned char)ptr[0] | ((unsigned char)ptr[1] << 8) | ((unsigned char)ptr[2] << 16) | ((unsigned char)ptr[3] << 24)
 #define BIT(ptr, off) (((ptr)[(off) / 8] >> (7 - ((off) % 8))) & 0x01)
 
+
+#define FLV_FRAME_BUF_MAX_LEN (1024*1024)
+
 #define FLV_H264_SAMPLE_RATE 90000
 #define FLV_H265_SAMPLE_RATE 90000
 
-typedef struct FlvHevcDecoderConfigurationRecord
-{
-    unsigned char  configurationVersion;    // 1-only
-    unsigned char  general_profile_space;   // 2bit,[0,3]
-    unsigned char  general_tier_flag;       // 1bit,[0,1]
-    unsigned char  general_profile_idc; // 5bit,[0,31]
-    unsigned int general_profile_compatibility_flags;//uint32_t
-    uint64 general_constraint_indicator_flags;//uint64_t
-    unsigned char  general_level_idc;
-    unsigned short min_spatial_segmentation_idc;
-    unsigned char  parallelismType;     // 2bit,[0,3]
-    unsigned char  chromaFormat;            // 2bit,[0,3]
-    unsigned char  bitDepthLumaMinus8;  // 3bit,[0,7]
-    unsigned char  bitDepthChromaMinus8;    // 3bit,[0,7]
-    unsigned short avgFrameRate;
-    unsigned char  constantFrameRate;       // 2bit,[0,3]
-    unsigned char  numTemporalLayers;       // 3bit,[0,7]
-    unsigned char  temporalIdNested;        // 1bit,[0,1]
-    unsigned char  lengthSizeMinusOne;  // 2bit,[0,3]
-
-    unsigned char  numOfArrays;
-
-    unsigned int pic_width;
-    unsigned int pic_height;
-}T_FlvH265Extradata;
 
 
-char * FlvHandle::m_strFormatName=(char *)FLV_MUX_NAME;
 /*****************************************************************************
 -Fuction		: H264Handle
 -Description	: 
@@ -131,7 +108,7 @@ int FlvHandle::GetFrameData(int i_iDataOffset,T_MediaFrameInfo *m_ptFrame)
         return iRet;
     }
     iProcessedLen+=iRet;
-    switch(tFlvTag.bType)
+    switch(tFlvTag.tTagHeader.bType)
     {
         case FLV_TAG_VIDEO_TYPE :
         {
@@ -222,14 +199,14 @@ int FlvHandle::GetAudioData(unsigned char *i_pbAudioTag,int i_iTagLen,T_MediaFra
     }
     //tag Header 1 byte
     ParseAudioDataTagHeader(i_pbAudioTag[iProcessedLen],m_ptFrame);
-    if(MEDIA_ENCODE_TYPE_UNKNOW == m_ptFrame.eEncType ||MEDIA_ENCODE_TYPE_OPUS == m_ptFrame.eEncType)
+    if(MEDIA_ENCODE_TYPE_UNKNOW == m_ptFrame->eEncType ||MEDIA_ENCODE_TYPE_OPUS == m_ptFrame->eEncType)
     {
-        MH_LOGE("RTMP_UNKNOW_ENC_TYPE %d\r\n", m_ptFrame.eEncType);//OPUS暂不支持,后续再做
+        MH_LOGE("RTMP_UNKNOW_ENC_TYPE %d\r\n", m_ptFrame->eEncType);//OPUS暂不支持,后续再做
         return -1;
     }
     iProcessedLen++;
 
-    if(MEDIA_ENCODE_TYPE_AAC == m_ptFrame.eEncType)
+    if(MEDIA_ENCODE_TYPE_AAC == m_ptFrame->eEncType)
     {
         bIsAACSeqHeader = i_pbAudioTag[iProcessedLen] == 0 ? 1:0;//tag Body(AAC packet type) 1 byte
         iProcessedLen++;
@@ -446,7 +423,7 @@ int FlvHandle::GetVideoData(unsigned char *i_pbVideoTag,int i_iTagLen,T_MediaFra
             tH265Extradata.general_profile_idc = pbVideoData[1] & 0x1F;
             tH265Extradata.general_profile_compatibility_flags = (pbVideoData[2] << 24) | (pbVideoData[3] << 16) | (pbVideoData[4] << 8) | pbVideoData[5];
             tH265Extradata.general_constraint_indicator_flags = ((unsigned int)pbVideoData[6] << 24) | ((unsigned int)pbVideoData[7] << 16) | ((unsigned int)pbVideoData[8] << 8) | (unsigned int)pbVideoData[9];
-            tH265Extradata.general_constraint_indicator_flags = (tH265Extradata.general_constraint_indicator_flags << 16) | (((uint64)pbVideoData[10]) << 8) | pbVideoData[11];
+            tH265Extradata.general_constraint_indicator_flags = (tH265Extradata.general_constraint_indicator_flags << 16) | (((uint64_t)pbVideoData[10]) << 8) | pbVideoData[11];
             tH265Extradata.general_level_idc = pbVideoData[12];
             tH265Extradata.min_spatial_segmentation_idc = ((pbVideoData[13] & 0x0F) << 8) | pbVideoData[14];
             tH265Extradata.parallelismType = pbVideoData[15] & 0x03;
@@ -732,7 +709,7 @@ int FlvHandle::AddAdtsHeader(unsigned int i_dwSampleRate,unsigned int i_dwChanne
     
     if (NULL == o_pbAudioData || i_iDataMaxLen < 7) 
     {
-        RTMP_LOGE("AddAdtsHeader NULL %d \r\n", i_iDataMaxLen);
+        MH_LOGE("AddAdtsHeader NULL %d \r\n", i_iDataMaxLen);
         return iLen;
     }
 
