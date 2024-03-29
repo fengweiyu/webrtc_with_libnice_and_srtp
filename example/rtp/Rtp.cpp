@@ -360,7 +360,7 @@ int Rtp :: GetRtpPackets(T_MediaFrameInfo *m_ptFrame,unsigned char **o_ppbPacket
     //RTP_LOGI("m_ptMediaFrameParam->dwNaluCount %d iFrameLen %d dwTimeStamp%d\r\n",m_ptFrame->dwNaluCount,m_ptFrame->iFrameLen,m_ptFrame->dwTimeStamp);
     for(i=0;i<m_ptFrame->dwNaluCount;i++)
     {
-        iPacketNum+=m_RtpPacket.Packet(&tRtpPacketParam,pbNaluStartPos,m_ptFrame->adwNaluEndOffset[i]-dwNaluOffset,&o_ppbPacketBuf[iPacketNum],&o_aiEveryPacketLen[iPacketNum]);
+        iPacketNum+=m_RtpPacket.Packet(&tRtpPacketParam,m_ptFrame->atNaluInfo[i].pbData,m_ptFrame->atNaluInfo[i].dwDataLen,&o_ppbPacketBuf[iPacketNum],&o_aiEveryPacketLen[iPacketNum]);
         m_pVideoRtpSession->SetRtpPacketParam(&tRtpPacketParam);
         if(iPacketNum<=0 || iPacketNum>i_iPacketBufMaxNum)
         {
@@ -369,8 +369,8 @@ int Rtp :: GetRtpPackets(T_MediaFrameInfo *m_ptFrame,unsigned char **o_ppbPacket
             return iPacketNum;
         }
 
-        pbNaluStartPos = m_ptFrame->pbFrameStartPos +m_ptFrame->adwNaluEndOffset[i];
-        dwNaluOffset =m_ptFrame->adwNaluEndOffset[i];
+        //pbNaluStartPos = m_ptFrame->pbFrameStartPos +m_ptFrame->adwNaluEndOffset[i];
+        //dwNaluOffset =m_ptFrame->adwNaluEndOffset[i];
     }
     RTP_LOGI("iPacketNum %d ,m_ptMediaFrameParam->dwNaluCount %d eFrameType %d iFrameLen %d dwTimeStamp%d\r\n",iPacketNum,m_ptFrame->dwNaluCount,
     m_ptFrame->eFrameType,m_ptFrame->iFrameLen,m_ptFrame->dwTimeStamp);

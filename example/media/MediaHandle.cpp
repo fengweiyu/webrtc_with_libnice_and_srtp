@@ -15,6 +15,7 @@
 #include "MediaAdapter.h"
 #include "RawVideoHandle.h"
 #include "RawAudioHandle.h"
+#include "FlvHandleInterface.h"
 
 using std::cout;//需要<iostream>
 using std::endl;
@@ -84,7 +85,13 @@ int MediaHandle::Init(char *i_strPath)
         return iRet;
     } 
     
-    //暂时不支持复合流
+    if(NULL != strstr(i_strPath,FlvHandleInterface::m_strFormatName))
+    {
+        m_pMediaHandle=new FlvHandleInterface();
+        if(NULL !=m_pMediaHandle)
+            iRet=m_pMediaHandle->Init(i_strPath);
+        return iRet;
+    }
     if(NULL != strstr(i_strPath,H264Handle::m_strVideoFormatName))
     {
         m_pMediaHandle=new H264Handle();

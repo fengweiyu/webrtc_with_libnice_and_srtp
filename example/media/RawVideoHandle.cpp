@@ -496,7 +496,8 @@ int H264Handle::SetH264NaluData(unsigned char i_bNaluType,unsigned char i_bStart
         m_ptFrame->pbFrameStartPos = i_pbNaluData;
     }
     m_ptFrame->iFrameLen += i_iNaluDataLen;
-    m_ptFrame->adwNaluEndOffset[m_ptFrame->dwNaluCount] = (i_pbNaluData+i_iNaluDataLen - m_ptFrame->pbFrameStartPos);
+    m_ptFrame->atNaluInfo[m_ptFrame->dwNaluCount].pbData= i_pbNaluData;
+    m_ptFrame->atNaluInfo[m_ptFrame->dwNaluCount].dwDataLen= i_iNaluDataLen;
     m_ptFrame->dwNaluCount++;
 
     iNaluDataLen = i_iNaluDataLen-i_bStartCodeLen;//包括类型减开始码
@@ -873,7 +874,8 @@ int H265Handle::SetH265NaluData(unsigned char i_bNaluType,unsigned char i_bStart
         m_ptFrame->pbFrameStartPos = i_pbNaluData;
     }
     m_ptFrame->iFrameLen += i_iNaluDataLen;
-    m_ptFrame->adwNaluEndOffset[m_ptFrame->dwNaluCount] = (i_pbNaluData+i_iNaluDataLen - m_ptFrame->pbFrameStartPos);
+    m_ptFrame->atNaluInfo[m_ptFrame->dwNaluCount].pbData= i_pbNaluData;
+    m_ptFrame->atNaluInfo[m_ptFrame->dwNaluCount].dwDataLen= i_iNaluDataLen;
     m_ptFrame->dwNaluCount++;
 
     iNaluDataLen = i_iNaluDataLen-i_bStartCodeLen;//包括类型减开始码

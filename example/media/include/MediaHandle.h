@@ -40,16 +40,21 @@ typedef enum
     MEDIA_ENCODE_TYPE_VP8,
     MEDIA_ENCODE_TYPE_VP9,
     MEDIA_ENCODE_TYPE_AAC,
-    MEDIA_ENCODE_TYPE_G711U,
     MEDIA_ENCODE_TYPE_G711A,
+    MEDIA_ENCODE_TYPE_G711U,
     MEDIA_ENCODE_TYPE_G726,
+    MEDIA_ENCODE_TYPE_MP3,
+    MEDIA_ENCODE_TYPE_OPUS,
+    MEDIA_ENCODE_TYPE_LPCM,// Linear PCM, platform endian
+    MEDIA_ENCODE_TYPE_ADPCM,
+    MEDIA_ENCODE_TYPE_LLPCM,// Linear PCM, little endian
 }E_MediaEncodeType;
 
 typedef enum
 {
 	MEDIA_FRAME_TYPE_UNKNOW = 0,
     MEDIA_FRAME_TYPE_VIDEO_I_FRAME,
-    MEDIA_FRAME_TYPE_VIDEO_P_FRAME,
+    MEDIA_FRAME_TYPE_VIDEO_P_FRAME,//inner
     MEDIA_FRAME_TYPE_VIDEO_B_FRAME,
     MEDIA_FRAME_TYPE_AUDIO_FRAME,
         
@@ -85,6 +90,11 @@ typedef struct MediaFrameParam
     unsigned int dwTimeStamp;
 }T_MediaFrameParam;
 
+typedef struct AudioEncodeParam
+{
+    unsigned int dwChannels;
+    unsigned int dwBitsPerSample;
+}T_AudioEncodeParam;
 
 typedef struct VideoEncodeParam
 {
@@ -108,6 +118,12 @@ typedef struct MediaFrameBufInfo
     E_MediaEncodeType eEncType;//裸流的帧数据时，这个需要外部赋值然后传入
 }T_MediaFrameBufInfo;
 
+typedef struct MediaNaluInfo
+{
+    unsigned char *pbData;////包含00 00 00 01
+    unsigned int dwDataLen;
+}T_MediaNaluInfo;
+
 typedef struct MediaFrameInfo
 {
     unsigned char *pbFrameBuf;//缓冲区
@@ -119,15 +135,20 @@ typedef struct MediaFrameInfo
     E_StreamType eStreamType;//解析文件时,eStreamType外部赋值0(表示不是数据流(是文件)),下面4个参数则由内部赋值
     E_MediaEncodeType eEncType;
     unsigned int dwTimeStamp;
-    unsigned int dwSampleRate;
+    unsigned int dwSampleRate;//dwSamplesPerSecond
     E_MediaFrameType eFrameType;
+    unsigned int dwWidth;//
+    unsigned int dwHeight;//
 
 	//输出1帧数据结果
-    unsigned char *pbFrameStartPos;
+    unsigned char *pbFrameStartPos;//包含00 00 00 01
     int iFrameLen;
     unsigned int dwNaluCount;//包括sps,pps等参数集对应的nalu
-    unsigned int adwNaluEndOffset[MAX_NALU_CNT_ONE_FRAME];
+    T_MediaNaluInfo atNaluInfo[MAX_NALU_CNT_ONE_FRAME];//存在一帧图像切片成多个(nalu)的情况
+    unsigned char bNaluLenSize;//avcc形式存储nalu是的naluLen的大小(所占字节数)
+    //unsigned int adwNaluEndOffset[MAX_NALU_CNT_ONE_FRAME];
     T_VideoEncodeParam tVideoEncodeParam;
+    T_AudioEncodeParam tAudioEncodeParam;
 }T_MediaFrameInfo;
 
 /*****************************************************************************
