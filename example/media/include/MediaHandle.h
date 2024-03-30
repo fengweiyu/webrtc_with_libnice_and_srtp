@@ -134,7 +134,7 @@ typedef struct MediaFrameInfo
     //裸流的帧数据(数据流,eStreamType需要被赋值为对应的数据流格式)时，下面5个参数都需要外部赋值然后传入
     E_StreamType eStreamType;//解析文件时,eStreamType外部赋值0(表示不是数据流(是文件)),下面4个参数则由内部赋值
     E_MediaEncodeType eEncType;
-    unsigned int dwTimeStamp;
+    unsigned int dwTimeStamp;//ms
     unsigned int dwSampleRate;//dwSamplesPerSecond
     E_MediaFrameType eFrameType;
     unsigned int dwWidth;//

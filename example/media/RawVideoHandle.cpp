@@ -539,8 +539,7 @@ int H264Handle::SetH264NaluData(unsigned char i_bNaluType,unsigned char i_bStart
         if(STREAM_TYPE_UNKNOW == m_ptFrame->eStreamType)//文件的时候才需要赋值，数据流的时候外部会赋值以外部为准
         {
             m_ptFrame->eFrameType = eFrameType;
-            //时间戳的单位是1/VIDEO_H264_SAMPLE_RATE(s),频率的倒数
-            m_ptFrame->dwTimeStamp += VIDEO_H264_FRAME_INTERVAL*VIDEO_H264_SAMPLE_RATE/1000;
+            m_ptFrame->dwTimeStamp += VIDEO_H264_FRAME_INTERVAL;//VIDEO_H264_FRAME_INTERVAL*VIDEO_H264_SAMPLE_RATE/1000;
             m_ptFrame->dwSampleRate= VIDEO_H264_SAMPLE_RATE;
             m_ptFrame->eEncType = MEDIA_ENCODE_TYPE_H264;
         }
@@ -913,10 +912,9 @@ int H265Handle::SetH265NaluData(unsigned char i_bNaluType,unsigned char i_bStart
         if(STREAM_TYPE_UNKNOW == m_ptFrame->eStreamType)//文件的时候才需要赋值，数据流的时候外部会赋值以外部为准
         {
             m_ptFrame->eFrameType = eFrameType;
-            //时间戳的单位是1/VIDEO_H264_SAMPLE_RATE(s),频率的倒数
-            m_ptFrame->dwTimeStamp += VIDEO_H264_FRAME_INTERVAL*VIDEO_H264_SAMPLE_RATE/1000;
-            m_ptFrame->dwSampleRate= VIDEO_H264_SAMPLE_RATE;
-            m_ptFrame->eEncType = MEDIA_ENCODE_TYPE_H264;
+            m_ptFrame->dwTimeStamp += VIDEO_H265_FRAME_INTERVAL;//VIDEO_H265_FRAME_INTERVAL*VIDEO_H264_SAMPLE_RATE/1000;
+            m_ptFrame->dwSampleRate= VIDEO_H265_SAMPLE_RATE;
+            m_ptFrame->eEncType = MEDIA_ENCODE_TYPE_H265;
         }
         iRet = 0;//解析出一帧则退出
     }

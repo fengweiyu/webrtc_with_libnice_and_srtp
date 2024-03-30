@@ -159,8 +159,8 @@ int G711Handle::GetFrame(T_MediaFrameInfo *m_ptFrame)
         if(STREAM_TYPE_UNKNOW == m_ptFrame->eStreamType)//文件的时候才需要赋值，数据流的时候外部会赋值以外部为准
         {
             m_ptFrame->eFrameType = MEDIA_FRAME_TYPE_AUDIO_FRAME;
-            m_ptFrame->dwTimeStamp += AUDIO_G711_A_FRAME_SAMPLE_POINT_NUM;
             m_ptFrame->dwSampleRate= AUDIO_G711_SAMPLE_RATE;
+            m_ptFrame->dwTimeStamp += AUDIO_G711_A_FRAME_SAMPLE_POINT_NUM*1000/m_ptFrame->dwSampleRate;//采样点*每点的时间
             m_ptFrame->eEncType = MEDIA_ENCODE_TYPE_G711U;
         }
 	
@@ -412,15 +412,15 @@ int AACHandle::GetFrame(T_MediaFrameInfo *m_ptFrame)
             if(STREAM_TYPE_UNKNOW == m_ptFrame->eStreamType)//文件的时候才需要赋值，数据流的时候外部会赋值以外部为准
             {
                 m_ptFrame->eFrameType = MEDIA_FRAME_TYPE_AUDIO_FRAME;
+                if(iSampleRateIndex>=0&&iSampleRateIndex<sizeof(g_aiAACSamplingFreqIndexValue)/sizeof(int));
+                    m_ptFrame->dwSampleRate = g_aiAACSamplingFreqIndexValue[iSampleRateIndex];
                 if(0 != iFramMark)
                 {
                     //AAC定义每1024个采样点为1帧
                     //采样点的时间单位与时间戳一样
                     //因此时间戳的增量为1024(1/采样率)
-                    m_ptFrame->dwTimeStamp += AUDIO_AAC_A_FRAME_SAMPLE_POINT_NUM;
+                    m_ptFrame->dwTimeStamp += AUDIO_AAC_A_FRAME_SAMPLE_POINT_NUM*1000/m_ptFrame->dwSampleRate;//采样点*每点的时间
                 }
-                if(iSampleRateIndex>=0&&iSampleRateIndex<sizeof(g_aiAACSamplingFreqIndexValue)/sizeof(int));
-                    m_ptFrame->dwSampleRate = g_aiAACSamplingFreqIndexValue[iSampleRateIndex];
                 m_ptFrame->eEncType = MEDIA_ENCODE_TYPE_AAC;
             }
             break;

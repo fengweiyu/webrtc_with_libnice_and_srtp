@@ -164,7 +164,7 @@ int FlvHandleInterface::GetFrame(T_MediaFrameInfo *m_ptFrame)
 	{
         m_ptFrame->iFrameProcessedLen += iProcessedLen;
 	}
-    return iRet;
+    return 0;
 }
 
 
