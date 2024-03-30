@@ -384,7 +384,7 @@ int RtpPacketH264 :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluB
             iNaluLen    -= 4;
         }
         
-        if((unsigned int)iNaluLen <=RTP_MAX_PACKET_SIZE- sizeof(T_RtpHeader))
+        if((unsigned int)iNaluLen <=RTP_MAX_PACKET_SIZE- RTP_HEADER_LEN)
         {//单个NAL包单元
             if(NULL == m_pRtpPacketNALU)
             {
@@ -561,7 +561,7 @@ int H264FU_A :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,in
             pbNaluBuf ++; //drop nalu header，一个字节的FRT，打包的数据中不包含(原始的)nalu header
             iNaluLen --;
         } 
-        else if ((unsigned int)iNaluLen <= RTP_MAX_PACKET_SIZE- sizeof(T_RtpHeader)-FU_A_HEADER_LEN) //iNaluLen已经--了
+        else if ((unsigned int)iNaluLen <= RTP_MAX_PACKET_SIZE- RTP_HEADER_LEN-FU_A_HEADER_LEN) //iNaluLen已经--了
         {//NALU Payload数据在1字节的FU indicator  和1字节的   FU header后面
             iMark = 1;//最后一包
         }
@@ -569,9 +569,9 @@ int H264FU_A :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,in
         if (iPackNum == 0) 
         {
             RtpPacket :: GenerateRtpHeader(i_ptParam,iPaddingLen,iMark,o_ppPackets[iPackNum]);
-            o_ppPackets[iPackNum][sizeof(T_RtpHeader) + 0] = (bNaluHeader & 0xe0) | FU_A_TYPE;//FU indicator,低5位
-            o_ppPackets[iPackNum][sizeof(T_RtpHeader) + 1] = (bNaluHeader & 0x1f);//FU indicator，高3位:S E R ,R: 1 bit 保留位必须设置为0
-            o_ppPackets[iPackNum][sizeof(T_RtpHeader) + 1] |= 0x80; //S: 1 bit 当设置成1,开始位指示分片NAL单元的开始
+            o_ppPackets[iPackNum][RTP_HEADER_LEN + 0] = (bNaluHeader & 0xe0) | FU_A_TYPE;//FU indicator,低5位
+            o_ppPackets[iPackNum][RTP_HEADER_LEN + 1] = (bNaluHeader & 0x1f);//FU indicator，高3位:S E R ,R: 1 bit 保留位必须设置为0
+            o_ppPackets[iPackNum][RTP_HEADER_LEN + 1] |= 0x80; //S: 1 bit 当设置成1,开始位指示分片NAL单元的开始
             memcpy(o_ppPackets[iPackNum] + RTP_HEADER_LEN + FU_A_HEADER_LEN, pbNaluBuf, RTP_MAX_PACKET_SIZE- RTP_HEADER_LEN-FU_A_HEADER_LEN);
             o_aiEveryPacketLen[iPackNum] = RTP_MAX_PACKET_SIZE;
 
@@ -587,9 +587,9 @@ int H264FU_A :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,in
                     iPaddingLen = 4 -((RTP_HEADER_LEN+FU_A_HEADER_LEN+iNaluLen)%4);//4字节对齐
                 }
                 RtpPacket :: GenerateRtpHeader(i_ptParam,iPaddingLen,iMark,o_ppPackets[iPackNum]);
-                o_ppPackets[iPackNum][sizeof(T_RtpHeader) + 0] = (bNaluHeader & 0x60) | FU_A_TYPE;//FU indicator,低5位
-                o_ppPackets[iPackNum][sizeof(T_RtpHeader) + 1] = (bNaluHeader & 0x1f);//FU indicator，高3位:S E R ,R: 1 bit 保留位必须设置为0
-                o_ppPackets[iPackNum][sizeof(T_RtpHeader) + 1] |= 0x40; //E: 1 bit 当设置成1, 结束位指示分片NAL单元的结束
+                o_ppPackets[iPackNum][RTP_HEADER_LEN + 0] = (bNaluHeader & 0x60) | FU_A_TYPE;//FU indicator,低5位
+                o_ppPackets[iPackNum][RTP_HEADER_LEN + 1] = (bNaluHeader & 0x1f);//FU indicator，高3位:S E R ,R: 1 bit 保留位必须设置为0
+                o_ppPackets[iPackNum][RTP_HEADER_LEN + 1] |= 0x40; //E: 1 bit 当设置成1, 结束位指示分片NAL单元的结束
             
                 memcpy(o_ppPackets[iPackNum] + RTP_HEADER_LEN + FU_A_HEADER_LEN, pbNaluBuf, iNaluLen);
                 o_aiEveryPacketLen[iPackNum] = RTP_HEADER_LEN+ FU_A_HEADER_LEN + iNaluLen;
@@ -604,8 +604,8 @@ int H264FU_A :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,in
             else 
             {
                 RtpPacket :: GenerateRtpHeader(i_ptParam,iPaddingLen,iMark,o_ppPackets[iPackNum]);
-                o_ppPackets[iPackNum][sizeof(T_RtpHeader) + 0] = (bNaluHeader & 0x60) | FU_A_TYPE;//FU indicator,低5位
-                o_ppPackets[iPackNum][sizeof(T_RtpHeader) + 1] = (bNaluHeader & 0x1f);//FU indicator，高3位:S E R ,R: 1 bit 保留位必须设置为0
+                o_ppPackets[iPackNum][RTP_HEADER_LEN + 0] = (bNaluHeader & 0x60) | FU_A_TYPE;//FU indicator,低5位
+                o_ppPackets[iPackNum][RTP_HEADER_LEN + 1] = (bNaluHeader & 0x1f);//FU indicator，高3位:S E R ,R: 1 bit 保留位必须设置为0
                 memcpy(o_ppPackets[iPackNum] + RTP_HEADER_LEN +FU_A_HEADER_LEN, pbNaluBuf, RTP_MAX_PACKET_SIZE- RTP_HEADER_LEN-FU_A_HEADER_LEN);
                 o_aiEveryPacketLen[iPackNum] = RTP_MAX_PACKET_SIZE;
                 
@@ -683,7 +683,7 @@ int RtpPacketH265 :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluB
             iNaluLen    -= 4;
         }
         
-        if((unsigned int)iNaluLen <=RTP_MAX_PACKET_SIZE- sizeof(T_RtpHeader))
+        if((unsigned int)iNaluLen <=RTP_MAX_PACKET_SIZE- RTP_HEADER_LEN)
         {//单个NAL包单元
             if(NULL == m_pRtpPacketNALU)
             {
@@ -870,10 +870,10 @@ int H265FU_A :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,in
         if (iPackNum == 0) 
         {
             RtpPacket :: GenerateRtpHeader(i_ptParam,iPaddingLen,iMark,o_ppPackets[iPackNum]);
-            o_ppPackets[iPackNum][sizeof(T_RtpHeader) + 0] = (bNaluHeader1 & 0x81) | (FU_A_TYPE<<1);//修改type值为49(& 0x81先清掉原有的占位数据)
-            o_ppPackets[iPackNum][sizeof(T_RtpHeader) + 1] = bNaluHeader2;//不变
-            o_ppPackets[iPackNum][sizeof(T_RtpHeader) + 2] = (bNaluHeader1>>1) & 0x3F; //nalu type
-            o_ppPackets[iPackNum][sizeof(T_RtpHeader) + 2] |= 0x80; //S: 1 bit 当设置成1,开始位指示分片NAL单元的开始
+            o_ppPackets[iPackNum][RTP_HEADER_LEN + 0] = (bNaluHeader1 & 0x81) | (FU_A_TYPE<<1);//修改type值为49(& 0x81先清掉原有的占位数据)
+            o_ppPackets[iPackNum][RTP_HEADER_LEN + 1] = bNaluHeader2;//不变
+            o_ppPackets[iPackNum][RTP_HEADER_LEN + 2] = (bNaluHeader1>>1) & 0x3F; //nalu type
+            o_ppPackets[iPackNum][RTP_HEADER_LEN + 2] |= 0x80; //S: 1 bit 当设置成1,开始位指示分片NAL单元的开始
             memcpy(o_ppPackets[iPackNum] + RTP_HEADER_LEN + FU_A_HEADER_LEN, pbNaluBuf, RTP_MAX_PACKET_SIZE- RTP_HEADER_LEN-FU_A_HEADER_LEN);
             o_aiEveryPacketLen[iPackNum] = RTP_MAX_PACKET_SIZE;
 
@@ -889,10 +889,10 @@ int H265FU_A :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,in
                     iPaddingLen = 4 -((RTP_HEADER_LEN+FU_A_HEADER_LEN+iNaluLen)%4);//4字节对齐
                 }
                 RtpPacket :: GenerateRtpHeader(i_ptParam,iPaddingLen,iMark,o_ppPackets[iPackNum]);
-                o_ppPackets[iPackNum][sizeof(T_RtpHeader) + 0] = (bNaluHeader1 & 0x81) | (FU_A_TYPE<<1);//修改type值为49(& 0x81先清掉原有的占位数据)
-                o_ppPackets[iPackNum][sizeof(T_RtpHeader) + 1] = bNaluHeader2;//不变
-                o_ppPackets[iPackNum][sizeof(T_RtpHeader) + 2] = (bNaluHeader1>>1) & 0x3F; //nalu type
-                o_ppPackets[iPackNum][sizeof(T_RtpHeader) + 2] |= 0x40; //E: 1 bit 当设置成1, 结束位指示分片NAL单元的结束
+                o_ppPackets[iPackNum][RTP_HEADER_LEN + 0] = (bNaluHeader1 & 0x81) | (FU_A_TYPE<<1);//修改type值为49(& 0x81先清掉原有的占位数据)
+                o_ppPackets[iPackNum][RTP_HEADER_LEN + 1] = bNaluHeader2;//不变
+                o_ppPackets[iPackNum][RTP_HEADER_LEN + 2] = (bNaluHeader1>>1) & 0x3F; //nalu type
+                o_ppPackets[iPackNum][RTP_HEADER_LEN + 2] |= 0x40; //E: 1 bit 当设置成1, 结束位指示分片NAL单元的结束
             
                 memcpy(o_ppPackets[iPackNum] + RTP_HEADER_LEN + FU_A_HEADER_LEN, pbNaluBuf, iNaluLen);
                 o_aiEveryPacketLen[iPackNum] = RTP_HEADER_LEN+ FU_A_HEADER_LEN + iNaluLen;
@@ -907,9 +907,9 @@ int H265FU_A :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,in
             else 
             {
                 RtpPacket :: GenerateRtpHeader(i_ptParam,iPaddingLen,iMark,o_ppPackets[iPackNum]);
-                o_ppPackets[iPackNum][sizeof(T_RtpHeader) + 0] = (bNaluHeader1 & 0x81) | (FU_A_TYPE<<1);//修改type值为49(& 0x81先清掉原有的占位数据)
-                o_ppPackets[iPackNum][sizeof(T_RtpHeader) + 1] = bNaluHeader2;//不变
-                o_ppPackets[iPackNum][sizeof(T_RtpHeader) + 2] = (bNaluHeader1>>1) & 0x3F; //nalu type
+                o_ppPackets[iPackNum][RTP_HEADER_LEN + 0] = (bNaluHeader1 & 0x81) | (FU_A_TYPE<<1);//修改type值为49(& 0x81先清掉原有的占位数据)
+                o_ppPackets[iPackNum][RTP_HEADER_LEN + 1] = bNaluHeader2;//不变
+                o_ppPackets[iPackNum][RTP_HEADER_LEN + 2] = (bNaluHeader1>>1) & 0x3F; //nalu type
                 memcpy(o_ppPackets[iPackNum] + RTP_HEADER_LEN + FU_A_HEADER_LEN, pbNaluBuf, RTP_MAX_PACKET_SIZE- RTP_HEADER_LEN-FU_A_HEADER_LEN);
                 o_aiEveryPacketLen[iPackNum] = RTP_MAX_PACKET_SIZE;
                 

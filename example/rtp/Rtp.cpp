@@ -397,6 +397,19 @@ int Rtp :: GetRtpPackets(T_MediaFrameInfo *m_ptFrame,unsigned char **o_ppbPacket
             return iPacketNum;
         }
     }
+    iPacketNum = 0;
+    if(MEDIA_FRAME_TYPE_AUDIO_FRAME == m_ptFrame->eFrameType)
+    {
+        //iPacketNum+=m_AudioRtpPacket.Packet(&tRtpPacketParam,m_ptFrame->pbFrameStartPos,m_ptFrame->iFrameLen,&o_ppbPacketBuf[iPacketNum],&o_aiEveryPacketLen[iPacketNum],iRtpPacketType);
+        //m_pVideoRtpSession->SetRtpPacketParam(&tRtpPacketParam);
+        //if(iPacketNum<=0 || iPacketNum>i_iPacketBufMaxNum)
+        {
+            //RTP_LOGE("m_pRtpPacket->Packet  err %d \r\n",iPacketNum);
+            //iPacketNum = -1;
+            //return iPacketNum;
+        }
+        return 0;
+    }
     memset(&tRtpPacketParam,0,sizeof(T_RtpPacketParam));
     m_pVideoRtpSession->GetRtpPacketParam(&tRtpPacketParam);
     if (0 == m_dwLastTimestamp)
@@ -406,23 +419,10 @@ int Rtp :: GetRtpPackets(T_MediaFrameInfo *m_ptFrame,unsigned char **o_ppbPacket
     else
     {
         dwDiffTimestamp = m_ptFrame->dwTimeStamp - m_dwLastTimestamp;
-    }
-    tRtpPacketParam.dwTimestamp += dwDiffTimestamp;//这样做的目的是让rtp的时间戳从0开始，
+    }////时间戳的单位是1/VIDEO_H264_SAMPLE_RATE(s),频率的倒数
+    tRtpPacketParam.dwTimestamp += dwDiffTimestamp*m_ptFrame->dwSampleRate/1000;//这样做的目的是让rtp的时间戳从0开始，
     m_dwLastTimestamp = m_ptFrame->dwTimeStamp;//不然也可以直接用m_tMediaFrameParam.dwTimeStamp
     
-    iPacketNum = 0;
-    if(MEDIA_FRAME_TYPE_AUDIO_FRAME == m_ptFrame->eFrameType)
-    {
-        iPacketNum+=m_RtpPacket.Packet(&tRtpPacketParam,m_ptFrame->pbFrameStartPos,m_ptFrame->iFrameLen,&o_ppbPacketBuf[iPacketNum],&o_aiEveryPacketLen[iPacketNum],iRtpPacketType);
-        //m_pVideoRtpSession->SetRtpPacketParam(&tRtpPacketParam);
-        if(iPacketNum<=0 || iPacketNum>i_iPacketBufMaxNum)
-        {
-            RTP_LOGE("m_pRtpPacket->Packet  err %d \r\n",iPacketNum);
-            iPacketNum = -1;
-            //return iPacketNum;
-        }
-        return iPacketNum;
-    }
     pbNaluStartPos = m_ptFrame->pbFrameStartPos;
     dwNaluOffset = 0;
     if (m_ptFrame->dwNaluCount > MAX_NALU_CNT_ONE_FRAME)

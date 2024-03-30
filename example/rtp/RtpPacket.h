@@ -21,7 +21,7 @@
 using std::string;
 
 #define IP_MAX_LEN 				(40)
-#define RTP_MAX_PACKET_SIZE	((1500-IP_MAX_LEN)/4*4)//MTU (1514-54 以太网帧最大1514-mac头14-ip头20-tcp头20)
+#define RTP_MAX_PACKET_SIZE	1460//((1500-IP_MAX_LEN)/4*4)//MTU (1514-54 以太网帧最大1514-mac头14-ip头20-tcp头20)
 #define RTP_MAX_PACKET_NUM	(300)//m_iMaxPacketNum无法传递到底下的类里面,故暂不使用
 #define RTP_HEADER_LEN 			(12)
 
@@ -51,7 +51,7 @@ typedef struct RtpPacketParam
     unsigned short  wSeq;
     unsigned int    dwTimestampFreq;
     unsigned int    wPayloadType;
-    unsigned int    dwTimestamp;
+    unsigned int    dwTimestamp;//时间戳的单位是1/VIDEO_H264_SAMPLE_RATE(s),频率的倒数
 }T_RtpPacketParam;//这些参数在每个rtp会话中都不一样，即唯一的。
 
 
@@ -77,7 +77,7 @@ typedef struct RtpHeader
 	unsigned short wSeq;//序列号（SN）：占16位，用于标识发送者所发送的RTP报文的序列号，每发送一个报文，序列号增1
 	unsigned int dwTimestamp;//时间戳(Timestamp): 占32位，记录了该包中数据的第一个字节的采样时刻
 	unsigned int dwSSRC;//同步源标识符(SSRC)：占32位，用于标识同步信源，同步源就是指RTP包流的来源。在同一个RTP会话中不能有两个相同的SSRC值
-}T_RtpHeader;//size 12
+}T_RtpHeader;//size 12 不同平台sizeof(T_RtpHeader)大小可能不同,所以用RTP_HEADER_LEN代替
 
 
 /*****************************************************************************

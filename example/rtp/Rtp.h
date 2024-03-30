@@ -40,6 +40,7 @@ public:
 private:
     MediaHandle             *m_pMediaHandle;
 	RtpPacket               m_RtpPacket;
+	RtpPacket               m_AudioRtpPacket;
     T_MediaFrameParam       *m_ptMediaFrameParam;
     RtpSession              *m_pVideoRtpSession;
     
