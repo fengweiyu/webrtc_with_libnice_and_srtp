@@ -99,6 +99,7 @@ int FlvHandle::GetFrameData(int i_iDataOffset,T_MediaFrameInfo *m_ptFrame)
             MH_LOGE("FlvReadHeader err %d\r\n",iProcessedLen);
             return iRet;
         }
+        return iProcessedLen;//返回到外层以便i_iDataOffset值得到变更
     }
     memset(&tFlvTag,0,sizeof(T_FlvTag));
     iRet = this->FlvReadTag(m_ptFrame->pbFrameBuf+i_iDataOffset,m_ptFrame->iFrameBufLen-i_iDataOffset,&tFlvTag);
