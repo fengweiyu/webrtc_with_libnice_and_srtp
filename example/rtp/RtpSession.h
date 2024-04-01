@@ -15,7 +15,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string>
-#include "UdpSocket.h"
+//#include "UdpSocket.h"
 //#include "TcpSocket.h"
 #include "RtpPacket.h"
 
@@ -46,8 +46,8 @@ public:
     unsigned int GetSSRC(void);
     void Close();
 private:
-    UdpClient   *m_pRtpClientOverUDP;
-    UdpClient   *m_pRtcpClientOverUDP;
+    //UdpClient   *m_pRtpClientOverUDP;//暂时不引用，后续独立出去来实现和http模块解耦
+    //UdpClient   *m_pRtcpClientOverUDP;//恢复使用，可以搜索变量名
     //TcpClient   *m_pRtpClientOverTCP;//暂时不引用，后续独立出去来实现和http模块解耦
     //TcpClient   *m_pRtcpClientOverTCP;//后续独立出去来实现和http模块解耦
     T_RtpPacketParam m_tRtpPacketParam;

@@ -32,10 +32,10 @@ using std::endl;
 ******************************************************************************/
 RtpSession :: RtpSession(int i_wPayloadType,unsigned int i_dwSampleRate)
 {
-    m_pRtpClientOverUDP = NULL;
+    //m_pRtpClientOverUDP = NULL;
+    //m_pRtcpClientOverUDP = NULL;
     //m_pRtpClientOverTCP = NULL;
     //m_pRtcpClientOverTCP = NULL;
-    m_pRtcpClientOverUDP = NULL;
     memset(&m_tRtpPacketParam,0,sizeof(m_tRtpPacketParam));
     m_tRtpPacketParam.dwSSRC=GetSSRC();
     m_tRtpPacketParam.dwTimestampFreq=i_dwSampleRate;
@@ -54,7 +54,7 @@ RtpSession :: RtpSession(int i_wPayloadType,unsigned int i_dwSampleRate)
 ******************************************************************************/
 RtpSession :: ~RtpSession()
 {
-    if(NULL != m_pRtpClientOverUDP)
+    /*if(NULL != m_pRtpClientOverUDP)
     {
         delete m_pRtpClientOverUDP;
         m_pRtpClientOverUDP = NULL;
@@ -64,7 +64,7 @@ RtpSession :: ~RtpSession()
     {
         delete m_pRtcpClientOverUDP;
         m_pRtcpClientOverUDP = NULL;
-    }
+    }*/
         
     /*if(NULL != m_pRtpClientOverTCP)
     {
@@ -95,7 +95,7 @@ int RtpSession :: Init(bool i_blIsTcp,string i_strLocalIP,string i_strIP,unsigne
     unsigned short wPort=0;
     if(false == i_blIsTcp)
     {
-        if(NULL == m_pRtpClientOverUDP)
+        /*if(NULL == m_pRtpClientOverUDP)
             m_pRtpClientOverUDP = new UdpClient();
         if(NULL == m_pRtcpClientOverUDP)
             m_pRtcpClientOverUDP = new UdpClient();
@@ -118,7 +118,7 @@ int RtpSession :: Init(bool i_blIsTcp,string i_strLocalIP,string i_strIP,unsigne
                     break;
                 }
             }
-        }
+        }*/
 
     }
     else
@@ -150,13 +150,13 @@ int RtpSession :: Init(bool i_blIsTcp,string i_strLocalIP,string i_strIP,unsigne
 int RtpSession::SendRtpData(char * i_acSendBuf,int i_iSendLen)
 {
     int iRet=FALSE;
-    if(NULL == m_pRtpClientOverUDP)
+    //if(NULL == m_pRtpClientOverUDP)
     {
         //iRet=m_pRtpClientOverTCP->Send(i_acSendBuf,i_iSendLen);
     }
-    else
+    //else
     {
-        iRet=m_pRtpClientOverUDP->Send(i_acSendBuf,i_iSendLen);
+        //iRet=m_pRtpClientOverUDP->Send(i_acSendBuf,i_iSendLen);
     }
 
     return iRet;
@@ -175,13 +175,13 @@ int RtpSession::SendRtpData(char * i_acSendBuf,int i_iSendLen)
 int RtpSession::GetRtpSocket()
 {
     int iRet=FALSE;
-    if(NULL == m_pRtpClientOverUDP)
+    //if(NULL == m_pRtpClientOverUDP)
     {
         //iRet=m_pRtpClientOverTCP->GetClientSocket();
     }
-    else
+    //else
     {
-        iRet=m_pRtpClientOverUDP->GetClientSocket();
+        //iRet=m_pRtpClientOverUDP->GetClientSocket();
     }
 
     return iRet;
@@ -200,13 +200,13 @@ int RtpSession::GetRtpSocket()
 int RtpSession::GetRtcpSocket()
 {
     int iRet=FALSE;
-    if(NULL == m_pRtcpClientOverUDP)
+    //if(NULL == m_pRtcpClientOverUDP)
     {
         //iRet=m_pRtcpClientOverTCP->GetClientSocket();
     }
-    else
+    //else
     {
-        iRet=m_pRtcpClientOverUDP->GetClientSocket();
+        //iRet=m_pRtcpClientOverUDP->GetClientSocket();
     }
 
     return iRet;
@@ -288,22 +288,22 @@ unsigned int RtpSession:: GetSSRC(void)
 ******************************************************************************/
 void RtpSession::Close()
 {
-    if(NULL == m_pRtpClientOverUDP)
+    //if(NULL == m_pRtpClientOverUDP)
     {
         //m_pRtpClientOverTCP->Close();
     }
-    else
+    //else
     {
-        m_pRtpClientOverUDP->Close();
+       // m_pRtpClientOverUDP->Close();
     }
 
-    if(NULL == m_pRtcpClientOverUDP)
+    //if(NULL == m_pRtcpClientOverUDP)
     {
         //m_pRtcpClientOverTCP->Close();
     }
-    else
+    //else
     {
-        m_pRtcpClientOverUDP->Close();
+        //m_pRtcpClientOverUDP->Close();
     }
 }
 
