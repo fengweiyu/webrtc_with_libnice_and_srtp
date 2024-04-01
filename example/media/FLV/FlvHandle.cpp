@@ -628,7 +628,7 @@ unsigned char FlvHandle::ParseAudioDataTagHeader(unsigned char i_bAudioTagHeader
     unsigned char bAudioTagHeader = 0;
     unsigned char bEncType = 0;
     unsigned char bSampleRateIndex = 3;// 0-5.5kHz;1-11kHz;2-22kHz;3-44kHz(AAC都是3)
-    unsigned char bSampleBits = 0b00;// audio sample bits: 0-8 bit samples, 1-16-bit samples
+    unsigned char bSampleBits = 0;//0b00 win 会报错;// audio sample bits: 0-8 bit samples, 1-16-bit samples
     unsigned char bChannels = 1;// audio channel count: 0-Mono sound, 1-Stereo sound
     ///索引表  
     static unsigned int const s_adwSampleRateTable[16] = {
@@ -641,7 +641,7 @@ unsigned char FlvHandle::ParseAudioDataTagHeader(unsigned char i_bAudioTagHeader
 	bChannels = i_bAudioTagHeader & 0x01;
 	
     m_ptFrame->tAudioEncodeParam.dwChannels = bChannels;
-    m_ptFrame->tAudioEncodeParam.dwBitsPerSample = bSampleBits == 0b01 ? 16 : 8;
+    m_ptFrame->tAudioEncodeParam.dwBitsPerSample = bSampleBits == 1 ? 16 : 8;//0b01 win 会报错
     m_ptFrame->dwSampleRate= 44000;
     if(bSampleRateIndex < 4)
         m_ptFrame->dwSampleRate = s_adwSampleRateTable[bSampleRateIndex];
