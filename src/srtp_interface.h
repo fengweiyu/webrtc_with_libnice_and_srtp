@@ -46,7 +46,7 @@ public:
     int Shutdown();
 
 
-
+    static int m_iSrtpLibInited;//0未初始化，1已初始化
     
 private:
     srtp_t m_tSrtp;

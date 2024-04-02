@@ -13,7 +13,7 @@
 #define WEBRTC_COMMON_H
 
 
-#ifdef MEDIA_SEVER_TYPE_WEBRTC
+#ifdef MEDIA_SEVER_TYPE_WEBRTC0
 #include "XLog.h"
 #define  WEBRTC_LOGW2(val,...)     logi(WEBRTC) << lkv(ClientPort, val) << lformat(WEBRTC,__VA_ARGS__) << lend 
 #define  WEBRTC_LOGE2(val,...)     loge(WEBRTC) << lkv(ClientPort, val) << lformat(WEBRTC,__VA_ARGS__) << lend 
@@ -55,12 +55,31 @@ typedef struct VideoInfo
     unsigned short wPortNumForSDP;//端口,官方demo都是 9
     unsigned char ucRtpPayloadType;
     unsigned char res;
-	int iID;
+	int iID;//0
 	unsigned int dwProfileLevelId;
 	char * strSPS_Base64;
 	char * strPPS_Base64;
 	unsigned int dwSSRC;
 }T_VideoInfo;
+
+typedef struct AudioInfo
+{
+    const char *pstrFormatName;
+    unsigned int dwTimestampFrequency;
+    //9代表视频使用端口9来传输,但在webrtc中现在一般不使用
+	//如果设置为0，代表不传输视频
+    unsigned short wPortNumForSDP;//端口,官方demo都是 9
+    unsigned char ucRtpPayloadType;
+    unsigned char res;
+	int iID;//1/
+	unsigned int dwSSRC;
+}T_AudioInfo;
+
+typedef struct WebRtcMediaInfo
+{
+    T_VideoInfo tVideoInfo;
+	T_AudioInfo tAudioInfo;
+}T_WebRtcMediaInfo;
 
 typedef struct WebRtcCb
 {

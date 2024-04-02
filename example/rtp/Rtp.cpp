@@ -46,8 +46,9 @@ Rtp :: Rtp(unsigned char **m_ppPackets,int i_iMaxPacketNum,char *i_strPath)
     }
     
     m_pVideoRtpSession = new RtpSession(RTP_PAYLOAD_VIDEO,0);//i_dwSampleRate 暂时用不上先填0 tMediaInfo.dwVideoSampleRate
-
-    iRet=m_RtpPacket.Init(m_ppPackets, i_iMaxPacketNum);
+    m_pAudioRtpSession = new RtpSession(RTP_PAYLOAD_VIDEO,0);
+    
+    iRet=m_VideoRtpPacket.Init(m_ppPackets, i_iMaxPacketNum);
     if(FALSE == iRet)
     {
         RTP_LOGE("m_pRtpPacket->Init NULL\r\n");
@@ -79,7 +80,7 @@ Rtp :: Rtp(char *i_strPath)
     }
     
     m_pVideoRtpSession = new RtpSession(RTP_PAYLOAD_VIDEO,0);//i_dwSampleRate 暂时用不上先填0 tMediaInfo.dwVideoSampleRate
-
+    m_pAudioRtpSession = new RtpSession(RTP_PAYLOAD_VIDEO,0);
 }
 
 /*****************************************************************************
@@ -119,6 +120,10 @@ Rtp :: ~Rtp()
     {
         delete m_pVideoRtpSession;
     }
+    if(NULL !=m_pAudioRtpSession)
+    {
+        delete m_pAudioRtpSession;
+    }
 }
 
 
@@ -142,12 +147,12 @@ int Rtp :: DeInit(unsigned char **m_ppPackets,int i_iMaxPacketNum)
     {
         delete (T_MediaFrameParam *)m_ptMediaFrameParam;
     }
-    return m_RtpPacket.DeInit(m_ppPackets, i_iMaxPacketNum);
+    return m_VideoRtpPacket.DeInit(m_ppPackets, i_iMaxPacketNum);
 }
 
 /*****************************************************************************
 -Fuction		: RtpInterface::Init
--Description	: 
+-Description	: 暂不使用
 -Input			: 
 -Output 		: 
 -Return 		: 
@@ -172,7 +177,7 @@ int Rtp::Init(unsigned char **m_ppPackets,int i_iMaxPacketNum,char *i_strPath)
 
     m_pVideoRtpSession = new RtpSession(RTP_PAYLOAD_VIDEO,0);//i_dwSampleRate 暂时用不上先填0 tMediaInfo.dwVideoSampleRate
 
-    iRet=m_RtpPacket.Init(m_ppPackets, i_iMaxPacketNum);
+    iRet=m_VideoRtpPacket.Init(m_ppPackets, i_iMaxPacketNum);
     if(FALSE == iRet)
     {
         cout<<"m_pRtpPacket->Init NULL"<<endl;
@@ -197,7 +202,7 @@ int Rtp::Init(unsigned char **m_ppPackets,int i_iMaxPacketNum,char *i_strPath)
 
 /*****************************************************************************
 -Fuction		: RtpInterface
--Description	: RtpInterface
+-Description	: 只有视频打包
 -Input			: 
 -Output 		: 
 -Return 		: iPacketNum -1 err,其他表示rtp包个数
@@ -260,7 +265,7 @@ int Rtp :: GetRtpData(unsigned char **o_ppbPacketBuf,int *o_aiEveryPacketLen,int
     
     for(i=0;i<m_ptMediaFrameParam->dwNaluCount;i++)
     {
-        iPacketNum+=m_RtpPacket.Packet(&tRtpPacketParam,pbNaluStartPos,m_ptMediaFrameParam->a_dwNaluEndOffset[i]-dwNaluOffset,&o_ppbPacketBuf[iPacketNum],&o_aiEveryPacketLen[iPacketNum]);
+        iPacketNum+=m_VideoRtpPacket.Packet(&tRtpPacketParam,pbNaluStartPos,m_ptMediaFrameParam->a_dwNaluEndOffset[i]-dwNaluOffset,&o_ppbPacketBuf[iPacketNum],&o_aiEveryPacketLen[iPacketNum]);
         m_pVideoRtpSession->SetRtpPacketParam(&tRtpPacketParam);
         if(iPacketNum<=0 || iPacketNum>i_iPacketBufMaxNum)
         {
@@ -318,17 +323,30 @@ int Rtp::GetSPS_PPS(unsigned char *o_pbSpsBuf,int *o_piSpsBufLen,unsigned char *
 * -----------------------------------------------
 * 2017/09/21	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-unsigned int Rtp::GetSSRC()
+int Rtp::GetSSRC(unsigned int *o_pdwVideoSSRC,unsigned int *o_pdwAudioSSRC)
 {
+    int iRet = -1;
     T_RtpPacketParam tRtpPacketParam;
-    
-    memset(&tRtpPacketParam,0,sizeof(T_RtpPacketParam));
-    if(NULL !=m_pVideoRtpSession)
+
+    if(NULL != o_pdwVideoSSRC)
     {
-        m_pVideoRtpSession->GetRtpPacketParam(&tRtpPacketParam);
+        memset(&tRtpPacketParam,0,sizeof(T_RtpPacketParam));
+        if(NULL !=m_pVideoRtpSession)
+        {
+            iRet=m_pVideoRtpSession->GetRtpPacketParam(&tRtpPacketParam);
+        }
+        *o_pdwVideoSSRC = tRtpPacketParam.dwSSRC;
     }
-    
-	return tRtpPacketParam.dwSSRC;
+    if(NULL != o_pdwAudioSSRC)
+    {
+        memset(&tRtpPacketParam,0,sizeof(T_RtpPacketParam));
+        if(NULL !=m_pAudioRtpSession)
+        {
+            iRet|=m_pAudioRtpSession->GetRtpPacketParam(&tRtpPacketParam);
+        }
+        *o_pdwAudioSSRC = tRtpPacketParam.dwSSRC;
+    }
+	return iRet;
 }
 
 /*****************************************************************************
@@ -398,55 +416,59 @@ int Rtp :: GetRtpPackets(T_MediaFrameInfo *m_ptFrame,unsigned char **o_ppbPacket
         }
     }
     iPacketNum = 0;
-    if(MEDIA_FRAME_TYPE_AUDIO_FRAME == m_ptFrame->eFrameType)
+    do
     {
-        //iPacketNum+=m_AudioRtpPacket.Packet(&tRtpPacketParam,m_ptFrame->pbFrameStartPos,m_ptFrame->iFrameLen,&o_ppbPacketBuf[iPacketNum],&o_aiEveryPacketLen[iPacketNum],iRtpPacketType);
-        //m_pVideoRtpSession->SetRtpPacketParam(&tRtpPacketParam);
-        //if(iPacketNum<=0 || iPacketNum>i_iPacketBufMaxNum)
+        memset(&tRtpPacketParam,0,sizeof(T_RtpPacketParam));
+        m_pAudioRtpSession->GetRtpPacketParam(&tRtpPacketParam);
+        tRtpPacketParam.dwTimestamp = m_ptFrame->dwTimeStamp*m_ptFrame->dwSampleRate/1000;
+        if(MEDIA_FRAME_TYPE_AUDIO_FRAME == m_ptFrame->eFrameType)
         {
-            //RTP_LOGE("m_pRtpPacket->Packet  err %d \r\n",iPacketNum);
-            //iPacketNum = -1;
-            //return iPacketNum;
+            iPacketNum+=m_AudioRtpPacket.Packet(&tRtpPacketParam,m_ptFrame->pbFrameStartPos,m_ptFrame->iFrameLen,&o_ppbPacketBuf[iPacketNum],&o_aiEveryPacketLen[iPacketNum],iRtpPacketType);
+            m_pAudioRtpSession->SetRtpPacketParam(&tRtpPacketParam);
+            if(iPacketNum<=0 || iPacketNum>i_iPacketBufMaxNum)
+            {
+                RTP_LOGE("m_pRtpPacket->Packet  err %d \r\n",iPacketNum);
+                iPacketNum = -1;
+                break;
+            }
+            break;
         }
-        return 0;
-    }
-    memset(&tRtpPacketParam,0,sizeof(T_RtpPacketParam));
-    m_pVideoRtpSession->GetRtpPacketParam(&tRtpPacketParam);
-    if (0 == m_dwLastTimestamp)
-    {
-        dwDiffTimestamp = 0;
-    }
-    else
-    {
-        dwDiffTimestamp = m_ptFrame->dwTimeStamp - m_dwLastTimestamp;
-    }////时间戳的单位是1/VIDEO_H264_SAMPLE_RATE(s),频率的倒数
-    tRtpPacketParam.dwTimestamp += dwDiffTimestamp*m_ptFrame->dwSampleRate/1000;//这样做的目的是让rtp的时间戳从0开始，
-    m_dwLastTimestamp = m_ptFrame->dwTimeStamp;//不然也可以直接用m_tMediaFrameParam.dwTimeStamp
-    
-    pbNaluStartPos = m_ptFrame->pbFrameStartPos;
-    dwNaluOffset = 0;
-    if (m_ptFrame->dwNaluCount > MAX_NALU_CNT_ONE_FRAME)
-    {
-        RTP_LOGE("m_ptFrame->dwNaluCount err %d ,%d\r\n",m_ptFrame->dwNaluCount,m_ptFrame->iFrameLen);
-        return iPacketNum;
-    }
-    //RTP_LOGI("m_ptMediaFrameParam->dwNaluCount %d iFrameLen %d dwTimeStamp%d\r\n",m_ptFrame->dwNaluCount,m_ptFrame->iFrameLen,m_ptFrame->dwTimeStamp);
-    for(i=0;i<m_ptFrame->dwNaluCount;i++)
-    {
-        iPacketNum+=m_RtpPacket.Packet(&tRtpPacketParam,m_ptFrame->atNaluInfo[i].pbData,m_ptFrame->atNaluInfo[i].dwDataLen,&o_ppbPacketBuf[iPacketNum],&o_aiEveryPacketLen[iPacketNum],iRtpPacketType);
-        m_pVideoRtpSession->SetRtpPacketParam(&tRtpPacketParam);
-        if(iPacketNum<=0 || iPacketNum>i_iPacketBufMaxNum)
+        memset(&tRtpPacketParam,0,sizeof(T_RtpPacketParam));
+        m_pVideoRtpSession->GetRtpPacketParam(&tRtpPacketParam);
+        if (0 == m_dwLastTimestamp)
         {
-            RTP_LOGE("m_pRtpPacket->Packet  err %d \r\n",iPacketNum);
-            iPacketNum = -1;
-            return iPacketNum;
+            dwDiffTimestamp = 0;
         }
+        else
+        {
+            dwDiffTimestamp = m_ptFrame->dwTimeStamp - m_dwLastTimestamp;
+        }////时间戳的单位是1/VIDEO_H264_SAMPLE_RATE(s),频率的倒数
+        m_dwLastTimestamp = m_ptFrame->dwTimeStamp;//不然也可以直接用m_tMediaFrameParam.dwTimeStamp
+        //tRtpPacketParam.dwTimestamp += dwDiffTimestamp*m_ptFrame->dwSampleRate/1000;//这样做的目的是让rtp的时间戳从0开始，
+        tRtpPacketParam.dwTimestamp = m_ptFrame->dwTimeStamp*m_ptFrame->dwSampleRate/1000;//时间戳由外部控制
+        pbNaluStartPos = m_ptFrame->pbFrameStartPos;
+        dwNaluOffset = 0;
+        if (m_ptFrame->dwNaluCount > MAX_NALU_CNT_ONE_FRAME)
+        {
+            RTP_LOGE("m_ptFrame->dwNaluCount err %d ,%d\r\n",m_ptFrame->dwNaluCount,m_ptFrame->iFrameLen);
+            break;
+        }
+        //RTP_LOGI("m_ptMediaFrameParam->dwNaluCount %d iFrameLen %d dwTimeStamp%d\r\n",m_ptFrame->dwNaluCount,m_ptFrame->iFrameLen,m_ptFrame->dwTimeStamp);
+        for(i=0;i<m_ptFrame->dwNaluCount;i++)
+        {
+            iPacketNum+=m_VideoRtpPacket.Packet(&tRtpPacketParam,m_ptFrame->atNaluInfo[i].pbData,m_ptFrame->atNaluInfo[i].dwDataLen,&o_ppbPacketBuf[iPacketNum],&o_aiEveryPacketLen[iPacketNum],iRtpPacketType);
+            m_pVideoRtpSession->SetRtpPacketParam(&tRtpPacketParam);
+            if(iPacketNum<=0 || iPacketNum>i_iPacketBufMaxNum)
+            {
+                RTP_LOGE("m_pRtpPacket->Packet  err %d \r\n",iPacketNum);
+                iPacketNum = -1;
+                break;
+            }
+            //pbNaluStartPos = m_ptFrame->pbFrameStartPos +m_ptFrame->adwNaluEndOffset[i];
+            //dwNaluOffset =m_ptFrame->adwNaluEndOffset[i];
+        }
+    }while(0);
 
-        //pbNaluStartPos = m_ptFrame->pbFrameStartPos +m_ptFrame->adwNaluEndOffset[i];
-        //dwNaluOffset =m_ptFrame->adwNaluEndOffset[i];
-    }
-
-    
     RTP_LOGI("iPacketNum %d ,m_ptMediaFrameParam->dwNaluCount %d eFrameType %d iFrameLen %d dwTimeStamp%d\r\n",iPacketNum,m_ptFrame->dwNaluCount,
     m_ptFrame->eFrameType,m_ptFrame->iFrameLen,m_ptFrame->dwTimeStamp);
     return iPacketNum;

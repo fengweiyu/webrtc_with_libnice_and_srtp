@@ -32,7 +32,7 @@ Prflx(Peer Reflexive Candidate)，该地址是通过发送 STUN Binding 时，通过 Binding 
 在建立连接检查期间新发生，参数中的地址和端口是端发送 Binding 请求到 
 STUN/TURN server 经过 NAT 时，NAT 上分配的地址和端口*/
 const char * Libnice::m_astrCandidateTypeName[] = {"host", "srflx", "prflx", "relay"};
-int Libnice::m_iLibniceSendReadyFlag = 0;//0不可发送,1准备好通道可以发送
+//int Libnice::m_iLibniceSendReadyFlag = 0;//0不可发送,1准备好通道可以发送
 /*****************************************************************************
 -Fuction        : LibniceInit
 -Description    : LibniceInit
@@ -48,7 +48,8 @@ Libnice::Libnice(char * i_strStunAddr,unsigned int i_dwStunPort,E_IceControlRole
     m_ptAgent=NULL;
     m_pRemoteCandidatesList = NULL;
 //    m_dwStreamID=0;
-    m_iLibniceSendReadyFlag =0;
+    m_iLibniceVideoSendReadyFlag =0;
+    m_iLibniceAudioSendReadyFlag =0;
 	memset(&m_tLibniceDepData,0,sizeof(T_LibniceDepData));
 	snprintf(m_tLibniceDepData.strStunAddr,sizeof(m_tLibniceDepData.strStunAddr),"%s",i_strStunAddr);
 	m_tLibniceDepData.dwStunPort = i_dwStunPort;
@@ -123,8 +124,10 @@ int Libnice::LibniceProc()
     int inx =0;
     NiceAddress tBaseAddr;
 
-    m_iLibniceSendReadyFlag = 0;
-    memset(&m_tLocalCandidate,0,sizeof(T_LocalCandidate));
+    m_iLibniceVideoSendReadyFlag = 0;
+    m_iLibniceAudioSendReadyFlag = 0;
+    memset(&m_tLocalVideoCandidate,0,sizeof(T_LocalCandidate));
+    memset(&m_tLocalAudioCandidate,0,sizeof(T_LocalCandidate));
 	g_networking_init();//
 	m_ptLoop = g_main_loop_new(NULL, FALSE);//ptLoop
 	m_ptStdinIO = g_io_channel_unix_new(fileno(stdin));//ptStdinIO
@@ -150,7 +153,7 @@ int Libnice::LibniceProc()
 
 	// Create a new stream with one component
     AddVideoStream(m_ptAgent,(char *)"video",1);
-    AddAudioStream(m_ptAgent,(char *)"audio",1);//防止设置sdp时出错，暂时只是添加不使用
+    AddAudioStream(m_ptAgent,(char *)"audio",1);//
 
 	// Attach to the component to receive the data
 	// Without this call, candidates cannot be gathered
@@ -174,7 +177,9 @@ int Libnice::LibniceProc()
 
 	// Start gathering local candidates
 	if (!nice_agent_gather_candidates(m_ptAgent, m_tVideoStream.iID))
-		WEBRTC_LOGE("Failed to start candidate gathering\r\n");//g_error
+		WEBRTC_LOGE("Failed to start candidate gathering m_tVideoStream\r\n");//g_error
+	if (!nice_agent_gather_candidates(m_ptAgent, m_tAudioStream.iID))
+		WEBRTC_LOGE("Failed to start candidate gathering m_tAudioStream\r\n");//g_error
 
 	WEBRTC_LOGI("waiting for candidate-gathering-done signal...\r\n");//g_debug
 
@@ -214,23 +219,29 @@ int Libnice::StopProc()
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int Libnice::GetLocalCandidate(T_LocalCandidate * i_ptLocalCandidate)
+int Libnice::GetLocalCandidate(T_LocalCandidate * o_ptLocalVideoCandidate,T_LocalCandidate * o_ptLocalAudioCandidate)
 {
 	int iRet=-1;
-    if (i_ptLocalCandidate == NULL) 
+    if (o_ptLocalVideoCandidate == NULL) 
     {
 		printf("GetLocalCandidate NULL\r\n");
 		return iRet;
     }
-	if(m_tLocalCandidate.iGatheringDoneFlag == 0)
+	if(m_tLocalVideoCandidate.iGatheringDoneFlag == 0)
 	{
 		printf("GetLocalCandidate err\r\n");
 		return iRet;
 	}
-	memcpy(i_ptLocalCandidate,&m_tLocalCandidate,sizeof(T_LocalCandidate));
+	memcpy(o_ptLocalVideoCandidate,&m_tLocalVideoCandidate,sizeof(T_LocalCandidate));
+	
+    if (o_ptLocalAudioCandidate != NULL) 
+    {
+        memcpy(o_ptLocalAudioCandidate,&m_tLocalAudioCandidate,sizeof(T_LocalCandidate));
+    }
 	iRet = 0;
 	return iRet;
 }
+
 /*****************************************************************************
 -Fuction        : LibniceGetLocalSDP
 -Description    : local sdp缺少信息只好自己组包
@@ -261,7 +272,7 @@ int Libnice::GetLocalSDP(char * i_strSDP,int i_iSdpLen)
 		printf("LibniceGetLocalCandidate NULL\r\n");
 		return iRet;
     }
-	if(m_tLocalCandidate.iGatheringDoneFlag == 0)
+	if(m_tLocalVideoCandidate.iGatheringDoneFlag == 0)
 	{
 		printf("GetLocalSDP err\r\n");
 		return iRet;
@@ -298,7 +309,13 @@ int Libnice::SetRemoteCredentials(char * i_strUfrag,char * i_strPasswd)
     
     if (!nice_agent_set_remote_credentials(m_ptAgent, m_tVideoStream.iID, i_strUfrag, i_strPasswd)) 
     {
-		g_message("failed to set remote credentials");
+		printf("failed to set remote m_tVideoStream credentials\r\n");//g_message
+		return iRet;
+    }
+
+    if (!nice_agent_set_remote_credentials(m_ptAgent, m_tAudioStream.iID, i_strUfrag, i_strPasswd)) 
+    {
+		printf("failed to set remote m_tAudioStream credentials\r\n");//g_message
 		return iRet;
     }
     iRet = 0;
@@ -314,7 +331,7 @@ int Libnice::SetRemoteCredentials(char * i_strUfrag,char * i_strPasswd)
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int Libnice::SetRemoteCandidateToGlist(char * i_strCandidate)
+int Libnice::SetRemoteCandidateToGlist(char * i_strCandidate,int i_iStreamID)
 {
 	int iRet = -1;
     NiceCandidate *ptCand = NULL;
@@ -352,7 +369,7 @@ int Libnice::SetRemoteCandidateToGlist(char * i_strCandidate)
     }    
 	ptCand = nice_candidate_new(ntype);
 	ptCand->component_id = 1;
-	ptCand->stream_id = m_tVideoStream.iID;
+	ptCand->stream_id = i_iStreamID;
 	ptCand->transport = NICE_CANDIDATE_TRANSPORT_UDP;
 	strncpy(ptCand->foundation, tokens[0], NICE_CANDIDATE_MAX_FOUNDATION);
 	ptCand->foundation[NICE_CANDIDATE_MAX_FOUNDATION - 1] = 0;
@@ -414,6 +431,17 @@ int Libnice::SetRemoteCandidates()
             iRet=0;
         }
 	}
+	for(int i=1;i<=m_tAudioStream.iNum;i++)
+	{
+        if (nice_agent_set_remote_candidates(m_ptAgent, m_tAudioStream.iID, i,m_pRemoteCandidatesList) < 1) 
+        {
+            g_message("failed to set remote candidates");
+        }
+        else
+        {
+            iRet=0;
+        }
+	}
 	if (m_pRemoteCandidatesList != NULL)
 	{
 		g_slist_free_full(m_pRemoteCandidatesList, (GDestroyNotify)&nice_candidate_free);
@@ -448,7 +476,7 @@ int Libnice::SaveRemoteSDP(char * i_strSDP)
 
 /*****************************************************************************
 -Fuction        : SetRemoteCandidateAndSDP
--Description    : LibniceSetRemoteSDP
+-Description    : SetRemoteSdpWithCandidate
 -Input          : 
 -Output         : 
 -Return         : 
@@ -476,27 +504,56 @@ int Libnice::SetRemoteCandidateAndSDP(char * i_strCandidate)
         m_strRemoteSDP.append(i_strCandidate);
         m_strRemoteSDP.append("\r\n");
     }
+    size_t dwAudioPos = m_strRemoteSDP.find("m=audio");
+    if(string::npos != dwAudioPos)
+    {
+        iRet = SetRemoteSdpToStream(i_strCandidate,m_tVideoStream.iID,m_tVideoStream.iNum,m_strRemoteSDP.substr(0,dwAudioPos).c_str());
+        iRet |= SetRemoteSdpToStream(i_strCandidate,m_tAudioStream.iID,m_tAudioStream.iNum,m_strRemoteSDP.substr(dwAudioPos).c_str());
+    }
+    else
+    {
+        iRet = SetRemoteSdpToStream(i_strCandidate,m_tVideoStream.iID,m_tVideoStream.iNum,m_strRemoteSDP.c_str());
+    }
+	return iRet;
+}
+
+/*****************************************************************************
+-Fuction        : SetRemoteSdpToStream
+-Description    : SetRemoteSdpWithCandidate
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+int Libnice::SetRemoteSdpToStream(char * i_strCandidate,int i_iStreamID,int i_iStreamNum,const char *i_strSDP)
+{
+	int iRet = -1;
+	int i=0;
     char* ufrag = NULL;
     char* pwd = NULL;
     GSList * plist = NULL;
-    plist = nice_agent_parse_remote_stream_sdp (m_ptAgent, m_tVideoStream.iID, m_strRemoteSDP.c_str(), &ufrag, &pwd);
+    
+    plist = nice_agent_parse_remote_stream_sdp (m_ptAgent, i_iStreamID,i_strSDP, &ufrag, &pwd);
+    printf("SetRemoteSdpToStream %d,%d\r\n%s \r\n",i_iStreamID,g_slist_length(plist),i_strSDP);
     if (ufrag && pwd && g_slist_length(plist) > 0)
-    {//audio streamid暂时不处理,
+    {//
         ufrag[strlen(ufrag)-1] = 0;
         pwd[strlen(pwd)-1] = 0;
 
         NiceCandidate* c = (NiceCandidate*)g_slist_nth(plist, 0)->data; 
 
-        if (!nice_agent_set_remote_credentials(m_ptAgent, m_tVideoStream.iID, ufrag, pwd)) 
+        if (!nice_agent_set_remote_credentials(m_ptAgent, i_iStreamID, ufrag, pwd)) 
         {
             printf("failed to set remote credentials\r\n");
         }
         else
         {
             // Note: this will trigger the start of negotiation.
-            for (i = 1; i <= m_tVideoStream.iNum; i++)
+            for (i = 1; i <= i_iStreamNum; i++)
             {
-                if (nice_agent_set_remote_candidates(m_ptAgent, m_tVideoStream.iID, i, plist) < 1) 
+                if (nice_agent_set_remote_candidates(m_ptAgent, i_iStreamID, i, plist) < 1) 
                 {
                     printf("###failed to set remote candidates:%d\r\n",i);
                 }
@@ -515,13 +572,13 @@ int Libnice::SetRemoteCandidateAndSDP(char * i_strCandidate)
     {//nice_agent_parse_remote_stream_sdp部分失败则用自己的逻辑
         printf("failed to set remote candidates:%p,%p,%p,%d....use local\r\n",ufrag,pwd,plist,g_slist_length(plist));
         SetRemoteCredentials(ufrag, pwd);
-        SetRemoteCandidateToGlist(i_strCandidate);
+        SetRemoteCandidateToGlist(i_strCandidate,i_iStreamID);//i_strCandidate需要属于对应的streamID
         iRet = SetRemoteCandidates();
     }
     else
     {
         printf("1111failed to set remote candidates:%p,%p,%p,%d\r\n",ufrag,pwd,plist,g_slist_length(plist));
-        printf("##########RemoteSDP:%s##########\r\n",m_strRemoteSDP.c_str());
+        printf("##########RemoteSDP:%s##########\r\n",i_strSDP);
     }
 	return iRet;
 }
@@ -574,12 +631,12 @@ int Libnice::SendVideoData(char * i_acBuf,int i_iBufLen)
 	int i=0;
     if( m_ptAgent == NULL || m_tVideoStream.iID== 0 || i_acBuf == NULL) 
     {
-		WEBRTC_LOGE("LibniceSendData m_ptAgent null \r\n");
+		WEBRTC_LOGE("SendVideoData m_ptAgent null \r\n");
 		return iRet;
     }
-    if(m_iLibniceSendReadyFlag == 0) //根据接口说明，这里必须ready才能发送成功
+    if(m_iLibniceVideoSendReadyFlag == 0) //根据接口说明，这里必须ready才能发送成功
     {//发送标记由上层控制，因为发送协商报文也是这个接口但是还不是ready
-		WEBRTC_LOGE("LibniceSend no Ready \r\n");//上面注释机制修改为ready才协商
+		WEBRTC_LOGE("SendVideoData no Ready \r\n");//上面注释机制修改为ready才协商
 		return iRet;
     }
     for (i = 1; i <= m_tVideoStream.iNum; i++)
@@ -605,12 +662,12 @@ int Libnice::SendAudioData(char * i_acBuf,int i_iBufLen)
 	int i=0;
     if( m_ptAgent == NULL || m_tAudioStream.iID== 0 || i_acBuf == NULL) 
     {
-		printf("LibniceSendData m_ptAgent null \r\n");
+		printf("SendAudioData m_ptAgent null \r\n");
 		return iRet;
     }
-    if(m_iLibniceSendReadyFlag == 0) 
+    if(m_iLibniceAudioSendReadyFlag == 0) 
     {
-		printf("LibniceSendReady err \r\n");
+		printf("SendAudioData no Ready \r\n");
 		return iRet;
     }
     for (i = 1; i <= m_tAudioStream.iNum; i++)
@@ -630,9 +687,50 @@ int Libnice::SendAudioData(char * i_acBuf,int i_iBufLen)
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int Libnice::GetSendReadyFlag()
+int Libnice::GetSendReadyFlag(int * o_piVideoReadyFlag,int * o_piAudioReadyFlag)
 {
-    return m_iLibniceSendReadyFlag;
+    int iRet = -1;
+    if(NULL != o_piVideoReadyFlag)
+    {
+        *o_piVideoReadyFlag = m_iLibniceVideoSendReadyFlag;
+        iRet = 0;
+    }
+    if(NULL != o_piAudioReadyFlag)
+    {
+        *o_piAudioReadyFlag = m_iLibniceAudioSendReadyFlag;
+        iRet = 0;
+    }
+    return iRet;
+}
+
+/*****************************************************************************
+-Fuction        : LibniceGetSendReadyFlag
+-Description    : LibniceGetSendReadyFlag
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+int Libnice::SetSendReadyFlag(int i_iStreamID,int i_iSendReadyFlag)
+{
+    int iRet = -1;
+    if(i_iStreamID == m_tVideoStream.iID)
+    {
+        m_iLibniceVideoSendReadyFlag = i_iSendReadyFlag;
+        iRet = 0;
+    }
+    else if(i_iStreamID == m_tAudioStream.iID)
+    {
+        m_iLibniceAudioSendReadyFlag = i_iSendReadyFlag;
+        iRet = 0;
+    }
+    else
+    {
+        printf("SetSendReadyFlag err StreamID%d,%d,%d\r\n",i_iStreamID,m_tVideoStream.iID,m_tAudioStream.iID);
+    }
+    return iRet;
 }
 
 void Libnice::CandidateGatheringDone(NiceAgent *i_ptAgent, guint i_dwStreamID,gpointer pData)
@@ -647,18 +745,37 @@ void Libnice::CandidateGatheringDone(NiceAgent *i_ptAgent, guint i_dwStreamID,gp
 	gchar ipaddr[INET6_ADDRSTRLEN];
 	GSList *cands = NULL, *item = NULL;
 	static const gchar *transport_name[] = {"udp", "tcp_active", "tcp_passive", "tcp_so"};
-	
+    T_LocalCandidate *pLocalCandidate = NULL;
+
+    
+    pLibnice =(Libnice *)pData;
+	if (pLibnice == NULL)
+	{
+        printf("pLibnice == NULL\n");
+		goto end;
+	}
+    if(i_dwStreamID == pLibnice->m_tVideoStream.iID)
+    {
+        pLocalCandidate = &pLibnice->m_tLocalVideoCandidate;
+    }
+    else if(i_dwStreamID == pLibnice->m_tAudioStream.iID)
+    {
+        pLocalCandidate = &pLibnice->m_tLocalAudioCandidate;
+    }
+    if(NULL == pLocalCandidate)
+    {
+        printf("CandidateGatheringDone err StreamID%d,%d,%d\r\n",i_dwStreamID,pLibnice->m_tVideoStream.iID,pLibnice->m_tAudioStream.iID);
+        return;
+    }
+    
 	if (!nice_agent_get_local_credentials(i_ptAgent, i_dwStreamID,&strLocalUfrag, &strLocalPassword))
 		goto end;
 	cands = nice_agent_get_local_candidates(i_ptAgent, i_dwStreamID, 1);
 	if (cands == NULL)
 		goto end;
-    pLibnice =(Libnice *)pData;
-	if (pLibnice == NULL)
-		goto end;
-	memset(&pLibnice->m_tLocalCandidate,0,sizeof(T_LocalCandidate));	
-    snprintf(pLibnice->m_tLocalCandidate.strUfrag,sizeof(pLibnice->m_tLocalCandidate.strUfrag),"%s",strLocalUfrag);
-    snprintf(pLibnice->m_tLocalCandidate.strPassword,sizeof(pLibnice->m_tLocalCandidate.strPassword),"%s",strLocalPassword);
+	memset(pLocalCandidate,0,sizeof(T_LocalCandidate));	
+    snprintf(pLocalCandidate->strUfrag,sizeof(pLocalCandidate->strUfrag),"%s",strLocalUfrag);
+    snprintf(pLocalCandidate->strPassword,sizeof(pLocalCandidate->strPassword),"%s",strLocalPassword);
 	for (item = cands; item; item = item->next) 
 	{
 		NiceCandidate *c = (NiceCandidate *)item->data;//从第一个开始去candidate列表内容
@@ -674,27 +791,27 @@ void Libnice::CandidateGatheringDone(NiceAgent *i_ptAgent, guint i_dwStreamID,gp
 		//foundation 候选者的基础标识，用于唯一标识候选者
 		//component ID：组件ID，表示候选者属于ICE代理的哪个组件1 代表 RTP; 2 代表 RTCP 
 		//WebRTC 采用 Rtcp-mux 方式，也就是 RTP 和 RTCP 在同一通道内传输，减少 ICE 的协商和通道的保活 
-		snprintf(pLibnice->m_tLocalCandidate.strCandidateData[i],sizeof(pLibnice->m_tLocalCandidate.strCandidateData[i]),
+		snprintf(pLocalCandidate->strCandidateData[i],sizeof(pLocalCandidate->strCandidateData[i]),
 		"candidate:%s %u %s %u %s %u typ %s",
 		c->foundation,c->component_id,transport_name[c->transport],c->priority,
 		ipaddr,nice_address_get_port(&c->addr),m_astrCandidateTypeName[c->type]);
-        snprintf(pLibnice->m_tLocalCandidate.strIP[i],sizeof(pLibnice->m_tLocalCandidate.strIP[i]),"%s",ipaddr);
-        printf("strCandidateData %d,%s,\r\n",i,pLibnice->m_tLocalCandidate.strCandidateData[i]);
+        snprintf(pLocalCandidate->strIP[i],sizeof(pLocalCandidate->strIP[i]),"%s",ipaddr);
+        printf("strCandidateData %d,%s,\r\n",i,pLocalCandidate->strCandidateData[i]);
         i++;
         if(i>=MAX_CANDIDATE_NUM)
         {
             printf("m_tLocalCandidate too more %d,%d,\r\n",i,MAX_CANDIDATE_NUM);
             break;
         }
-        /*if(NULL!= strstr(pLibnice->m_tLocalCandidate.strCandidateData[i],"udp")&&NULL!= strstr(pLibnice->m_tLocalCandidate.strCandidateData[i],"."))
+        /*if(NULL!= strstr(pLocalCandidate->strCandidateData[i],"udp")&&NULL!= strstr(pLocalCandidate->strCandidateData[i],"."))
         {//后续可以优化为全部取出来放到数组中,sdp中的ip填0.0.0.0
             i=1;
             break;//或者试试(NiceCandidate *)g_slist_nth(cands, 0)->data;可能是最优路径
         }*/
 	}
-	pLibnice->m_tLocalCandidate.iCurCandidateNum=i;
-	printf("CandidateGatheringDone:%d ,%s %s\r\n",pLibnice->m_tLocalCandidate.iCurCandidateNum,strLocalUfrag, strLocalPassword);
-	pLibnice->m_tLocalCandidate.iGatheringDoneFlag = 1;
+	pLocalCandidate->iCurCandidateNum=i;
+	printf("CandidateGatheringDone:%d ,%s %s\r\n",pLocalCandidate->iCurCandidateNum,strLocalUfrag, strLocalPassword);
+	pLocalCandidate->iGatheringDoneFlag = 1;
 	iRet = 0;
 
 	end:
@@ -736,10 +853,21 @@ void Libnice::ComponentStateChanged(NiceAgent *agent, guint _stream_id,guint com
         if (NULL != pLibnice)
         {
             //放在前面也能发出握手包，结果也一样
-            pLibnice->m_iLibniceSendReadyFlag = 1;
+            pLibnice->SetSendReadyFlag(_stream_id,1);
             if (NULL != pLibnice->m_tLibniceCb.Handshake)
             {//这里接收浏览器发出的报文(包括dtls协商报文)
-                 pLibnice->m_tLibniceCb.Handshake(pLibnice->m_tLibniceCb.pObjCb);
+                if(_stream_id == pLibnice->m_tVideoStream.iID)
+                {
+                    pLibnice->m_tLibniceCb.Handshake(pLibnice->m_tLibniceCb.pVideoDtlsObjCb);
+                }
+                else if(_stream_id == pLibnice->m_tAudioStream.iID)
+                {
+                    pLibnice->m_tLibniceCb.Handshake(pLibnice->m_tLibniceCb.pAudioDtlsObjCb);
+                }
+                else
+                {
+                    printf("ComponentStateChanged err StreamID%d,%d,%d\r\n",_stream_id,pLibnice->m_tVideoStream.iID,pLibnice->m_tAudioStream.iID);
+                }
             }
         }
 	}
@@ -747,14 +875,14 @@ void Libnice::ComponentStateChanged(NiceAgent *agent, guint _stream_id,guint com
 
 void Libnice::RecvVideoData(NiceAgent *agent, guint _stream_id, guint component_id,guint len, gchar *buf, gpointer data)
 {
-    printf("Libnice::RecvVideoData %d,%#x\n",len,buf[0]);
+    printf("Libnice::RecvVideoData _stream_id%d,%d,%#x\n",_stream_id,len,buf[0]);
     Libnice *pLibnice=NULL;
     pLibnice = (Libnice *)data;
 	if (NULL != pLibnice)
 	{
         if (NULL != pLibnice->m_tLibniceCb.HandleRecvData)
         {//这里接收浏览器发出的报文(包括dtls协商报文)
-             pLibnice->m_tLibniceCb.HandleRecvData(buf,len,pLibnice->m_tLibniceCb.pObjCb);
+             pLibnice->m_tLibniceCb.HandleRecvData(buf,len,pLibnice->m_tLibniceCb.pVideoDtlsObjCb);
         }
 	}
 	//printf("%d,%.*s\r\n", len,len, buf);
@@ -763,7 +891,16 @@ void Libnice::RecvVideoData(NiceAgent *agent, guint _stream_id, guint component_
 
 void Libnice::RecvAudioData(NiceAgent *agent, guint _stream_id, guint component_id,guint len, gchar *buf, gpointer data)
 {
-	printf("RecvAudioData:%d\r\n", len);
+    printf("Libnice::RecvAudioData _stream_id%d,%d,%#x\n",_stream_id,len,buf[0]);
+    Libnice *pLibnice=NULL;
+    pLibnice = (Libnice *)data;
+	if (NULL != pLibnice)
+	{
+        if (NULL != pLibnice->m_tLibniceCb.HandleRecvData)
+        {//这里接收浏览器发出的报文(包括dtls协商报文)
+             pLibnice->m_tLibniceCb.HandleRecvData(buf,len,pLibnice->m_tLibniceCb.pAudioDtlsObjCb);
+        }
+	}
 	//fflush(stdout);
 }
 

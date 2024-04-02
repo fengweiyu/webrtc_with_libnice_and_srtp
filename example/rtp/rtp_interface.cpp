@@ -136,9 +136,9 @@ int RtpInterface::GetSPS_PPS(unsigned char *o_pbSpsBuf,int *o_piSpsBufLen,unsign
 * -----------------------------------------------
 * 2017/09/21	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-unsigned int RtpInterface::GetSSRC()
+int RtpInterface::GetSSRC(unsigned int *o_pdwVideoSSRC,unsigned int *o_pdwAudioSSRC)
 {
-	return ((Rtp *)m_pRtp)->GetSSRC();
+	return ((Rtp *)m_pRtp)->GetSSRC(o_pdwVideoSSRC,o_pdwAudioSSRC);
 }
 
 /*****************************************************************************

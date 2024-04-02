@@ -55,7 +55,8 @@ typedef struct LibniceCb
 {
     void ( *Handshake)(void * pArg);
 	void ( *HandleRecvData)(char * i_acData,int i_iLen,void * pArg);
-    void *pObjCb;
+    void *pVideoDtlsObjCb;
+    void *pAudioDtlsObjCb;
 }T_LibniceCb;
 
 /*****************************************************************************
@@ -73,27 +74,33 @@ public:
     int SetCallback(T_LibniceCb *i_ptLibniceCb);
     int LibniceProc();
     int StopProc();
-    int GetLocalCandidate(T_LocalCandidate * i_ptLocalCandidate);
+    int GetLocalCandidate(T_LocalCandidate * o_ptLocalVideoCandidate,T_LocalCandidate * o_ptLocalAudioCandidate=NULL);
     int GetLocalSDP(char * i_strSDP,int i_iSdpLen);
     int SaveRemoteSDP(char * i_strSDP);
     int SetRemoteCandidateAndSDP(char * i_strCandidate);
     
-    int GetSendReadyFlag();
+    int GetSendReadyFlag(int * o_piVideoReadyFlag,int * o_piAudioReadyFlag);
+    int SetSendReadyFlag(int i_iStreamID,int i_iSendReadyFlag);
     int SendVideoData(char * i_acBuf,int i_iBufLen);
     int SendAudioData(char * i_acBuf,int i_iBufLen);
     static void RecvVideoData(NiceAgent *agent, guint _stream_id, guint component_id,guint len, gchar *buf, gpointer data);
     static void RecvAudioData(NiceAgent *agent, guint _stream_id, guint component_id,guint len, gchar *buf, gpointer data);
+
     
     int SetRemoteCredentials(char * i_strUfrag,char * i_strPasswd);
-    int SetRemoteCandidateToGlist(char * i_strCandidate);
+    int SetRemoteCandidateToGlist(char * i_strCandidate,int i_iStreamID);
     int SetRemoteCandidates();
     int SetRemoteSDP(char * i_strSDP);
     
 	static const char *m_astrCandidateTypeName[];
     T_LibniceCb m_tLibniceCb;//回调需使用
-    T_LocalCandidate m_tLocalCandidate;//m_iLibniceSendReadyFlag被ComponentStateChanged调用
-    static int m_iLibniceSendReadyFlag;//0不可发送,1准备好通道可以发送,后续添加设置函数然后改属性，后续应区分音视频
+    T_LocalCandidate m_tLocalVideoCandidate;//m_iLibniceSendReadyFlag被ComponentStateChanged调用
+    T_LocalCandidate m_tLocalAudioCandidate;//后续这些音视频相关的信息都优化放到T_StreamInfo中
+    T_StreamInfo m_tVideoStream;
+    T_StreamInfo m_tAudioStream;
 private:
+    int SetRemoteSdpToStream(char * i_strCandidate,int i_iStreamID,int i_iStreamNum,const char *i_strSDP);
+
     static void CandidateGatheringDone(NiceAgent *i_ptAgent, guint i_dwStreamID,gpointer pData);
     static void NewSelectPair(NiceAgent *agent, guint _stream_id,guint component_id, gchar *lfoundation,gchar *rfoundation, gpointer data);
     static void ComponentStateChanged(NiceAgent *agent, guint _stream_id,guint component_id, guint state,gpointer data);
@@ -103,8 +110,9 @@ private:
     NiceAgent * m_ptAgent;
     GSList * m_pRemoteCandidatesList;
 //    unsigned int m_dwStreamID;目前只有一个streamid使用,即videostream里面的
-    T_StreamInfo m_tVideoStream;
-    T_StreamInfo m_tAudioStream;
+    int m_iLibniceVideoSendReadyFlag;//0不可发送,1准备好通道可以发送
+    int m_iLibniceAudioSendReadyFlag;//后续这些音视频相关的信息都优化放到T_StreamInfo中
+    
     T_LibniceDepData m_tLibniceDepData;
     string m_strRemoteSDP;
     GMainLoop *m_ptLoop;//

@@ -303,8 +303,8 @@ void DtlsOnlyHandshake::HandleRecvData(char *buf,int len)
     /* Try to read data */
     char data[1500];	/* FIXME */
     memset(&data, 0, 1500);
-    int read = SSL_read(m_ptSsl, &data, 1500);
-    printf("... and read %d of them from SSL...\n", read);
+    int read = SSL_read(m_ptSsl, &data, 1500);//理论上不需要读，
+    printf("... and read %d of them from SSL...\n", read);//接收的数据已经写入到m_ptReadBio里面应该会自动处理
     if(read < 0) 
     {
         unsigned long err = SSL_get_error(m_ptSsl, read);
@@ -429,7 +429,7 @@ int DtlsOnlyHandshake::GetLocalPolicyInfo(T_PolicyInfo *i_ptPolicyInfo)
 	}
 	if(0 == m_iShakeEndFlag) 
 	{
-	    printf("GetPolicyInfo err\r\n");
+	    //printf("GetPolicyInfo err\r\n");
         return iRet;
 	}
     memcpy(i_ptPolicyInfo,&m_tOutPolicyInfo,sizeof(T_PolicyInfo));

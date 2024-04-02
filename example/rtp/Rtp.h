@@ -34,15 +34,16 @@ public:
     int DeInit(unsigned char **m_ppPackets,int i_iMaxPacketNum);
     int GetSPS_PPS(unsigned char *o_pbSpsBuf,int *o_piSpsBufLen,unsigned char *o_pbPpsBuf,int *o_piPpsBufLen);
     int GetRtpData(unsigned char **o_ppbPacketBuf,int *o_aiEveryPacketLen,int i_iPacketBufMaxNum);
-    unsigned int GetSSRC();
+    int GetSSRC(unsigned int *o_pdwVideoSSRC,unsigned int *o_pdwAudioSSRC);
 
     int GetRtpPackets(T_MediaFrameInfo *m_ptFrame,unsigned char **o_ppbPacketBuf,int *o_aiEveryPacketLen,int i_iPacketBufMaxNum);
 private:
     MediaHandle             *m_pMediaHandle;
-	RtpPacket               m_RtpPacket;
+	RtpPacket               m_VideoRtpPacket;//m_RtpPacket
 	RtpPacket               m_AudioRtpPacket;
     T_MediaFrameParam       *m_ptMediaFrameParam;
     RtpSession              *m_pVideoRtpSession;
+    RtpSession              *m_pAudioRtpSession;
     
     unsigned int 	        m_dwLastTimestamp;//Á÷¿ØÐèÒª
 };

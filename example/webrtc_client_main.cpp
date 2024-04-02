@@ -159,6 +159,7 @@ static void * WebRtcProc(void *pArg)
 static int OfferProc(WebRtcInterface * i_pWebRTC,char * i_strServerIp, int i_iServerPort, char * i_strSelfName,char *i_strVideoPath)
 {
     T_VideoInfo tVideoInfo;
+    T_WebRtcMediaInfo tMediaInfo;
     char acGetMsg[6*1024];
     RtpInterface *pRtpInterface=NULL;
     WebRtcClientOffer *pWebRtcClientOffer=NULL;
@@ -215,9 +216,11 @@ static int OfferProc(WebRtcInterface * i_pWebRTC,char * i_strServerIp, int i_iSe
                 tVideoInfo.dwProfileLevelId = dwProfileLevelId;
                 tVideoInfo.strSPS_Base64 = strSPS_Base64;
                 tVideoInfo.strPPS_Base64= strPPS_Base64;
-                tVideoInfo.dwSSRC= pRtpInterface->GetSSRC();
+                pRtpInterface->GetSSRC(&tVideoInfo.dwSSRC,NULL);
+                memset(&tMediaInfo,0,sizeof(tMediaInfo));
+                memcpy(&tMediaInfo.tVideoInfo,&tVideoInfo,sizeof(tVideoInfo));
                 memset(acGetMsg,0,sizeof(acGetMsg));
-                if(i_pWebRTC->GenerateLocalSDP(&tVideoInfo,acGetMsg,sizeof(acGetMsg))>=0)
+                if(i_pWebRTC->GenerateLocalSDP(&tMediaInfo,acGetMsg,sizeof(acGetMsg))>=0)
                 {
                     pWebRtcClientOffer->PostSdpMsg(acGetMsg);
                     eWebRtcStatus=WEBRTC_OFFER_HANDLE_SDP;
@@ -293,7 +296,7 @@ static int OfferProc(WebRtcInterface * i_pWebRTC,char * i_strServerIp, int i_iSe
                 {
                     for(i=0;i<iPacketNum;i++)
                     {
-                        i_pWebRTC->SendProtectedRtp((char *)ppbPacketBuf[i], aiEveryPacketLen[i]);
+                        i_pWebRTC->SendProtectedVideoRtp((char *)ppbPacketBuf[i], aiEveryPacketLen[i]);
                     }
                     iPacketNum = -1;
                 }

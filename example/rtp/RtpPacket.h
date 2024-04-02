@@ -28,7 +28,9 @@ using std::string;
 
 #define RTP_PAYLOAD_H264    96
 #define RTP_PAYLOAD_H265    97
-#define RTP_PAYLOAD_G711    104
+#define RTP_PAYLOAD_G711A    8//a=rtpmap:8 PCMA/8000 webrtc
+#define RTP_PAYLOAD_G711U    0//a=rtpmap:0 PCMU/8000 webrtc
+#define RTP_PAYLOAD_OPUS   111//a=rtpmap:111 opus/48000/2 webrtc
 #define RTP_PAYLOAD_VIDEO    106 //由于是动态的，所以先直接使用,webrtc baseline106
 #define RTP_PAYLOAD_AUDIO    104 //后续做成映射表
 

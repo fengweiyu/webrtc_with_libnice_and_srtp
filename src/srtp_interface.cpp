@@ -14,11 +14,11 @@
 #include <stdio.h>
 #include <string.h>
 
-
+int Srtp::m_iSrtpLibInited = 0;//0未初始化，1已初始化
 /*****************************************************************************
 -Fuction        : SrtpInit
 -Description    : v
--Input          : 
+-Input          :  
 -Output         : 
 -Return         : 
 * Modify Date     Version             Author           Modification
@@ -28,7 +28,11 @@
 Srtp::Srtp()
 {	
 	memset(&m_tSrtp,0,sizeof(srtp_t));
-    (void)srtp_init();
+	if(0 == m_iSrtpLibInited)
+	{
+        (void)srtp_init();
+        m_iSrtpLibInited = 1;
+	}
 }
 
 
@@ -44,7 +48,11 @@ Srtp::Srtp()
 ******************************************************************************/
 Srtp::~Srtp()
 {	
-	Shutdown();
+	if(0 != m_iSrtpLibInited)
+	{
+        (void)srtp_shutdown();
+        m_iSrtpLibInited = 0;
+	}
 }
 
 
@@ -127,7 +135,7 @@ int Srtp::ProtectRtp(char * i_acRtpData,int * o_piProtectDataLen,int i_iRtpDataL
 ******************************************************************************/
 int Srtp::Shutdown()
 {
-    return srtp_shutdown();
+    //return srtp_shutdown();
 }
 
 
