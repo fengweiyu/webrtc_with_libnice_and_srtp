@@ -43,7 +43,7 @@ const char * Libnice::m_astrCandidateTypeName[] = {"host", "srflx", "prflx", "re
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-Libnice::Libnice(char * i_strStunAddr,unsigned int i_dwStunPort,E_IceControlRole i_eControlling)
+Libnice::Libnice(char * i_strStunAddr,unsigned int i_dwStunPort,E_IceControlRole i_eControlling,int i_iAvMultiplex)
 {
     m_ptAgent=NULL;
     m_pRemoteCandidatesList = NULL;
@@ -54,7 +54,8 @@ Libnice::Libnice(char * i_strStunAddr,unsigned int i_dwStunPort,E_IceControlRole
 	snprintf(m_tLibniceDepData.strStunAddr,sizeof(m_tLibniceDepData.strStunAddr),"%s",i_strStunAddr);
 	m_tLibniceDepData.dwStunPort = i_dwStunPort;
 	m_tLibniceDepData.eControlling = i_eControlling;
-
+	m_tLibniceDepData.iAvMultiplex = i_iAvMultiplex;
+	
     memset(&m_tLibniceCb,0,sizeof(T_LibniceCb));
     memset(&m_tVideoStream,0,sizeof(T_StreamInfo));
     memset(&m_tAudioStream,0,sizeof(T_StreamInfo));
@@ -178,8 +179,11 @@ int Libnice::LibniceProc()
 	// Start gathering local candidates
 	if (!nice_agent_gather_candidates(m_ptAgent, m_tVideoStream.iID))
 		WEBRTC_LOGE("Failed to start candidate gathering m_tVideoStream\r\n");//g_error
-	if (!nice_agent_gather_candidates(m_ptAgent, m_tAudioStream.iID))
-		WEBRTC_LOGE("Failed to start candidate gathering m_tAudioStream\r\n");//g_error
+	if(m_tLibniceDepData.iAvMultiplex > 0)
+	{
+        if (!nice_agent_gather_candidates(m_ptAgent, m_tAudioStream.iID))//这样后面才可以触发connecting
+            WEBRTC_LOGE("Failed to start candidate gathering m_tAudioStream\r\n");//g_error
+	}
 
 	WEBRTC_LOGI("waiting for candidate-gathering-done signal...\r\n");//g_debug
 
@@ -505,7 +509,7 @@ int Libnice::SetRemoteCandidateAndSDP(char * i_strCandidate)
         m_strRemoteSDP.append("\r\n");
     }
     size_t dwAudioPos = m_strRemoteSDP.find("m=audio");
-    if(string::npos != dwAudioPos)
+    if(/*string::npos != dwAudioPos && */m_tLibniceDepData.iAvMultiplex > 0)
     {
         iRet = SetRemoteSdpToStream(i_strCandidate,m_tVideoStream.iID,m_tVideoStream.iNum,m_strRemoteSDP.substr(0,dwAudioPos).c_str());
         iRet |= SetRemoteSdpToStream(i_strCandidate,m_tAudioStream.iID,m_tAudioStream.iNum,m_strRemoteSDP.substr(dwAudioPos).c_str());

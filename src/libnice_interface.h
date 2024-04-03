@@ -49,6 +49,7 @@ typedef struct LibniceDepData
     char strStunAddr[24];
     unsigned int dwStunPort;
     E_IceControlRole eControlling;
+    int iAvMultiplex;//0 表示音视频复用一个通道(使用视频通道,只建立一个通道),1表示音视频各用一个通道
 }T_LibniceDepData;
 
 typedef struct LibniceCb
@@ -69,8 +70,8 @@ typedef struct LibniceCb
 class Libnice
 {
 public:
-	Libnice(char * i_strStunAddr,unsigned int i_dwStunPort,E_IceControlRole i_eControlling);
-	~Libnice();
+	Libnice(char * i_strStunAddr,unsigned int i_dwStunPort,E_IceControlRole i_eControlling,int i_iAvMultiplex=0);//0 表示音视频复用一个通道(使用视频通道,只建立一个通道),1表示音视频各用一个通道
+	~Libnice();//i_iAvMultiplex=0需要SDP设置a=group:BUNDLE  
     int SetCallback(T_LibniceCb *i_ptLibniceCb);
     int LibniceProc();
     int StopProc();

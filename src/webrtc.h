@@ -62,7 +62,7 @@ protected:
     //T_DtlsOnlyHandshakeCb m_tDtlsOnlyHandshakeCb;
     T_LibniceCb m_tLibniceCb;
     T_SctpCb m_tSctpCb;
-	int m_iSendReadyFlag;//0 no ready,1 ready
+	int m_iStreamType;//0 只有视频流，1只有音频流，2 复合流，音视频流都有
     
 };
 
