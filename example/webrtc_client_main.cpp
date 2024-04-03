@@ -296,7 +296,7 @@ static int OfferProc(WebRtcInterface * i_pWebRTC,char * i_strServerIp, int i_iSe
                 {
                     for(i=0;i<iPacketNum;i++)
                     {
-                        i_pWebRTC->SendProtectedVideoRtp((char *)ppbPacketBuf[i], aiEveryPacketLen[i]);
+                        i_pWebRTC->SendProtectedRtp((char *)ppbPacketBuf[i], aiEveryPacketLen[i]);
                     }
                     iPacketNum = -1;
                 }

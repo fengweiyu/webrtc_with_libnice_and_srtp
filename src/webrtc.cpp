@@ -16,7 +16,7 @@
 #include <sys/time.h>
 //#include "cJSON.h"
 
-
+const int WebRTC::s_iAvMultiplex = 0;//便于传入到m_Libnice
 /*****************************************************************************
 -Fuction        : WebRTC
 -Description    : 底层三者关系比较乱，暂时回调后续考虑用设计模式
@@ -27,20 +27,31 @@
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-WebRTC::WebRTC(char * i_strStunAddr,unsigned int i_dwStunPort,E_IceControlRole i_eControlling):m_Libnice(i_strStunAddr,i_dwStunPort,i_eControlling,1)
+WebRTC::WebRTC(char * i_strStunAddr,unsigned int i_dwStunPort,E_IceControlRole i_eControlling,int i_iStreamType):m_Libnice(i_strStunAddr,i_dwStunPort,i_eControlling,s_iAvMultiplex)
 {
     T_DtlsOnlyHandshakeCb tDtlsOnlyHandshakeCb;
 
+    
+    memset(&m_tWebRtcCb,0,sizeof(m_tWebRtcCb));
+    m_pWebRtcCbObj = NULL;
+
     m_pVideoDtlsOnlyHandshake = NULL;
+    m_pVideoSrtp = NULL;
     memset(&tDtlsOnlyHandshakeCb,0,sizeof(T_DtlsOnlyHandshakeCb));
     tDtlsOnlyHandshakeCb.SendDataOut=&WebRTC::SendVideoDataOutCb;
     tDtlsOnlyHandshakeCb.pObj=&m_Libnice;
     m_pVideoDtlsOnlyHandshake = new DtlsOnlyHandshake(tDtlsOnlyHandshakeCb);
+    m_pVideoSrtp = new Srtp();
     m_pAudioDtlsOnlyHandshake = NULL;
-    memset(&tDtlsOnlyHandshakeCb,0,sizeof(T_DtlsOnlyHandshakeCb));
-    tDtlsOnlyHandshakeCb.SendDataOut=&WebRTC::SendAudioDataOutCb;
-    tDtlsOnlyHandshakeCb.pObj=&m_Libnice;
-    m_pAudioDtlsOnlyHandshake = new DtlsOnlyHandshake(tDtlsOnlyHandshakeCb);
+    m_pAudioSrtp = NULL;
+    if(s_iAvMultiplex > 0)
+    {
+        memset(&tDtlsOnlyHandshakeCb,0,sizeof(T_DtlsOnlyHandshakeCb));
+        tDtlsOnlyHandshakeCb.SendDataOut=&WebRTC::SendAudioDataOutCb;
+        tDtlsOnlyHandshakeCb.pObj=&m_Libnice;
+        m_pAudioDtlsOnlyHandshake = new DtlsOnlyHandshake(tDtlsOnlyHandshakeCb);
+        m_pAudioSrtp = new Srtp();
+    }
 
     memset(&m_tLibniceCb,0,sizeof(T_LibniceCb));//改回调为传入对象的方法,回调必须带对象指针参数(回调函数要访问对象里的内容)
     m_tLibniceCb.Handshake= &WebRTC::HandshakeCb;//回调函数必须static,
@@ -51,7 +62,7 @@ WebRTC::WebRTC(char * i_strStunAddr,unsigned int i_dwStunPort,E_IceControlRole i
 
     m_iVideoSrtpCreatedFlag = 0;
     m_iAudioSrtpCreatedFlag = 0;
-    m_iStreamType = 2;
+    m_iStreamType = i_iStreamType;
     m_pSctp = NULL;
     memset(&m_tSctpCb,0,sizeof(m_tSctpCb));
     m_tSctpCb.SendToOut = NULL;//没有应用数据通过sctp发暂时不用
@@ -64,11 +75,6 @@ WebRTC::WebRTC(char * i_strStunAddr,unsigned int i_dwStunPort,E_IceControlRole i
     {
         WEBRTC_LOGE("m_pDtlsOnlyHandshake->Init err%d",iRet);
     }
-    iRet = m_pAudioDtlsOnlyHandshake->Init();//可以放Proc()里
-    if(iRet < 0)
-    {
-        WEBRTC_LOGE("m_pDtlsOnlyHandshake->Init err%d",iRet);
-    }
     if(ICE_CONTROLLED_ROLE == i_eControlling)//后续可以抽象出一个角色放webrtc.h
         iRet = m_pVideoDtlsOnlyHandshake->Create(DTLS_ROLE_SERVER);//必须是DTLS_ROLE_SERVER，DTLS_ROLE_CLIENT实测失败
     else
@@ -77,13 +83,23 @@ WebRTC::WebRTC(char * i_strStunAddr,unsigned int i_dwStunPort,E_IceControlRole i
     {
         WEBRTC_LOGE("m_pVideoDtlsOnlyHandshake->Create err i_eControlling %d iRet %d",i_eControlling,iRet);
     }
-    if(ICE_CONTROLLED_ROLE == i_eControlling)//后续可以抽象出一个角色放webrtc.h
-        iRet = m_pAudioDtlsOnlyHandshake->Create(DTLS_ROLE_SERVER);//必须是DTLS_ROLE_SERVER，DTLS_ROLE_CLIENT实测失败
-    else
-        iRet = m_pAudioDtlsOnlyHandshake->Create(DTLS_ROLE_SERVER);//offer端，使用sever
-    if(iRet < 0)//可以放Proc()里
+
+
+    if(NULL != m_pAudioDtlsOnlyHandshake)
     {
-        WEBRTC_LOGE("m_pAudioDtlsOnlyHandshake->Create err i_eControlling %d iRet %d",i_eControlling,iRet);
+        iRet = m_pAudioDtlsOnlyHandshake->Init();//可以放Proc()里
+        if(iRet < 0)
+        {
+            WEBRTC_LOGE("m_pDtlsOnlyHandshake->Init err%d",iRet);
+        }
+        if(ICE_CONTROLLED_ROLE == i_eControlling)//后续可以抽象出一个角色放webrtc.h
+            iRet = m_pAudioDtlsOnlyHandshake->Create(DTLS_ROLE_SERVER);//必须是DTLS_ROLE_SERVER，DTLS_ROLE_CLIENT实测失败
+        else
+            iRet = m_pAudioDtlsOnlyHandshake->Create(DTLS_ROLE_SERVER);//offer端，使用sever
+        if(iRet < 0)//可以放Proc()里
+        {
+            WEBRTC_LOGE("m_pAudioDtlsOnlyHandshake->Create err i_eControlling %d iRet %d",i_eControlling,iRet);
+        }
     }
 }
 /*****************************************************************************
@@ -108,6 +124,37 @@ WebRTC::~WebRTC()
     {
         delete m_pVideoDtlsOnlyHandshake;
     }
+    if(NULL!= m_pVideoSrtp)
+    {
+        delete m_pVideoSrtp;
+    }
+    if(NULL!= m_pAudioSrtp)
+    {
+        delete m_pAudioSrtp;
+    }
+}
+/*****************************************************************************
+-Fuction        : Proc
+-Description    : Proc
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+int WebRTC::SetCallback(T_WebRtcCb *i_ptWebRtcCb,void *pObj)
+{
+    int iRet = -1;
+    if(NULL == i_ptWebRtcCb || NULL == pObj)
+    {
+        WEBRTC_LOGW("SetCallback NULL \r\n");
+        return iRet;
+    }
+    memset(&m_tWebRtcCb,0,sizeof(T_WebRtcCb));
+    memcpy(&m_tWebRtcCb,i_ptWebRtcCb,sizeof(T_WebRtcCb));
+    m_pWebRtcCbObj = pObj;
+    return 0;
 }
 /*****************************************************************************
 -Fuction        : Proc
@@ -204,6 +251,34 @@ int WebRTC::HandleCandidateMsg(char * i_strCandidateMsg,int i_iNotJsonMsgFlag)
 
 /*****************************************************************************
 -Fuction        : SendProtectedRtp
+-Description    : i_iStreamType 0 未定义(默认，s_iAvMultiplex = 0可使用)，1音频，2视频
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+int WebRTC::SendProtectedRtp(char * i_acRtpBuf,int i_iRtpBufLen,int i_iStreamType)
+{
+    int iRet = -1;
+    if(s_iAvMultiplex > 0)
+    {
+        if(1 == i_iStreamType)
+        {
+            iRet = SendProtectedVideoRtp(i_acRtpBuf,i_iRtpBufLen);
+        }
+        else if(2 == i_iStreamType)
+        {
+            iRet = SendProtectedVideoRtp(i_acRtpBuf,i_iRtpBufLen);
+        }
+        return iRet;
+    }
+    return SendProtectedVideoRtp(i_acRtpBuf,i_iRtpBufLen);
+}
+
+/*****************************************************************************
+-Fuction        : SendProtectedRtp
 -Description    : SendProtectedRtp
 -Input          : 
 -Output         : 
@@ -232,11 +307,11 @@ int WebRTC::SendProtectedVideoRtp(char * i_acRtpBuf,int i_iRtpBufLen)
             WEBRTC_LOGE("m_Srtp.ProtectRtp GetLocalPolicyInfo err \r\n",iRet);
             return iRet;
         }
-        m_VideoSrtp.Create(tPolicyInfo.key, sizeof(tPolicyInfo.key), SRTP_SSRC_PROTECT);
+        m_pVideoSrtp->Create(tPolicyInfo.key, sizeof(tPolicyInfo.key), SRTP_SSRC_PROTECT);
         m_iVideoSrtpCreatedFlag = 1;
     }
     iProtectRtpLen = i_iRtpBufLen;
-    iRet=m_VideoSrtp.ProtectRtp(i_acRtpBuf,&iProtectRtpLen,i_iRtpBufLen);
+    iRet=m_pVideoSrtp->ProtectRtp(i_acRtpBuf,&iProtectRtpLen,i_iRtpBufLen);
     if (iRet) 
     {
         WEBRTC_LOGE("m_Srtp.ProtectRtp err %d i_iRtpBufLen %d\r\n",iRet,i_iRtpBufLen);
@@ -272,11 +347,11 @@ int WebRTC::SendProtectedAudioRtp(char * i_acRtpBuf,int i_iRtpBufLen)
     {
         memset(&tPolicyInfo,0,sizeof(T_PolicyInfo));
         m_pAudioDtlsOnlyHandshake->GetLocalPolicyInfo(&tPolicyInfo);
-        m_AudioSrtp.Create(tPolicyInfo.key, sizeof(tPolicyInfo.key), SRTP_SSRC_PROTECT);
+        m_pAudioSrtp->Create(tPolicyInfo.key, sizeof(tPolicyInfo.key), SRTP_SSRC_PROTECT);
         m_iAudioSrtpCreatedFlag = 1;
     }
     iProtectRtpLen = i_iRtpBufLen;
-    iRet=m_AudioSrtp.ProtectRtp(i_acRtpBuf,&iProtectRtpLen,i_iRtpBufLen);
+    iRet=m_pAudioSrtp->ProtectRtp(i_acRtpBuf,&iProtectRtpLen,i_iRtpBufLen);
     if (iRet) 
     {
         WEBRTC_LOGE("m_Srtp.ProtectRtp err %d \r\n",iRet);
@@ -306,15 +381,11 @@ int WebRTC::GetGatheringDoneFlag()
     memset(&tLocalVideoCandidate,0,sizeof(T_LocalCandidate));
     memset(&tLocalAudioCandidate,0,sizeof(T_LocalCandidate));
     m_Libnice.GetLocalCandidate(&tLocalVideoCandidate,&tLocalAudioCandidate);
-    if(0 == m_iStreamType && tLocalVideoCandidate.iGatheringDoneFlag != 0)
+    if(0 == s_iAvMultiplex && tLocalVideoCandidate.iGatheringDoneFlag != 0)
     {
 		iRet = 0;
     }
-    if(1 == m_iStreamType && tLocalAudioCandidate.iGatheringDoneFlag != 0)
-	{
-		iRet = 0;
-	}
-    if(2 == m_iStreamType && tLocalVideoCandidate.iGatheringDoneFlag != 0 && tLocalAudioCandidate.iGatheringDoneFlag != 0)
+    if(1 == s_iAvMultiplex && tLocalVideoCandidate.iGatheringDoneFlag != 0&& tLocalAudioCandidate.iGatheringDoneFlag != 0)
 	{
 		iRet = 0;
 	}
@@ -338,7 +409,7 @@ int WebRTC::GetSendReadyFlag()
     T_PolicyInfo tPolicyInfo;
 
     m_Libnice.GetSendReadyFlag(&iVideoReadyFlag,&iAudioReadyFlag);
-    if((0 == m_iStreamType||2 == m_iStreamType) && 0 != iVideoReadyFlag)
+    if((0 == s_iAvMultiplex) && 0 != iVideoReadyFlag)
     {
         memset(&tPolicyInfo,0,sizeof(T_PolicyInfo));
         iRet=m_pVideoDtlsOnlyHandshake->GetLocalPolicyInfo(&tPolicyInfo);//获取成功表示通道协商成功了
@@ -347,14 +418,14 @@ int WebRTC::GetSendReadyFlag()
 	{
 	    //WEBRTC_LOGW("GetSendReadyFlag 0\r\n");
 	}
-    if((1 == m_iStreamType||2 == m_iStreamType) &&0 != iAudioReadyFlag)
+    if((s_iAvMultiplex > 0) &&0 != iAudioReadyFlag)
     {
         memset(&tPolicyInfo,0,sizeof(T_PolicyInfo));
         iRet|=m_pAudioDtlsOnlyHandshake->GetLocalPolicyInfo(&tPolicyInfo);//获取成功表示通道协商成功了
     }
 	else
 	{
-	    if(m_iStreamType < 2)
+	    if(s_iAvMultiplex > 0)
             iRet = -1;
 	    //WEBRTC_LOGW("GetSendReadyFlag 0\r\n");
 	}
@@ -565,6 +636,13 @@ void WebRTC::HandleRecvDataCb(char * i_acData,int i_iLen,void * pArg)
             
         }
     }
+    else
+    {
+        //if(NULL != m_tWebRtcCb.RecvData && NULL != m_pWebRtcCbObj)
+        {
+            //m_tWebRtcCb.RecvData(i_acData,i_iLen,m_pWebRtcCbObj);//区分音频和视频，以及srtp调用
+        }
+    }
 }
 
 /*****************************************************************************
@@ -625,7 +703,7 @@ int WebRTC::SendAudioDataOutCb(char * i_acData,int i_iLen,void * pArg)
 ******************************************************************************/
 bool WebRTC::IsDtls(char *buf) 
 {
-    return ((*buf >= 20) && (*buf <= 64));
+    return ((*buf >= 20) && (*buf <= 64));//buf < 64
 }
 
 
@@ -639,7 +717,7 @@ bool WebRTC::IsDtls(char *buf)
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-WebRtcOffer::WebRtcOffer(char * i_strStunAddr,unsigned int i_dwStunPort,E_IceControlRole i_eControlling):WebRTC(i_strStunAddr,i_dwStunPort,i_eControlling)
+WebRtcOffer::WebRtcOffer(char * i_strStunAddr,unsigned int i_dwStunPort,E_IceControlRole i_eControlling,int i_iStreamType):WebRTC(i_strStunAddr,i_dwStunPort,i_eControlling,i_iStreamType)
 {
 }
 
@@ -945,7 +1023,7 @@ int WebRtcOffer::GenerateLocalSDP(T_WebRtcMediaInfo *i_ptMediaInfo,char *o_strSD
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-WebRtcAnswer::WebRtcAnswer(char * i_strStunAddr,unsigned int i_dwStunPort,E_IceControlRole i_eControlling):WebRTC(i_strStunAddr,i_dwStunPort,i_eControlling)
+WebRtcAnswer::WebRtcAnswer(char * i_strStunAddr,unsigned int i_dwStunPort,E_IceControlRole i_eControlling,int i_iStreamType):WebRTC(i_strStunAddr,i_dwStunPort,i_eControlling,i_iStreamType)
 {
 }
 
@@ -1196,16 +1274,32 @@ int WebRtcAnswer::GenerateLocalSDP(T_WebRtcMediaInfo *i_ptMediaInfo,char *o_strS
     }
     else
     {
-        strSdpFmt.assign("v=0\r\n"
-            "o=- %ld%06ld %d IN IP4 %s\r\n"//o=<username><session id> <version> <network type> <address type><address> Origin ,给定了会话的发起者信息
-            "s=ywf webrtc\r\n"//s=<sessionname> ;给定了Session Name
-            "t=0 0\r\n"//"t=0 0\r\na=group:BUNDLE %d %d\r\n" sctp暂不需要去掉一个%d//t=<start time><stop time> ;BUNDLE 与sdpMLineIndex sdpMid里的一致
-            //"a=group:BUNDLE %d %d\r\n"//a=group:BUNDLE表示音视频流共用一个通道
-            "a=msid-semantic: WMS ywf-mslabel\r\n"//"a=msid-semantic: WMS ywf\r\n"
-            );//a=setup:actpass 浏览器会报错
-        iRet=snprintf(o_strSDP,i_iSdpMaxLen,strSdpFmt.c_str(),
-            tCreateTime.tv_sec,tCreateTime.tv_usec,1,"0.0.0.0");
-            //ptVideoInfo->iID,ptAudioInfo->iID);
+        if(s_iAvMultiplex > 0)
+        {
+            strSdpFmt.assign("v=0\r\n"
+                "o=- %ld%06ld %d IN IP4 %s\r\n"//o=<username><session id> <version> <network type> <address type><address> Origin ,给定了会话的发起者信息
+                "s=ywf webrtc\r\n"//s=<sessionname> ;给定了Session Name
+                "t=0 0\r\n"//"t=0 0\r\na=group:BUNDLE %d %d\r\n" sctp暂不需要去掉一个%d//t=<start time><stop time> ;BUNDLE 与sdpMLineIndex sdpMid里的一致
+                //"a=group:BUNDLE %d %d\r\n"//a=group:BUNDLE表示音视频流共用一个通道
+                "a=msid-semantic: WMS ywf-mslabel\r\n"//"a=msid-semantic: WMS ywf\r\n"
+                );//a=setup:actpass 浏览器会报错
+            iRet=snprintf(o_strSDP,i_iSdpMaxLen,strSdpFmt.c_str(),
+                tCreateTime.tv_sec,tCreateTime.tv_usec,1,"0.0.0.0");
+                //ptVideoInfo->iID,ptAudioInfo->iID);
+        }
+        else
+        {
+            strSdpFmt.assign("v=0\r\n"
+                "o=- %ld%06ld %d IN IP4 %s\r\n"//o=<username><session id> <version> <network type> <address type><address> Origin ,给定了会话的发起者信息
+                "s=ywf webrtc\r\n"//s=<sessionname> ;给定了Session Name
+                "t=0 0\r\n"//"t=0 0\r\na=group:BUNDLE %d %d\r\n" sctp暂不需要去掉一个%d//t=<start time><stop time> ;BUNDLE 与sdpMLineIndex sdpMid里的一致
+                "a=group:BUNDLE %d %d\r\n"//a=group:BUNDLE表示音视频流共用一个通道
+                "a=msid-semantic: WMS ywf-mslabel\r\n"//"a=msid-semantic: WMS ywf\r\n"
+                );//a=setup:actpass 浏览器会报错
+            iRet=snprintf(o_strSDP,i_iSdpMaxLen,strSdpFmt.c_str(),
+                tCreateTime.tv_sec,tCreateTime.tv_usec,1,"0.0.0.0",
+                ptVideoInfo->iID,ptAudioInfo->iID);
+        }
     }
     ptLocalCandidate = &tVideoLocalCandidate;
     strSdpFmt.assign("m=%s %u RTP/SAVPF %d\r\n"
@@ -1280,10 +1374,17 @@ int WebRtcAnswer::GenerateLocalSDP(T_WebRtcMediaInfo *i_ptMediaInfo,char *o_strS
     {
         return iRet;
     }
-    ptLocalCandidate = &tAudioLocalCandidate;
     //音频SDP
-    memset(strLocalFingerprint,0,sizeof(strLocalFingerprint));
-    m_pAudioDtlsOnlyHandshake->GetLocalFingerprint(strLocalFingerprint,sizeof(strLocalFingerprint));
+    if(s_iAvMultiplex > 0)
+    {
+        ptLocalCandidate = &tAudioLocalCandidate;
+        memset(strLocalFingerprint,0,sizeof(strLocalFingerprint));
+        m_pAudioDtlsOnlyHandshake->GetLocalFingerprint(strLocalFingerprint,sizeof(strLocalFingerprint));
+    }
+    else
+    {
+        ptLocalCandidate = &tVideoLocalCandidate;
+    }
     strSdpFmt.assign(
         "m=%s %u RTP/SAVPF %d\r\n"
         "c=IN IP4 %s\r\n"

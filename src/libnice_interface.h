@@ -88,9 +88,9 @@ public:
     static void RecvAudioData(NiceAgent *agent, guint _stream_id, guint component_id,guint len, gchar *buf, gpointer data);
 
     
-    int SetRemoteCredentials(char * i_strUfrag,char * i_strPasswd);
+    int SetRemoteCredentials(char * i_strUfrag,char * i_strPasswd,int i_iStreamID);
     int SetRemoteCandidateToGlist(char * i_strCandidate,int i_iStreamID);
-    int SetRemoteCandidates();
+    int SetRemoteCandidates(int i_iStreamID,int i_iStreamNum);
     int SetRemoteSDP(char * i_strSDP);
     
 	static const char *m_astrCandidateTypeName[];

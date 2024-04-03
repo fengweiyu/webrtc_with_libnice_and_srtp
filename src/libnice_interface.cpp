@@ -302,7 +302,7 @@ int Libnice::GetLocalSDP(char * i_strSDP,int i_iSdpLen)
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int Libnice::SetRemoteCredentials(char * i_strUfrag,char * i_strPasswd)
+int Libnice::SetRemoteCredentials(char * i_strUfrag,char * i_strPasswd,int i_iStreamID)
 {
 	int iRet = -1;
     if (i_strUfrag == NULL || i_strPasswd == NULL || m_ptAgent == NULL || m_tVideoStream.iID == 0) 
@@ -311,17 +311,12 @@ int Libnice::SetRemoteCredentials(char * i_strUfrag,char * i_strPasswd)
 		return iRet;
     }
     
-    if (!nice_agent_set_remote_credentials(m_ptAgent, m_tVideoStream.iID, i_strUfrag, i_strPasswd)) 
+    if (!nice_agent_set_remote_credentials(m_ptAgent,i_iStreamID, i_strUfrag, i_strPasswd)) 
     {
-		printf("failed to set remote m_tVideoStream credentials\r\n");//g_message
+		printf("failed to set remote m_tVideoStream credentials %d\r\n",i_iStreamID);//g_message
 		return iRet;
     }
-
-    if (!nice_agent_set_remote_credentials(m_ptAgent, m_tAudioStream.iID, i_strUfrag, i_strPasswd)) 
-    {
-		printf("failed to set remote m_tAudioStream credentials\r\n");//g_message
-		return iRet;
-    }
+    
     iRet = 0;
     return iRet;
 }
@@ -410,7 +405,7 @@ int Libnice::SetRemoteCandidateToGlist(char * i_strCandidate,int i_iStreamID)
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int Libnice::SetRemoteCandidates()
+int Libnice::SetRemoteCandidates(int i_iStreamID,int i_iStreamNum)
 {
 	int iRet = -1;
     if (m_pRemoteCandidatesList == NULL) 
@@ -424,20 +419,9 @@ int Libnice::SetRemoteCandidates()
 		return iRet;
     }
 	// Note: this will trigger the start of negotiation.
-	for(int i=1;i<=m_tVideoStream.iNum;i++)
+	for(int i=1;i<=i_iStreamNum;i++)
 	{
-        if (nice_agent_set_remote_candidates(m_ptAgent, m_tVideoStream.iID, i,m_pRemoteCandidatesList) < 1) 
-        {
-            g_message("failed to set remote candidates");
-        }
-        else
-        {
-            iRet=0;
-        }
-	}
-	for(int i=1;i<=m_tAudioStream.iNum;i++)
-	{
-        if (nice_agent_set_remote_candidates(m_ptAgent, m_tAudioStream.iID, i,m_pRemoteCandidatesList) < 1) 
+        if (nice_agent_set_remote_candidates(m_ptAgent, i_iStreamID, i,m_pRemoteCandidatesList) < 1) 
         {
             g_message("failed to set remote candidates");
         }
@@ -575,9 +559,9 @@ int Libnice::SetRemoteSdpToStream(char * i_strCandidate,int i_iStreamID,int i_iS
     else if(NULL !=ufrag && NULL!=pwd)
     {//nice_agent_parse_remote_stream_sdp部分失败则用自己的逻辑
         printf("failed to set remote candidates:%p,%p,%p,%d....use local\r\n",ufrag,pwd,plist,g_slist_length(plist));
-        SetRemoteCredentials(ufrag, pwd);
+        SetRemoteCredentials(ufrag, pwd,i_iStreamID);
         SetRemoteCandidateToGlist(i_strCandidate,i_iStreamID);//i_strCandidate需要属于对应的streamID
-        iRet = SetRemoteCandidates();
+        iRet = SetRemoteCandidates(i_iStreamID,i_iStreamNum);
     }
     else
     {

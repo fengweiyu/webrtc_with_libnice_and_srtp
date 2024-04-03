@@ -37,7 +37,7 @@ answer (被动接受)的一方为 controlled 角色
 full ice agent 是 controlling role，lite ice agent 是 controlled ,srs 仅支持 lite ice*/
 typedef enum IceControlRole
 {
-    ICE_CONTROLLED_ROLE=0,////使用这个失败
+    ICE_CONTROLLED_ROLE=0,////先设置远端sdp(connecting),再发送本身sdp然后等待远端来请求并建立链接
     ICE_CONTROLLING_ROLE
 }E_IceControlRole;
 /*ICE 模式FULL ICE，双方都要进行连通性检查；ice 客户端实现，该模式既可以收 binding request，
@@ -85,7 +85,7 @@ typedef struct WebRtcCb
 {
     int (*RecvVideoData)(char * i_acDataBuf,int i_iDataLen,void *i_pIoHandle);//Annex-B格式裸流带00 00 00 01
     int (*RecvAudioData)(char * i_acDataBuf,int i_iDataLen,void *i_pIoHandle);//aac带7字节头
-    int (*RecvScriptData)(char * i_acDataBuf,int i_iDataLen,void *i_pIoHandle);
+    int (*RecvData)(char * i_acDataBuf,int i_iDataLen,void *i_pIoHandle);
 }T_WebRtcCb;
 
 

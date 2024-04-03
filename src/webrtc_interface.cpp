@@ -68,6 +68,22 @@ WebRtcInterface::~WebRtcInterface()
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
+int WebRtcInterface::SetCallback(T_WebRtcCb *i_ptWebRtcCb,void *pObj)
+{
+    WebRTC *pWebRTC = (WebRTC *)m_pHandle;
+    return pWebRTC->SetCallback(i_ptWebRtcCb,pObj);
+}
+
+/*****************************************************************************
+-Fuction        : Proc
+-Description    : Proc
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
 int WebRtcInterface::Proc()
 {
     WebRTC *pWebRTC = (WebRTC *)m_pHandle;
@@ -195,27 +211,12 @@ int WebRtcInterface::GetSendReadyFlag()
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int WebRtcInterface::SendProtectedVideoRtp(char * i_acRtpBuf,int i_iRtpBufLen)
+int WebRtcInterface::SendProtectedRtp(char * i_acRtpBuf,int i_iRtpBufLen,int i_iStreamType)
 {
     WebRTC *pWebRTC = (WebRTC *)m_pHandle;
-    return pWebRTC->SendProtectedVideoRtp(i_acRtpBuf,i_iRtpBufLen);
+    return pWebRTC->SendProtectedRtp(i_acRtpBuf,i_iRtpBufLen,i_iStreamType);
 }
 
-/*****************************************************************************
--Fuction        : SendProtectedRtp
--Description    : SendProtectedRtp
--Input          : 
--Output         : 
--Return         : 
-* Modify Date     Version             Author           Modification
-* -----------------------------------------------
-* 2020/01/13      V1.0.0              Yu Weifeng       Created
-******************************************************************************/
-int WebRtcInterface::SendProtectedAudioRtp(char * i_acRtpBuf,int i_iRtpBufLen)
-{
-    WebRTC *pWebRTC = (WebRTC *)m_pHandle;
-    return pWebRTC->SendProtectedAudioRtp(i_acRtpBuf,i_iRtpBufLen);
-}
 
 
 
