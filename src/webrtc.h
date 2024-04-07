@@ -45,21 +45,24 @@ public:
     virtual int GenerateLocalSDP(T_WebRtcMediaInfo *i_ptMediaInfo,char *o_strSDP,int i_iSdpMaxLen);//webrtc_client使用
     
     static void HandshakeCb(void * pArg);//放到上层的目的是为了底层模块之间不要相互依赖
-    static void HandleRecvDataCb(char * i_acData,int i_iLen,void * pArg);//后续可以改为private试试
+    static void HandleRecvDataCb(char * i_acData,int i_iLen,void * pArg,void * pWebRtcArg);//后续可以改为private试试
 	static int SendVideoDataOutCb(char * i_acData,int i_iLen,void * pArg);
 	static int SendAudioDataOutCb(char * i_acData,int i_iLen,void * pArg);
+
+    T_WebRtcCb m_tWebRtcCb;
+    void *m_pWebRtcCbObj;
+	Srtp *m_pVideoSrtp;
+	Srtp *m_pAudioSrtp;
+    DtlsOnlyHandshake * m_pVideoDtlsOnlyHandshake;//只在视频通道这一个通道内协商
+    DtlsOnlyHandshake * m_pAudioDtlsOnlyHandshake;//音频通道
 protected:
     int SendProtectedVideoRtp(char * i_acRtpBuf,int i_iRtpBufLen);
     int SendProtectedAudioRtp(char * i_acRtpBuf,int i_iRtpBufLen);
     static bool IsDtls(char *buf);
     
     Libnice m_Libnice;
-	Srtp *m_pVideoSrtp;
-	Srtp *m_pAudioSrtp;
 	int m_iVideoSrtpCreatedFlag;//0未创建,1已经创建
 	int m_iAudioSrtpCreatedFlag;//0未创建,1已经创建
-    DtlsOnlyHandshake * m_pVideoDtlsOnlyHandshake;//只在视频通道这一个通道内协商
-    DtlsOnlyHandshake * m_pAudioDtlsOnlyHandshake;//音频通道
     Sctp * m_pSctp;//应用数据和视频数据共用一个通道传输
     
     //T_DtlsOnlyHandshakeCb m_tDtlsOnlyHandshakeCb;
@@ -68,8 +71,6 @@ protected:
 	int m_iStreamType;//0 只有视频流，1只有音频流，2 复合流，音视频流都有
     static const int s_iAvMultiplex;//0 表示音视频复用一个通道(使用视频通道,只建立一个通道),1表示音视频各用一个通道
 
-    T_WebRtcCb m_tWebRtcCb;
-    void *m_pWebRtcCbObj;
 };
 
 /*****************************************************************************
@@ -109,8 +110,12 @@ public:
 
     int GenerateLocalSDP(T_WebRtcMediaInfo *i_ptMediaInfo,char *o_strSDP,int i_iSdpMaxLen);
 private:
+    int GenerateVideoSDP(T_LocalCandidate *ptLocalCandidate,char *strLocalFingerprint,T_VideoInfo *ptVideoInfo,char *o_strSDP,int i_iSdpMaxLen);
+    int GenerateAudioSDP(T_LocalCandidate *ptLocalCandidate,char *strLocalFingerprint,T_AudioInfo *ptAudioInfo,char *o_strSDP,int i_iSdpMaxLen);
+
     string *m_pVideoID;//Answer的ID从对方请求的sdp中的获取
     string *m_pAudioID;
+    int m_iAvDiff;//判断音视频前后顺序
 };
 
 

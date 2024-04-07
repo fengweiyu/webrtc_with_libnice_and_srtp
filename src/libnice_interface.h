@@ -55,9 +55,10 @@ typedef struct LibniceDepData
 typedef struct LibniceCb
 {
     void ( *Handshake)(void * pArg);
-	void ( *HandleRecvData)(char * i_acData,int i_iLen,void * pArg);
+	void ( *HandleRecvData)(char * i_acData,int i_iLen,void * pDtlsArg,void * pWebRtcArg);
     void *pVideoDtlsObjCb;
     void *pAudioDtlsObjCb;
+    void *pWebRtcObjCb;
 }T_LibniceCb;
 
 /*****************************************************************************

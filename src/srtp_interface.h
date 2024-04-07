@@ -43,10 +43,11 @@ public:
 	~Srtp();
     int Create(char *i_acKey,int i_iKeyLen,E_SrtpSsrcType i_eSrtpSsrcType);
     int ProtectRtp(char * i_acRtpData,int * o_piProtectDataLen,int i_iRtpDataLen);
+    int UnProtectRtp(char * m_acSrtpData,int * m_piDataLen);
     int Shutdown();
 
 
-    static int m_iSrtpLibInited;//0Î´³õÊ¼»¯£¬1ÒÑ³õÊ¼»¯
+    static int m_iSrtpLibInited;//0æœªåˆå§‹åŒ–ï¼Œ1å·²åˆå§‹åŒ–
     
 private:
     srtp_t m_tSrtp;

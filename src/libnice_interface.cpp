@@ -870,7 +870,7 @@ void Libnice::RecvVideoData(NiceAgent *agent, guint _stream_id, guint component_
 	{
         if (NULL != pLibnice->m_tLibniceCb.HandleRecvData)
         {//这里接收浏览器发出的报文(包括dtls协商报文)
-             pLibnice->m_tLibniceCb.HandleRecvData(buf,len,pLibnice->m_tLibniceCb.pVideoDtlsObjCb);
+             pLibnice->m_tLibniceCb.HandleRecvData(buf,len,pLibnice->m_tLibniceCb.pVideoDtlsObjCb,pLibnice->m_tLibniceCb.pWebRtcObjCb);
         }
 	}
 	//printf("%d,%.*s\r\n", len,len, buf);
@@ -886,7 +886,7 @@ void Libnice::RecvAudioData(NiceAgent *agent, guint _stream_id, guint component_
 	{
         if (NULL != pLibnice->m_tLibniceCb.HandleRecvData)
         {//这里接收浏览器发出的报文(包括dtls协商报文)
-             pLibnice->m_tLibniceCb.HandleRecvData(buf,len,pLibnice->m_tLibniceCb.pAudioDtlsObjCb);
+             pLibnice->m_tLibniceCb.HandleRecvData(buf,len,pLibnice->m_tLibniceCb.pAudioDtlsObjCb,pLibnice->m_tLibniceCb.pWebRtcObjCb);
         }
 	}
 	//fflush(stdout);

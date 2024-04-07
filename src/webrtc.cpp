@@ -58,6 +58,7 @@ WebRTC::WebRTC(char * i_strStunAddr,unsigned int i_dwStunPort,E_IceControlRole i
     m_tLibniceCb.HandleRecvData= &WebRTC::HandleRecvDataCb;//如果函数内调用对象里的则必须改c函数传对象指针
     m_tLibniceCb.pVideoDtlsObjCb=m_pVideoDtlsOnlyHandshake;//不再libnice类里面做指针转换,这是防止底层模块相互依赖
     m_tLibniceCb.pAudioDtlsObjCb=m_pAudioDtlsOnlyHandshake;
+    m_tLibniceCb.pWebRtcObjCb=this;
     m_Libnice.SetCallback(&m_tLibniceCb);
 
     m_iVideoSrtpCreatedFlag = 0;
@@ -169,7 +170,7 @@ int WebRTC::SetCallback(T_WebRtcCb *i_ptWebRtcCb,void *pObj)
 int WebRTC::Proc()
 {
     int iRet = m_Libnice.LibniceProc();
-    WEBRTC_LOGW("WebRTC::Proc exit %d",iRet);
+    WEBRTC_LOGW("WebRTC::Proc exit %d\r\n",iRet);
     return iRet;
 }
 /*****************************************************************************
@@ -624,23 +625,62 @@ void WebRTC::HandshakeCb(void * pArg)
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-void WebRTC::HandleRecvDataCb(char * i_acData,int i_iLen,void * pArg)
+void WebRTC::HandleRecvDataCb(char * i_acData,int i_iLen,void * pDtlsArg,void * pWebRtcArg)
 {
+    int iRet = -1;
     DtlsOnlyHandshake *pDtlsOnlyHandshake=NULL;
+    WebRTC * pWebRTC=NULL;
+    Srtp * pSrtp=NULL;
+
+    if(NULL!=pDtlsArg)//防止该静态函数对本对象的依赖,
+    {
+        pDtlsOnlyHandshake = (DtlsOnlyHandshake *)pDtlsArg;
+    }
+    
     if (IsDtls(i_acData))
     {
-        if(NULL!=pArg)//防止该静态函数对本对象的依赖,
+        if(NULL!=pDtlsOnlyHandshake)//防止该静态函数对本对象的依赖,
         {//所以不直接用m_pDtlsOnlyHandshake->Handshake();
-            pDtlsOnlyHandshake = (DtlsOnlyHandshake *)pArg;
             pDtlsOnlyHandshake->HandleRecvData(i_acData,i_iLen);
-            
         }
     }
     else
     {
-        //if(NULL != m_tWebRtcCb.RecvData && NULL != m_pWebRtcCbObj)
+        if(NULL==pWebRtcArg)//防止该静态函数对本对象的依赖,
         {
-            //m_tWebRtcCb.RecvData(i_acData,i_iLen,m_pWebRtcCbObj);//区分音频和视频，以及srtp调用
+            return;
+        }
+        pWebRTC = (WebRTC *)pWebRtcArg;
+        if(NULL != pWebRTC->m_tWebRtcCb.IsRtp && NULL != pWebRTC->m_pWebRtcCbObj)
+        {
+            iRet = pWebRTC->m_tWebRtcCb.IsRtp(i_acData,i_iLen,pWebRTC->m_pWebRtcCbObj);
+        }
+        if(1 != iRet)
+        {
+            return;
+        }
+        
+        if(pWebRTC->m_pVideoDtlsOnlyHandshake==pDtlsOnlyHandshake)//
+        {
+            pSrtp = pWebRTC->m_pVideoSrtp;
+        }
+        else if(pWebRTC->m_pAudioDtlsOnlyHandshake==pDtlsOnlyHandshake)//
+        {
+            pSrtp = pWebRTC->m_pAudioSrtp;
+        }
+        if(NULL!=pSrtp)
+        {
+            iRet = pSrtp->UnProtectRtp(i_acData,&i_iLen);
+        }
+        if(0 != iRet)
+        {
+            WEBRTC_LOGE("pSrtp->UnProtectRtp err %d",iRet);
+            return;
+        }
+        
+        if(NULL != pWebRTC->m_tWebRtcCb.RecvRtpData && NULL != pWebRTC->m_pWebRtcCbObj)
+        {
+            pWebRTC->m_tWebRtcCb.RecvRtpData(i_acData,i_iLen,pWebRTC->m_pWebRtcCbObj);//
         }
     }
 }
@@ -1027,6 +1067,7 @@ WebRtcAnswer::WebRtcAnswer(char * i_strStunAddr,unsigned int i_dwStunPort,E_IceC
 {
     m_pVideoID = NULL;
     m_pAudioID = NULL;
+    m_iAvDiff = 0;
 }
 
 /*****************************************************************************
@@ -1099,7 +1140,8 @@ int WebRtcAnswer::HandleMsg(char * i_strOfferMsg,int i_iNotJsonMsgFlag)
             }
         }
     }
-    
+    m_iAvDiff=(int)(iAudioPos-iVideoPos);
+    printf("HandleMsg m_iAvDiff %d \r\n",m_iAvDiff);
     if(1 == i_iNotJsonMsgFlag)
     {
         iRet=m_Libnice.SaveRemoteSDP(i_strOfferMsg);
@@ -1218,11 +1260,13 @@ int WebRtcAnswer::GenerateLocalSDP(T_WebRtcMediaInfo *i_ptMediaInfo,char *o_strS
     struct timeval tCreateTime;
     T_LocalCandidate tVideoLocalCandidate;
     T_LocalCandidate tAudioLocalCandidate;
-    T_LocalCandidate *ptLocalCandidate=NULL;
-    char strLocalFingerprint[160];
+    T_LocalCandidate *ptVideoLocalCandidate=NULL;
+    T_LocalCandidate *ptAudioLocalCandidate=NULL;
+    char strVideoLocalFingerprint[160];
+    char strAudioLocalFingerprint[160];
+    char *pVideoLocalFingerprint=NULL;
+    char *pAudioLocalFingerprint=NULL;
     char strCandidate[128];
-    const char *strVideoStreamType="video";
-    const char *strAudioStreamType="audio";
     string strSdpFmt("");
     int i=0;
     T_VideoInfo *ptVideoInfo=NULL;
@@ -1257,8 +1301,8 @@ int WebRtcAnswer::GenerateLocalSDP(T_WebRtcMediaInfo *i_ptMediaInfo,char *o_strS
     
     memset(&tCreateTime,0,sizeof(struct timeval));
     gettimeofday(&tCreateTime, NULL);
-    memset(strLocalFingerprint,0,sizeof(strLocalFingerprint));
-    m_pVideoDtlsOnlyHandshake->GetLocalFingerprint(strLocalFingerprint,sizeof(strLocalFingerprint));
+    memset(strVideoLocalFingerprint,0,sizeof(strVideoLocalFingerprint));
+    m_pVideoDtlsOnlyHandshake->GetLocalFingerprint(strVideoLocalFingerprint,sizeof(strVideoLocalFingerprint));
 #if 0    
     strSdpFmt.assign("v=0\r\n"
         "o=- %ld%06ld %d IN IP4 %s\r\n"//o=<username><session id> <version> <network type> <address type><address> Origin ,给定了会话的发起者信息
@@ -1357,133 +1401,194 @@ int WebRtcAnswer::GenerateLocalSDP(T_WebRtcMediaInfo *i_ptMediaInfo,char *o_strS
                 m_pVideoID->c_str(),m_pAudioID->c_str());
         }
     }
-    
-    if(ptVideoInfo->pstrFormatName != NULL)
+
+    ptVideoLocalCandidate = &tVideoLocalCandidate;
+    pVideoLocalFingerprint = strVideoLocalFingerprint;
+    if(s_iAvMultiplex > 0)
     {
-        ptLocalCandidate = &tVideoLocalCandidate;
-        strSdpFmt.assign("m=%s %u RTP/SAVPF %d\r\n"
-            "c=IN IP4 %s\r\n"
-            "a=mid:%s\r\n"//与sdpMLineIndex sdpMid里的一致
-            "a=sendrecv\r\n"
-            "a=rtcp-mux\r\n"
-            "a=ice-ufrag:%s\r\n"
-            "a=ice-pwd:%s\r\n"
-            //"a=ice-options:trickle\r\n"//表示ice的candidate分开传输，现在一起传输所以注释掉
-            "a=fingerprint:sha-256 %s\r\n"
-            //"a=setup:passive\r\n"
-            //"a=connection:new\r\n"
-            "a=rtpmap:%d %s/%d\r\n"
-            "a=fmtp:%d level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=%06X;sprop-parameter-sets=%s,%s\r\n"
-            "a=msid:ywf-mslabel ywf-label-%s\r\n"
-            "a=ssrc:%d msid:ywf-mslabel ywf-label-%s\r\n"//与rtp中的SSRC 一致
-            "a=setup:passive\r\n");//a=setup:actpass 浏览器会报错,active表示客户端,passive表示服务端actpass既是客户端又是服务端,由对方决定
-            /*"a=ssrc:%ld cname:ywf%s\r\n"
-            "a=ssrc:%ld msid:janus janusa0\r\n"
-            "a=ssrc:%ld mslabel:janus\r\n"
-            "a=ssrc:%ld label:janusa0\r\n");*/
-        for(i=0;i<ptLocalCandidate->iCurCandidateNum;i++)
-        {
-            if(NULL!= strstr(ptLocalCandidate->strCandidateData[i],"udp"))
-            {//webrtc官方只支持:udp tcp ssltcp tls ，所以相同的只有udp
-                memset(strCandidate,0,sizeof(strCandidate));
-                snprintf(strCandidate,sizeof(strCandidate),"a=%s\r\n",ptLocalCandidate->strCandidateData[i]);
-                strSdpFmt.append(strCandidate);
-            }
-        }
-        //memset(strCandidate,0,sizeof(strCandidate));
-        //snprintf(strCandidate,sizeof(strCandidate),"a=%s\r\n","candidate:21 1 udp 110 139.9.149.150 9018 typ host");
-        //strSdpFmt.append(strCandidate);
-        //去掉sctp一样可以通道打通
-        /*strSdpFmt.append("m=%s %u DTLS/SCTP %d\r\n"
-            "c=IN IP4 %s\r\n"
-            "a=mid:%d\r\n"//与sdpMLineIndex sdpMid里的加1
-            "a=sendrecv\r\n"
-            "a=ice-ufrag:%s\r\n"
-            "a=ice-pwd:%s\r\n"
-            "a=fingerprint:sha-256 %s\r\n"
-            "a=setup:passive\r\n");
-        for(i=0;i<tLocalCandidate.iCurCandidateNum;i++)
-        {
-            if(NULL!= strstr(tLocalCandidate.strCandidateData[i],"udp"))
-            {//webrtc官方只支持:udp tcp ssltcp tls ，所以相同的只有udp
-                memset(strCandidate,0,sizeof(strCandidate));
-                snprintf(strCandidate,sizeof(strCandidate),"a=%s\r\n",tLocalCandidate.strCandidateData[i]);
-                strSdpFmt.append(strCandidate);
-            }
-        }*/
-        
-        iRet+=snprintf(o_strSDP+iRet,i_iSdpMaxLen-iRet,strSdpFmt.c_str(),
-            strVideoStreamType,ptVideoInfo->wPortNumForSDP,ptVideoInfo->ucRtpPayloadType,
-            "0.0.0.0",//"0.0.0.0"还是失败，多个也是失败
-            m_pVideoID->c_str(),
-            ptLocalCandidate->strUfrag, 
-            ptLocalCandidate->strPassword,
-            strLocalFingerprint,
-            ptVideoInfo->ucRtpPayloadType,ptVideoInfo->pstrFormatName,ptVideoInfo->dwTimestampFrequency,
-            ptVideoInfo->ucRtpPayloadType,ptVideoInfo->dwProfileLevelId,ptVideoInfo->strSPS_Base64,ptVideoInfo->strPPS_Base64,
-            m_pVideoID->c_str(),ptVideoInfo->dwSSRC,m_pVideoID->c_str());
-            /*tCreateTime.tv_sec, strStreamType,tCreateTime.tv_sec, tCreateTime.tv_sec, tCreateTime.tv_sec,
-            "application",i_ptVideoInfo->wPortNumForSDP,102,//"m=application 9 DTLS/SCTP". Reason: Expects at least 4 fields
-            "0.0.0.0",
-            i_ptVideoInfo->iID+1,
-            tLocalCandidate.strUfrag, 
-            tLocalCandidate.strPassword,
-            strLocalFingerprint);*/
+        ptAudioLocalCandidate = &tAudioLocalCandidate;
+        memset(strAudioLocalFingerprint,0,sizeof(strAudioLocalFingerprint));
+        m_pAudioDtlsOnlyHandshake->GetLocalFingerprint(strAudioLocalFingerprint,sizeof(strAudioLocalFingerprint));
+        pAudioLocalFingerprint = strAudioLocalFingerprint;
     }
-    
-    //音频SDP
-    if(ptAudioInfo->pstrFormatName != NULL)
+    else
     {
-        if(s_iAvMultiplex > 0)
+        ptAudioLocalCandidate = &tVideoLocalCandidate;
+        pAudioLocalFingerprint = strVideoLocalFingerprint;
+    }
+
+    if(m_iAvDiff < 0)
+    {
+        if(ptAudioInfo->pstrFormatName != NULL)
         {
-            ptLocalCandidate = &tAudioLocalCandidate;
-            memset(strLocalFingerprint,0,sizeof(strLocalFingerprint));
-            m_pAudioDtlsOnlyHandshake->GetLocalFingerprint(strLocalFingerprint,sizeof(strLocalFingerprint));
+            iRet+=GenerateAudioSDP(ptAudioLocalCandidate,pAudioLocalFingerprint,ptAudioInfo,o_strSDP+iRet,i_iSdpMaxLen-iRet);
         }
-        else
+        if(ptVideoInfo->pstrFormatName != NULL)
         {
-            ptLocalCandidate = &tVideoLocalCandidate;
+            iRet+=GenerateVideoSDP(ptVideoLocalCandidate,pVideoLocalFingerprint,ptVideoInfo,o_strSDP+iRet,i_iSdpMaxLen-iRet);
         }
-        strSdpFmt.assign(
-            "m=%s %u RTP/SAVPF %d\r\n"
-            "c=IN IP4 %s\r\n"
-            "a=mid:%s\r\n"//与sdpMLineIndex sdpMid里的一致
-            "a=sendrecv\r\n"
-            "a=rtcp-mux\r\n"
-            "a=ice-ufrag:%s\r\n"
-            "a=ice-pwd:%s\r\n"
-            //"a=ice-options:trickle\r\n"//表示ice的candidate分开传输，现在一起传输所以注释掉
-            "a=fingerprint:sha-256 %s\r\n"
-            //"a=setup:passive\r\n"
-            //"a=connection:new\r\n"
-            "a=rtpmap:%d %s/%d\r\n"
-            "a=msid:ywf-mslabel ywf-label-%s\r\n"
-            "a=ssrc:%d msid:ywf-mslabel ywf-label-%s\r\n"//与rtp中的SSRC 一致
-            "a=setup:passive\r\n");//a=setup:actpass 浏览器会报错
-            /*"a=ssrc:%ld cname:ywf%s\r\n"
-            "a=ssrc:%ld msid:janus janusa0\r\n"
-            "a=ssrc:%ld mslabel:janus\r\n"
-            "a=ssrc:%ld label:janusa0\r\n");*/
-        for(i=0;i<ptLocalCandidate->iCurCandidateNum;i++)
+    }
+    else
+    {
+        if(ptVideoInfo->pstrFormatName != NULL)
         {
-            if(NULL!= strstr(ptLocalCandidate->strCandidateData[i],"udp"))
-            {//webrtc官方只支持:udp tcp ssltcp tls ，所以相同的只有udp
-                memset(strCandidate,0,sizeof(strCandidate));
-                snprintf(strCandidate,sizeof(strCandidate),"a=%s\r\n",ptLocalCandidate->strCandidateData[i]);
-                strSdpFmt.append(strCandidate);
-            }
+            iRet+=GenerateVideoSDP(ptVideoLocalCandidate,pVideoLocalFingerprint,ptVideoInfo,o_strSDP+iRet,i_iSdpMaxLen-iRet);
         }
-        iRet=snprintf(o_strSDP+iRet,i_iSdpMaxLen-iRet,strSdpFmt.c_str(),
-            strAudioStreamType,ptAudioInfo->wPortNumForSDP,ptAudioInfo->ucRtpPayloadType,
-            "0.0.0.0",//
-            m_pAudioID->c_str(),
-            ptLocalCandidate->strUfrag, 
-            ptLocalCandidate->strPassword,
-            strLocalFingerprint,
-            ptAudioInfo->ucRtpPayloadType,ptAudioInfo->pstrFormatName,ptAudioInfo->dwTimestampFrequency,
-            m_pAudioID->c_str(),ptAudioInfo->dwSSRC,m_pAudioID->c_str());
+        if(ptAudioInfo->pstrFormatName != NULL)
+        {
+            iRet+=GenerateAudioSDP(ptAudioLocalCandidate,pAudioLocalFingerprint,ptAudioInfo,o_strSDP+iRet,i_iSdpMaxLen-iRet);
+        }
     }
 
 	return iRet;
+}
+
+/*****************************************************************************
+-Fuction        : GenerateVideoSDP
+-Description    : GenerateVideoSDP
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+int WebRtcAnswer::GenerateVideoSDP(T_LocalCandidate *ptLocalCandidate,char *strLocalFingerprint,T_VideoInfo *ptVideoInfo,char *o_strSDP,int i_iSdpMaxLen)
+{
+    string strSdpFmt("");
+    int i=0;
+    char strCandidate[128];
+	int iRet=0;
+    const char *strVideoStreamType="video";
+
+    
+    strSdpFmt.assign("m=%s %u RTP/SAVPF %d\r\n"
+        "c=IN IP4 %s\r\n"
+        "a=mid:%s\r\n"//与sdpMLineIndex sdpMid里的一致
+        "a=sendrecv\r\n"
+        "a=rtcp-mux\r\n"
+        "a=ice-ufrag:%s\r\n"
+        "a=ice-pwd:%s\r\n"
+        //"a=ice-options:trickle\r\n"//表示ice的candidate分开传输，现在一起传输所以注释掉
+        "a=fingerprint:sha-256 %s\r\n"
+        //"a=setup:passive\r\n"
+        //"a=connection:new\r\n"
+        "a=rtpmap:%d %s/%d\r\n"
+        "a=fmtp:%d level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=%06X;sprop-parameter-sets=%s,%s\r\n"
+        "a=msid:ywf-mslabel ywf-label-%s\r\n"
+        "a=ssrc:%d msid:ywf-mslabel ywf-label-%s\r\n"//与rtp中的SSRC 一致
+        "a=setup:passive\r\n");//a=setup:actpass 浏览器会报错,active表示客户端,passive表示服务端actpass既是客户端又是服务端,由对方决定
+        /*"a=ssrc:%ld cname:ywf%s\r\n"
+        "a=ssrc:%ld msid:janus janusa0\r\n"
+        "a=ssrc:%ld mslabel:janus\r\n"
+        "a=ssrc:%ld label:janusa0\r\n");*/
+    for(i=0;i<ptLocalCandidate->iCurCandidateNum;i++)
+    {
+        if(NULL!= strstr(ptLocalCandidate->strCandidateData[i],"udp"))
+        {//webrtc官方只支持:udp tcp ssltcp tls ，所以相同的只有udp
+            memset(strCandidate,0,sizeof(strCandidate));
+            snprintf(strCandidate,sizeof(strCandidate),"a=%s\r\n",ptLocalCandidate->strCandidateData[i]);
+            strSdpFmt.append(strCandidate);
+        }
+    }
+    //memset(strCandidate,0,sizeof(strCandidate));
+    //snprintf(strCandidate,sizeof(strCandidate),"a=%s\r\n","candidate:21 1 udp 110 139.9.149.150 9018 typ host");
+    //strSdpFmt.append(strCandidate);
+    //去掉sctp一样可以通道打通
+    /*strSdpFmt.append("m=%s %u DTLS/SCTP %d\r\n"
+        "c=IN IP4 %s\r\n"
+        "a=mid:%d\r\n"//与sdpMLineIndex sdpMid里的加1
+        "a=sendrecv\r\n"
+        "a=ice-ufrag:%s\r\n"
+        "a=ice-pwd:%s\r\n"
+        "a=fingerprint:sha-256 %s\r\n"
+        "a=setup:passive\r\n");
+    for(i=0;i<tLocalCandidate.iCurCandidateNum;i++)
+    {
+        if(NULL!= strstr(tLocalCandidate.strCandidateData[i],"udp"))
+        {//webrtc官方只支持:udp tcp ssltcp tls ，所以相同的只有udp
+            memset(strCandidate,0,sizeof(strCandidate));
+            snprintf(strCandidate,sizeof(strCandidate),"a=%s\r\n",tLocalCandidate.strCandidateData[i]);
+            strSdpFmt.append(strCandidate);
+        }
+    }*/
+    
+    iRet=snprintf(o_strSDP+iRet,i_iSdpMaxLen-iRet,strSdpFmt.c_str(),
+        strVideoStreamType,ptVideoInfo->wPortNumForSDP,ptVideoInfo->ucRtpPayloadType,
+        "0.0.0.0",//"0.0.0.0"还是失败，多个也是失败
+        m_pVideoID->c_str(),
+        ptLocalCandidate->strUfrag, 
+        ptLocalCandidate->strPassword,
+        strLocalFingerprint,
+        ptVideoInfo->ucRtpPayloadType,ptVideoInfo->pstrFormatName,ptVideoInfo->dwTimestampFrequency,
+        ptVideoInfo->ucRtpPayloadType,ptVideoInfo->dwProfileLevelId,ptVideoInfo->strSPS_Base64,ptVideoInfo->strPPS_Base64,
+        m_pVideoID->c_str(),ptVideoInfo->dwSSRC,m_pVideoID->c_str());
+        /*tCreateTime.tv_sec, strStreamType,tCreateTime.tv_sec, tCreateTime.tv_sec, tCreateTime.tv_sec,
+        "application",i_ptVideoInfo->wPortNumForSDP,102,//"m=application 9 DTLS/SCTP". Reason: Expects at least 4 fields
+        "0.0.0.0",
+        i_ptVideoInfo->iID+1,
+        tLocalCandidate.strUfrag, 
+        tLocalCandidate.strPassword,
+        strLocalFingerprint);*/
+    return iRet;
+}
+
+/*****************************************************************************
+-Fuction        : GenerateAudioSDP
+-Description    : GenerateAudioSDP
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+int WebRtcAnswer::GenerateAudioSDP(T_LocalCandidate *ptLocalCandidate,char *strLocalFingerprint,T_AudioInfo *ptAudioInfo,char *o_strSDP,int i_iSdpMaxLen)
+{
+    string strSdpFmt("");
+    int i=0;
+    char strCandidate[128];
+	int iRet=0;
+    const char *strAudioStreamType="audio";
+
+    strSdpFmt.assign(
+        "m=%s %u RTP/SAVPF %d\r\n"
+        "c=IN IP4 %s\r\n"
+        "a=mid:%s\r\n"//与sdpMLineIndex sdpMid里的一致
+        "a=sendrecv\r\n"
+        "a=rtcp-mux\r\n"
+        "a=ice-ufrag:%s\r\n"
+        "a=ice-pwd:%s\r\n"
+        //"a=ice-options:trickle\r\n"//表示ice的candidate分开传输，现在一起传输所以注释掉
+        "a=fingerprint:sha-256 %s\r\n"
+        //"a=setup:passive\r\n"
+        //"a=connection:new\r\n"
+        "a=rtpmap:%d %s/%d\r\n"
+        "a=msid:ywf-mslabel ywf-label-%s\r\n"
+        "a=ssrc:%d msid:ywf-mslabel ywf-label-%s\r\n"//与rtp中的SSRC 一致
+        "a=setup:passive\r\n");//a=setup:actpass 浏览器会报错
+        /*"a=ssrc:%ld cname:ywf%s\r\n"
+        "a=ssrc:%ld msid:janus janusa0\r\n"
+        "a=ssrc:%ld mslabel:janus\r\n"
+        "a=ssrc:%ld label:janusa0\r\n");*/
+    for(i=0;i<ptLocalCandidate->iCurCandidateNum;i++)
+    {
+        if(NULL!= strstr(ptLocalCandidate->strCandidateData[i],"udp"))
+        {//webrtc官方只支持:udp tcp ssltcp tls ，所以相同的只有udp
+            memset(strCandidate,0,sizeof(strCandidate));
+            snprintf(strCandidate,sizeof(strCandidate),"a=%s\r\n",ptLocalCandidate->strCandidateData[i]);
+            strSdpFmt.append(strCandidate);
+        }
+    }
+    iRet=snprintf(o_strSDP+iRet,i_iSdpMaxLen-iRet,strSdpFmt.c_str(),
+        strAudioStreamType,ptAudioInfo->wPortNumForSDP,ptAudioInfo->ucRtpPayloadType,
+        "0.0.0.0",//
+        m_pAudioID->c_str(),
+        ptLocalCandidate->strUfrag, 
+        ptLocalCandidate->strPassword,
+        strLocalFingerprint,
+        ptAudioInfo->ucRtpPayloadType,ptAudioInfo->pstrFormatName,ptAudioInfo->dwTimestampFrequency,
+        m_pAudioID->c_str(),ptAudioInfo->dwSSRC,m_pAudioID->c_str());
+    return iRet;
 }
 
