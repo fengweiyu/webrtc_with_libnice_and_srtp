@@ -155,4 +155,33 @@ int RtpInterface :: GetRtpPackets(void *m_ptFrame,unsigned char **o_ppbPacketBuf
 {
     return ((Rtp *)m_pRtp)->GetRtpPackets((T_MediaFrameInfo *)m_ptFrame,o_ppbPacketBuf,o_aiEveryPacketLen,i_iPacketBufMaxNum);
 }
+/*****************************************************************************
+-Fuction		: Rtp
+-Description	: //0 ·ñ ,1 ÊÇ
+-Input			: 
+-Output 		: 
+-Return 		: 
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
+int RtpInterface::IsRtp(char *buf, int size) 
+{
+    return ((Rtp *)m_pRtp)->IsRtp(buf,size);
+}
+
+/*****************************************************************************
+-Fuction		: Rtp
+-Description	: //0 ·ñ ,1 ÊÇ
+-Input			: 
+-Output 		: 
+-Return 		: 
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
+int RtpInterface::IsRtcp(char *buf, int size) 
+{
+    return ((Rtp *)m_pRtp)->IsRtcp(buf,size);
+}
 

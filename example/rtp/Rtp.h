@@ -37,6 +37,8 @@ public:
     int GetSSRC(unsigned int *o_pdwVideoSSRC,unsigned int *o_pdwAudioSSRC);
 
     int GetRtpPackets(T_MediaFrameInfo *m_ptFrame,unsigned char **o_ppbPacketBuf,int *o_aiEveryPacketLen,int i_iPacketBufMaxNum);
+    int IsRtp(char *buf, int size);
+    int IsRtcp(char *buf, int size);
 private:
     MediaHandle             *m_pMediaHandle;
 	RtpPacket               m_VideoRtpPacket;//m_RtpPacket

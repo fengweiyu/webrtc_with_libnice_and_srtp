@@ -473,4 +473,47 @@ int Rtp :: GetRtpPackets(T_MediaFrameInfo *m_ptFrame,unsigned char **o_ppbPacket
     m_ptFrame->eFrameType,m_ptFrame->iFrameLen,m_ptFrame->dwTimeStamp);
     return iPacketNum;
 }
+/*****************************************************************************
+-Fuction		: Rtp
+-Description	: //0 ·ñ ,1 ÊÇ
+-Input			: 
+-Output 		: 
+-Return 		: 
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
+int Rtp::IsRtp(char *buf, int size) 
+{
+    if (size < 2) 
+    {
+        return 0;
+    }
+    RtpHeader *header = (RtpHeader *)buf;
+    if(((header->PayloadType < 64) || (header->PayloadType >= 96)) && header->Version == 2)
+        return 1;
+    return 0;
+}
+
+/*****************************************************************************
+-Fuction		: Rtp
+-Description	: //0 ·ñ ,1 ÊÇ
+-Input			: 
+-Output 		: 
+-Return 		: 
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
+int Rtp::IsRtcp(char *buf, int size) 
+{
+    if (size < 2) 
+    {
+        return 0;
+    }
+    RtpHeader *header = (RtpHeader *)buf;
+    if((header->PayloadType >= 64) && (header->PayloadType < 96))
+        return 1;
+    return 0;
+}
 

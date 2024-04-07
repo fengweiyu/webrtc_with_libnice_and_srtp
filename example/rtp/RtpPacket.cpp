@@ -286,7 +286,7 @@ int RtpPacket :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbFrameBuf,
         {
             if(NULL != m_pRtpPacket)
             {
-                if(m_pRtpPacket->m_iRtpType != i_iRtpPacketType)
+                if(m_pRtpPacket->m_iRtpType != RTP_PACKET_TYPE_G711A && m_pRtpPacket->m_iRtpType != RTP_PACKET_TYPE_G711U)
                 {
                     delete m_pRtpPacket;
                     m_pRtpPacket = NULL;
@@ -938,7 +938,7 @@ int H265FU_A :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,in
 RtpPacketG711 :: RtpPacketG711()
 {
     m_pRtpPacketG711 = NULL;
-    m_iRtpType = RTP_PACKET_TYPE_G711U;
+    m_iRtpType = RTP_PACKET_TYPE_G711A;
 }
 
 /*****************************************************************************
@@ -1014,7 +1014,8 @@ int RtpPacketG711 :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbFrame
             }
             iPackNum++;
         }
-        iRet=iPackNum;        
+        iRet=iPackNum;   
+        //cout<<"RtpPacketG711 Packet"<<iPackNum<<endl;
     }
     return iRet;
 }
