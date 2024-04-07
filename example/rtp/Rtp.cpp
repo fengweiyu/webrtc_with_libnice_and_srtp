@@ -46,7 +46,7 @@ Rtp :: Rtp(unsigned char **m_ppPackets,int i_iMaxPacketNum,char *i_strPath)
     }
     
     m_pVideoRtpSession = new RtpSession(RTP_PAYLOAD_VIDEO,0);//i_dwSampleRate 暂时用不上先填0 tMediaInfo.dwVideoSampleRate
-    m_pAudioRtpSession = new RtpSession(RTP_PAYLOAD_VIDEO,0);
+    m_pAudioRtpSession = new RtpSession(RTP_PAYLOAD_G711A,0);
     
     iRet=m_VideoRtpPacket.Init(m_ppPackets, i_iMaxPacketNum);
     if(FALSE == iRet)
@@ -80,7 +80,7 @@ Rtp :: Rtp(char *i_strPath)
     }
     
     m_pVideoRtpSession = new RtpSession(RTP_PAYLOAD_VIDEO,0);//i_dwSampleRate 暂时用不上先填0 tMediaInfo.dwVideoSampleRate
-    m_pAudioRtpSession = new RtpSession(RTP_PAYLOAD_VIDEO,0);
+    m_pAudioRtpSession = new RtpSession(RTP_PAYLOAD_G711A,0);
 }
 
 /*****************************************************************************
