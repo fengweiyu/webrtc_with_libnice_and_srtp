@@ -108,6 +108,9 @@ public:
     int GenerateLocalMsg(T_VideoInfo *i_ptVideoInfo,char * o_strAnswerMsg,int i_iAnswerMaxLen);
 
     int GenerateLocalSDP(T_WebRtcMediaInfo *i_ptMediaInfo,char *o_strSDP,int i_iSdpMaxLen);
+private:
+    string *m_pVideoID;//Answer的ID从对方请求的sdp中的获取
+    string *m_pAudioID;
 };
 
 
