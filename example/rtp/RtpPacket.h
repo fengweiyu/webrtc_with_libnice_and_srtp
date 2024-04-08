@@ -21,7 +21,8 @@
 using std::string;
 
 #define IP_MAX_LEN 				(40)
-#define RTP_MAX_PACKET_SIZE	1460//((1500-IP_MAX_LEN)/4*4)//MTU (1514-54 以太网帧最大1514-mac头14-ip头20-tcp头20)
+#define SRTP_MAX_LEN 				(128+16)
+#define RTP_MAX_PACKET_SIZE	(1460-SRTP_MAX_LEN)//((1500-IP_MAX_LEN)/4*4)//MTU (1514-54 以太网帧最大1514-mac头14-ip头20-tcp头20)
 #define RTP_MAX_PACKET_NUM	(300)//m_iMaxPacketNum无法传递到底下的类里面,故暂不使用
 #define RTP_HEADER_LEN 			(12)
 

@@ -12,8 +12,8 @@
 #ifndef RTP_INTERFACE_H
 #define RTP_INTERFACE_H
 
-#define RTP_PACKET_MAX_SIZE	1460//((1500-40)/4*4)//MTU (RTP_MAX_PACKET_SIZE)
-#define RTP_PACKET_MAX_NUM	(300)//RTP_MAX_PACKET_NUM
+#define SRTP_PACKET_MAX_SIZE	1460//((1500-40)/4*4)//MTU (RTP_MAX_PACKET_SIZE+SRTP_MAX_LEN)
+#define SRTP_PACKET_MAX_NUM	(300)//RTP_MAX_PACKET_NUM
 
 /*****************************************************************************
 -Class			: RtpInterface

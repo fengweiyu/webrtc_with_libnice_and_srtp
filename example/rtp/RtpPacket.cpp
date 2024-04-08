@@ -165,13 +165,13 @@ int RtpPacket :: Init(unsigned char **m_ppPackets,int i_iMaxPacketNum)
     }
     for(i =0;i<i_iMaxPacketNum;i++)
     {
-        m_ppPackets[i] = new unsigned char[RTP_MAX_PACKET_SIZE];
+        m_ppPackets[i] = new unsigned char[RTP_MAX_PACKET_SIZE+SRTP_MAX_LEN];
         if(NULL == m_ppPackets[i])
         {
             DeInit(m_ppPackets,i_iMaxPacketNum);
             return iRet;
         }
-        memset(m_ppPackets[i],0,RTP_MAX_PACKET_SIZE);//初始化放里面，多个nalu分别一起发
+        memset(m_ppPackets[i],0,RTP_MAX_PACKET_SIZE+SRTP_MAX_LEN);//初始化放里面，多个nalu分别一起发
     }
     m_iMaxPacketNum = i_iMaxPacketNum;//m_iMaxPacketNum无法传递到底下的对象里,故暂不使用
     

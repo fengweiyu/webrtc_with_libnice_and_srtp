@@ -427,7 +427,7 @@ int Rtp :: GetRtpPackets(T_MediaFrameInfo *m_ptFrame,unsigned char **o_ppbPacket
             m_pAudioRtpSession->SetRtpPacketParam(&tRtpPacketParam);
             if(iPacketNum<=0 || iPacketNum>i_iPacketBufMaxNum)
             {
-                RTP_LOGE("m_pRtpPacket->Packet  err %d \r\n",iPacketNum);
+                RTP_LOGE("m_AudioRtpPacket->Packet err %d %d\r\n",iPacketNum,i_iPacketBufMaxNum);
                 iPacketNum = -1;
                 break;
             }
@@ -460,7 +460,7 @@ int Rtp :: GetRtpPackets(T_MediaFrameInfo *m_ptFrame,unsigned char **o_ppbPacket
             m_pVideoRtpSession->SetRtpPacketParam(&tRtpPacketParam);
             if(iPacketNum<=0 || iPacketNum>i_iPacketBufMaxNum)
             {
-                RTP_LOGE("m_pRtpPacket->Packet  err %d \r\n",iPacketNum);
+                RTP_LOGE("m_VideoRtpPacket->Packet err %d %d\r\n",iPacketNum,i_iPacketBufMaxNum);
                 iPacketNum = -1;
                 break;
             }
@@ -490,6 +490,7 @@ int Rtp::IsRtp(char *buf, int size)
         return 0;
     }
     RtpHeader *header = (RtpHeader *)buf;
+    //RTP_LOGI("IsRtp header->PayloadType %d\r\n",header->PayloadType);
     if(((header->PayloadType < 64) || (header->PayloadType >= 96)) && header->Version == 2)
         return 1;
     return 0;
@@ -512,6 +513,7 @@ int Rtp::IsRtcp(char *buf, int size)
         return 0;
     }
     RtpHeader *header = (RtpHeader *)buf;
+    //RTP_LOGI("IsRtcp header->PayloadType %d\r\n",header->PayloadType);
     if((header->PayloadType >= 64) && (header->PayloadType < 96))
         return 1;
     return 0;
