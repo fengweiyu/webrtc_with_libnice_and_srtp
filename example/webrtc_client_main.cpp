@@ -82,7 +82,7 @@ int main(int argc, char* argv[])
         tWebRtcCfg.eWebRtcRole= WEBRTC_OFFER_ROLE;
         tWebRtcCfg.eControlling= ICE_CONTROLLING_ROLE;
         T_WebRtcCb tWebRtcCb;
-        pWebRTC = new WebRtcInterface(tWebRtcCfg,tWebRtcCb);
+        pWebRTC = new WebRtcInterface(tWebRtcCfg,tWebRtcCb,NULL);
     }
     else
     {
