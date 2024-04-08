@@ -83,7 +83,8 @@ public:
     int Create(E_DtlsRole i_eDtlsRole);
     void Handshake();
     void HandleRecvData(char *buf,int len);
-    int GetLocalPolicyInfo(T_PolicyInfo *i_ptPolicyInfo);
+    int GetLocalPolicyInfo(T_PolicyInfo *o_ptPolicyInfo);
+    int GetRemotePolicyInfo(T_PolicyInfo *o_ptPolicyInfo);
     int GetLocalFingerprint(char * i_strLocalFingerprint,int i_iFingerprintMaxLen);
 	static int VerifyCallback(int i_iPreverifyOk, X509_STORE_CTX *ctx);//被其他c函数访问就不是只有本类访问了
 	

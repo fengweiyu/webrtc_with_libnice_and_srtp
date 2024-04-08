@@ -27,7 +27,7 @@ int Srtp::m_iSrtpLibInited = 0;//0未初始化，1已初始化
 ******************************************************************************/
 Srtp::Srtp()
 {	
-	memset(&m_tSrtp,0,sizeof(srtp_t));
+	m_tSrtp=NULL;
 	if(0 == m_iSrtpLibInited)
 	{
         (void)srtp_init();
@@ -50,6 +50,8 @@ Srtp::~Srtp()
 {	
 	if(0 != m_iSrtpLibInited)
 	{
+	    if(NULL!= m_tSrtp)
+    	    srtp_dealloc(m_tSrtp);
         (void)srtp_shutdown();
         m_iSrtpLibInited = 0;
 	}

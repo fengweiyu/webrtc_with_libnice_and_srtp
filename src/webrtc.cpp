@@ -37,6 +37,7 @@ WebRTC::WebRTC(char * i_strStunAddr,unsigned int i_dwStunPort,E_IceControlRole i
 
     m_pVideoDtlsOnlyHandshake = NULL;
     m_pVideoSrtp = NULL;
+    m_pVideoDecSrtp = NULL;
     memset(&tDtlsOnlyHandshakeCb,0,sizeof(T_DtlsOnlyHandshakeCb));
     tDtlsOnlyHandshakeCb.SendDataOut=&WebRTC::SendVideoDataOutCb;
     tDtlsOnlyHandshakeCb.pObj=&m_Libnice;
@@ -44,6 +45,7 @@ WebRTC::WebRTC(char * i_strStunAddr,unsigned int i_dwStunPort,E_IceControlRole i
     m_pVideoSrtp = new Srtp();
     m_pAudioDtlsOnlyHandshake = NULL;
     m_pAudioSrtp = NULL;
+    m_pAudioDecSrtp = NULL;
     if(s_iAvMultiplex > 0)
     {
         memset(&tDtlsOnlyHandshakeCb,0,sizeof(T_DtlsOnlyHandshakeCb));
@@ -129,9 +131,17 @@ WebRTC::~WebRTC()
     {
         delete m_pVideoSrtp;
     }
+    if(NULL!= m_pVideoDecSrtp)
+    {
+        delete m_pVideoDecSrtp;
+    }
     if(NULL!= m_pAudioSrtp)
     {
         delete m_pAudioSrtp;
+    }
+    if(NULL!= m_pAudioDecSrtp)
+    {
+        delete m_pAudioDecSrtp;
     }
 }
 /*****************************************************************************
@@ -302,6 +312,83 @@ int WebRTC::SendProtectedRtp(char * i_acRtpBuf,int i_iRtpBufLen,int i_iStreamTyp
         return iRet;
     }
     return SendProtectedVideoRtp(i_acRtpBuf,i_iRtpBufLen);
+}
+
+/*****************************************************************************
+-Fuction        : HandleRecvSrtp
+-Description    : 
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+int WebRTC::HandleRecvSrtp(char * i_acSrtpBuf,int i_iSrtpBufLen,DtlsOnlyHandshake *pDtlsOnlyHandshake)
+{
+    int iRet = -1;
+    Srtp * pSrtp=NULL;
+    T_PolicyInfo tPolicyInfo;
+
+    if(NULL != m_tWebRtcCb.IsRtp && NULL != m_pWebRtcCbObj)
+    {
+        iRet = m_tWebRtcCb.IsRtp(i_acSrtpBuf,i_iSrtpBufLen,m_pWebRtcCbObj);
+    }
+    if(1 != iRet)
+    {
+        WEBRTC_LOGE("pSrtp->IsRtp err %#x,%d\r\n",(unsigned char)(i_acSrtpBuf[1]&0x7f),i_iSrtpBufLen);
+        return iRet;
+    }
+    
+    if(m_pVideoDtlsOnlyHandshake==pDtlsOnlyHandshake)//
+    {
+        if(NULL == m_pVideoDecSrtp)
+        {
+            m_pVideoDecSrtp = new Srtp();
+            memset(&tPolicyInfo,0,sizeof(T_PolicyInfo));
+            iRet = m_pVideoDtlsOnlyHandshake->GetRemotePolicyInfo(&tPolicyInfo);
+            if(0 != iRet)
+            {
+                WEBRTC_LOGE("m_pVideoDecSrtp.GetRemotePolicyInfo GetRemotePolicyInfo err \r\n",iRet);
+                return iRet;
+            }
+            m_pVideoDecSrtp->Create(tPolicyInfo.key, sizeof(tPolicyInfo.key), SRTP_SSRC_UNPROTECT);
+        }
+        pSrtp = m_pVideoDecSrtp;
+    }
+    else if(m_pAudioDtlsOnlyHandshake==pDtlsOnlyHandshake)//
+    {
+        if(NULL == m_pAudioDecSrtp)
+        {
+            m_pAudioDecSrtp = new Srtp();
+            memset(&tPolicyInfo,0,sizeof(T_PolicyInfo));
+            iRet =m_pAudioDtlsOnlyHandshake->GetRemotePolicyInfo(&tPolicyInfo);
+            if(0 != iRet)
+            {
+                WEBRTC_LOGE("m_pAudioDecSrtp.GetRemotePolicyInfo GetRemotePolicyInfo err \r\n",iRet);
+                return iRet;
+            }
+            m_pAudioDecSrtp->Create(tPolicyInfo.key, sizeof(tPolicyInfo.key), SRTP_SSRC_UNPROTECT);
+        }
+        pSrtp = m_pAudioDecSrtp;
+    }
+    
+    if(NULL!=pSrtp)
+    {
+        iRet = pSrtp->UnProtectRtp(i_acSrtpBuf,&i_iSrtpBufLen);
+    }
+    if(0 != iRet)
+    {
+        WEBRTC_LOGE("pSrtp->UnProtectRtp err %d",iRet);
+        return iRet;
+    }
+    
+    if(NULL != m_tWebRtcCb.RecvRtpData && NULL != m_pWebRtcCbObj)
+    {
+        return m_tWebRtcCb.RecvRtpData(i_acSrtpBuf,i_iSrtpBufLen,m_pWebRtcCbObj);//
+    }
+
+    return iRet;
 }
 
 /*****************************************************************************
@@ -656,8 +743,8 @@ void WebRTC::HandleRecvDataCb(char * i_acData,int i_iLen,void * pDtlsArg,void * 
     int iRet = -1;
     DtlsOnlyHandshake *pDtlsOnlyHandshake=NULL;
     WebRTC * pWebRTC=NULL;
-    Srtp * pSrtp=NULL;
 
+    
     if(NULL!=pDtlsArg)//防止该静态函数对本对象的依赖,
     {
         pDtlsOnlyHandshake = (DtlsOnlyHandshake *)pDtlsArg;
@@ -677,38 +764,7 @@ void WebRTC::HandleRecvDataCb(char * i_acData,int i_iLen,void * pDtlsArg,void * 
             return;
         }
         pWebRTC = (WebRTC *)pWebRtcArg;
-        if(NULL != pWebRTC->m_tWebRtcCb.IsRtp && NULL != pWebRTC->m_pWebRtcCbObj)
-        {
-            iRet = pWebRTC->m_tWebRtcCb.IsRtp(i_acData,i_iLen,pWebRTC->m_pWebRtcCbObj);
-        }
-        if(1 != iRet)
-        {
-            WEBRTC_LOGE("pSrtp->IsRtp err %#x,%d\r\n",(unsigned char)(i_acData[1]&0x7f),i_iLen);
-            return;
-        }
-        
-        if(pWebRTC->m_pVideoDtlsOnlyHandshake==pDtlsOnlyHandshake)//
-        {
-            pSrtp = pWebRTC->m_pVideoSrtp;
-        }
-        else if(pWebRTC->m_pAudioDtlsOnlyHandshake==pDtlsOnlyHandshake)//
-        {
-            pSrtp = pWebRTC->m_pAudioSrtp;
-        }
-        if(NULL!=pSrtp)
-        {
-            iRet = pSrtp->UnProtectRtp(i_acData,&i_iLen);
-        }
-        if(0 != iRet)
-        {
-            WEBRTC_LOGE("pSrtp->UnProtectRtp err %d",iRet);
-            return;
-        }
-        
-        if(NULL != pWebRTC->m_tWebRtcCb.RecvRtpData && NULL != pWebRTC->m_pWebRtcCbObj)
-        {
-            pWebRTC->m_tWebRtcCb.RecvRtpData(i_acData,i_iLen,pWebRTC->m_pWebRtcCbObj);//
-        }
+        pWebRTC->HandleRecvSrtp(i_acData,i_iLen,pDtlsOnlyHandshake);
     }
 }
 

@@ -419,10 +419,10 @@ void DtlsOnlyHandshake::HandleRecvData(char *buf,int len)
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int DtlsOnlyHandshake::GetLocalPolicyInfo(T_PolicyInfo *i_ptPolicyInfo) 
+int DtlsOnlyHandshake::GetLocalPolicyInfo(T_PolicyInfo *o_ptPolicyInfo) 
 {
     int iRet = -1;
-	if(i_ptPolicyInfo == NULL) 
+	if(o_ptPolicyInfo == NULL) 
 	{
 	    printf("GetPolicyInfo null\r\n");
         return iRet;
@@ -432,7 +432,34 @@ int DtlsOnlyHandshake::GetLocalPolicyInfo(T_PolicyInfo *i_ptPolicyInfo)
 	    //printf("GetPolicyInfo err\r\n");
         return iRet;
 	}
-    memcpy(i_ptPolicyInfo,&m_tOutPolicyInfo,sizeof(T_PolicyInfo));
+    memcpy(o_ptPolicyInfo,&m_tOutPolicyInfo,sizeof(T_PolicyInfo));
+    iRet = 0;
+    return iRet;
+}
+/*****************************************************************************
+-Fuction        : GetRemotePolicyInfo
+-Description    : 获取远端的创建srtp需要的信息，用于解密
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+int DtlsOnlyHandshake::GetRemotePolicyInfo(T_PolicyInfo *o_ptPolicyInfo) 
+{
+    int iRet = -1;
+	if(o_ptPolicyInfo == NULL) 
+	{
+	    printf("GetRemotePolicyInfo null\r\n");
+        return iRet;
+	}
+	if(0 == m_iShakeEndFlag) 
+	{
+	    //printf("GetPolicyInfo err\r\n");
+        return iRet;
+	}
+    memcpy(o_ptPolicyInfo,&m_tInPolicyInfo,sizeof(T_PolicyInfo));
     iRet = 0;
     return iRet;
 }
