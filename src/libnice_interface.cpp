@@ -119,7 +119,7 @@ int Libnice::SetCallback(T_LibniceCb *i_ptLibniceCb)
 ******************************************************************************/
 int Libnice::LibniceProc()
 {
-	int iRet = -1;
+	int iRet = 0;
     static GMainLoop *ptLoop=NULL;//
     static GIOChannel* ptStdinIO=NULL;//
     int inx =0;
@@ -178,7 +178,10 @@ int Libnice::LibniceProc()
 
 	// Start gathering local candidates
 	if (!nice_agent_gather_candidates(m_ptAgent, m_tVideoStream.iID))
+	{
 		WEBRTC_LOGE("Failed to start candidate gathering m_tVideoStream\r\n");//g_error
+		iRet = -1;
+	}
 	if(m_tLibniceDepData.iAvMultiplex > 0)
 	{
         if (!nice_agent_gather_candidates(m_ptAgent, m_tAudioStream.iID))//这样后面才可以触发connecting
@@ -195,6 +198,8 @@ int Libnice::LibniceProc()
 	g_main_loop_unref(m_ptLoop);//ptLoop
 	g_object_unref(m_ptAgent);//
 	g_io_channel_unref (m_ptStdinIO);//ptStdinIO
+
+	return iRet;
 }
 
 /*****************************************************************************
@@ -863,7 +868,7 @@ void Libnice::ComponentStateChanged(NiceAgent *agent, guint _stream_id,guint com
 
 void Libnice::RecvVideoData(NiceAgent *agent, guint _stream_id, guint component_id,guint len, gchar *buf, gpointer data)
 {
-    printf("Libnice::RecvVideoData _stream_id%d,%d,%#x\n",_stream_id,len,buf[0]);
+    printf("Libnice::RecvSrtpData _stream_id%d,%d,%#x,%#x\r\n",_stream_id,len,(unsigned char)buf[0],(unsigned char)buf[1]);
     Libnice *pLibnice=NULL;
     pLibnice = (Libnice *)data;
 	if (NULL != pLibnice)

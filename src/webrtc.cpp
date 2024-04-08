@@ -31,7 +31,7 @@ WebRTC::WebRTC(char * i_strStunAddr,unsigned int i_dwStunPort,E_IceControlRole i
 {
     T_DtlsOnlyHandshakeCb tDtlsOnlyHandshakeCb;
 
-    
+    m_iLibniceProcStartedFlag = 0;
     memset(&m_tWebRtcCb,0,sizeof(m_tWebRtcCb));
     m_pWebRtcCbObj = NULL;
 
@@ -169,7 +169,9 @@ int WebRTC::SetCallback(T_WebRtcCb *i_ptWebRtcCb,void *pObj)
 ******************************************************************************/
 int WebRTC::Proc()
 {
+    m_iLibniceProcStartedFlag = 1;
     int iRet = m_Libnice.LibniceProc();
+    m_iLibniceProcStartedFlag = 0;
     WEBRTC_LOGW("WebRTC::Proc exit %d\r\n",iRet);
     return iRet;
 }
@@ -189,6 +191,30 @@ int WebRTC::StopProc()
     WEBRTC_LOGW("WebRTC::Proc StopProc %d \r\n",iRet);
     return iRet;
 }
+/*****************************************************************************
+-Fuction        : GetStopedFlag
+-Description    : GetStopedFlag
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+int WebRTC::GetStopedFlag()
+{
+    int iRet = 0;
+    if(0 == m_iLibniceProcStartedFlag)
+    {
+        iRet = 1;
+    }
+    else
+    {
+        iRet = 0;
+    }
+    return iRet;
+}
+
 /*****************************************************************************
 -Fuction        : HandleCandidateMsg
 -Description    : Offer消息必须是是在Candidate之前的，有这样的时序要求
@@ -657,6 +683,7 @@ void WebRTC::HandleRecvDataCb(char * i_acData,int i_iLen,void * pDtlsArg,void * 
         }
         if(1 != iRet)
         {
+            WEBRTC_LOGE("pSrtp->IsRtp err %#x,%d\r\n",(unsigned char)(i_acData[1]&0x7f),i_iLen);
             return;
         }
         
@@ -1114,7 +1141,7 @@ int WebRtcAnswer::HandleMsg(char * i_strOfferMsg,int i_iNotJsonMsgFlag)
         return iRet;
     }
     string strMsg(i_strOfferMsg);
-    size_t iVideoPos = strMsg.find("m=video");
+    size_t iVideoPos = strMsg.find("m=video");//可能有多个(多个视频轨道就有多个m=video),后续处理
     if(string::npos != iVideoPos)
     {
         size_t iVideoMidPos = strMsg.find("a=mid:",iVideoPos);
@@ -1127,7 +1154,7 @@ int WebRtcAnswer::HandleMsg(char * i_strOfferMsg,int i_iNotJsonMsgFlag)
             }
         }
     }
-    size_t iAudioPos = strMsg.find("m=audio");
+    size_t iAudioPos = strMsg.find("m=audio");//可能有多个(多个音频轨道就有多个m=audio),后续处理
     if(string::npos != iAudioPos)
     {
         size_t iAudioMidPos = strMsg.find("a=mid:",iAudioPos);

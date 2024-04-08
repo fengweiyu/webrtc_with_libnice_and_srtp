@@ -41,11 +41,11 @@ typedef struct WebRtcCfg
 class WebRtcInterface
 {
 public:
-	WebRtcInterface(T_WebRtcCfg i_tWebRtcCfg,T_WebRtcCb i_tWebRtcCb);//:m_Libnice(i_strStunAddr,i_dwStunPort,i_iControlling),m_Srtp()
+	WebRtcInterface(T_WebRtcCfg i_tWebRtcCfg,T_WebRtcCb i_tWebRtcCb,void *pCbObj);//:m_Libnice(i_strStunAddr,i_dwStunPort,i_iControlling),m_Srtp()
 	virtual ~WebRtcInterface();
-    int SetCallback(T_WebRtcCb *i_ptWebRtcCb,void *pObj);
     int Proc();
     int StopProc();
+    int GetStopedFlag();//0 ∑Ò£¨1 «
     int GenerateLocalSDP(T_WebRtcMediaInfo *i_ptMediaInfo,char *o_strSDP,int i_iSdpMaxLen);//webrtc_client π”√
     int HandleMsg(char * i_strMsg,int i_iNotJsonMsgFlag=0);
     int HandleCandidateMsg(char * i_strCandidateMsg,int i_iNotJsonMsgFlag=0);

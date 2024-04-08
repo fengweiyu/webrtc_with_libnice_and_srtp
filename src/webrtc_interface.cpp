@@ -23,7 +23,7 @@
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-WebRtcInterface::WebRtcInterface(T_WebRtcCfg i_tWebRtcCfg,T_WebRtcCb i_tWebRtcCb)
+WebRtcInterface::WebRtcInterface(T_WebRtcCfg i_tWebRtcCfg,T_WebRtcCb i_tWebRtcCb,void *pCbObj)
 {
     m_pHandle = NULL;
     memcpy(&m_tWebRtcCfg,&i_tWebRtcCfg,sizeof(T_WebRtcCfg));
@@ -31,6 +31,8 @@ WebRtcInterface::WebRtcInterface(T_WebRtcCfg i_tWebRtcCfg,T_WebRtcCb i_tWebRtcCb
         m_pHandle = new WebRtcOffer(m_tWebRtcCfg.strStunAddr,m_tWebRtcCfg.dwStunPort,m_tWebRtcCfg.eControlling);
     else
         m_pHandle = new WebRtcAnswer(m_tWebRtcCfg.strStunAddr,m_tWebRtcCfg.dwStunPort,m_tWebRtcCfg.eControlling);
+    WebRTC *pWebRTC = (WebRTC *)m_pHandle;
+    pWebRTC->SetCallback(&i_tWebRtcCb,pCbObj);
 }
 /*****************************************************************************
 -Fuction        : ~WebRtcInterface
@@ -57,21 +59,6 @@ WebRtcInterface::~WebRtcInterface()
             delete pWebRtcAnswer;
         }
     }  
-}
-/*****************************************************************************
--Fuction        : Proc
--Description    : Proc
--Input          : 
--Output         : 
--Return         : 
-* Modify Date     Version             Author           Modification
-* -----------------------------------------------
-* 2020/01/13      V1.0.0              Yu Weifeng       Created
-******************************************************************************/
-int WebRtcInterface::SetCallback(T_WebRtcCb *i_ptWebRtcCb,void *pObj)
-{
-    WebRTC *pWebRTC = (WebRTC *)m_pHandle;
-    return pWebRTC->SetCallback(i_ptWebRtcCb,pObj);
 }
 
 /*****************************************************************************
@@ -106,6 +93,21 @@ int WebRtcInterface::StopProc()
     return pWebRTC->StopProc();
 }
 
+/*****************************************************************************
+-Fuction        : Proc
+-Description    : Proc
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+int WebRtcInterface::GetStopedFlag()
+{
+    WebRTC *pWebRTC = (WebRTC *)m_pHandle;
+    return pWebRTC->GetStopedFlag();
+}
 
 /*****************************************************************************
 -Fuction        : GenerateLocalSDP

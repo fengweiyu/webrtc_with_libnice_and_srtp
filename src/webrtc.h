@@ -35,6 +35,7 @@ public:
     int SetCallback(T_WebRtcCb *i_ptWebRtcCb,void *pObj);
     int Proc();
     int StopProc();
+    int GetStopedFlag();//0 否，1是
     virtual int HandleMsg(char * i_strMsg,int i_iNotJsonMsgFlag=0)=0;
     int HandleCandidateMsg(char * i_strCandidateMsg,int i_iNotJsonMsgFlag=0);
     int GetGatheringDoneFlag();//-1还未收集好,0收集成功
@@ -71,6 +72,7 @@ protected:
 	int m_iStreamType;//0 只有视频流，1只有音频流，2 复合流，音视频流都有
     static const int s_iAvMultiplex;//0 表示音视频复用一个通道(使用视频通道,只建立一个通道),1表示音视频各用一个通道
 
+    int m_iLibniceProcStartedFlag;//0 否，1是
 };
 
 /*****************************************************************************
