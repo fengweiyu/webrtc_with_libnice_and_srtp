@@ -402,6 +402,12 @@ int MediaHandle::GetFrame(T_MediaFrameInfo *m_ptFrame)
     {
         iRet = m_pMediaHandle->GetFrame(m_ptFrame);
     }
+
+    if(FALSE == iRet)
+    {
+        MH_LOGE("GetNextFrame FALSE:eStreamType%d,eEncType%d\r\n",m_ptFrame->eStreamType, m_ptFrame->eEncType);
+    }
+    
 	return iRet;
 }
 
