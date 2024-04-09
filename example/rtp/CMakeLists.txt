@@ -16,6 +16,7 @@ SET(src_list
     Rtp.cpp
 	RtpSession.cpp
 	RtpPacket.cpp
+    RtpParse.cpp
 #    UdpSocket.cpp
 	)		
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}

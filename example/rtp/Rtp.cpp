@@ -469,10 +469,67 @@ int Rtp :: GetRtpPackets(T_MediaFrameInfo *m_ptFrame,unsigned char **o_ppbPacket
         }
     }while(0);
 
-    RTP_LOGI("iPacketNum %d ,m_ptMediaFrameParam->dwNaluCount %d eFrameType %d iFrameLen %d dwTimeStamp%d\r\n",iPacketNum,m_ptFrame->dwNaluCount,
-    m_ptFrame->eFrameType,m_ptFrame->iFrameLen,m_ptFrame->dwTimeStamp);
+    //RTP_LOGI("iPacketNum %d ,m_ptMediaFrameParam->dwNaluCount %d eFrameType %d iFrameLen %d dwTimeStamp%d\r\n",iPacketNum,m_ptFrame->dwNaluCount,
+    //m_ptFrame->eFrameType,m_ptFrame->iFrameLen,m_ptFrame->dwTimeStamp);
     return iPacketNum;
 }
+/*****************************************************************************
+-Fuction		: Rtp
+-Description	: //
+-Input			: 
+-Output 		: 
+-Return 		: <0 err,0 need more data,>0 success
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
+int Rtp::ParseRtpPacket(unsigned char *i_pbPacketBuf,int i_iPacketLen,T_MediaFrameInfo *o_ptFrame)
+{
+    int iRet = -1;
+    T_RtpPacketParam tParam;
+    if(NULL == i_pbPacketBuf ||NULL == o_ptFrame)
+    {
+        RTP_LOGE("GetRtpPackets NULL%d\r\n",i_iPacketLen);
+        return iRet;
+    }
+    
+    memset(&tParam,0,sizeof(T_RtpPacketParam));
+    o_ptFrame->pbFrameStartPos=o_ptFrame->pbFrameBuf;
+    o_ptFrame->iFrameLen=0;
+    iRet=m_RtpParse.Parse(i_pbPacketBuf,i_iPacketLen,&tParam,o_ptFrame->pbFrameStartPos,&o_ptFrame->iFrameLen,o_ptFrame->iFrameBufMaxLen);
+    if(iRet<0)
+    {
+        RTP_LOGE("m_RtpParse.Parse err%d\r\n",iRet);
+        return iRet;
+    }
+    switch (tParam.wPayloadType)
+    {
+        case RTP_PAYLOAD_G711A:
+        {
+            o_ptFrame->eEncType=MEDIA_ENCODE_TYPE_G711A;
+            o_ptFrame->dwTimeStamp=tParam.dwTimestamp;
+            o_ptFrame->eFrameType=MEDIA_FRAME_TYPE_AUDIO_FRAME;
+            iRet = 0;
+            break;
+        }
+        case RTP_PAYLOAD_G711U:
+        {
+            o_ptFrame->eEncType=MEDIA_ENCODE_TYPE_G711U;
+            o_ptFrame->dwTimeStamp=tParam.dwTimestamp;
+            o_ptFrame->eFrameType=MEDIA_FRAME_TYPE_AUDIO_FRAME;
+            iRet = 0;
+            break;
+        }
+        default :
+        {
+            RTP_LOGE("ParseRtpPacket.wPayloadType err %d\r\n",tParam.wPayloadType);
+            break;
+        }
+    }
+    
+    return iRet;
+}
+
 /*****************************************************************************
 -Fuction		: Rtp
 -Description	: //0 ·ñ ,1 ÊÇ

@@ -13,6 +13,7 @@
 #define RTP_H
 
 #include "RtpPacket.h"
+#include "RtpParse.h"
 #include "RtpSession.h"
 #include "MediaHandle.h"
 
@@ -37,6 +38,7 @@ public:
     int GetSSRC(unsigned int *o_pdwVideoSSRC,unsigned int *o_pdwAudioSSRC);
 
     int GetRtpPackets(T_MediaFrameInfo *m_ptFrame,unsigned char **o_ppbPacketBuf,int *o_aiEveryPacketLen,int i_iPacketBufMaxNum);
+    int ParseRtpPacket(unsigned char *i_pbPacketBuf,int i_iPacketLen,T_MediaFrameInfo *o_ptFrame);
     int IsRtp(char *buf, int size);
     int IsRtcp(char *buf, int size);
 private:
@@ -47,6 +49,8 @@ private:
     RtpSession              *m_pVideoRtpSession;
     RtpSession              *m_pAudioRtpSession;
     
+	RtpParse                m_RtpParse;
+	
     unsigned int 	        m_dwLastTimestamp;//Á÷¿ØÐèÒª
 };
 

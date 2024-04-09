@@ -155,6 +155,22 @@ int RtpInterface :: GetRtpPackets(void *m_ptFrame,unsigned char **o_ppbPacketBuf
 {
     return ((Rtp *)m_pRtp)->GetRtpPackets((T_MediaFrameInfo *)m_ptFrame,o_ppbPacketBuf,o_aiEveryPacketLen,i_iPacketBufMaxNum);
 }
+
+/*****************************************************************************
+-Fuction		: ParseRtpPacket
+-Description	: ParseRtpPacket
+-Input			: 
+-Output 		: 
+-Return 		: 
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
+int RtpInterface :: ParseRtpPacket(unsigned char *i_pbPacketBuf,int i_iPacketLen,void *o_ptFrame)
+{
+    return ((Rtp *)m_pRtp)->ParseRtpPacket(i_pbPacketBuf,i_iPacketLen,(T_MediaFrameInfo *)o_ptFrame);
+}
+
 /*****************************************************************************
 -Fuction		: Rtp
 -Description	: //0 ·ñ ,1 ÊÇ
