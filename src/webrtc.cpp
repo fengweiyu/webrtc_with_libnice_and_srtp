@@ -1544,27 +1544,51 @@ int WebRtcAnswer::GenerateVideoSDP(T_LocalCandidate *ptLocalCandidate,char *strL
 	int iRet=0;
     const char *strVideoStreamType="video";
 
-    
-    strSdpFmt.assign("m=%s %u RTP/SAVPF %d\r\n"
-        "c=IN IP4 %s\r\n"
-        "a=mid:%s\r\n"//与sdpMLineIndex sdpMid里的一致
-        "a=sendrecv\r\n"
-        "a=rtcp-mux\r\n"
-        "a=ice-ufrag:%s\r\n"
-        "a=ice-pwd:%s\r\n"
-        //"a=ice-options:trickle\r\n"//表示ice的candidate分开传输，现在一起传输所以注释掉
-        "a=fingerprint:sha-256 %s\r\n"
-        //"a=setup:passive\r\n"
-        //"a=connection:new\r\n"
-        "a=rtpmap:%d %s/%d\r\n"
-        "a=fmtp:%d level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=%06X;sprop-parameter-sets=%s,%s\r\n"
-        "a=msid:ywf-mslabel ywf-label-%s\r\n"
-        "a=ssrc:%d msid:ywf-mslabel ywf-label-%s\r\n"//与rtp中的SSRC 一致
-        "a=setup:passive\r\n");//a=setup:actpass 浏览器会报错,active表示客户端,passive表示服务端actpass既是客户端又是服务端,由对方决定
-        /*"a=ssrc:%ld cname:ywf%s\r\n"
-        "a=ssrc:%ld msid:janus janusa0\r\n"
-        "a=ssrc:%ld mslabel:janus\r\n"
-        "a=ssrc:%ld label:janusa0\r\n");*/
+    if(NULL == ptVideoInfo->strSPS_Base64 || NULL == ptVideoInfo->strPPS_Base64)
+    {//兼容只收不发媒体流的情况
+        strSdpFmt.assign("m=%s %u RTP/SAVPF %d\r\n"
+            "c=IN IP4 %s\r\n"
+            "a=mid:%s\r\n"//与sdpMLineIndex sdpMid里的一致
+            "a=sendrecv\r\n"
+            "a=rtcp-mux\r\n"
+            "a=ice-ufrag:%s\r\n"
+            "a=ice-pwd:%s\r\n"
+            //"a=ice-options:trickle\r\n"//表示ice的candidate分开传输，现在一起传输所以注释掉
+            "a=fingerprint:sha-256 %s\r\n"
+            //"a=setup:passive\r\n"
+            //"a=connection:new\r\n"
+            "a=rtpmap:%d %s/%d\r\n"
+            "a=msid:ywf-mslabel ywf-label-%s\r\n"
+            "a=ssrc:%d msid:ywf-mslabel ywf-label-%s\r\n"//与rtp中的SSRC 一致
+            "a=setup:passive\r\n");//a=setup:actpass 浏览器会报错,active表示客户端,passive表示服务端actpass既是客户端又是服务端,由对方决定
+            /*"a=ssrc:%ld cname:ywf%s\r\n"
+            "a=ssrc:%ld msid:janus janusa0\r\n"
+            "a=ssrc:%ld mslabel:janus\r\n"
+            "a=ssrc:%ld label:janusa0\r\n");*/
+    }
+    else
+    {
+        strSdpFmt.assign("m=%s %u RTP/SAVPF %d\r\n"
+            "c=IN IP4 %s\r\n"
+            "a=mid:%s\r\n"//与sdpMLineIndex sdpMid里的一致
+            "a=sendrecv\r\n"
+            "a=rtcp-mux\r\n"
+            "a=ice-ufrag:%s\r\n"
+            "a=ice-pwd:%s\r\n"
+            //"a=ice-options:trickle\r\n"//表示ice的candidate分开传输，现在一起传输所以注释掉
+            "a=fingerprint:sha-256 %s\r\n"
+            //"a=setup:passive\r\n"
+            //"a=connection:new\r\n"
+            "a=rtpmap:%d %s/%d\r\n"
+            "a=fmtp:%d level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=%06X;sprop-parameter-sets=%s,%s\r\n"
+            "a=msid:ywf-mslabel ywf-label-%s\r\n"
+            "a=ssrc:%d msid:ywf-mslabel ywf-label-%s\r\n"//与rtp中的SSRC 一致
+            "a=setup:passive\r\n");//a=setup:actpass 浏览器会报错,active表示客户端,passive表示服务端actpass既是客户端又是服务端,由对方决定
+            /*"a=ssrc:%ld cname:ywf%s\r\n"
+            "a=ssrc:%ld msid:janus janusa0\r\n"
+            "a=ssrc:%ld mslabel:janus\r\n"
+            "a=ssrc:%ld label:janusa0\r\n");*/
+    }
     for(i=0;i<ptLocalCandidate->iCurCandidateNum;i++)
     {
         if(NULL!= strstr(ptLocalCandidate->strCandidateData[i],"udp"))
@@ -1595,24 +1619,38 @@ int WebRtcAnswer::GenerateVideoSDP(T_LocalCandidate *ptLocalCandidate,char *strL
             strSdpFmt.append(strCandidate);
         }
     }*/
-    
-    iRet=snprintf(o_strSDP+iRet,i_iSdpMaxLen-iRet,strSdpFmt.c_str(),
-        strVideoStreamType,ptVideoInfo->wPortNumForSDP,ptVideoInfo->ucRtpPayloadType,
-        "0.0.0.0",//"0.0.0.0"还是失败，多个也是失败
-        m_pVideoID->c_str(),
-        ptLocalCandidate->strUfrag, 
-        ptLocalCandidate->strPassword,
-        strLocalFingerprint,
-        ptVideoInfo->ucRtpPayloadType,ptVideoInfo->pstrFormatName,ptVideoInfo->dwTimestampFrequency,
-        ptVideoInfo->ucRtpPayloadType,ptVideoInfo->dwProfileLevelId,ptVideoInfo->strSPS_Base64,ptVideoInfo->strPPS_Base64,
-        m_pVideoID->c_str(),ptVideoInfo->dwSSRC,m_pVideoID->c_str());
-        /*tCreateTime.tv_sec, strStreamType,tCreateTime.tv_sec, tCreateTime.tv_sec, tCreateTime.tv_sec,
-        "application",i_ptVideoInfo->wPortNumForSDP,102,//"m=application 9 DTLS/SCTP". Reason: Expects at least 4 fields
-        "0.0.0.0",
-        i_ptVideoInfo->iID+1,
-        tLocalCandidate.strUfrag, 
-        tLocalCandidate.strPassword,
-        strLocalFingerprint);*/
+    if(NULL == ptVideoInfo->strSPS_Base64 || NULL == ptVideoInfo->strPPS_Base64)
+    {
+        iRet=snprintf(o_strSDP+iRet,i_iSdpMaxLen-iRet,strSdpFmt.c_str(),
+            strVideoStreamType,ptVideoInfo->wPortNumForSDP,ptVideoInfo->ucRtpPayloadType,
+            "0.0.0.0",//"0.0.0.0"还是失败，多个也是失败
+            m_pVideoID->c_str(),
+            ptLocalCandidate->strUfrag, 
+            ptLocalCandidate->strPassword,
+            strLocalFingerprint,
+            ptVideoInfo->ucRtpPayloadType,ptVideoInfo->pstrFormatName,ptVideoInfo->dwTimestampFrequency,
+            m_pVideoID->c_str(),ptVideoInfo->dwSSRC,m_pVideoID->c_str());
+    }
+    else
+    {
+        iRet=snprintf(o_strSDP+iRet,i_iSdpMaxLen-iRet,strSdpFmt.c_str(),
+            strVideoStreamType,ptVideoInfo->wPortNumForSDP,ptVideoInfo->ucRtpPayloadType,
+            "0.0.0.0",//"0.0.0.0"还是失败，多个也是失败
+            m_pVideoID->c_str(),
+            ptLocalCandidate->strUfrag, 
+            ptLocalCandidate->strPassword,
+            strLocalFingerprint,
+            ptVideoInfo->ucRtpPayloadType,ptVideoInfo->pstrFormatName,ptVideoInfo->dwTimestampFrequency,
+            ptVideoInfo->ucRtpPayloadType,ptVideoInfo->dwProfileLevelId,ptVideoInfo->strSPS_Base64,ptVideoInfo->strPPS_Base64,
+            m_pVideoID->c_str(),ptVideoInfo->dwSSRC,m_pVideoID->c_str());
+            /*tCreateTime.tv_sec, strStreamType,tCreateTime.tv_sec, tCreateTime.tv_sec, tCreateTime.tv_sec,
+            "application",i_ptVideoInfo->wPortNumForSDP,102,//"m=application 9 DTLS/SCTP". Reason: Expects at least 4 fields
+            "0.0.0.0",
+            i_ptVideoInfo->iID+1,
+            tLocalCandidate.strUfrag, 
+            tLocalCandidate.strPassword,
+            strLocalFingerprint);*/
+    }
     return iRet;
 }
 
