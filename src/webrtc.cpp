@@ -1230,7 +1230,7 @@ int WebRtcAnswer::HandleMsg(char * i_strOfferMsg,int i_iNotJsonMsgFlag)
         iRet=m_Libnice.SaveRemoteSDP(i_strOfferMsg);
         if(NULL != strstr(i_strOfferMsg,"candidate:"))
         {
-            iRet=m_Libnice.SetRemoteCandidateAndSDP(NULL);//
+            iRet=0;//m_Libnice.SetRemoteCandidateAndSDP(NULL);//生成sdp后再设置，防止生成sdp耗时久，导致设置后等待久
         }
         return iRet;
     }
@@ -1522,7 +1522,8 @@ int WebRtcAnswer::GenerateLocalSDP(T_WebRtcMediaInfo *i_ptMediaInfo,char *o_strS
             iRet+=GenerateAudioSDP(ptAudioLocalCandidate,pAudioLocalFingerprint,ptAudioInfo,o_strSDP+iRet,i_iSdpMaxLen-iRet);
         }
     }
-
+    //HandleMsg中注释,两种先后顺序出图时间都一样
+    m_Libnice.SetRemoteCandidateAndSDP(NULL);//生成sdp后再设置，防止生成sdp耗时久，导致设置后等待久
 	return iRet;
 }
 
