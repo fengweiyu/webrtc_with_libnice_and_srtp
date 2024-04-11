@@ -19,7 +19,7 @@ using std::cout;//需要<iostream>
 using std::endl;
 
 #define AUDIO_G711_SAMPLE_RATE 8000
-#define AUDIO_G711_A_FRAME_SAMPLE_POINT_NUM 320
+#define AUDIO_G711_A_FRAME_SAMPLE_POINT_NUM 160//320
 
 char * G711Handle::m_strAudioFormatName = (char *)AUDIO_ENC_FORMAT_G711_NAME;
 int G711Handle::m_iAudioFixLen = AUDIO_G711_A_FRAME_SAMPLE_POINT_NUM;//G711中1B就是一个样本数据
