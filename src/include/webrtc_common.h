@@ -13,7 +13,7 @@
 #define WEBRTC_COMMON_H
 
 
-#ifdef MEDIA_SEVER_TYPE_WEBRTC0
+#ifdef MEDIA_SEVER_TYPE_WEBRTC
 #include "XLog.h"
 #define  WEBRTC_LOGW2(val,...)     logi(WEBRTC) << lkv(ClientPort, val) << lformat(WEBRTC,__VA_ARGS__) << lend 
 #define  WEBRTC_LOGE2(val,...)     loge(WEBRTC) << lkv(ClientPort, val) << lformat(WEBRTC,__VA_ARGS__) << lend 
