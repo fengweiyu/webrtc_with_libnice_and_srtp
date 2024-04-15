@@ -168,10 +168,12 @@ int Libnice::LibniceProc()
     }
     
     // 设置本地网络地址和端口
+    //nice_address_init (&tBaseAddr);//设置了地址则只有candidate:2 1 tcp_active 1015023359 139.9.149.150 0 typ host,没找到修改为udp的方法
     //nice_address_set_from_string(&tBaseAddr, "139.9.149.150");
     //nice_address_set_port(&tBaseAddr,9018);
+    //g_object_set (G_OBJECT (m_ptAgent), "ice-tcp", FALSE,  NULL);//可以使用这个修改是否udp，tcp
     // 添加候选地址（可以是对端地址）
-    //nice_agent_add_local_address(m_ptAgent,&tBaseAddr);//设置了地址则只有candidate:2 1 tcp_active 1015023359 139.9.149.150 0 typ host,没找到修改为udp的方法
+    //nice_agent_add_local_address(m_ptAgent,&tBaseAddr);//目前收集地址很快(1s内)，但是后面还有建立链接和密钥协商耗时(总体1s内)
     
     // 设置本地端口范围，一般不做限制
     //nice_agent_set_port_range(m_ptAgent, m_tVideoStream.iID,NICE_COMPONENT_TYPE_RTP, 9018, 9900);//设置了无作用
