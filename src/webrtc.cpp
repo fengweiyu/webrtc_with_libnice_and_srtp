@@ -16,6 +16,8 @@
 #include <sys/time.h>
 //#include "cJSON.h"
 
+#define MAX_MATCH_NUM       8
+
 const int WebRTC::s_iAvMultiplex = 0;//便于传入到m_Libnice
 /*****************************************************************************
 -Fuction        : WebRTC
@@ -635,14 +637,14 @@ int WebRTC::GenerateLocalSDP(T_WebRtcMediaInfo *i_ptMediaInfo,char *o_strSDP,int
 
     iRet=snprintf(o_strSDP,i_iSdpMaxLen,strSdpFmt.c_str(),
         tCreateTime.tv_sec,tCreateTime.tv_usec,1,tLocalCandidate.strIP[i-1],
-        i_ptVideoInfo->iID,
-        strStreamType,i_ptVideoInfo->wPortNumForSDP,i_ptVideoInfo->ucRtpPayloadType,
+        i_ptVideoInfo->iMediaID,
+        strStreamType,i_ptVideoInfo->wPortNumForSDP,i_ptVideoInfo->bRtpPayloadType,
         tLocalCandidate.strIP[i-1],//"0.0.0.0"还是失败，多个也是失败
-        i_ptVideoInfo->iID,
+        i_ptVideoInfo->iMediaID,
         tLocalCandidate.strUfrag, 
         tLocalCandidate.strPassword,
         strLocalFingerprint,
-        i_ptVideoInfo->ucRtpPayloadType,i_ptVideoInfo->pstrFormatName,i_ptVideoInfo->dwTimestampFrequency,
+        i_ptVideoInfo->bRtpPayloadType,i_ptVideoInfo->strFormatName,i_ptVideoInfo->dwTimestampFrequency,
         i_ptVideoInfo->dwSSRC, strStreamType,i_ptVideoInfo->dwSSRC, i_ptVideoInfo->dwSSRC, i_ptVideoInfo->dwSSRC);
 
 	return iRet;
@@ -868,7 +870,7 @@ WebRtcOffer::~WebRtcOffer()
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int WebRtcOffer::HandleMsg(char * i_strAnswerMsg,int i_iNotJsonMsgFlag)
+int WebRtcOffer::HandleMsg(char * i_strAnswerMsg,int i_iNotJsonMsgFlag,T_WebRtcSdpMediaInfo *o_ptSdpMediaInfo)
 {
     int iRet = -1;
     char acRemoteSDP[5*1024];
@@ -1118,15 +1120,15 @@ int WebRtcOffer::GenerateLocalSDP(T_WebRtcMediaInfo *i_ptMediaInfo,char *o_strSD
     
     iRet=snprintf(o_strSDP,i_iSdpMaxLen,strSdpFmt.c_str(),
         tCreateTime.tv_sec,tCreateTime.tv_usec,1,"0.0.0.0",
-        i_ptVideoInfo->iID,//i_ptVideoInfo->iID+1,
-        strStreamType,i_ptVideoInfo->wPortNumForSDP,i_ptVideoInfo->ucRtpPayloadType,
+        i_ptVideoInfo->iMediaID,//i_ptVideoInfo->iID+1,
+        strStreamType,i_ptVideoInfo->wPortNumForSDP,i_ptVideoInfo->bRtpPayloadType,
         "0.0.0.0",//"0.0.0.0"还是失败，多个也是失败
-        i_ptVideoInfo->iID,
+        i_ptVideoInfo->iMediaID,
         tLocalCandidate.strUfrag, 
         tLocalCandidate.strPassword,
         strLocalFingerprint,
-        i_ptVideoInfo->ucRtpPayloadType,i_ptVideoInfo->pstrFormatName,i_ptVideoInfo->dwTimestampFrequency,
-        i_ptVideoInfo->ucRtpPayloadType,i_ptVideoInfo->dwProfileLevelId,i_ptVideoInfo->strSPS_Base64,i_ptVideoInfo->strPPS_Base64,i_ptVideoInfo->dwSSRC);
+        i_ptVideoInfo->bRtpPayloadType,i_ptVideoInfo->strFormatName,i_ptVideoInfo->dwTimestampFrequency,
+        i_ptVideoInfo->bRtpPayloadType,i_ptVideoInfo->dwProfileLevelId,i_ptVideoInfo->strSPS_Base64,i_ptVideoInfo->strPPS_Base64,i_ptVideoInfo->dwSSRC);
         /*"application",i_ptVideoInfo->wPortNumForSDP,102,//"m=application 9 DTLS/SCTP". Reason: Expects at least 4 fields
         "0.0.0.0",
         i_ptVideoInfo->iID+1,
@@ -1186,10 +1188,10 @@ WebRtcAnswer::~WebRtcAnswer()
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int WebRtcAnswer::HandleMsg(char * i_strOfferMsg,int i_iNotJsonMsgFlag)
+int WebRtcAnswer::HandleMsg(char * i_strOfferMsg,int i_iNotJsonMsgFlag,T_WebRtcSdpMediaInfo *o_ptSdpMediaInfo)
 {
     int iRet = -1;
-    char acRemoteSDP[5*1024];
+    //char acRemoteSDP[5*1024];
     
     if(NULL == i_strOfferMsg)
     {
@@ -1225,6 +1227,20 @@ int WebRtcAnswer::HandleMsg(char * i_strOfferMsg,int i_iNotJsonMsgFlag)
     }
     m_iAvDiff=(int)(iAudioPos-iVideoPos);
     printf("HandleMsg m_iAvDiff %d \r\n",m_iAvDiff);
+    if(NULL != o_ptSdpMediaInfo)
+    {
+        o_ptSdpMediaInfo->iAvMediaDiff = m_iAvDiff;
+        if(m_iAvDiff>0)
+        {
+            GetSdpVideoInfo(strMsg.substr(iVideoPos,iAudioPos-iVideoPos).c_str(),o_ptSdpMediaInfo);
+            GetSdpAudioInfo(strMsg.substr(iAudioPos,strMsg.size()-iAudioPos).c_str(),o_ptSdpMediaInfo);
+        }
+        else
+        {
+            GetSdpAudioInfo(strMsg.substr(iAudioPos,iVideoPos-iAudioPos).c_str(),o_ptSdpMediaInfo);
+            GetSdpVideoInfo(strMsg.substr(iVideoPos,strMsg.size()-iVideoPos).c_str(),o_ptSdpMediaInfo);
+        }
+    }
     if(1 == i_iNotJsonMsgFlag)
     {
         iRet=m_Libnice.SaveRemoteSDP(i_strOfferMsg);
@@ -1362,15 +1378,15 @@ int WebRtcAnswer::GenerateLocalSDP(T_WebRtcMediaInfo *i_ptMediaInfo,char *o_strS
     }
     ptVideoInfo=&i_ptMediaInfo->tVideoInfo;
     ptAudioInfo=&i_ptMediaInfo->tAudioInfo;
-    if((ptAudioInfo->pstrFormatName != NULL && 0 == m_iStreamType)||(ptVideoInfo->pstrFormatName != NULL && 1 == m_iStreamType))
+    if((strlen(ptAudioInfo->strFormatName) != 0 && 0 == m_iStreamType)||(strlen(ptVideoInfo->strFormatName) != 0 && 1 == m_iStreamType))
     {
 		//WEBRTC_LOGE("GenerateLocalSDP err %p,%p,%d\r\n",ptAudioInfo->pstrFormatName,ptVideoInfo->pstrFormatName,m_iStreamType);
 		//return iRet;
     }
-    if((ptVideoInfo->pstrFormatName == NULL && NULL == ptAudioInfo->pstrFormatName)||
-    (ptVideoInfo->pstrFormatName != NULL && NULL == m_pVideoID)||(ptAudioInfo->pstrFormatName != NULL && NULL == m_pAudioID))
+    if((strlen(ptVideoInfo->strFormatName) == 0 && strlen(ptAudioInfo->strFormatName) == 0)/*||
+    (strlen(ptVideoInfo->strFormatName) != 0 && NULL == m_pVideoID)||(strlen(ptAudioInfo->strFormatName) != 0 && NULL == m_pAudioID)*/)
     {
-		WEBRTC_LOGE("GenerateLocalSDP err %p,%p,%p,%p\r\n",ptAudioInfo->pstrFormatName,ptVideoInfo->pstrFormatName,m_pVideoID,m_pAudioID);
+		WEBRTC_LOGE("GenerateLocalSDP err %d,%d,%p,%p\r\n",strlen(ptAudioInfo->strFormatName),strlen(ptVideoInfo->strFormatName),m_pVideoID,m_pAudioID);
 		return iRet;
     }
 	if(GetGatheringDoneFlag() < 0)
@@ -1431,29 +1447,29 @@ int WebRtcAnswer::GenerateLocalSDP(T_WebRtcMediaInfo *i_ptMediaInfo,char *o_strS
         i_ptVideoInfo->ucRtpPayloadType,i_ptVideoInfo->pstrFormatName,i_ptVideoInfo->dwTimestampFrequency,
         tCreateTime.tv_sec, strStreamType,tCreateTime.tv_sec, tCreateTime.tv_sec, tCreateTime.tv_sec);
 #endif
-    if(ptAudioInfo->pstrFormatName == NULL && ptVideoInfo->pstrFormatName != NULL)
+    if(strlen(ptAudioInfo->strFormatName) == 0 && strlen(ptVideoInfo->strFormatName) != 0)
     {
         strSdpFmt.assign("v=0\r\n"
             "o=- %ld%06ld %d IN IP4 %s\r\n"//o=<username><session id> <version> <network type> <address type><address> Origin ,给定了会话的发起者信息
             "s=ywf webrtc\r\n"//s=<sessionname> ;给定了Session Name
-            "t=0 0\r\na=group:BUNDLE %s\r\n"//"t=0 0\r\na=group:BUNDLE %d %d\r\n" sctp暂不需要去掉一个%d//t=<start time><stop time> ;BUNDLE 与sdpMLineIndex sdpMid里的一致
+            "t=0 0\r\na=group:BUNDLE %d\r\n"//"t=0 0\r\na=group:BUNDLE %d %d\r\n" sctp暂不需要去掉一个%d//t=<start time><stop time> ;BUNDLE 与sdpMLineIndex sdpMid里的一致
             "a=msid-semantic: WMS ywf-mslabel\r\n"//"a=msid-semantic: WMS ywf\r\n"
             );//a=setup:actpass 浏览器会报错
         iRet=snprintf(o_strSDP,i_iSdpMaxLen,strSdpFmt.c_str(),
             tCreateTime.tv_sec,tCreateTime.tv_usec,1,"0.0.0.0",
-            m_pVideoID->c_str());
+            ptVideoInfo->iMediaID);//m_pVideoID->c_str()
     }
-    else if(ptVideoInfo->pstrFormatName == NULL && ptAudioInfo->pstrFormatName != NULL)
+    else if(strlen(ptVideoInfo->strFormatName) == 0 && strlen(ptAudioInfo->strFormatName) != 0)
     {
         strSdpFmt.assign("v=0\r\n"
             "o=- %ld%06ld %d IN IP4 %s\r\n"//o=<username><session id> <version> <network type> <address type><address> Origin ,给定了会话的发起者信息
             "s=ywf webrtc\r\n"//s=<sessionname> ;给定了Session Name
-            "t=0 0\r\na=group:BUNDLE %s\r\n"//"t=0 0\r\na=group:BUNDLE %d %d\r\n" sctp暂不需要去掉一个%d//t=<start time><stop time> ;BUNDLE 与sdpMLineIndex sdpMid里的一致
+            "t=0 0\r\na=group:BUNDLE %d\r\n"//"t=0 0\r\na=group:BUNDLE %d %d\r\n" sctp暂不需要去掉一个%d//t=<start time><stop time> ;BUNDLE 与sdpMLineIndex sdpMid里的一致
             "a=msid-semantic: WMS ywf-mslabel\r\n"//"a=msid-semantic: WMS ywf\r\n"
             );//a=setup:actpass 浏览器会报错
         iRet=snprintf(o_strSDP,i_iSdpMaxLen,strSdpFmt.c_str(),
             tCreateTime.tv_sec,tCreateTime.tv_usec,1,"0.0.0.0",
-            m_pAudioID->c_str());
+            ptAudioInfo->iMediaID);//m_pAudioID->c_str()
     }
     else
     {
@@ -1476,12 +1492,12 @@ int WebRtcAnswer::GenerateLocalSDP(T_WebRtcMediaInfo *i_ptMediaInfo,char *o_strS
                 "o=- %ld%06ld %d IN IP4 %s\r\n"//o=<username><session id> <version> <network type> <address type><address> Origin ,给定了会话的发起者信息
                 "s=ywf webrtc\r\n"//s=<sessionname> ;给定了Session Name
                 "t=0 0\r\n"//"t=0 0\r\na=group:BUNDLE %d %d\r\n" sctp暂不需要去掉一个%d//t=<start time><stop time> ;BUNDLE 与sdpMLineIndex sdpMid里的一致
-                "a=group:BUNDLE %s %s\r\n"//a=group:BUNDLE表示音视频流共用一个通道
+                "a=group:BUNDLE %d %d\r\n"//a=group:BUNDLE表示音视频流共用一个通道
                 "a=msid-semantic: WMS ywf-mslabel\r\n"//"a=msid-semantic: WMS ywf\r\n"
                 );//a=setup:actpass 浏览器会报错
             iRet=snprintf(o_strSDP,i_iSdpMaxLen,strSdpFmt.c_str(),
                 tCreateTime.tv_sec,tCreateTime.tv_usec,1,"0.0.0.0",
-                m_pVideoID->c_str(),m_pAudioID->c_str());
+                ptVideoInfo->iMediaID,ptAudioInfo->iMediaID);//m_pVideoID->c_str(),m_pAudioID->c_str()
         }
     }
 
@@ -1502,22 +1518,22 @@ int WebRtcAnswer::GenerateLocalSDP(T_WebRtcMediaInfo *i_ptMediaInfo,char *o_strS
 
     if(m_iAvDiff < 0)
     {
-        if(ptAudioInfo->pstrFormatName != NULL)
+        if(strlen(ptAudioInfo->strFormatName) != 0)
         {
             iRet+=GenerateAudioSDP(ptAudioLocalCandidate,pAudioLocalFingerprint,ptAudioInfo,o_strSDP+iRet,i_iSdpMaxLen-iRet);
         }
-        if(ptVideoInfo->pstrFormatName != NULL)
+        if(strlen(ptVideoInfo->strFormatName) != 0)
         {
             iRet+=GenerateVideoSDP(ptVideoLocalCandidate,pVideoLocalFingerprint,ptVideoInfo,o_strSDP+iRet,i_iSdpMaxLen-iRet);
         }
     }
     else
     {
-        if(ptVideoInfo->pstrFormatName != NULL)
+        if(strlen(ptVideoInfo->strFormatName) != 0)
         {
             iRet+=GenerateVideoSDP(ptVideoLocalCandidate,pVideoLocalFingerprint,ptVideoInfo,o_strSDP+iRet,i_iSdpMaxLen-iRet);
         }
-        if(ptAudioInfo->pstrFormatName != NULL)
+        if(strlen(ptAudioInfo->strFormatName) != 0)
         {
             iRet+=GenerateAudioSDP(ptAudioLocalCandidate,pAudioLocalFingerprint,ptAudioInfo,o_strSDP+iRet,i_iSdpMaxLen-iRet);
         }
@@ -1549,7 +1565,7 @@ int WebRtcAnswer::GenerateVideoSDP(T_LocalCandidate *ptLocalCandidate,char *strL
     {//兼容只收不发媒体流的情况
         strSdpFmt.assign("m=%s %u RTP/SAVPF %d\r\n"
             "c=IN IP4 %s\r\n"
-            "a=mid:%s\r\n"//与sdpMLineIndex sdpMid里的一致
+            "a=mid:%d\r\n"//与sdpMLineIndex sdpMid里的一致
             "a=sendrecv\r\n"
             "a=rtcp-mux\r\n"
             "a=ice-ufrag:%s\r\n"
@@ -1559,8 +1575,8 @@ int WebRtcAnswer::GenerateVideoSDP(T_LocalCandidate *ptLocalCandidate,char *strL
             //"a=setup:passive\r\n"
             //"a=connection:new\r\n"
             "a=rtpmap:%d %s/%d\r\n"
-            "a=msid:ywf-mslabel ywf-label-%s\r\n"
-            "a=ssrc:%d msid:ywf-mslabel ywf-label-%s\r\n"//与rtp中的SSRC 一致
+            "a=msid:ywf-mslabel ywf-label-%d\r\n"
+            "a=ssrc:%d msid:ywf-mslabel ywf-label-%d\r\n"//与rtp中的SSRC 一致
             "a=setup:passive\r\n");//a=setup:actpass 浏览器会报错,active表示客户端,passive表示服务端actpass既是客户端又是服务端,由对方决定
             /*"a=ssrc:%ld cname:ywf%s\r\n"
             "a=ssrc:%ld msid:janus janusa0\r\n"
@@ -1571,7 +1587,7 @@ int WebRtcAnswer::GenerateVideoSDP(T_LocalCandidate *ptLocalCandidate,char *strL
     {
         strSdpFmt.assign("m=%s %u RTP/SAVPF %d\r\n"
             "c=IN IP4 %s\r\n"
-            "a=mid:%s\r\n"//与sdpMLineIndex sdpMid里的一致
+            "a=mid:%d\r\n"//与sdpMLineIndex sdpMid里的一致
             "a=sendrecv\r\n"
             "a=rtcp-mux\r\n"
             "a=ice-ufrag:%s\r\n"
@@ -1582,8 +1598,8 @@ int WebRtcAnswer::GenerateVideoSDP(T_LocalCandidate *ptLocalCandidate,char *strL
             //"a=connection:new\r\n"
             "a=rtpmap:%d %s/%d\r\n"
             "a=fmtp:%d level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=%06X;sprop-parameter-sets=%s,%s\r\n"
-            "a=msid:ywf-mslabel ywf-label-%s\r\n"
-            "a=ssrc:%d msid:ywf-mslabel ywf-label-%s\r\n"//与rtp中的SSRC 一致
+            "a=msid:ywf-mslabel ywf-label-%d\r\n"
+            "a=ssrc:%d msid:ywf-mslabel ywf-label-%d\r\n"//与rtp中的SSRC 一致
             "a=setup:passive\r\n");//a=setup:actpass 浏览器会报错,active表示客户端,passive表示服务端actpass既是客户端又是服务端,由对方决定
             /*"a=ssrc:%ld cname:ywf%s\r\n"
             "a=ssrc:%ld msid:janus janusa0\r\n"
@@ -1623,27 +1639,27 @@ int WebRtcAnswer::GenerateVideoSDP(T_LocalCandidate *ptLocalCandidate,char *strL
     if(NULL == ptVideoInfo->strSPS_Base64 || NULL == ptVideoInfo->strPPS_Base64)
     {
         iRet=snprintf(o_strSDP+iRet,i_iSdpMaxLen-iRet,strSdpFmt.c_str(),
-            strVideoStreamType,ptVideoInfo->wPortNumForSDP,ptVideoInfo->ucRtpPayloadType,
+            strVideoStreamType,ptVideoInfo->wPortNumForSDP,ptVideoInfo->bRtpPayloadType,
             "0.0.0.0",//"0.0.0.0"还是失败，多个也是失败
-            m_pVideoID->c_str(),
+            ptVideoInfo->iMediaID,
             ptLocalCandidate->strUfrag, 
             ptLocalCandidate->strPassword,
             strLocalFingerprint,
-            ptVideoInfo->ucRtpPayloadType,ptVideoInfo->pstrFormatName,ptVideoInfo->dwTimestampFrequency,
-            m_pVideoID->c_str(),ptVideoInfo->dwSSRC,m_pVideoID->c_str());
+            ptVideoInfo->bRtpPayloadType,ptVideoInfo->strFormatName,ptVideoInfo->dwTimestampFrequency,
+            ptVideoInfo->iMediaID,ptVideoInfo->dwSSRC,ptVideoInfo->iMediaID);
     }
     else
     {
         iRet=snprintf(o_strSDP+iRet,i_iSdpMaxLen-iRet,strSdpFmt.c_str(),
-            strVideoStreamType,ptVideoInfo->wPortNumForSDP,ptVideoInfo->ucRtpPayloadType,
+            strVideoStreamType,ptVideoInfo->wPortNumForSDP,ptVideoInfo->bRtpPayloadType,
             "0.0.0.0",//"0.0.0.0"还是失败，多个也是失败
-            m_pVideoID->c_str(),
+            ptVideoInfo->iMediaID,
             ptLocalCandidate->strUfrag, 
             ptLocalCandidate->strPassword,
             strLocalFingerprint,
-            ptVideoInfo->ucRtpPayloadType,ptVideoInfo->pstrFormatName,ptVideoInfo->dwTimestampFrequency,
-            ptVideoInfo->ucRtpPayloadType,ptVideoInfo->dwProfileLevelId,ptVideoInfo->strSPS_Base64,ptVideoInfo->strPPS_Base64,
-            m_pVideoID->c_str(),ptVideoInfo->dwSSRC,m_pVideoID->c_str());
+            ptVideoInfo->bRtpPayloadType,ptVideoInfo->strFormatName,ptVideoInfo->dwTimestampFrequency,
+            ptVideoInfo->bRtpPayloadType,ptVideoInfo->dwProfileLevelId,ptVideoInfo->strSPS_Base64,ptVideoInfo->strPPS_Base64,
+            ptVideoInfo->iMediaID,ptVideoInfo->dwSSRC,ptVideoInfo->iMediaID);
             /*tCreateTime.tv_sec, strStreamType,tCreateTime.tv_sec, tCreateTime.tv_sec, tCreateTime.tv_sec,
             "application",i_ptVideoInfo->wPortNumForSDP,102,//"m=application 9 DTLS/SCTP". Reason: Expects at least 4 fields
             "0.0.0.0",
@@ -1676,7 +1692,7 @@ int WebRtcAnswer::GenerateAudioSDP(T_LocalCandidate *ptLocalCandidate,char *strL
     strSdpFmt.assign(
         "m=%s %u RTP/SAVPF %d\r\n"
         "c=IN IP4 %s\r\n"
-        "a=mid:%s\r\n"//与sdpMLineIndex sdpMid里的一致
+        "a=mid:%d\r\n"//与sdpMLineIndex sdpMid里的一致
         "a=sendrecv\r\n"
         "a=rtcp-mux\r\n"
         "a=ice-ufrag:%s\r\n"
@@ -1686,8 +1702,8 @@ int WebRtcAnswer::GenerateAudioSDP(T_LocalCandidate *ptLocalCandidate,char *strL
         //"a=setup:passive\r\n"
         //"a=connection:new\r\n"
         "a=rtpmap:%d %s/%d\r\n"
-        "a=msid:ywf-mslabel ywf-label-%s\r\n"
-        "a=ssrc:%d msid:ywf-mslabel ywf-label-%s\r\n"//与rtp中的SSRC 一致
+        "a=msid:ywf-mslabel ywf-label-%d\r\n"
+        "a=ssrc:%d msid:ywf-mslabel ywf-label-%d\r\n"//与rtp中的SSRC 一致
         "a=setup:passive\r\n");//a=setup:actpass 浏览器会报错
         /*"a=ssrc:%ld cname:ywf%s\r\n"
         "a=ssrc:%ld msid:janus janusa0\r\n"
@@ -1703,14 +1719,246 @@ int WebRtcAnswer::GenerateAudioSDP(T_LocalCandidate *ptLocalCandidate,char *strL
         }
     }
     iRet=snprintf(o_strSDP+iRet,i_iSdpMaxLen-iRet,strSdpFmt.c_str(),
-        strAudioStreamType,ptAudioInfo->wPortNumForSDP,ptAudioInfo->ucRtpPayloadType,
+        strAudioStreamType,ptAudioInfo->wPortNumForSDP,ptAudioInfo->bRtpPayloadType,
         "0.0.0.0",//
-        m_pAudioID->c_str(),
+        ptAudioInfo->iMediaID,
         ptLocalCandidate->strUfrag, 
         ptLocalCandidate->strPassword,
         strLocalFingerprint,
-        ptAudioInfo->ucRtpPayloadType,ptAudioInfo->pstrFormatName,ptAudioInfo->dwTimestampFrequency,
-        m_pAudioID->c_str(),ptAudioInfo->dwSSRC,m_pAudioID->c_str());
+        ptAudioInfo->bRtpPayloadType,ptAudioInfo->strFormatName,ptAudioInfo->dwTimestampFrequency,
+        ptAudioInfo->iMediaID,ptAudioInfo->dwSSRC,ptAudioInfo->iMediaID);
+    return iRet;
+}
+
+/*****************************************************************************
+-Fuction        : GetSdpMediaInfo
+-Description    : 
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+int WebRtcAnswer::GetSdpVideoInfo(const char * i_strSDP,T_WebRtcSdpMediaInfo *o_ptSdpMediaInfo)
+{
+    int iRet = -1;
+	regmatch_t atMatch[MAX_MATCH_NUM];
+	const char *strVideoPortPatten="m=video ([0-9]+)";
+	const char *strMediaIdPatten="a=mid:([0-9]+)";
+	const char *strRtpMapPatten=NULL;
+	const char *strFmtpPatten=NULL;
+	string strFindRes;
+	string strSubSDP;
+    string strSDP(i_strSDP);
+    size_t iRtpMapPos = 0;
+    size_t iFmtpPos = 0;
+    int i = 0;
+    unsigned short wPortNumForSDP=9;
+	int iMediaID=0;//0/mid
+    char *endptr;
+    
+    if (i_strSDP == NULL || NULL==o_ptSdpMediaInfo) 
+    {
+		WEBRTC_LOGE("GetSdpVideoInfo NULL\r\n");
+		return iRet;
+    }
+    memset(atMatch,0,sizeof(atMatch));
+    if(REG_NOERROR == this->Regex(strVideoPortPatten,(char *)strSDP.c_str(),atMatch))
+    {
+        strFindRes.assign(strSDP,atMatch[1].rm_so,atMatch[1].rm_eo-atMatch[1].rm_so);//0是整行
+        wPortNumForSDP = atoi(strFindRes.c_str());
+		//WEBRTC_LOGD("wPortNumForSDP %s,%d\r\n",strFindRes.c_str(),wPortNumForSDP);
+    }
+    memset(atMatch,0,sizeof(atMatch));
+    if(REG_NOERROR == this->Regex(strMediaIdPatten,(char *)strSDP.c_str(),atMatch))
+    {
+        strFindRes.assign(strSDP,atMatch[1].rm_so,atMatch[1].rm_eo-atMatch[1].rm_so);
+        iMediaID = atoi(strFindRes.c_str());
+		WEBRTC_LOGD("iMediaID %s,%d\r\n",strFindRes.c_str(),iMediaID);
+    }
+    
+    strRtpMapPatten=".*a=rtpmap:([0-9]+) ([A-Za-z0-9]+)/([0-9]+).*";//a=rtpmap:96 VP8/90000
+    strFmtpPatten="a=fmtp:([0-9]+) level-asymmetry-allowed=([0-9]+);packetization-mode=([0-9]+);profile-level-id=([A-Za-z0-9]+).*";//a=fmtp:127 level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=4d001f
+    for(i =0;i<WEBRTC_SDP_MEDIA_INFO_MAX_NUM;i++)
+    {
+        memset(atMatch,0,sizeof(atMatch));
+        strSubSDP.assign(strSDP.substr(iFmtpPos,strSDP.size() - iFmtpPos).c_str());
+        if(REG_NOERROR != this->Regex(strFmtpPatten,(char *)strSubSDP.c_str(),atMatch))
+        {
+            break;
+        }
+        strFindRes.assign(strSubSDP,atMatch[1].rm_so,atMatch[1].rm_eo-atMatch[1].rm_so);
+        o_ptSdpMediaInfo->tVideoInfos[i].bRtpPayloadType= atoi(strFindRes.c_str());
+        strFindRes.assign(strSubSDP,atMatch[2].rm_so,atMatch[2].rm_eo-atMatch[2].rm_so);
+        o_ptSdpMediaInfo->tVideoInfos[i].bLevelAsymmetryAllowed= atoi(strFindRes.c_str());
+        strFindRes.assign(strSubSDP,atMatch[3].rm_so,atMatch[3].rm_eo-atMatch[3].rm_so);
+        o_ptSdpMediaInfo->tVideoInfos[i].bPacketizationMode= atoi(strFindRes.c_str());
+        strFindRes.assign(strSubSDP,atMatch[4].rm_so,atMatch[4].rm_eo-atMatch[4].rm_so);
+        o_ptSdpMediaInfo->tVideoInfos[i].dwProfileLevelId= (unsigned int)strtol(strFindRes.c_str(),&endptr,16);//4d001f
+		//WEBRTC_LOGD("dwProfileLevelId %s,%#x\r\n",strFindRes.c_str(),o_ptSdpMediaInfo->tVideoInfos[i].dwProfileLevelId);
+        iFmtpPos+=atMatch[0].rm_so;
+        memset(atMatch,0,sizeof(atMatch));
+		//WEBRTC_LOGD("strSDP.substr(0,iFmtpPos).c_str() %s,%d\r\n",strSDP.substr(0,iFmtpPos).c_str(),iFmtpPos);
+        strSubSDP.assign(strSDP.substr(0,iFmtpPos).c_str());
+        if(REG_NOERROR != this->Regex(strRtpMapPatten,(char *)strSubSDP.c_str(),atMatch))
+        {
+            break;
+        }
+        strFindRes.assign(strSubSDP,atMatch[2].rm_so,atMatch[2].rm_eo-atMatch[2].rm_so);
+        snprintf(o_ptSdpMediaInfo->tVideoInfos[i].strFormatName,sizeof(o_ptSdpMediaInfo->tVideoInfos[i].strFormatName),"%s",strFindRes.c_str());
+        strFindRes.assign(strSubSDP,atMatch[3].rm_so,atMatch[3].rm_eo-atMatch[3].rm_so);
+        o_ptSdpMediaInfo->tVideoInfos[i].dwTimestampFrequency = atoi(strFindRes.c_str());
+        
+        o_ptSdpMediaInfo->tVideoInfos[i].wPortNumForSDP= wPortNumForSDP;
+        o_ptSdpMediaInfo->tVideoInfos[i].iMediaID= iMediaID;
+        i++;
+        iFmtpPos+=strlen("a=fmtp:");
+    }
+    return iRet;
+}
+
+/*****************************************************************************
+-Fuction        : GetSdpAudioInfo
+-Description    : 
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+int WebRtcAnswer::GetSdpAudioInfo(const char * i_strSDP,T_WebRtcSdpMediaInfo *o_ptSdpMediaInfo)
+{
+    int iRet = -1;
+	regmatch_t atMatch[MAX_MATCH_NUM];
+	const char *strAudioPortPatten=".*m=audio ([0-9]+) .*";
+	const char *strMediaIdPatten=".*a=mid:([0-9]+).*";
+	const char *strRtpMapPatten=NULL;
+	const char *strFmtpPatten=NULL;
+	string strFindRes;
+	string strSubSDP;
+    string strSDP(i_strSDP);
+    size_t iRtpMapPos = 0;
+    size_t iFmtpPos = 0;
+    int i = 0;
+    unsigned short wPortNumForSDP=9;
+	int iMediaID=1;//1/mid
+
+	
+    if (i_strSDP == NULL || NULL==o_ptSdpMediaInfo) 
+    {
+		WEBRTC_LOGE("GetSdpAudioInfo NULL\r\n");
+		return iRet;
+    }
+    memset(atMatch,0,sizeof(atMatch));
+    if(REG_NOERROR == this->Regex(strAudioPortPatten,(char *)strSDP.c_str(),atMatch))
+    {
+        strFindRes.assign(strSDP,atMatch[1].rm_so,atMatch[1].rm_eo-atMatch[1].rm_so);//0是整行
+        wPortNumForSDP = atoi(strFindRes.c_str());
+		//WEBRTC_LOGD("audio wPortNumForSDP %s,%d\r\n",strFindRes.c_str(),wPortNumForSDP);
+    }
+    memset(atMatch,0,sizeof(atMatch));
+    if(REG_NOERROR == this->Regex(strMediaIdPatten,(char *)strSDP.c_str(),atMatch))
+    {
+        strFindRes.assign(strSDP,atMatch[1].rm_so,atMatch[1].rm_eo-atMatch[1].rm_so);
+        iMediaID = atoi(strFindRes.c_str());
+		WEBRTC_LOGD("audio iMediaID %s,%d\r\n",strFindRes.c_str(),iMediaID);
+    }
+    strRtpMapPatten="a=rtpmap:([0-9]+) ([A-Za-z0-9]+)/([0-9]+).*";//加了.*会匹配到最后一个rtpmap
+    for(i =0;i<WEBRTC_SDP_MEDIA_INFO_MAX_NUM;i++)
+    {
+        iRtpMapPos = strSDP.find("a=rtpmap",iRtpMapPos);
+        if(string::npos == iRtpMapPos)
+        {
+            break;
+        }
+        memset(atMatch,0,sizeof(atMatch));
+        strSubSDP.assign(strSDP.substr(iRtpMapPos,strSDP.size() - iRtpMapPos).c_str());
+        if(REG_NOERROR == this->Regex(strRtpMapPatten,(char *)strSubSDP.c_str(),atMatch))
+        {
+            strFindRes.assign(strSubSDP,atMatch[1].rm_so,atMatch[1].rm_eo-atMatch[1].rm_so);
+            o_ptSdpMediaInfo->tAudioInfos[i].bRtpPayloadType= atoi(strFindRes.c_str());
+            strFindRes.assign(strSubSDP,atMatch[2].rm_so,atMatch[2].rm_eo-atMatch[2].rm_so);
+            snprintf(o_ptSdpMediaInfo->tAudioInfos[i].strFormatName,sizeof(o_ptSdpMediaInfo->tAudioInfos[i].strFormatName),"%s",strFindRes.c_str());
+            strFindRes.assign(strSubSDP,atMatch[3].rm_so,atMatch[3].rm_eo-atMatch[3].rm_so);
+            o_ptSdpMediaInfo->tAudioInfos[i].dwTimestampFrequency = atoi(strFindRes.c_str());
+
+            o_ptSdpMediaInfo->tAudioInfos[i].wPortNumForSDP= wPortNumForSDP;
+            o_ptSdpMediaInfo->tAudioInfos[i].iMediaID= iMediaID;
+        }
+		//WEBRTC_LOGD("strFormatName %s,%d\r\n",o_ptSdpMediaInfo->tAudioInfos[i].strFormatName,o_ptSdpMediaInfo->tAudioInfos[i].dwTimestampFrequency);
+        i++;
+        iRtpMapPos+=strlen("a=rtpmap");
+    }
+    return iRet;
+}
+
+/*****************************************************************************
+-Fuction		: Regex
+-Description	: 正则表达式
+.点				匹配除“\r\n”之外的任何单个字符
+*				匹配前面的子表达式任意次。例如，zo*能匹配“z”，也能匹配“zo”以及“zoo”。*等价于o{0,}
+				其中.*的匹配结果不会存储到结果数组里
+(pattern)		匹配模式串pattern并获取这一匹配。所获取的匹配可以从产生的Matches集合得到
+[xyz]			字符集合。匹配所包含的任意一个字符。例如，“[abc]”可以匹配“plain”中的“a”。
++				匹配前面的子表达式一次或多次(大于等于1次）。例如，“zo+”能匹配“zo”以及“zoo”，但不能匹配“z”。+等价于{1,}。
+				//如下例子中不用+，默认是一次，即只能匹配到一个数字6
+				
+[A-Za-z0-9] 	26个大写字母、26个小写字母和0至9数字
+[A-Za-z0-9+/=]	26个大写字母、26个小写字母0至9数字以及+/= 三个字符
+
+
+-Input			: i_strPattern 模式串,i_strBuf待匹配字符串,
+-Output 		: o_ptMatch 存储匹配串位置的数组,用于存储匹配结果在待匹配串中的下标范围
+//数组0单元存放主正则表达式匹配结果的位置,即所有正则组合起来的匹配结果，后边的单元依次存放子正则表达式匹配结果的位置
+-Return 		: 
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2017/11/01	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
+int WebRtcAnswer::Regex(const char *i_strPattern,char *i_strBuf,regmatch_t *o_ptMatch)
+{
+    char acErrBuf[256];
+    int iRet=-1;
+    regex_t tReg;    //定义一个正则实例
+    //const size_t dwMatch = 6;    //定义匹配结果最大允许数       //表示允许几个匹配
+
+
+    //REG_ICASE 匹配字母时忽略大小写。
+    iRet =regcomp(&tReg, i_strPattern, REG_EXTENDED);    //编译正则模式串
+    if(iRet != 0) 
+    {
+        regerror(iRet, &tReg, acErrBuf, sizeof(acErrBuf));
+        WEBRTC_LOGE("Regex Error:\r\n");
+    }
+    else
+    {
+        iRet = regexec(&tReg, i_strBuf, MAX_MATCH_NUM, o_ptMatch, 0); //匹配他
+        if (iRet == REG_NOMATCH)
+        { //如果没匹配上
+            WEBRTC_LOGE("Regex No Match!\r\n");
+        }
+        else if (iRet == REG_NOERROR)
+        { //如果匹配上了
+            /*WEBRTC_LOGD("Match\r\n");
+            int i=0,j=0;
+			for(j=0;j<MAX_MATCH_NUM;j++)
+			{
+				for (i= o_ptMatch[j].rm_so; i < o_ptMatch[j].rm_eo; i++)
+				{ //遍历输出匹配范围的字符串
+					printf("%c", i_strBuf[i]);
+				}
+				printf("\n");
+			}*/
+        }
+        else
+        {
+            WEBRTC_LOGE("Regex Unknow err:\r\n");
+        }
+        regfree(&tReg);  //释放正则表达式
+    }
+    
     return iRet;
 }
 

@@ -32,6 +32,9 @@
 #define  WEBRTC_LOGI(...)     printf(__VA_ARGS__)
 #endif
 
+
+#define WEBRTC_SDP_MEDIA_INFO_MAX_NUM 20
+
 /*offer (主动发起)的一方为 controlling 角色
 answer (被动接受)的一方为 controlled 角色
 full ice agent 是 controlling role，lite ice agent 是 controlled ,srs 仅支持 lite ice*/
@@ -48,14 +51,23 @@ sdp 中有 a=ice-lite 字样srs 服务器采用 lite-ice 模式 */
 
 typedef struct VideoInfo
 {
-    const char *pstrFormatName;
+    char strFormatName[8];
     unsigned int dwTimestampFrequency;
     //9代表视频使用端口9来传输,但在webrtc中现在一般不使用
 	//如果设置为0，代表不传输视频
     unsigned short wPortNumForSDP;//端口,官方demo都是 9
-    unsigned char ucRtpPayloadType;
-    unsigned char res;
-	int iID;//0
+    unsigned char bRtpPayloadType;
+    /*
+    packetization-mode:packetization-mode表示图像数据包分拆发送的方式。
+    0: Single NAL (Network Abstraction Layer)，每帧图像数据全部放在一个NAL单元传送；
+    1: Not Interleaved，每帧图像数据被拆放到多个NAL单元传送，这些NAL单元传送的顺序是按照解码的顺序发送；
+    2: Interleaved，每帧图像数据被拆放到多个NAL单元传送，但是这些NAL单元传送的顺序可以不按照解码的顺序发送
+    实际上，只有I帧可以被拆分发送，P帧和B帧都不能被拆分发送。所以如果packetization-mode=1(一般都用1)，则意味着I帧会被拆分发送。
+    */
+    unsigned char bPacketizationMode;
+    unsigned char bLevelAsymmetryAllowed;//表示是否允许两端编码的Level不一致。注意必须两端的SDP中该值都为1才生效。
+    unsigned char res[3];
+	int iMediaID;//0/mid
 	unsigned int dwProfileLevelId;
 	char * strSPS_Base64;
 	char * strPPS_Base64;
@@ -64,14 +76,14 @@ typedef struct VideoInfo
 
 typedef struct AudioInfo
 {
-    const char *pstrFormatName;
+    char strFormatName[8];
     unsigned int dwTimestampFrequency;
     //9代表视频使用端口9来传输,但在webrtc中现在一般不使用
 	//如果设置为0，代表不传输视频
     unsigned short wPortNumForSDP;//端口,官方demo都是 9
-    unsigned char ucRtpPayloadType;
+    unsigned char bRtpPayloadType;
     unsigned char res;
-	int iID;//1/
+	int iMediaID;//1/mid
 	unsigned int dwSSRC;
 }T_AudioInfo;
 
@@ -80,6 +92,15 @@ typedef struct WebRtcMediaInfo
     T_VideoInfo tVideoInfo;
 	T_AudioInfo tAudioInfo;
 }T_WebRtcMediaInfo;
+
+
+typedef struct WebRtcSdpMediaInfo
+{
+    T_VideoInfo tVideoInfos[WEBRTC_SDP_MEDIA_INFO_MAX_NUM];
+	T_AudioInfo tAudioInfos[WEBRTC_SDP_MEDIA_INFO_MAX_NUM];
+	int iAvMediaDiff;//音视频信息在sdp中前后的偏移位置
+}T_WebRtcSdpMediaInfo;//目前只支持sdp中只包含一路音频和一路视频
+
 
 typedef struct WebRtcCb
 {

@@ -140,15 +140,15 @@ int WebRtcInterface::GenerateLocalSDP(T_WebRtcMediaInfo *i_ptMediaInfo,char *o_s
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int WebRtcInterface::HandleMsg(char * i_strMsg,int i_iNotJsonMsgFlag)
+int WebRtcInterface::HandleMsg(char * i_strMsg,int i_iNotJsonMsgFlag,T_WebRtcSdpMediaInfo *o_ptSdpMediaInfo)
 {
     if(WEBRTC_OFFER_ROLE == m_tWebRtcCfg.eWebRtcRole)
     {
         WebRtcOffer *pWebRtcOffer = (WebRtcOffer *)m_pHandle;
-        return pWebRtcOffer->HandleMsg(i_strMsg,i_iNotJsonMsgFlag);
+        return pWebRtcOffer->HandleMsg(i_strMsg,i_iNotJsonMsgFlag,o_ptSdpMediaInfo);
     }
     WebRtcAnswer *pWebRtcAnswer = (WebRtcAnswer *)m_pHandle;
-    return pWebRtcAnswer->HandleMsg(i_strMsg,i_iNotJsonMsgFlag);
+    return pWebRtcAnswer->HandleMsg(i_strMsg,i_iNotJsonMsgFlag,o_ptSdpMediaInfo);
 }
 
 /*****************************************************************************

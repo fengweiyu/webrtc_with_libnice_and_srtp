@@ -17,7 +17,7 @@
 #include "dtls_only_handshake.h"
 #include "sctp_interface.h"
 #include "webrtc_common.h"
-
+#include <regex.h>
 
 
 /*****************************************************************************
@@ -36,7 +36,7 @@ public:
     int Proc();
     int StopProc();
     int GetStopedFlag();//0 否，1是
-    virtual int HandleMsg(char * i_strMsg,int i_iNotJsonMsgFlag=0)=0;
+    virtual int HandleMsg(char * i_strMsg,int i_iNotJsonMsgFlag=0,T_WebRtcSdpMediaInfo *o_ptSdpMediaInfo=NULL)=0;
     int HandleCandidateMsg(char * i_strCandidateMsg,int i_iNotJsonMsgFlag=0);
     int GetGatheringDoneFlag();//-1还未收集好,0收集成功
     int GetSendReadyFlag();//-1不可发送,0准备好通道可以发送
@@ -90,7 +90,7 @@ class WebRtcOffer : public WebRTC
 public:
 	WebRtcOffer(char * i_strStunAddr,unsigned int i_dwStunPort,E_IceControlRole i_eControlling,int i_iStreamType=2);
 	virtual ~WebRtcOffer();
-    int HandleMsg(char * i_strAnswerMsg,int i_iNotJsonMsgFlag=0);
+    int HandleMsg(char * i_strAnswerMsg,int i_iNotJsonMsgFlag=0,T_WebRtcSdpMediaInfo *o_ptSdpMediaInfo=NULL);
     int GenerateLocalMsg(T_VideoInfo *i_ptVideoInfo,char * o_strOfferMsg,int i_iOfferMaxLen);
     int GenerateLocalSDP(T_WebRtcMediaInfo *i_ptMediaInfo,char *o_strSDP,int i_iSdpMaxLen);
 
@@ -110,14 +110,18 @@ public:
 	WebRtcAnswer(char * i_strStunAddr,unsigned int i_dwStunPort,E_IceControlRole i_eControlling,int i_iStreamType=2);
 	virtual ~WebRtcAnswer();
 	
-    int HandleMsg(char * i_strOfferMsg,int i_iNotJsonMsgFlag=0);
+    int HandleMsg(char * i_strOfferMsg,int i_iNotJsonMsgFlag=0,T_WebRtcSdpMediaInfo *o_ptSdpMediaInfo=NULL);
     int GenerateLocalMsg(T_VideoInfo *i_ptVideoInfo,char * o_strAnswerMsg,int i_iAnswerMaxLen);
 
     int GenerateLocalSDP(T_WebRtcMediaInfo *i_ptMediaInfo,char *o_strSDP,int i_iSdpMaxLen);
 private:
     int GenerateVideoSDP(T_LocalCandidate *ptLocalCandidate,char *strLocalFingerprint,T_VideoInfo *ptVideoInfo,char *o_strSDP,int i_iSdpMaxLen);
     int GenerateAudioSDP(T_LocalCandidate *ptLocalCandidate,char *strLocalFingerprint,T_AudioInfo *ptAudioInfo,char *o_strSDP,int i_iSdpMaxLen);
+    int GetSdpVideoInfo(const char * i_strSDP,T_WebRtcSdpMediaInfo *o_ptSdpMediaInfo);
+    int GetSdpAudioInfo(const char * i_strSDP,T_WebRtcSdpMediaInfo *o_ptSdpMediaInfo);
+    int Regex(const char *i_strPattern,char *i_strBuf,regmatch_t *o_ptMatch);
 
+    
     string *m_pVideoID;//Answer的ID从对方请求的sdp中的获取
     string *m_pAudioID;
     int m_iAvDiff;//判断音视频前后顺序
