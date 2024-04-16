@@ -16,7 +16,6 @@
 #include <iostream>//不加.h,c++新的头文件
 #include "Definition.h"
 #include "MediaHandle.h"
-#include "rtp_adapter.h"
 
 using std::cout;//需要<iostream>
 using std::endl;
@@ -78,9 +77,7 @@ Rtp :: Rtp(char *i_strPath)
     {
         m_pMediaHandle->Init(i_strPath);
     }
-    
-    m_pVideoRtpSession = new RtpSession(RTP_PAYLOAD_VIDEO,0);//i_dwSampleRate 暂时用不上先填0 tMediaInfo.dwVideoSampleRate
-    m_pAudioRtpSession = new RtpSession(RTP_PAYLOAD_G711A,0);
+
 }
 
 /*****************************************************************************
@@ -328,6 +325,11 @@ int Rtp::GetSSRC(unsigned int *o_pdwVideoSSRC,unsigned int *o_pdwAudioSSRC)
     int iRet = -1;
     T_RtpPacketParam tRtpPacketParam;
 
+    if((NULL != o_pdwVideoSSRC&&NULL == m_pVideoRtpSession) ||(NULL != o_pdwAudioSSRC&&NULL == m_pAudioRtpSession))
+    {
+        RTP_LOGE("GetSSRC m_pVideoRtpSession m_pAudioRtpSessionNULL%p,%p,%p,%p,\r\n",o_pdwVideoSSRC,m_pVideoRtpSession,o_pdwAudioSSRC,m_pAudioRtpSession);
+        return iRet;
+    }
     if(NULL != o_pdwVideoSSRC)
     {
         memset(&tRtpPacketParam,0,sizeof(T_RtpPacketParam));
@@ -347,6 +349,102 @@ int Rtp::GetSSRC(unsigned int *o_pdwVideoSSRC,unsigned int *o_pdwAudioSSRC)
         *o_pdwAudioSSRC = tRtpPacketParam.dwSSRC;
     }
 	return iRet;
+}
+
+
+/*****************************************************************************
+-Fuction		: Rtp
+-Description	: Rtp
+-Input			: 
+-Output 		: 
+-Return 		: 
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
+int Rtp :: SetRtpTypeInfo(T_RtpMediaInfo *i_ptRtpMediaInfo)
+{
+    int iRet=FALSE;
+    T_RtpPacketTypeInfos tRtpPacketTypeInfos;
+	E_RtpPacketType ePacketType=RTP_PACKET_TYPE_UNKNOW;
+	
+    if(NULL == i_ptRtpMediaInfo)
+    {
+        RTP_LOGE("i_ptRtpMediaInfo NULL err %p\r\n",i_ptRtpMediaInfo);
+        return iRet;
+    }
+    m_pVideoRtpSession = new RtpSession(i_ptRtpMediaInfo->iVideoPayload,0);//i_dwSampleRate 暂时用不上先填0 tMediaInfo.dwVideoSampleRate
+    m_pAudioRtpSession = new RtpSession(i_ptRtpMediaInfo->iAudioPayload,0);
+
+    
+    memset(&tRtpPacketTypeInfos,0,sizeof(T_RtpPacketTypeInfos));
+    tRtpPacketTypeInfos.atTypeInfos[0].iPayload=i_ptRtpMediaInfo->iVideoPayload;
+    switch(i_ptRtpMediaInfo->iVideoEnc)
+    {
+        case MEDIA_ENCODE_TYPE_H264:
+        {
+            ePacketType = RTP_PACKET_TYPE_H264;
+            break;
+        }
+        case MEDIA_ENCODE_TYPE_H265:
+        {
+            ePacketType = RTP_PACKET_TYPE_H265;
+            break;
+        }
+        default :
+        {
+            RTP_LOGE("iVideoEnc eEncType err %d\r\n",i_ptRtpMediaInfo->iVideoEnc);
+            return iRet;
+        }
+    }
+    tRtpPacketTypeInfos.atTypeInfos[0].ePacketType=ePacketType;
+    ePacketType=RTP_PACKET_TYPE_UNKNOW;
+    tRtpPacketTypeInfos.atTypeInfos[1].iPayload=i_ptRtpMediaInfo->iAudioPayload;
+    switch(i_ptRtpMediaInfo->iAudioEnc)
+    {
+        case MEDIA_ENCODE_TYPE_AAC:
+        {
+            ePacketType = RTP_PACKET_TYPE_AAC;
+            break;
+        }
+        case MEDIA_ENCODE_TYPE_G711A:
+        {
+            ePacketType = RTP_PACKET_TYPE_G711A;
+            break;
+        }
+        case MEDIA_ENCODE_TYPE_G711U:
+        {
+            ePacketType = RTP_PACKET_TYPE_G711U;
+            break;
+        }
+        default :
+        {
+            RTP_LOGE("iAudioEnc eEncType err %d\r\n",i_ptRtpMediaInfo->iAudioEnc);
+            return iRet;
+        }
+    }
+    tRtpPacketTypeInfos.atTypeInfos[1].ePacketType=ePacketType;
+    return m_RtpParse.Init(tRtpPacketTypeInfos);
+}
+
+/*****************************************************************************
+-Fuction		: ~Rtp
+-Description	: ~Rtp
+-Input			: 
+-Output 		: 
+-Return 		: 
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
+int Rtp :: GetFrame(T_MediaFrameInfo *m_ptFrame)
+{
+    if(NULL == m_ptFrame)
+    {
+        RTP_LOGE("GetRtpPackets NULL\r\n");
+        return -1;
+    }
+    return m_pMediaHandle->GetFrame(m_ptFrame);
 }
 
 /*****************************************************************************
@@ -370,16 +468,14 @@ int Rtp :: GetRtpPackets(T_MediaFrameInfo *m_ptFrame,unsigned char **o_ppbPacket
     unsigned char *pbNaluStartPos=NULL;
     int iRtpPacketType = RTP_PACKET_TYPE_H264;
     
-    if(NULL == o_ppbPacketBuf ||NULL == o_aiEveryPacketLen ||NULL == m_pMediaHandle )
+    if(NULL == m_ptFrame ||NULL == o_ppbPacketBuf ||NULL == o_aiEveryPacketLen ||NULL == m_pMediaHandle )
     {
         RTP_LOGE("GetRtpPackets NULL\r\n");
         return iPacketNum;
     }
-    
-    iRet=m_pMediaHandle->GetFrame(m_ptFrame);
-    if(FALSE == iRet)
+    if(NULL == m_pVideoRtpSession ||NULL == m_pAudioRtpSession )
     {
-        RTP_LOGE("GetFrame err \r\n");
+        RTP_LOGE("GetRtpPackets m_pVideoRtpSession m_pAudioRtpSessionNULL\r\n");
         return iPacketNum;
     }
     switch(m_ptFrame->eEncType)
@@ -502,9 +598,9 @@ int Rtp::ParseRtpPacket(unsigned char *i_pbPacketBuf,int i_iPacketLen,T_MediaFra
         RTP_LOGE("m_RtpParse.Parse err%d\r\n",iRet);
         return iRet;
     }
-    switch (tParam.wPayloadType)
+    switch (tParam.ePacketType)
     {
-        case RTP_PAYLOAD_G711A:
+        case RTP_PACKET_TYPE_G711A:
         {
             o_ptFrame->eEncType=MEDIA_ENCODE_TYPE_G711A;
             o_ptFrame->dwTimeStamp=tParam.dwTimestamp;
@@ -512,7 +608,7 @@ int Rtp::ParseRtpPacket(unsigned char *i_pbPacketBuf,int i_iPacketLen,T_MediaFra
             iRet = 0;
             break;
         }
-        case RTP_PAYLOAD_G711U:
+        case RTP_PACKET_TYPE_G711U:
         {
             o_ptFrame->eEncType=MEDIA_ENCODE_TYPE_G711U;
             o_ptFrame->dwTimeStamp=tParam.dwTimestamp;
@@ -522,7 +618,7 @@ int Rtp::ParseRtpPacket(unsigned char *i_pbPacketBuf,int i_iPacketLen,T_MediaFra
         }
         default :
         {
-            RTP_LOGE("ParseRtpPacket.wPayloadType err %d\r\n",tParam.wPayloadType);
+            RTP_LOGE("ParseRtpPacket.ePacketType err %d\r\n",tParam.ePacketType);
             break;
         }
     }

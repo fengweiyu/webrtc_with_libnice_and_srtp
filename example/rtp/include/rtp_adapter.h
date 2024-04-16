@@ -32,4 +32,14 @@
 #define  RTP_LOGI(...)     printf(__VA_ARGS__)
 #endif
 
+typedef struct RtpMediaInfo
+{
+    int iVideoPayload;
+    int iVideoEnc;
+    int iAudioPayload;
+    int iAudioEnc;
+}T_RtpMediaInfo;//
+
+
+
 #endif //RTP_ADAPTER_H

@@ -37,16 +37,26 @@ using std::string;
 
 typedef enum
 {
-	RTP_PACKET_TYPE_H264 = 0,
+	RTP_PACKET_TYPE_UNKNOW = 0,
+	RTP_PACKET_TYPE_H264,
     RTP_PACKET_TYPE_H265,
     RTP_PACKET_TYPE_G711U,
     RTP_PACKET_TYPE_G711A,
     RTP_PACKET_TYPE_G726,
-    RTP_PACKET_TYPE_AAC
-        
+    RTP_PACKET_TYPE_AAC,
+    
+    RTP_PACKET_TYPE_MAX//无实际含义
 }E_RtpPacketType;
 
-
+typedef struct RtpPacketTypeInfo
+{
+    int iPayload;
+	E_RtpPacketType ePacketType;
+}T_RtpPacketTypeInfo;
+typedef struct RtpPacketTypeInfos
+{
+	T_RtpPacketTypeInfo atTypeInfos[RTP_PACKET_TYPE_MAX];
+}T_RtpPacketTypeInfos;
 
 typedef struct RtpPacketParam
 {
@@ -55,6 +65,7 @@ typedef struct RtpPacketParam
     unsigned int    dwTimestampFreq;
     unsigned int    wPayloadType;
     unsigned int    dwTimestamp;//时间戳的单位是1/VIDEO_H264_SAMPLE_RATE(s),频率的倒数
+    E_RtpPacketType  ePacketType;   
 }T_RtpPacketParam;//这些参数在每个rtp会话中都不一样，即唯一的。
 
 

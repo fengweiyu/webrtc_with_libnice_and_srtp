@@ -20,6 +20,7 @@
 #include "RtpCommon.h"
 
 
+
 /*****************************************************************************
 -Class			: RtpParse
 -Description	: 
@@ -32,11 +33,11 @@ class RtpParse
 public:
     RtpParse();
     virtual ~RtpParse();
-
+    int Init(T_RtpPacketTypeInfos i_tPacketTypeInfos);
     virtual int Parse(unsigned char *i_pbPacketBuf,int i_iPacketLen,T_RtpPacketParam *o_ptParam,unsigned char *o_pbParsedData,int *o_iDataLen,int i_iDataMaxLen);
 
 protected:
-	int m_iRtpType;
+	T_RtpPacketTypeInfos m_tPacketTypeInfos;
 private:
     int ParseRtpHeader(unsigned char *i_pbRtpBuf,int i_iBufLen,T_RtpPacketParam *o_ptParam,int *o_iPaddingLen,int *o_iMark);
     int G711Parse(unsigned char *i_pbRtpBodyBuf,int i_iBufLen,unsigned char *o_pbParsedData,int *o_iDataLen,int i_iDataMaxLen);

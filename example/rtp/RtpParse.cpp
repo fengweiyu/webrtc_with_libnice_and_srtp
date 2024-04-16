@@ -41,7 +41,7 @@ using std::endl;
 ******************************************************************************/
 RtpParse :: RtpParse()
 {
-    m_iRtpType = 0;
+    memset(&m_tPacketTypeInfos,0,sizeof(T_RtpPacketTypeInfos));
 
 }
 
@@ -57,6 +57,22 @@ RtpParse :: RtpParse()
 ******************************************************************************/
 RtpParse :: ~RtpParse()
 {
+}
+
+/*****************************************************************************
+-Fuction		: RtpParse
+-Description	: RtpParse
+-Input			: 
+-Output 		: 
+-Return 		: 
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
+int RtpParse :: Init(T_RtpPacketTypeInfos i_tPacketTypeInfos)
+{
+    memcpy(&m_tPacketTypeInfos,&i_tPacketTypeInfos,sizeof(T_RtpPacketTypeInfos));
+    return TRUE;
 }
 
 /*****************************************************************************
@@ -106,6 +122,8 @@ int RtpParse :: Parse(unsigned char *i_pbPacketBuf,int i_iPacketLen,T_RtpPacketP
     T_RtpPacketParam tParam;
     int iMark=0;
     int iPad=0;
+    int i=0;
+    E_RtpPacketType eRtpPacketType = RTP_PACKET_TYPE_UNKNOW;
     
 	if (!i_pbPacketBuf || i_iPacketLen <= 0 || !o_ptParam|| !o_pbParsedData|| !o_iDataLen)
     {
@@ -119,19 +137,32 @@ int RtpParse :: Parse(unsigned char *i_pbPacketBuf,int i_iPacketLen,T_RtpPacketP
         cout<<"i_iRtpPacketType ParseRtpHeader err "<<i_iPacketLen<<endl;
         return iRet;
     }
-    switch (tParam.wPayloadType)
+    for(i=0;i<RTP_PACKET_TYPE_MAX;i++)
     {
-        case RTP_PAYLOAD_G711A:
-        case RTP_PAYLOAD_G711U:
+        if(tParam.wPayloadType == m_tPacketTypeInfos.atTypeInfos[i].iPayload)
+        {
+            eRtpPacketType = m_tPacketTypeInfos.atTypeInfos[i].ePacketType;
+            break;
+        }
+    }
+    tParam.ePacketType=eRtpPacketType;
+    switch (tParam.ePacketType)
+    {
+        case RTP_PACKET_TYPE_G711U:
+        case RTP_PACKET_TYPE_G711A:
         {
             iRet=G711Parse(i_pbPacketBuf+RTP_HEADER_LEN,i_iPacketLen-RTP_HEADER_LEN,o_pbParsedData,o_iDataLen,i_iDataMaxLen);
             break;
         }
         default :
         {
-            printf("tParam.wPayloadType err %d\r\n",tParam.wPayloadType);
+            printf("tParam.ePacketType err %d %d\r\n",tParam.ePacketType,tParam.wPayloadType);
             break;
         }
+    }
+    if(FALSE != iRet)
+    {
+        memcpy(o_ptParam,&tParam,sizeof(T_RtpPacketParam));
     }
     return iRet;
 }

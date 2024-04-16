@@ -36,7 +36,7 @@ public:
     int DeInit(unsigned char **m_ppPackets,int i_iMaxPacketNum);
     int GenerateRtpHeader(T_RtpPacketParam *i_ptParam,T_RtpHeader *o_ptRtpHeader);
     int GenerateRtpHeader(T_RtpPacketParam *i_ptParam,int i_iPaddingLen,int i_iMark,unsigned char *o_bRtpHeader);
-    virtual int Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbFrameBuf,int i_iFrameLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iRtpPacketType=0);
+    virtual int Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbFrameBuf,int i_iFrameLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iRtpPacketType=RTP_PACKET_TYPE_H264);
 
 protected:
 	int m_iRtpType;
@@ -58,7 +58,7 @@ class RtpPacketH264 : public RtpPacket
 public:
     RtpPacketH264();
     virtual ~RtpPacketH264();
-    virtual int Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,int i_iNaluLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iRtpPacketType=0);
+    virtual int Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,int i_iNaluLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iRtpPacketType=RTP_PACKET_TYPE_H264);
 
 protected:
 	int m_iRtpVideoType;
@@ -80,7 +80,7 @@ class H264NALU : public RtpPacketH264
 public:
     H264NALU();
     virtual ~H264NALU();
-    int Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,int i_iNaluLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iRtpPacketType=0);
+    int Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,int i_iNaluLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iRtpPacketType=RTP_PACKET_TYPE_H264);
 
 };
 
@@ -96,7 +96,7 @@ class H264FU_A : public RtpPacketH264
 public:
     H264FU_A();
     virtual ~H264FU_A();
-    int Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,int i_iNaluLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iRtpPacketType=0);
+    int Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,int i_iNaluLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iRtpPacketType=RTP_PACKET_TYPE_H264);
     static const unsigned char FU_A_TYPE;
     static const unsigned char FU_A_HEADER_LEN;
 };
@@ -114,7 +114,7 @@ class RtpPacketH265 : public RtpPacket
 public:
     RtpPacketH265();
     virtual ~RtpPacketH265();
-    virtual int Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,int i_iNaluLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iRtpPacketType=0);
+    virtual int Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,int i_iNaluLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iRtpPacketType=RTP_PACKET_TYPE_H264);
 
 protected:
 	int m_iRtpVideoType;
@@ -136,7 +136,7 @@ class H265NALU : public RtpPacketH265
 public:
     H265NALU();
     virtual ~H265NALU();
-    int Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,int i_iNaluLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iRtpPacketType=0);
+    int Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,int i_iNaluLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iRtpPacketType=RTP_PACKET_TYPE_H264);
 
 };
 
@@ -152,7 +152,7 @@ class H265FU_A : public RtpPacketH265
 public:
     H265FU_A();
     virtual ~H265FU_A();
-    int Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,int i_iNaluLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iRtpPacketType=0);
+    int Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,int i_iNaluLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iRtpPacketType=RTP_PACKET_TYPE_H264);
     static const unsigned char FU_A_TYPE;
     static const unsigned char FU_A_HEADER_LEN;
 };
@@ -170,7 +170,7 @@ class RtpPacketG711 : public RtpPacket
 public:
     RtpPacketG711();
     virtual ~RtpPacketG711();
-    virtual int Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbFrameBuf,int i_iFrameLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iRtpPacketType=0);
+    virtual int Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbFrameBuf,int i_iFrameLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iRtpPacketType=RTP_PACKET_TYPE_H264);
 private:
     RtpPacketG711 *m_pRtpPacketG711;
 };
@@ -188,7 +188,7 @@ class RtpPacketG726 : public RtpPacket
 public:
     RtpPacketG726();
     virtual ~RtpPacketG726();
-    virtual int Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbFrameBuf,int i_iFrameLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iRtpPacketType=0);
+    virtual int Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbFrameBuf,int i_iFrameLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iRtpPacketType=RTP_PACKET_TYPE_H264);
 private:
     RtpPacketG726 *m_pRtpPacketG726;
 };
@@ -206,7 +206,7 @@ class RtpPacketAAC : public RtpPacket
 public:
     RtpPacketAAC();
     virtual ~RtpPacketAAC();
-    virtual int Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbFrameBuf,int i_iFrameLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iRtpPacketType=0);
+    virtual int Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbFrameBuf,int i_iFrameLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iRtpPacketType=RTP_PACKET_TYPE_H264);
 private:
     RtpPacketAAC *m_pRtpPacketAAC;
 };

@@ -224,7 +224,7 @@ int RtpPacket :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbFrameBuf,
     int iRet=FALSE;
 	if (!i_pbFrameBuf || i_iFrameLen <= 0 || !o_ppPackets || !o_aiEveryPacketLen)
     {
-        cout<<"Packet err NULL"<<endl;
+        printf("RtpPacket Packet err NULL i_ptParam %p,%p,%p,%p,%d \r\n",i_ptParam,i_pbFrameBuf,o_ppPackets,o_aiEveryPacketLen,i_iFrameLen);
         return iRet;
     }
     
@@ -368,7 +368,7 @@ int RtpPacketH264 :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluB
     int iNaluLen=i_iNaluLen;
 	if (!i_pbNaluBuf || i_iNaluLen <= 0 || !o_ppPackets || !o_aiEveryPacketLen)
     {
-        cout<<"Packet err NULL"<<endl;
+        cout<<"RtpPacketH264 Packet err NULL"<<endl;
     }
     else
     {
@@ -461,7 +461,7 @@ int H264NALU :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,in
     
 	if (!i_pbNaluBuf || i_iNaluLen <= 0 || !o_ppPackets || !o_aiEveryPacketLen)
     {
-        cout<<"Packet err NULL"<<endl;
+        cout<<"H264NALU Packet err NULL"<<endl;
     }
     else
     {
@@ -547,7 +547,7 @@ int H264FU_A :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,in
     
 	if (!i_pbNaluBuf || i_iNaluLen <= 0 || !o_ppPackets || !o_aiEveryPacketLen)
     {
-        cout<<"Packet err NULL"<<endl;
+        cout<<"H264FU_A Packet err NULL"<<endl;
         return iRet;
     }
 
@@ -672,7 +672,7 @@ int RtpPacketH265 :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluB
     int iNaluLen=i_iNaluLen;
 	if (!i_pbNaluBuf || i_iNaluLen <= 0 || !o_ppPackets || !o_aiEveryPacketLen)
     {
-        cout<<"Packet err NULL"<<endl;
+        cout<<"RtpPacketH265 Packet err NULL"<<endl;
     }
     else
     {
@@ -759,7 +759,7 @@ int H265NALU :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,in
     
     if (!i_pbNaluBuf || i_iNaluLen <= 0 || !o_ppPackets || !o_aiEveryPacketLen)
     {
-        cout<<"Packet err NULL"<<endl;
+        cout<<"H265NALU Packet err NULL"<<endl;
     }
     else
     {
@@ -847,7 +847,7 @@ int H265FU_A :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,in
     
     if (!i_pbNaluBuf || i_iNaluLen <= 0 || !o_ppPackets || !o_aiEveryPacketLen)
     {
-        cout<<"Packet err NULL"<<endl;
+        cout<<"H265FU_A Packet err NULL"<<endl;
         return iRet;
     }
 
@@ -979,7 +979,7 @@ int RtpPacketG711 :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbFrame
     
 	if (!i_pbFrameBuf || i_iFrameLen <= 0 || !o_ppPackets || !o_aiEveryPacketLen)
     {
-        cout<<"Packet err NULL"<<endl;
+        cout<<"RtpPacketG711 Packet err NULL"<<endl;
     }
     else
     {
@@ -1073,7 +1073,7 @@ int RtpPacketG726 :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbFrame
     
     if (!i_pbFrameBuf || i_iFrameLen <= 0 || !o_ppPackets || !o_aiEveryPacketLen)
     {
-        cout<<"Packet err NULL"<<endl;
+        cout<<"RtpPacketG726 Packet err NULL"<<endl;
     }
     else
     {
@@ -1167,7 +1167,7 @@ int RtpPacketAAC :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbFrameB
     
     if (!i_pbFrameBuf || i_iFrameLen <= 0 || !o_ppPackets || !o_aiEveryPacketLen)
     {
-        cout<<"Packet err NULL"<<endl;
+        cout<<"RtpPacketAAC Packet err NULL"<<endl;
         return iRet;
     }
     

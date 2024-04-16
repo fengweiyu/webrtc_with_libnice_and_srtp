@@ -141,6 +141,39 @@ int RtpInterface::GetSSRC(unsigned int *o_pdwVideoSSRC,unsigned int *o_pdwAudioS
 	return ((Rtp *)m_pRtp)->GetSSRC(o_pdwVideoSSRC,o_pdwAudioSSRC);
 }
 
+
+/*****************************************************************************
+-Fuction		: RtpInterface
+-Description	: RtpInterface
+-Input			: 
+-Output 		: 
+-Return 		: 
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
+int RtpInterface :: SetRtpTypeInfo(void * i_ptRtpMediaInfo)
+{
+    T_RtpMediaInfo * ptRtpMediaInfo = (T_RtpMediaInfo *)i_ptRtpMediaInfo;
+    return ((Rtp *)m_pRtp)->SetRtpTypeInfo(ptRtpMediaInfo);
+}
+
+
+/*****************************************************************************
+-Fuction		: RtpInterface
+-Description	: RtpInterface
+-Input			: 
+-Output 		: 
+-Return 		: 
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
+int RtpInterface :: GetFrame(void *m_ptFrame)
+{
+    return ((Rtp *)m_pRtp)->GetFrame((T_MediaFrameInfo *)m_ptFrame);
+}
+
 /*****************************************************************************
 -Fuction		: GetRtpPackets
 -Description	: GetRtpPackets

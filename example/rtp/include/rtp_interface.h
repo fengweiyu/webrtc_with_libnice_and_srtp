@@ -34,6 +34,8 @@ public:
     int GetRtpData(unsigned char **o_ppbPacketBuf,int *o_aiEveryPacketLen,int i_iPacketBufMaxNum);
     int GetSSRC(unsigned int *o_pdwVideoSSRC,unsigned int *o_pdwAudioSSRC);
     
+    int SetRtpTypeInfo(void *i_ptRtpMediaInfo);
+    int GetFrame(void *m_ptFrame);
     int GetRtpPackets(void *m_ptFrame,unsigned char **o_ppbPacketBuf,int *o_aiEveryPacketLen,int i_iPacketBufMaxNum);
     int ParseRtpPacket(unsigned char *i_pbPacketBuf,int i_iPacketLen,void *o_ptFrame);
     int IsRtp(char *buf, int size);
