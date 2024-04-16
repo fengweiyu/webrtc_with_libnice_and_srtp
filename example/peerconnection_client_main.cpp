@@ -207,11 +207,11 @@ static int OfferProc(WebRTC * i_pWebRTC,char * i_strServerIp, int i_iServerPort,
             case WEBRTC_OFFER_SEND_OFFER:
             {
                 memset(&tVideoInfo,0,sizeof(tVideoInfo));
-                tVideoInfo.pstrFormatName=WEBRTC_VIDEO_ENCODE_FORMAT_NAME;
+                snprintf(tVideoInfo.strFormatName,sizeof(tVideoInfo.strFormatName),"%s",WEBRTC_VIDEO_ENCODE_FORMAT_NAME);
                 tVideoInfo.dwTimestampFrequency=WEBRTC_H264_TIMESTAMP_FREQUENCY;  
-                tVideoInfo.ucRtpPayloadType=WEBRTC_RTP_PAYLOAD_H264;
+                tVideoInfo.bRtpPayloadType=WEBRTC_RTP_PAYLOAD_H264;
                 tVideoInfo.wPortNumForSDP=9;
-                tVideoInfo.iID=0;
+                tVideoInfo.iMediaID=0;
                 memset(acOfferMsg,0,sizeof(acOfferMsg));
                 if(i_pWebRTC->GenerateLocalMsg(&tVideoInfo,acOfferMsg,sizeof(acOfferMsg))>=0)
                 {
@@ -229,11 +229,11 @@ static int OfferProc(WebRTC * i_pWebRTC,char * i_strServerIp, int i_iServerPort,
             case WEBRTC_OFFER_HANDLE_ANSWER:
             {
                 memset(&tVideoInfo,0,sizeof(tVideoInfo));
-                tVideoInfo.pstrFormatName=WEBRTC_VIDEO_ENCODE_FORMAT_NAME;
+                snprintf(tVideoInfo.strFormatName,sizeof(tVideoInfo.strFormatName),"%s",WEBRTC_VIDEO_ENCODE_FORMAT_NAME);
                 tVideoInfo.dwTimestampFrequency=WEBRTC_H264_TIMESTAMP_FREQUENCY;  
-                tVideoInfo.ucRtpPayloadType=WEBRTC_RTP_PAYLOAD_H264;
+                tVideoInfo.bRtpPayloadType=WEBRTC_RTP_PAYLOAD_H264;
                 tVideoInfo.wPortNumForSDP=9;
-                tVideoInfo.iID=0;
+                tVideoInfo.iMediaID=0;
                 memset(acOfferMsg,0,sizeof(acOfferMsg));
                 if(i_pWebRTC->GenerateLocalCandidateMsg(&tVideoInfo,acOfferMsg,sizeof(acOfferMsg))>=0)
                 {
@@ -420,9 +420,9 @@ static int AnswerProc(WebRTC * i_pWebRTC,char * i_strServerIp, int i_iServerPort
                     {
                         memset(acAnswerMsg,0,sizeof(acAnswerMsg));
                         memset(&tVideoInfo,0,sizeof(tVideoInfo));
-                        tVideoInfo.pstrFormatName=WEBRTC_VIDEO_ENCODE_FORMAT_NAME;
+                        snprintf(tVideoInfo.strFormatName,sizeof(tVideoInfo.strFormatName),"%s",WEBRTC_VIDEO_ENCODE_FORMAT_NAME);
                         tVideoInfo.dwTimestampFrequency=WEBRTC_H264_TIMESTAMP_FREQUENCY;  
-                        tVideoInfo.ucRtpPayloadType=WEBRTC_RTP_PAYLOAD_H264;
+                        tVideoInfo.bRtpPayloadType=WEBRTC_RTP_PAYLOAD_H264;
                         tVideoInfo.wPortNumForSDP=9;
                         if(i_pWebRTC->GenerateLocalMsg(&tVideoInfo,acAnswerMsg,sizeof(acAnswerMsg))>=0)
                         {
