@@ -53,6 +53,12 @@ MediaHandle::~MediaHandle()
 	if(m_pMediaHandle !=NULL)
 	{
         delete m_pMediaHandle;
+        m_pMediaHandle = NULL;
+	}
+	if(m_pMediaAudioHandle !=NULL)
+	{
+        delete m_pMediaAudioHandle;
+        m_pMediaAudioHandle = NULL;
 	}
     if(NULL != m_pMediaFile)
     {
