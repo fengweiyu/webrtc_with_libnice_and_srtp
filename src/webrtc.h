@@ -46,11 +46,14 @@ public:
     int GenerateLocalCandidateMsg(T_VideoInfo *i_ptVideoInfo,char * o_strCandidateMsg,int i_iCandidateMaxLen);
     virtual int GenerateLocalSDP(T_WebRtcMediaInfo *i_ptMediaInfo,char *o_strSDP,int i_iSdpMaxLen);//webrtc_client使用
     
+    int HandleVideoDtlsStopMsg();
+    Libnice * GetLibniceObj();
     static void HandshakeCb(void * pArg);//放到上层的目的是为了底层模块之间不要相互依赖
     static void HandleRecvDataCb(char * i_acData,int i_iLen,void * pArg,void * pWebRtcArg);//后续可以改为private试试
 	static int SendVideoDataOutCb(char * i_acData,int i_iLen,void * pArg);
 	static int SendAudioDataOutCb(char * i_acData,int i_iLen,void * pArg);
-
+    static int RecvVideoStopPacket(void * pArg);
+    static int RecvAudioStopPacket(void * pArg);
 protected:
     int SendProtectedVideoRtp(char * i_acRtpBuf,int i_iRtpBufLen);
     int SendProtectedAudioRtp(char * i_acRtpBuf,int i_iRtpBufLen);
@@ -76,6 +79,7 @@ protected:
     static const int s_iAvMultiplex;//0 表示音视频复用一个通道(使用视频通道,只建立一个通道),1表示音视频各用一个通道
 
     int m_iLibniceProcStartedFlag;//0 否，1是
+    int m_iLibniceProcStopFlag;//0 否，1是
 };
 
 /*****************************************************************************

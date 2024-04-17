@@ -34,6 +34,7 @@ WebRTC::WebRTC(char * i_strStunAddr,unsigned int i_dwStunPort,E_IceControlRole i
     T_DtlsOnlyHandshakeCb tDtlsOnlyHandshakeCb;
 
     m_iLibniceProcStartedFlag = 0;
+    m_iLibniceProcStopFlag = 0;
     memset(&m_tWebRtcCb,0,sizeof(m_tWebRtcCb));
     m_pWebRtcCbObj = NULL;
 
@@ -42,7 +43,8 @@ WebRTC::WebRTC(char * i_strStunAddr,unsigned int i_dwStunPort,E_IceControlRole i
     m_pVideoDecSrtp = NULL;
     memset(&tDtlsOnlyHandshakeCb,0,sizeof(T_DtlsOnlyHandshakeCb));
     tDtlsOnlyHandshakeCb.SendDataOut=&WebRTC::SendVideoDataOutCb;
-    tDtlsOnlyHandshakeCb.pObj=&m_Libnice;
+    tDtlsOnlyHandshakeCb.RecvStopPacket=&WebRTC::RecvVideoStopPacket;
+    tDtlsOnlyHandshakeCb.pObj=this;
     m_pVideoDtlsOnlyHandshake = new DtlsOnlyHandshake(tDtlsOnlyHandshakeCb);
     m_pVideoSrtp = new Srtp();
     m_pAudioDtlsOnlyHandshake = NULL;
@@ -52,7 +54,8 @@ WebRTC::WebRTC(char * i_strStunAddr,unsigned int i_dwStunPort,E_IceControlRole i
     {
         memset(&tDtlsOnlyHandshakeCb,0,sizeof(T_DtlsOnlyHandshakeCb));
         tDtlsOnlyHandshakeCb.SendDataOut=&WebRTC::SendAudioDataOutCb;
-        tDtlsOnlyHandshakeCb.pObj=&m_Libnice;
+        tDtlsOnlyHandshakeCb.RecvStopPacket=&WebRTC::RecvAudioStopPacket;
+        tDtlsOnlyHandshakeCb.pObj=this;
         m_pAudioDtlsOnlyHandshake = new DtlsOnlyHandshake(tDtlsOnlyHandshakeCb);
         m_pAudioSrtp = new Srtp();
     }
@@ -199,8 +202,13 @@ int WebRTC::Proc()
 ******************************************************************************/
 int WebRTC::StopProc()
 {
-    int iRet = m_Libnice.StopProc();
-    WEBRTC_LOGW("WebRTC::Proc StopProc %d \r\n",iRet);
+    int iRet = -1;
+    if(0 == m_iLibniceProcStopFlag)
+    {
+        iRet = m_Libnice.StopProc();
+        m_iLibniceProcStopFlag = 1;
+    }
+    WEBRTC_LOGW("WebRTC::Proc StopProc StartedFlag%d StopFlag%d,%d\r\n",m_iLibniceProcStartedFlag,m_iLibniceProcStopFlag,iRet);
     return iRet;
 }
 /*****************************************************************************
@@ -771,6 +779,43 @@ void WebRTC::HandleRecvDataCb(char * i_acData,int i_iLen,void * pDtlsArg,void * 
 }
 
 /*****************************************************************************
+-Fuction        : IsDtls
+-Description    : IsDtls
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+int WebRTC::HandleVideoDtlsStopMsg() 
+{
+    int iRet = -1;
+    
+    if(NULL != m_tWebRtcCb.RecvStopMsg && NULL != m_pWebRtcCbObj)
+    {
+        iRet = m_tWebRtcCb.RecvStopMsg(m_pWebRtcCbObj);
+    }
+
+    return iRet;
+}
+
+/*****************************************************************************
+-Fuction        : IsDtls
+-Description    : IsDtls
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+Libnice * WebRTC::GetLibniceObj() 
+{
+    return &m_Libnice;//buf < 64
+}
+
+/*****************************************************************************
 -Fuction        : SendDataOutCb
 -Description    : SendDataOutCb
 -Input          : 
@@ -783,11 +828,11 @@ void WebRTC::HandleRecvDataCb(char * i_acData,int i_iLen,void * pDtlsArg,void * 
 int WebRTC::SendVideoDataOutCb(char * i_acData,int i_iLen,void * pArg)
 {
     int iRet=-1;
-    Libnice *pLibnice=NULL;
+    WebRTC *pWebRTC=NULL;
     if(NULL!=pArg)//防止该静态函数对本对象的依赖,
     {//所以不直接用m_pDtlsOnlyHandshake->Handshake();
-        pLibnice = (Libnice *)pArg;
-        iRet=pLibnice->SendVideoData(i_acData,i_iLen);
+        pWebRTC = (WebRTC *)pArg;
+        iRet=pWebRTC->GetLibniceObj()->SendVideoData(i_acData,i_iLen);
     }
     printf("WebRTC::SendDataOutCb:%d\r\n",iRet);
     return iRet;
@@ -806,13 +851,52 @@ int WebRTC::SendVideoDataOutCb(char * i_acData,int i_iLen,void * pArg)
 int WebRTC::SendAudioDataOutCb(char * i_acData,int i_iLen,void * pArg)
 {
     int iRet=-1;
-    Libnice *pLibnice=NULL;
+    WebRTC *pWebRTC=NULL;
     if(NULL!=pArg)//防止该静态函数对本对象的依赖,
     {//所以不直接用m_pDtlsOnlyHandshake->Handshake();
-        pLibnice = (Libnice *)pArg;
-        iRet=pLibnice->SendAudioData(i_acData,i_iLen);
+        pWebRTC = (WebRTC *)pArg;
+        iRet=pWebRTC->GetLibniceObj()->SendAudioData(i_acData,i_iLen);
     }
     printf("WebRTC::SendAudioDataOutCb:%d\r\n",iRet);
+    return iRet;
+}
+/*****************************************************************************
+-Fuction        : SendDataOutCb
+-Description    : SendDataOutCb
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+int WebRTC::RecvVideoStopPacket(void * pArg)
+{
+    int iRet=-1;
+    WebRTC *pWebRTC=NULL;
+    
+    printf("WebRTC::RecvVideoStopPacket \r\n");
+    if(NULL!=pArg)//防止该静态函数对本对象的依赖,
+    {
+        pWebRTC = (WebRTC *)pArg;
+        iRet = pWebRTC->HandleVideoDtlsStopMsg();
+    }
+    return iRet;
+}
+/*****************************************************************************
+-Fuction        : SendDataOutCb
+-Description    : SendDataOutCb
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+int WebRTC::RecvAudioStopPacket(void * pArg)
+{
+    int iRet=-1;
+    printf("WebRTC::RecvAuidoStopPacket:%d\r\n",iRet);
     return iRet;
 }
 

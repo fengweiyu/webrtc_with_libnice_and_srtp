@@ -37,6 +37,7 @@ typedef enum DtlsRole
 typedef struct DtlsOnlyHandshakeCb
 {
 	int (* SendDataOut)(char * i_acData,int i_iLen,void *pArg);
+	int (* RecvStopPacket)(void * pArg);//Alert
 	void *pObj;
 
 }T_DtlsOnlyHandshakeCb;

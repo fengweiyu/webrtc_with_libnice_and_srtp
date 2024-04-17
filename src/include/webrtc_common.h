@@ -107,6 +107,8 @@ typedef struct WebRtcCb
     int (*RecvVideoData)(char * i_acDataBuf,int i_iDataLen,void *i_pIoHandle);//Annex-B格式裸流带00 00 00 01
     int (*RecvAudioData)(char * i_acDataBuf,int i_iDataLen,void *i_pIoHandle);//aac带7字节头
     int (*RecvRtpData)(char * i_acDataBuf,int i_iDataLen,void *i_pIoHandle);
+    int (*RecvRtcpData)(char * i_acDataBuf,int i_iDataLen,void *i_pIoHandle);
+    int (*RecvStopMsg)(void *i_pIoHandle);
     int (*IsRtp)(char * i_acDataBuf,int i_iDataLen,void *i_pIoHandle);//0 否 ,1 是
     int (*IsRtcp)(char * i_acDataBuf,int i_iDataLen,void *i_pIoHandle);
 }T_WebRtcCb;

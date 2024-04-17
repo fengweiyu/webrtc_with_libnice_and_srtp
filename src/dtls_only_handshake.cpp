@@ -31,8 +31,8 @@ openssl°æ±¾1.1.0
 /* DTLS stuff */
 #define DTLS_CIPHERS	"ALL:NULL:eNULL:aNULL"
 
-
-
+#define DTLS_ALERT_TYPE	21
+#define DTLS_HANDSHAKE_TYPE	22
 
 /*****************************************************************************
 -Fuction        : DtlsOnlyHandshake
@@ -276,7 +276,22 @@ void DtlsOnlyHandshake::Handshake()
 ******************************************************************************/
 void DtlsOnlyHandshake::HandleRecvData(char *buf,int len)
 {       
-    printf("DtlsOnlyHandshake HandleRecvData:%d\n",len);
+    if(!buf || 0==len) 
+    {
+        printf("HandleRecvData NULL\n");
+        return;
+    }
+    printf("DtlsOnlyHandshake HandleRecvData:%d,%d\n",buf[0],len);
+    if(DTLS_ALERT_TYPE==buf[0]) 
+    {
+        printf("HandleRecvData DTLS_ALERT_TYPE\n");
+        if(NULL != m_tDtlsOnlyHandshakeCb.RecvStopPacket && NULL != m_tDtlsOnlyHandshakeCb.pObj) 
+        {
+            m_tDtlsOnlyHandshakeCb.RecvStopPacket(m_tDtlsOnlyHandshakeCb.pObj);
+        }
+        return;
+    }
+    
     if(!m_ptSsl || !m_ptReadBio) 
     {
         printf("No DtlsOnlyHandshake HandleRecvData\n");
