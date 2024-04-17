@@ -77,7 +77,8 @@ Rtp :: Rtp(char *i_strPath)
     {
         m_pMediaHandle->Init(i_strPath);
     }
-
+    m_pVideoRtpSession = NULL;
+    m_pAudioRtpSession = NULL;
 }
 
 /*****************************************************************************
@@ -93,6 +94,8 @@ Rtp :: Rtp(char *i_strPath)
 Rtp :: Rtp()
 {
     m_pMediaHandle = NULL;
+    m_pVideoRtpSession = NULL;
+    m_pAudioRtpSession = NULL;
     m_dwLastTimestamp = 0;
     m_ptMediaFrameParam = NULL;
 }
@@ -112,14 +115,17 @@ Rtp :: ~Rtp()
     if(NULL !=m_pMediaHandle)
     {
         delete m_pMediaHandle;
+        m_pMediaHandle = NULL;
     }
     if(NULL !=m_pVideoRtpSession)
     {
         delete m_pVideoRtpSession;
+        m_pVideoRtpSession = NULL;
     }
     if(NULL !=m_pAudioRtpSession)
     {
         delete m_pAudioRtpSession;
+        m_pAudioRtpSession = NULL;
     }
 }
 
