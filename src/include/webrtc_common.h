@@ -15,13 +15,13 @@
 
 #ifdef MEDIA_SEVER_TYPE_WEBRTC
 #include "XLog.h"
-#define  WEBRTC_LOGW2(val,...)     logi(WEBRTC) << lkv(ClientPort, val) << lformat(WEBRTC,__VA_ARGS__) << lend 
-#define  WEBRTC_LOGE2(val,...)     loge(WEBRTC) << lkv(ClientPort, val) << lformat(WEBRTC,__VA_ARGS__) << lend 
-#define  WEBRTC_LOGD2(val,...)     logd(WEBRTC) << lkv(ClientPort, val) << lformat(WEBRTC,__VA_ARGS__) << lend 
-#define  WEBRTC_LOGW(...)     logi(WEBRTC) << lformat(WEBRTC,__VA_ARGS__) << lend 
-#define  WEBRTC_LOGE(...)     loge(WEBRTC) << lformat(WEBRTC,__VA_ARGS__) << lend
-#define  WEBRTC_LOGD(...)     logd(WEBRTC) << lformat(WEBRTC,__VA_ARGS__) << lend
-#define  WEBRTC_LOGI(...)     logi(WEBRTC) << lformat(WEBRTC,__VA_ARGS__) << lend
+#define  WEBRTC_LOGW2(val,...)     logi(WEBRTC) << lkv(ClientPort, val) << lformat(WEBRTC,__VA_ARGS__) << lend;printf(__VA_ARGS__)
+#define  WEBRTC_LOGE2(val,...)     loge(WEBRTC) << lkv(ClientPort, val) << lformat(WEBRTC,__VA_ARGS__) << lend;printf(__VA_ARGS__)
+#define  WEBRTC_LOGD2(val,...)     logd(WEBRTC) << lkv(ClientPort, val) << lformat(WEBRTC,__VA_ARGS__) << lend;printf(__VA_ARGS__)
+#define  WEBRTC_LOGW(...)     logi(WEBRTC) << lformat(WEBRTC,__VA_ARGS__) << lend;printf(__VA_ARGS__)
+#define  WEBRTC_LOGE(...)     loge(WEBRTC) << lformat(WEBRTC,__VA_ARGS__) << lend;printf(__VA_ARGS__)
+#define  WEBRTC_LOGD(...)     logd(WEBRTC) << lformat(WEBRTC,__VA_ARGS__) << lend;printf(__VA_ARGS__)
+#define  WEBRTC_LOGI(...)     logi(WEBRTC) << lformat(WEBRTC,__VA_ARGS__) << lend;printf(__VA_ARGS__)
 #else
 #define  WEBRTC_LOGW2(val,fmt,...)      printf("<%d>:"fmt,val,##__VA_ARGS__)
 #define  WEBRTC_LOGE2(val,fmt,...)      printf("<%d>:"fmt,val,##__VA_ARGS__)
