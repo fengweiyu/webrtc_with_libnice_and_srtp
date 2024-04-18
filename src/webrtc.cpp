@@ -309,6 +309,13 @@ int WebRTC::HandleCandidateMsg(char * i_strCandidateMsg,int i_iNotJsonMsgFlag)
 int WebRTC::SendProtectedRtp(char * i_acRtpBuf,int i_iRtpBufLen,int i_iStreamType)
 {
     int iRet = -1;
+
+    if(0 != m_iLibniceProcStopFlag)
+    {
+        WEBRTC_LOGE("SendProtectedRtp ProcStop err %d\r\n",m_iLibniceProcStopFlag);
+        return iRet;
+    }
+
     if(s_iAvMultiplex > 0)
     {
         if(1 == i_iStreamType)
