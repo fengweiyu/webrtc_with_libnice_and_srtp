@@ -176,7 +176,7 @@ int Libnice::LibniceProc()
     //nice_agent_add_local_address(m_ptAgent,&tBaseAddr);//目前收集地址很快(1s内)，但是后面还有建立链接和密钥协商耗时(总体1s内)
     
     // 设置本地端口范围，一般不做限制
-    //nice_agent_set_port_range(m_ptAgent, m_tVideoStream.iID,NICE_COMPONENT_TYPE_RTP, 9018, 9900);//设置了无作用
+    nice_agent_set_port_range(m_ptAgent, m_tVideoStream.iID,NICE_COMPONENT_TYPE_RTP, 10000, 65536);//设置了10000以上防止防火墙阻止
 
 	// Start gathering local candidates
 	if (!nice_agent_gather_candidates(m_ptAgent, m_tVideoStream.iID))
@@ -765,7 +765,7 @@ void Libnice::CandidateGatheringDone(NiceAgent *i_ptAgent, guint i_dwStreamID,gp
     
 	if (!nice_agent_get_local_credentials(i_ptAgent, i_dwStreamID,&strLocalUfrag, &strLocalPassword))
 		goto end;
-	cands = nice_agent_get_local_candidates(i_ptAgent, i_dwStreamID, 1);
+	cands = nice_agent_get_local_candidates(i_ptAgent, i_dwStreamID, 1);//NICE_COMPONENT_TYPE_RTP
 	if (cands == NULL)
 		goto end;
 	memset(pLocalCandidate,0,sizeof(T_LocalCandidate));	
