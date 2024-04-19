@@ -1630,7 +1630,8 @@ int WebRtcAnswer::GenerateLocalSDP(T_WebRtcMediaInfo *i_ptMediaInfo,char *o_strS
         }
     }
     //HandleMsg中注释,两种先后顺序出图时间都一样
-    m_Libnice.SetRemoteCandidateAndSDP(NULL);//生成sdp后再设置，防止生成sdp耗时久，导致设置后等待久
+    if(m_Libnice.SetRemoteCandidateAndSDP(NULL)<0)//生成sdp后再设置，防止生成sdp耗时久，导致设置后等待久
+        return -1;
 	return iRet;
 }
 
@@ -1903,7 +1904,7 @@ int WebRtcAnswer::GetSdpVideoInfo(const char * i_strSDP,T_WebRtcSdpMediaInfo *o_
         
         o_ptSdpMediaInfo->tVideoInfos[i].wPortNumForSDP= wPortNumForSDP;
         o_ptSdpMediaInfo->tVideoInfos[i].iMediaID= iMediaID;
-        i++;
+
         iFmtpPos+=strlen("a=fmtp:");
     }
     return iRet;
@@ -1979,7 +1980,7 @@ int WebRtcAnswer::GetSdpAudioInfo(const char * i_strSDP,T_WebRtcSdpMediaInfo *o_
             o_ptSdpMediaInfo->tAudioInfos[i].iMediaID= iMediaID;
         }
 		//WEBRTC_LOGD("strFormatName %s,%d\r\n",o_ptSdpMediaInfo->tAudioInfos[i].strFormatName,o_ptSdpMediaInfo->tAudioInfos[i].dwTimestampFrequency);
-        i++;
+
         iRtpMapPos+=strlen("a=rtpmap");
     }
     return iRet;
