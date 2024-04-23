@@ -479,9 +479,9 @@ int Rtp :: GetRtpPackets(T_MediaFrameInfo *m_ptFrame,unsigned char **o_ppbPacket
         RTP_LOGE("GetRtpPackets NULL\r\n");
         return iPacketNum;
     }
-    if(NULL == m_pVideoRtpSession ||NULL == m_pAudioRtpSession )
+    if(NULL == m_pVideoRtpSession ||NULL == m_pAudioRtpSession)
     {
-        RTP_LOGE("GetRtpPackets m_pVideoRtpSession m_pAudioRtpSessionNULL\r\n");
+        RTP_LOGE("GetRtpPackets m_pVideoRtpSession m_pAudioRtpSession NULL %p,%p\r\n"m_pVideoRtpSession,m_pAudioRtpSession);
         return iPacketNum;
     }
     switch(m_ptFrame->eEncType)
