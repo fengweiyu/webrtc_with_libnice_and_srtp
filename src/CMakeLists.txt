@@ -10,6 +10,7 @@ project (WebRTC)
  
 #SET(CMAKE_C_FLAGS "-g")
 
+#add_definitions(-DMEDIA_SEVER_TYPE_WEBRTC)
 
 SET(src_list
     dtls_only_handshake.cpp

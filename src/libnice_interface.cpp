@@ -20,6 +20,14 @@
 #include <string.h>
 #include "debug.h"
 
+
+
+#define LIBNICE_MIN_PORT_NUM 10000
+#define LIBNICE_MAX_PORT_NUM 65536
+
+
+
+
 /*Host (Host Candidate)，该地址是一个真实的主机，参数中的地址和端口对应一个真实的主机地址，
 该地址来源于本地的物理网卡或逻辑网卡上的地址，
 对于具有公网地址或者同一内网的端可以用；
@@ -176,7 +184,7 @@ int Libnice::LibniceProc()
     //nice_agent_add_local_address(m_ptAgent,&tBaseAddr);//目前收集地址很快(1s内)，但是后面还有建立链接和密钥协商耗时(总体1s内)
     
     // 设置本地端口范围，一般不做限制
-    nice_agent_set_port_range(m_ptAgent, m_tVideoStream.iID,NICE_COMPONENT_TYPE_RTP, 10000, 65536);//设置了10000以上防止防火墙阻止
+    nice_agent_set_port_range(m_ptAgent, m_tVideoStream.iID,NICE_COMPONENT_TYPE_RTP,LIBNICE_MIN_PORT_NUM,LIBNICE_MAX_PORT_NUM);//设置了10000以上防止防火墙阻止
 
 	// Start gathering local candidates
 	if (!nice_agent_gather_candidates(m_ptAgent, m_tVideoStream.iID))
