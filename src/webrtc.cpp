@@ -346,15 +346,20 @@ int WebRTC::HandleRecvSrtp(char * i_acSrtpBuf,int i_iSrtpBufLen,DtlsOnlyHandshak
     int iRet = -1;
     Srtp * pSrtp=NULL;
     T_PolicyInfo tPolicyInfo;
-
+    unsigned char bPayload=0;
+    
     if(NULL != m_tWebRtcCb.IsRtp && NULL != m_pWebRtcCbObj)
     {
         iRet = m_tWebRtcCb.IsRtp(i_acSrtpBuf,i_iSrtpBufLen,m_pWebRtcCbObj);
     }
     if(1 != iRet)
     {
-        WEBRTC_LOGE("pSrtp->IsRtp err %#x,%d\r\n",(unsigned char)(i_acSrtpBuf[1]&0x7f),i_iSrtpBufLen);
-        return iRet;
+        bPayload = (unsigned char)(i_acSrtpBuf[1]&0x7f);
+        if(!IsSrtcp(i_acSrtpBuf))
+        {
+            WEBRTC_LOGD("pSrtp->IsRtcp   %#x,%d\r\n",bPayload,i_iSrtpBufLen);   
+            return iRet;
+        }
     }
     
     if(m_pVideoDtlsOnlyHandshake==pDtlsOnlyHandshake)//
@@ -389,14 +394,21 @@ int WebRTC::HandleRecvSrtp(char * i_acSrtpBuf,int i_iSrtpBufLen,DtlsOnlyHandshak
         }
         pSrtp = m_pAudioDecSrtp;
     }
-    
-    if(NULL!=pSrtp)
+    if(NULL== pSrtp)
     {
-        iRet = pSrtp->UnProtectRtp(i_acSrtpBuf,&i_iSrtpBufLen);
+        WEBRTC_LOGE("pSrtp NULL err %d\r\n",iRet);
+        return -1;
     }
+    if(IsSrtcp(i_acSrtpBuf))
+    {//srtcp
+        iRet = pSrtp->UnProtectRtcp(i_acSrtpBuf,&i_iSrtpBufLen);
+        WEBRTC_LOGD("pSrtp->UnProtectRtcp %d,bPayload %d,Len %d,pt %d\r\n",iRet,bPayload,i_iSrtpBufLen,(unsigned char)i_acSrtpBuf[1]);
+        return iRet;
+    }
+    iRet = pSrtp->UnProtectRtp(i_acSrtpBuf,&i_iSrtpBufLen);
     if(0 != iRet)
     {
-        WEBRTC_LOGE("pSrtp->UnProtectRtp err %d",iRet);
+        WEBRTC_LOGE("pSrtp->UnProtectRtp err %d\r\n",iRet);
         return iRet;
     }
     
@@ -920,6 +932,23 @@ int WebRTC::RecvAudioStopPacket(void * pArg)
 bool WebRTC::IsDtls(char *buf) 
 {
     return ((*buf >= 20) && (*buf <= 64));//buf < 64
+}
+
+/*****************************************************************************
+-Fuction        : IsDtls
+-Description    : IsDtls
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+bool WebRTC::IsSrtcp(char *buf) 
+{
+    unsigned char bPayload=0;
+    bPayload = (unsigned char)(buf[1]&0x7f);
+    return (bPayload >= 64|| bPayload < 96);
 }
 
 
@@ -1667,6 +1696,8 @@ int WebRtcAnswer::GenerateVideoSDP(T_LocalCandidate *ptLocalCandidate,char *strL
             //"a=setup:passive\r\n"
             //"a=connection:new\r\n"
             "a=rtpmap:%d %s/%d\r\n"
+            "a=rtcp-fb:%d nack\r\n"
+            "a=rtcp-fb:%d nack pli\r\n"
             "a=msid:ywf-mslabel ywf-label-%d\r\n"
             "a=ssrc:%d msid:ywf-mslabel ywf-label-%d\r\n"//与rtp中的SSRC 一致
             "a=setup:passive\r\n");//a=setup:actpass 浏览器会报错,active表示客户端,passive表示服务端actpass既是客户端又是服务端,由对方决定
@@ -1689,6 +1720,8 @@ int WebRtcAnswer::GenerateVideoSDP(T_LocalCandidate *ptLocalCandidate,char *strL
             //"a=setup:passive\r\n"
             //"a=connection:new\r\n"
             "a=rtpmap:%d %s/%d\r\n"
+            "a=rtcp-fb:%d nack\r\n"
+            "a=rtcp-fb:%d nack pli\r\n"
             "a=fmtp:%d level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=%06X;sprop-parameter-sets=%s,%s\r\n"
             "a=msid:ywf-mslabel ywf-label-%d\r\n"
             "a=ssrc:%d msid:ywf-mslabel ywf-label-%d\r\n"//与rtp中的SSRC 一致
@@ -1738,6 +1771,7 @@ int WebRtcAnswer::GenerateVideoSDP(T_LocalCandidate *ptLocalCandidate,char *strL
             ptLocalCandidate->strPassword,
             strLocalFingerprint,
             ptVideoInfo->bRtpPayloadType,ptVideoInfo->strFormatName,ptVideoInfo->dwTimestampFrequency,
+            ptVideoInfo->bRtpPayloadType,ptVideoInfo->bRtpPayloadType,
             ptVideoInfo->iMediaID,ptVideoInfo->dwSSRC,ptVideoInfo->iMediaID);
     }
     else
@@ -1750,6 +1784,7 @@ int WebRtcAnswer::GenerateVideoSDP(T_LocalCandidate *ptLocalCandidate,char *strL
             ptLocalCandidate->strPassword,
             strLocalFingerprint,
             ptVideoInfo->bRtpPayloadType,ptVideoInfo->strFormatName,ptVideoInfo->dwTimestampFrequency,
+            ptVideoInfo->bRtpPayloadType,ptVideoInfo->bRtpPayloadType,
             ptVideoInfo->bRtpPayloadType,ptVideoInfo->dwProfileLevelId,ptVideoInfo->strSPS_Base64,ptVideoInfo->strPPS_Base64,
             ptVideoInfo->iMediaID,ptVideoInfo->dwSSRC,ptVideoInfo->iMediaID);
             /*tCreateTime.tv_sec, strStreamType,tCreateTime.tv_sec, tCreateTime.tv_sec, tCreateTime.tv_sec,

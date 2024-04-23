@@ -143,6 +143,28 @@ int Srtp::UnProtectRtp(char * m_acSrtpData,int * m_piDataLen)
     return iRet;
 }
 
+/*****************************************************************************
+-Fuction        : UnProtectRtp
+-Description    : srtp_err_status_t srtp_unprotect(srtp_t ctx, void *srtp_hdr, int *len_ptr);
+-Input          : 
+-Output         : 
+-Return         : srtp_err_status_ok
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+int Srtp::UnProtectRtcp(char * m_acSrtpData,int * m_piDataLen)
+{
+    int iRet = -1;
+	if(m_acSrtpData == NULL ||m_piDataLen == NULL)
+	{
+		printf("UnProtectRtp null\r\n");
+		return iRet;
+	}
+	iRet = srtp_unprotect_rtcp(m_tSrtp, m_acSrtpData, m_piDataLen);
+    return iRet;
+}
+
 
 /*****************************************************************************
 -Fuction        : SrtpShutdown

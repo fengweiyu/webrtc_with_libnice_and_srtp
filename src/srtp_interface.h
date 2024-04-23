@@ -44,6 +44,7 @@ public:
     int Create(char *i_acKey,int i_iKeyLen,E_SrtpSsrcType i_eSrtpSsrcType);
     int ProtectRtp(char * i_acRtpData,int * o_piProtectDataLen,int i_iRtpDataLen);
     int UnProtectRtp(char * m_acSrtpData,int * m_piDataLen);
+    int UnProtectRtcp(char * m_acSrtpData,int * m_piDataLen);
     int Shutdown();
 
 

@@ -58,6 +58,7 @@ protected:
     int SendProtectedVideoRtp(char * i_acRtpBuf,int i_iRtpBufLen);
     int SendProtectedAudioRtp(char * i_acRtpBuf,int i_iRtpBufLen);
     static bool IsDtls(char *buf);
+    bool IsSrtcp(char *buf);
     
     Libnice m_Libnice;
 	Srtp *m_pVideoSrtp;
