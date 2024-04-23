@@ -23,6 +23,8 @@
     5.查看WebRTC运行状态
         直接在地址栏输入：chrome://webrtc-internals/
     6.参考 https://www.cnblogs.com/yuweifeng/p/17578695.html
+
+设置端口范围需要修改代码中宏定义LIBNICE_MIN_PORT_NUM 和 LIBNICE_MAX_PORT_NUM
 ******************************************************************************
 
 1.compile
