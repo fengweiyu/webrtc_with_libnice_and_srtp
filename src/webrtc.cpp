@@ -354,7 +354,7 @@ int WebRTC::HandleRecvSrtp(char * i_acSrtpBuf,int i_iSrtpBufLen,DtlsOnlyHandshak
     }
     if(1 != iRet)
     {
-        bPayload = (unsigned char)(i_acSrtpBuf[1]&0x7f);
+        bPayload = (unsigned char)((unsigned char)i_acSrtpBuf[1]&0x7f);
         if(!IsSrtcp(i_acSrtpBuf))
         {
             WEBRTC_LOGD("pSrtp->IsRtcp   %#x,%d\r\n",bPayload,i_iSrtpBufLen);   
@@ -401,6 +401,7 @@ int WebRTC::HandleRecvSrtp(char * i_acSrtpBuf,int i_iSrtpBufLen,DtlsOnlyHandshak
     }
     if(IsSrtcp(i_acSrtpBuf))
     {//srtcp
+        //WEBRTC_LOGD("UnProtectRtcp->UnProtectRtcp %d,bPayload %d,Len %d,pt %d\r\n",iRet,bPayload,i_iSrtpBufLen,(unsigned char)i_acSrtpBuf[1]);
         iRet = pSrtp->UnProtectRtcp(i_acSrtpBuf,&i_iSrtpBufLen);
         WEBRTC_LOGD("pSrtp->UnProtectRtcp %d,bPayload %d,Len %d,pt %d\r\n",iRet,bPayload,i_iSrtpBufLen,(unsigned char)i_acSrtpBuf[1]);
         return iRet;
@@ -947,8 +948,8 @@ bool WebRTC::IsDtls(char *buf)
 bool WebRTC::IsSrtcp(char *buf) 
 {
     unsigned char bPayload=0;
-    bPayload = (unsigned char)(buf[1]&0x7f);
-    return (bPayload >= 64|| bPayload < 96);
+    bPayload = (unsigned char)((unsigned char)buf[1]&0x7f);
+    return (bPayload >= 64 && bPayload < 96);
 }
 
 
