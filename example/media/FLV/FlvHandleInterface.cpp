@@ -145,7 +145,7 @@ int FlvHandleInterface::GetFrame(T_MediaFrameInfo *m_ptFrame)
 	
 	pcFrameData = m_ptFrame->pbFrameBuf;
 	iRemainDataLen = m_ptFrame->iFrameBufLen;
-	while(iRemainDataLen>0&&iRet>0&&0==m_ptFrame->iFrameLen);
+	//while(iRemainDataLen>0&&iRet>0&&0==m_ptFrame->iFrameLen);
     m_ptFrame->dwNaluCount = 0;
     m_ptFrame->iFrameLen = 0;
     do
@@ -154,7 +154,7 @@ int FlvHandleInterface::GetFrame(T_MediaFrameInfo *m_ptFrame)
         if(iRet <= 0)
         {
             MH_LOGE("m_pFlvHandle->GetFrameData err %d %d\r\n",iProcessedLen,iRet);
-            return iRet;
+            return -1;
         }
         iProcessedLen+=iRet;
         iRemainDataLen-=iRet;
