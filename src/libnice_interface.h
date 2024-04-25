@@ -23,7 +23,7 @@
 
 using std::string;
 
-#define MAX_CANDIDATE_NUM 20
+#define MAX_CANDIDATE_NUM 32
 
 
 
