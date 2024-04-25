@@ -12,6 +12,8 @@
 #ifndef VIDEO_HANDLE_H
 #define VIDEO_HANDLE_H
 
+#if 0
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string>
@@ -108,6 +110,6 @@ private:
 
 
 
-
+#endif
 
 #endif

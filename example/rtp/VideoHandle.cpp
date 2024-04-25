@@ -9,6 +9,8 @@
 * Last Modified 	: 	
 * History			: 	
 ******************************************************************************/
+#if 0
+
 #include "VideoHandle.h"
 #include <string.h>
 #include <iostream>
@@ -547,3 +549,4 @@ int H264Handle::RemoveH264EmulationBytes(unsigned char *o_pbNaluBuf,int i_iMaxNa
     return iNaluLen;
 }
 
+#endif
