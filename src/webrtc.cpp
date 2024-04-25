@@ -77,38 +77,7 @@ WebRTC::WebRTC(char * i_strStunAddr,unsigned int i_dwStunPort,E_IceControlRole i
     m_tSctpCb.RecvFromOut = NULL;
     m_pSctp = new Sctp(&m_tSctpCb);
 
-    int iRet = 0;
-    iRet = m_pVideoDtlsOnlyHandshake->Init();//这里耗时300ms，可以放Proc()里
-    if(iRet < 0)
-    {
-        WEBRTC_LOGE("m_pDtlsOnlyHandshake->Init err%d",iRet);
-    }
-    if(ICE_CONTROLLED_ROLE == i_eControlling)//后续可以抽象出一个角色放webrtc.h
-        iRet = m_pVideoDtlsOnlyHandshake->Create(DTLS_ROLE_SERVER);//必须是DTLS_ROLE_SERVER，DTLS_ROLE_CLIENT实测失败
-    else
-        iRet = m_pVideoDtlsOnlyHandshake->Create(DTLS_ROLE_SERVER);//offer端，使用sever
-    if(iRet < 0)//可以放Proc()里
-    {
-        WEBRTC_LOGE("m_pVideoDtlsOnlyHandshake->Create err i_eControlling %d iRet %d",i_eControlling,iRet);
-    }
-
-
-    if(NULL != m_pAudioDtlsOnlyHandshake)
-    {
-        iRet = m_pAudioDtlsOnlyHandshake->Init();//可以放Proc()里
-        if(iRet < 0)
-        {
-            WEBRTC_LOGE("m_pDtlsOnlyHandshake->Init err%d",iRet);
-        }
-        if(ICE_CONTROLLED_ROLE == i_eControlling)//后续可以抽象出一个角色放webrtc.h
-            iRet = m_pAudioDtlsOnlyHandshake->Create(DTLS_ROLE_SERVER);//必须是DTLS_ROLE_SERVER，DTLS_ROLE_CLIENT实测失败
-        else
-            iRet = m_pAudioDtlsOnlyHandshake->Create(DTLS_ROLE_SERVER);//offer端，使用sever
-        if(iRet < 0)//可以放Proc()里
-        {
-            WEBRTC_LOGE("m_pAudioDtlsOnlyHandshake->Create err i_eControlling %d iRet %d",i_eControlling,iRet);
-        }
-    }
+    m_eControlling = i_eControlling;//DtlsInit
 }
 /*****************************************************************************
 -Fuction        : ~WebRTC
@@ -172,6 +141,58 @@ int WebRTC::SetCallback(T_WebRtcCb *i_ptWebRtcCb,void *pObj)
     m_pWebRtcCbObj = pObj;
     return 0;
 }
+/*****************************************************************************
+-Fuction        : DtlsInit
+-Description    : DtlsInit
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+int WebRTC::DtlsInit()
+{
+    int iRet = 0;
+    
+    iRet = m_pVideoDtlsOnlyHandshake->Init();//这里耗时300ms，可以放Proc()里
+    if(iRet < 0)
+    {
+        WEBRTC_LOGE("m_pDtlsOnlyHandshake->Init err%d",iRet);
+        return iRet;//
+    }
+    if(ICE_CONTROLLED_ROLE == m_eControlling)//后续可以抽象出一个角色放webrtc.h
+        iRet = m_pVideoDtlsOnlyHandshake->Create(DTLS_ROLE_SERVER);//必须是DTLS_ROLE_SERVER，DTLS_ROLE_CLIENT实测失败
+    else
+        iRet = m_pVideoDtlsOnlyHandshake->Create(DTLS_ROLE_SERVER);//offer端，使用sever
+    if(iRet < 0)//可以放Proc()里
+    {
+        WEBRTC_LOGE("m_pVideoDtlsOnlyHandshake->Create err i_eControlling %d iRet %d",m_eControlling,iRet);
+        return iRet;//
+    }
+
+
+    if(NULL != m_pAudioDtlsOnlyHandshake)
+    {
+        iRet = m_pAudioDtlsOnlyHandshake->Init();//可以放Proc()里
+        if(iRet < 0)
+        {
+            WEBRTC_LOGE("m_pAudioDtlsOnlyHandshake->Init err%d",iRet);
+            return iRet;//
+        }
+        if(ICE_CONTROLLED_ROLE == m_eControlling)//后续可以抽象出一个角色放webrtc.h
+            iRet = m_pAudioDtlsOnlyHandshake->Create(DTLS_ROLE_SERVER);//必须是DTLS_ROLE_SERVER，DTLS_ROLE_CLIENT实测失败
+        else
+            iRet = m_pAudioDtlsOnlyHandshake->Create(DTLS_ROLE_SERVER);//offer端，使用sever
+        if(iRet < 0)//可以放Proc()里
+        {
+            WEBRTC_LOGE("m_pAudioDtlsOnlyHandshake->Create err i_eControlling %d iRet %d",m_eControlling,iRet);
+            return iRet;//
+        }
+    }
+    return iRet;//
+}
+
 /*****************************************************************************
 -Fuction        : Proc
 -Description    : Proc
@@ -539,11 +560,11 @@ int WebRTC::GetGatheringDoneFlag()
 /*****************************************************************************
 -Fuction        : GetSendReadyFlag
 -Description    : 
-从开始运行到通道准备好，总耗时约1s
+从开始运行到通道准备好，总耗时约600-700ms(1s)
 1.dtls生成本地秘钥耗时300ms，
-2.收集地址耗时300ms,
+2.收集地址耗时300ms,(第1和第2已经新增了DtlsInit接口，可以并行处理)
 3.sdp发送给对方到(开始建立链接到)connected状态，耗时200-270ms，(sdp发送到对方设置好并回应耗时70ms)
-4.等待建立链接后的第一个数据包耗时100ms
+4.等待建立链接后的第一个数据包耗时100ms(可以通过缓存前一个包来优化但是麻烦)
 -Input          : 
 -Output         : 
 -Return         : -1不可发送,0准备好通道可以发送

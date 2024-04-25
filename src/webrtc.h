@@ -33,6 +33,7 @@ public:
 	WebRTC(char * i_strStunAddr,unsigned int i_dwStunPort,E_IceControlRole i_eControlling,int i_iStreamType=2);//:m_Libnice(i_strStunAddr,i_dwStunPort,i_iControlling),m_Srtp()
 	virtual ~WebRTC();
     int SetCallback(T_WebRtcCb *i_ptWebRtcCb,void *pObj);
+    int DtlsInit();
     int Proc();
     int StopProc();
     int GetStopedFlag();//0 否，1是
@@ -72,6 +73,7 @@ protected:
     Sctp * m_pSctp;//应用数据和视频数据共用一个通道传输
     
     //T_DtlsOnlyHandshakeCb m_tDtlsOnlyHandshakeCb;
+    E_IceControlRole m_eControlling;
     T_WebRtcCb m_tWebRtcCb;
     void *m_pWebRtcCbObj;
     T_LibniceCb m_tLibniceCb;

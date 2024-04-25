@@ -45,6 +45,7 @@ public:
 	virtual ~WebRtcInterface();
     int Proc();
     int StopProc();
+    int DtlsInit();
     int GetStopedFlag();//0 ∑Ò£¨1 «
     int GenerateLocalSDP(T_WebRtcMediaInfo *i_ptMediaInfo,char *o_strSDP,int i_iSdpMaxLen);//webrtc_client π”√
     int HandleMsg(char * i_strMsg,int i_iNotJsonMsgFlag=0,T_WebRtcSdpMediaInfo *o_ptSdpMediaInfo=NULL);
