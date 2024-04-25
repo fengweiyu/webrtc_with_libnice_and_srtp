@@ -87,6 +87,11 @@ DtlsOnlyHandshake::~DtlsOnlyHandshake()
         SSL_free(m_ptSsl);
         m_ptSsl = NULL;
     }
+    if(m_ptSslCtx != NULL) 
+    {
+        SSL_CTX_free(m_ptSslCtx);
+        m_ptSslCtx = NULL;
+    }
     /* BIOs are destroyed by SSL_free */
     m_ptReadBio = NULL;
     m_ptWriteBio = NULL;
@@ -177,6 +182,11 @@ int DtlsOnlyHandshake::Create(E_DtlsRole i_eDtlsRole)
 {
     int iRet = -1;
     
+    if(!m_ptSslCtx) 
+    {
+        printf("Create err DTLS context NULL\n");
+        return -1;
+    }
     m_ptSsl = SSL_new(m_ptSslCtx);
     if(!m_ptSsl) 
     {

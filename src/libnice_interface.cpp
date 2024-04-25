@@ -855,9 +855,9 @@ void Libnice::ComponentStateChanged(NiceAgent *agent, guint _stream_id,guint com
 	{//协商成功
         if (NULL != pLibnice)
         {
-            //放在前面也能发出握手包，结果也一样
-            pLibnice->SetSendReadyFlag(_stream_id,1);
-            if (NULL != pLibnice->m_tLibniceCb.Handshake)
+            //必须放到这里并开始dtls握手，
+            pLibnice->SetSendReadyFlag(_stream_id,1);//否则收到数据就开始dtls的报文处理，则dtls的报文也发送不出去，
+            if (NULL != pLibnice->m_tLibniceCb.Handshake)//还是要等NICE_COMPONENT_STATE_CONNECTED状态
             {//这里接收浏览器发出的报文(包括dtls协商报文)
                 if(_stream_id == pLibnice->m_tVideoStream.iID)
                 {
