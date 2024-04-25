@@ -850,7 +850,7 @@ void Libnice::ComponentStateChanged(NiceAgent *agent, guint _stream_id,guint com
     
 	printf("SIGNAL: state changed %d %d %s[%d]\n",_stream_id, component_id, state_name[state], state);
     Libnice *pLibnice=NULL;
-    pLibnice = (Libnice *)data;
+    pLibnice = (Libnice *)data;//sdp发送给对方到(开始建立链接到)connected状态，耗时200ms，(sdp发送到对方设置好并回应耗时70ms)
 	if (state == NICE_COMPONENT_STATE_CONNECTED) //这样更快开始握手//NICE_COMPONENT_STATE_READY
 	{//协商成功
         if (NULL != pLibnice)

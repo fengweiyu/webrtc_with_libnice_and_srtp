@@ -78,7 +78,7 @@ WebRTC::WebRTC(char * i_strStunAddr,unsigned int i_dwStunPort,E_IceControlRole i
     m_pSctp = new Sctp(&m_tSctpCb);
 
     int iRet = 0;
-    iRet = m_pVideoDtlsOnlyHandshake->Init();//可以放Proc()里
+    iRet = m_pVideoDtlsOnlyHandshake->Init();//这里耗时300ms，可以放Proc()里
     if(iRet < 0)
     {
         WEBRTC_LOGE("m_pDtlsOnlyHandshake->Init err%d",iRet);
@@ -508,10 +508,10 @@ int WebRTC::SendProtectedAudioRtp(char * i_acRtpBuf,int i_iRtpBufLen)
 
 /*****************************************************************************
 -Fuction        : GetGatheringDoneFlag
--Description    : -1不可发送,0准备好通道可以发送
+-Description    : 收集地址耗时300ms
 -Input          : 
 -Output         : 
--Return         : 
+-Return         : -1不可发送,0准备好通道可以发送
 * Modify Date     Version             Author           Modification
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
@@ -538,10 +538,15 @@ int WebRTC::GetGatheringDoneFlag()
 
 /*****************************************************************************
 -Fuction        : GetSendReadyFlag
--Description    : -1不可发送,0准备好通道可以发送
+-Description    : 
+从开始运行到通道准备好，总耗时约1s
+1.dtls生成本地秘钥耗时300ms，
+2.收集地址耗时300ms,
+3.sdp发送给对方到(开始建立链接到)connected状态，耗时200-270ms，(sdp发送到对方设置好并回应耗时70ms)
+4.等待建立链接后的第一个数据包耗时100ms
 -Input          : 
 -Output         : 
--Return         : 
+-Return         : -1不可发送,0准备好通道可以发送
 * Modify Date     Version             Author           Modification
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created

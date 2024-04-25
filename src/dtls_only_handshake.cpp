@@ -297,7 +297,7 @@ void DtlsOnlyHandshake::HandleRecvData(char *buf,int len)
         printf("No DtlsOnlyHandshake HandleRecvData\n");
         return;
     }
-    if(0 ==m_iShakeStartedFlag) 
+    if(0 ==m_iShakeStartedFlag) //等待建立链接后的第一个数据包耗时100ms
     {//防止ssl阻塞导致libnice线程阻塞从而导致不打洞
         printf("No m_iShakeStartedFlag\n");//上述应该是死锁导致已经解决
         return;//还没握手，就收到握手包，则丢弃
