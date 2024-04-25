@@ -12,13 +12,16 @@
 #ifndef TCP_SOCKET_H
 #define TCP_SOCKET_H
 
+
 #include <map>
 #include <stdio.h>
 #include <string>
-#include <sys/time.h>
 
 using std::map;
 using std::string;
+
+#define TCP_BODY_MTU    1448 //1518-4-14-20-32,1460MTU (1514-54 ä»¥å¤ªç½‘å¸§æœ€å¤§1514-macå¤´14-ipå¤´20-tcpå¤´20)
+
 
 /*****************************************************************************
 -Class			: TcpSocket
@@ -30,7 +33,7 @@ using std::string;
 class TcpSocket
 {
 public:
-	virtual int Init(string i_strIP,unsigned short i_wPort)=0;//ÓÉÓÚstringÊÇÉî¿½±´,²»ÊÇÄ¬ÈÏµÄÖ»¿½±´ÖµµÄÄÇÖÖÇ³¿½±´,ËùÒÔ¿ÉÒÔ²»ÓÃÖ¸Õë,¿ÉÒÔÖ±½ÓÓÃ»òÓÃÒıÓÃ¾ù¿É
+	virtual int Init(string i_strIP,unsigned short i_wPort)=0;//ç”±äºstringæ˜¯æ·±æ‹·è´,ä¸æ˜¯é»˜è®¤çš„åªæ‹·è´å€¼çš„é‚£ç§æµ…æ‹·è´,æ‰€ä»¥å¯ä»¥ä¸ç”¨æŒ‡é’ˆ,å¯ä»¥ç›´æ¥ç”¨æˆ–ç”¨å¼•ç”¨å‡å¯
 	virtual int Send(char * i_acSendBuf,int i_iSendLen,int i_iSocketFd)=0;
 	virtual int Recv(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen,int i_iSocketFd,timeval *i_ptTime=NULL)=0;
 	virtual void Close(int i_iSocketFd)=0;	
@@ -48,7 +51,7 @@ class TcpServer : public TcpSocket
 {
 public:
 	TcpServer();
-	~TcpServer();
+	virtual ~TcpServer();
 	int Init(string i_strIP,unsigned short i_wPort);	
     int Accept();
 	int Send(char * i_acSendBuf,int i_iSendLen,int i_iClientSocketFd);
@@ -71,7 +74,7 @@ class TcpClient : public TcpSocket
 {
 public:
 	TcpClient();
-	~TcpClient();
+	virtual ~TcpClient();
 	int Init(string i_strIP,unsigned short i_wPort);
 	int Send(char * i_acSendBuf,int i_iSendLen,int i_iClientSocketFd=0);
 	int Recv(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen,int i_iClientSocketFd=0,timeval *i_ptTime=NULL);
@@ -81,5 +84,30 @@ private:
 	int  m_iClientSocketFd;
 };
 
+/*****************************************************************************
+-Class			: TcpServer
+-Description	: 
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2017/09/21	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
+class TcpServerEpoll
+{
+public:
+	TcpServerEpoll();
+	virtual ~TcpServerEpoll();
+	int Init(unsigned short i_wPort,char * i_strIP = NULL);	
+    int Accept();
+	int Send(char * i_acSendBuf,int i_iSendLen,int i_iClientSocketFd);
+	int Recv(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen,int i_iClientSocketFd,int i_iTimeoutMs = 5);
+	void CloseClient(int i_iClientSocketFd);
+	void CloseServer();
+	
+private:
+	int  m_iServerSocketFd;
+	int  m_iServerEpollFd;
+	int  m_iClientEpollFd;
+	int  m_iMaxListenSocket;
+};
 
 #endif
