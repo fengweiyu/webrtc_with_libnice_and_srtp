@@ -1600,6 +1600,7 @@ int WebRtcAnswer::GenerateLocalSDP(T_WebRtcMediaInfo *i_ptMediaInfo,char *o_strS
             "o=- %ld%06ld %d IN IP4 %s\r\n"//o=<username><session id> <version> <network type> <address type><address> Origin ,给定了会话的发起者信息
             "s=ywf webrtc\r\n"//s=<sessionname> ;给定了Session Name
             "t=0 0\r\na=group:BUNDLE %d\r\n"//"t=0 0\r\na=group:BUNDLE %d %d\r\n" sctp暂不需要去掉一个%d//t=<start time><stop time> ;BUNDLE 与sdpMLineIndex sdpMid里的一致
+            //"a=ice-lite\r\n"
             "a=msid-semantic: WMS ywf-mslabel\r\n"//"a=msid-semantic: WMS ywf\r\n"
             );//a=setup:actpass 浏览器会报错
         iRet=snprintf(o_strSDP,i_iSdpMaxLen,strSdpFmt.c_str(),
@@ -1612,6 +1613,7 @@ int WebRtcAnswer::GenerateLocalSDP(T_WebRtcMediaInfo *i_ptMediaInfo,char *o_strS
             "o=- %ld%06ld %d IN IP4 %s\r\n"//o=<username><session id> <version> <network type> <address type><address> Origin ,给定了会话的发起者信息
             "s=ywf webrtc\r\n"//s=<sessionname> ;给定了Session Name
             "t=0 0\r\na=group:BUNDLE %d\r\n"//"t=0 0\r\na=group:BUNDLE %d %d\r\n" sctp暂不需要去掉一个%d//t=<start time><stop time> ;BUNDLE 与sdpMLineIndex sdpMid里的一致
+            //"a=ice-lite\r\n"
             "a=msid-semantic: WMS ywf-mslabel\r\n"//"a=msid-semantic: WMS ywf\r\n"
             );//a=setup:actpass 浏览器会报错
         iRet=snprintf(o_strSDP,i_iSdpMaxLen,strSdpFmt.c_str(),
@@ -1627,6 +1629,7 @@ int WebRtcAnswer::GenerateLocalSDP(T_WebRtcMediaInfo *i_ptMediaInfo,char *o_strS
                 "s=ywf webrtc\r\n"//s=<sessionname> ;给定了Session Name
                 "t=0 0\r\n"//"t=0 0\r\na=group:BUNDLE %d %d\r\n" sctp暂不需要去掉一个%d//t=<start time><stop time> ;BUNDLE 与sdpMLineIndex sdpMid里的一致
                 //"a=group:BUNDLE %d %d\r\n"//a=group:BUNDLE表示音视频流共用一个通道
+                //"a=ice-lite\r\n"
                 "a=msid-semantic: WMS ywf-mslabel\r\n"//"a=msid-semantic: WMS ywf\r\n"
                 );//a=setup:actpass 浏览器会报错
             iRet=snprintf(o_strSDP,i_iSdpMaxLen,strSdpFmt.c_str(),
@@ -1640,6 +1643,7 @@ int WebRtcAnswer::GenerateLocalSDP(T_WebRtcMediaInfo *i_ptMediaInfo,char *o_strS
                 "s=ywf webrtc\r\n"//s=<sessionname> ;给定了Session Name
                 "t=0 0\r\n"//"t=0 0\r\na=group:BUNDLE %d %d\r\n" sctp暂不需要去掉一个%d//t=<start time><stop time> ;BUNDLE 与sdpMLineIndex sdpMid里的一致
                 "a=group:BUNDLE %d %d\r\n"//a=group:BUNDLE表示音视频流共用一个通道
+                //"a=ice-lite\r\n"
                 "a=msid-semantic: WMS ywf-mslabel\r\n"//"a=msid-semantic: WMS ywf\r\n"
                 );//a=setup:actpass 浏览器会报错
             iRet=snprintf(o_strSDP,i_iSdpMaxLen,strSdpFmt.c_str(),
@@ -1718,6 +1722,7 @@ int WebRtcAnswer::GenerateVideoSDP(T_LocalCandidate *ptLocalCandidate,char *strL
             "a=rtcp-mux\r\n"
             "a=ice-ufrag:%s\r\n"
             "a=ice-pwd:%s\r\n"
+            //"a=ice-lite\r\n"
             //"a=ice-options:trickle\r\n"//表示ice的candidate分开传输，现在一起传输所以注释掉
             "a=fingerprint:sha-256 %s\r\n"
             //"a=setup:passive\r\n"
@@ -1725,6 +1730,7 @@ int WebRtcAnswer::GenerateVideoSDP(T_LocalCandidate *ptLocalCandidate,char *strL
             "a=rtpmap:%d %s/%d\r\n"
             "a=rtcp-fb:%d nack\r\n"
             "a=rtcp-fb:%d nack pli\r\n"
+            //"a=rtcp-fb:%d ccm fir\r\n"
             "a=msid:ywf-mslabel ywf-label-%d\r\n"
             "a=ssrc:%d msid:ywf-mslabel ywf-label-%d\r\n"//与rtp中的SSRC 一致
             "a=setup:passive\r\n");//a=setup:actpass 浏览器会报错,active表示客户端,passive表示服务端actpass既是客户端又是服务端,由对方决定
@@ -1742,6 +1748,7 @@ int WebRtcAnswer::GenerateVideoSDP(T_LocalCandidate *ptLocalCandidate,char *strL
             "a=rtcp-mux\r\n"
             "a=ice-ufrag:%s\r\n"
             "a=ice-pwd:%s\r\n"
+            //"a=ice-lite\r\n"
             //"a=ice-options:trickle\r\n"//表示ice的candidate分开传输，现在一起传输所以注释掉
             "a=fingerprint:sha-256 %s\r\n"
             //"a=setup:passive\r\n"
@@ -1749,6 +1756,7 @@ int WebRtcAnswer::GenerateVideoSDP(T_LocalCandidate *ptLocalCandidate,char *strL
             "a=rtpmap:%d %s/%d\r\n"
             "a=rtcp-fb:%d nack\r\n"
             "a=rtcp-fb:%d nack pli\r\n"
+            //"a=rtcp-fb:%d ccm fir\r\n"
             "a=fmtp:%d level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=%06X;sprop-parameter-sets=%s,%s\r\n"
             "a=msid:ywf-mslabel ywf-label-%d\r\n"
             "a=ssrc:%d msid:ywf-mslabel ywf-label-%d\r\n"//与rtp中的SSRC 一致
@@ -1798,7 +1806,7 @@ int WebRtcAnswer::GenerateVideoSDP(T_LocalCandidate *ptLocalCandidate,char *strL
             ptLocalCandidate->strPassword,
             strLocalFingerprint,
             ptVideoInfo->bRtpPayloadType,ptVideoInfo->strFormatName,ptVideoInfo->dwTimestampFrequency,
-            ptVideoInfo->bRtpPayloadType,ptVideoInfo->bRtpPayloadType,
+            ptVideoInfo->bRtpPayloadType,ptVideoInfo->bRtpPayloadType,//ptVideoInfo->bRtpPayloadType,
             ptVideoInfo->iMediaID,ptVideoInfo->dwSSRC,ptVideoInfo->iMediaID);
     }
     else
@@ -1811,7 +1819,7 @@ int WebRtcAnswer::GenerateVideoSDP(T_LocalCandidate *ptLocalCandidate,char *strL
             ptLocalCandidate->strPassword,
             strLocalFingerprint,
             ptVideoInfo->bRtpPayloadType,ptVideoInfo->strFormatName,ptVideoInfo->dwTimestampFrequency,
-            ptVideoInfo->bRtpPayloadType,ptVideoInfo->bRtpPayloadType,
+            ptVideoInfo->bRtpPayloadType,ptVideoInfo->bRtpPayloadType,//ptVideoInfo->bRtpPayloadType,
             ptVideoInfo->bRtpPayloadType,ptVideoInfo->dwProfileLevelId,ptVideoInfo->strSPS_Base64,ptVideoInfo->strPPS_Base64,
             ptVideoInfo->iMediaID,ptVideoInfo->dwSSRC,ptVideoInfo->iMediaID);
             /*tCreateTime.tv_sec, strStreamType,tCreateTime.tv_sec, tCreateTime.tv_sec, tCreateTime.tv_sec,
@@ -1851,6 +1859,7 @@ int WebRtcAnswer::GenerateAudioSDP(T_LocalCandidate *ptLocalCandidate,char *strL
         "a=rtcp-mux\r\n"
         "a=ice-ufrag:%s\r\n"
         "a=ice-pwd:%s\r\n"
+        //"a=ice-lite\r\n"
         //"a=ice-options:trickle\r\n"//表示ice的candidate分开传输，现在一起传输所以注释掉
         "a=fingerprint:sha-256 %s\r\n"
         //"a=setup:passive\r\n"
