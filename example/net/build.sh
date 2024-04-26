@@ -24,7 +24,7 @@ function GenerateCmakeFile()
 }
 function BuildLib()
 {
-    echo -e "Start building rtp..."
+    echo -e "Start building net..."
     OutputPath="./build"
     if [ -e "$OutputPath" ]; then
         rm $OutputPath -rf
@@ -39,7 +39,7 @@ function BuildLib()
 #       mkdir $OutputPath/lib
     fi  
     mkdir $OutputPath
-    mkdir $OutputPath/lib
+    mkdir $OutputPath/net
     
     GenerateCmakeFile $1 $OutputPath    
     cd $OutputPath
@@ -65,8 +65,8 @@ function CopyLib()
 #   CurPwd = $PWD
     CurPwd=$PWD
     cd $1
-    if [ -e "media" ]; then
-        echo "media exit"
+    if [ -e "net" ]; then
+        echo "net exit"
     else
         mkdir net
     fi

@@ -24,7 +24,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 
-#include "Definition.h"
+#include "NetAdapter.h"
 #include "UdpSocket.h"
 
 using std::cout;

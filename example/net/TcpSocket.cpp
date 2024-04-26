@@ -77,12 +77,11 @@ TcpServer::~TcpServer()
 * -----------------------------------------------
 * 2017/09/21	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-int TcpServer::Init(string i_strIP,unsigned short i_wPort)
+int TcpServer::Init(string *i_strIP,unsigned short i_wPort)
 {
 	int iRet=-1;
 	int iSocketFd=-1;
 	unsigned short wPort=i_wPort;
-	string IP(i_strIP.c_str());
 	struct sockaddr_in tServerAddr;
 
 	if(m_iServerSocketFd !=-1)
@@ -95,7 +94,7 @@ int TcpServer::Init(string i_strIP,unsigned short i_wPort)
         if(iSocketFd<0)
         {
             perror(NULL);
-            TCP_LOG("TcpSocketInit err");
+            TCP_LOGE("TcpServer Init err");
         }
         else
         {
@@ -105,7 +104,7 @@ int TcpServer::Init(string i_strIP,unsigned short i_wPort)
             int tmp = 1;
             if (setsockopt(iSocketFd, SOL_SOCKET, SO_REUSEADDR, (char *)&tmp, sizeof(tmp)) < 0) 
             {
-                TCP_LOG("TcpSocket setsockopt err");
+                TCP_LOGE("TcpServer setsockopt err");
                 close(iSocketFd);
                 iSocketFd=-1;
                 return iRet;
@@ -114,7 +113,7 @@ int TcpServer::Init(string i_strIP,unsigned short i_wPort)
             if (setsockopt(iSocketFd, IPPROTO_TCP, TCP_NODELAY, (char *)&chOpt, sizeof(chOpt)) < 0) 
             {
                 perror(NULL);
-                TCP_LOG("TcpSocket setsockopt TCP_NODELAY err");
+                TCP_LOGE("TcpServer setsockopt TCP_NODELAY err");
                 close(iSocketFd);
                 iSocketFd=-1;
                 return iRet;
@@ -124,11 +123,18 @@ int TcpServer::Init(string i_strIP,unsigned short i_wPort)
             bzero(&tServerAddr, sizeof(tServerAddr));
             tServerAddr.sin_family = AF_INET;
             tServerAddr.sin_port = htons(wPort);//一般是554
-            tServerAddr.sin_addr.s_addr = inet_addr(IP.c_str());//也可以使用htonl(INADDR_ANY),表示使用本机的所有IP
+            if(i_strIP == NULL)
+            {
+                tServerAddr.sin_addr.s_addr = htonl(INADDR_ANY);//也可以使用htonl(INADDR_ANY),表示使用本机的所有IP
+            }
+            else
+            {
+                tServerAddr.sin_addr.s_addr = inet_addr(i_strIP->c_str());//也可以使用htonl(INADDR_ANY),表示使用本机的所有IP
+            }
             if(bind(iSocketFd,(struct sockaddr*)&tServerAddr,sizeof(tServerAddr))<0)
             {
                 perror(NULL);
-                TCP_LOG("TcpSocket bind err");
+                TCP_LOGE("TcpServer bind err");
                 close(iSocketFd);
                 iSocketFd=-1;
             }
@@ -138,7 +144,7 @@ int TcpServer::Init(string i_strIP,unsigned short i_wPort)
                 if(listen(iSocketFd,100)<0) //等待连接个数,也就是允许连接的客户端个数100
                 {
                     perror(NULL);
-                    TCP_LOG("TcpSocket listen err");
+                    TCP_LOGE("TcpServer listen err");
                     close(iSocketFd);
                     iSocketFd=-1;
                 }
@@ -168,12 +174,20 @@ int TcpServer::Accept()
     int iClientSocketFd=-1;
     struct sockaddr_un tClientAddr; 
     socklen_t iLen=0;
+
+
+	if(m_iServerSocketFd < 0)
+	{
+        TCP_LOGE("(m_iServerSocketFd < 0\r\n");  
+        return -1;
+	}
+    
     //have connect request use accept  
     iLen=sizeof(tClientAddr);  
     iClientSocketFd=accept(m_iServerSocketFd,(struct sockaddr*)&tClientAddr,&iLen);  //这里会等待客户端连接
     if(iClientSocketFd<0)  
     {  
-        TCP_LOG("cannot accept client connect request");  
+        TCP_LOGE("cannot accept client connect request");  
         close(m_iServerSocketFd);  
         //unlink(UNIX_DOMAIN);  //错误： ‘UNIX_DOMAIN’在此作用域中尚未声明
     } 
@@ -198,7 +212,7 @@ int TcpServer::Send(char * i_acSendBuf,int i_iSendLen,int i_iClientSocketFd)
 	int iRet=-1;
 	if(i_acSendBuf==NULL ||i_iSendLen<=0)
 	{
-        TCP_LOG("Send err");
+        TCP_LOGE("Send err");
 	}
 	else
 	{
@@ -212,7 +226,7 @@ int TcpServer::Send(char * i_acSendBuf,int i_iSendLen,int i_iClientSocketFd)
             iRet=0;
         }
         string strSend(i_acSendBuf);
-        TCP_LOG("Send : %s\r\n",strSend);
+        TCP_LOGD("Send : %s\r\n",strSend.c_str());
 	}
 
 	return iRet;
@@ -242,7 +256,7 @@ int TcpServer::Recv(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen,int 
 
     if(NULL == o_acRecvBuf ||NULL == o_piRecvLen ||i_iRecvBufMaxLen <= 0)
     {
-        TCP_LOG("TcpServer::Recv NULL");
+        TCP_LOGE("TcpServer::Recv NULL");
         return iRet;
     }   
     memset(o_acRecvBuf,0,i_iRecvBufMaxLen);;
@@ -257,7 +271,7 @@ int TcpServer::Recv(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen,int 
         iRet = select(i_iClientSocketFd + 1, &tReadFds, NULL, NULL, &tTimeValue);//调用select（）监控函数//NULL 一直等到有变化
         if(iRet<0)  
         {
-            TCP_LOG("select Recv err\n");  
+            TCP_LOGE("select Recv err\n");  
             close(i_iClientSocketFd);
             iRet=-1;
             break;
@@ -278,7 +292,7 @@ int TcpServer::Recv(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen,int 
             {
                 if(errno != EINTR)
                 {
-                    TCP_LOG("errno Recv err%d\r\n",iRecvLen); 
+                    TCP_LOGE("errno Recv err%d\r\n",iRecvLen); 
                     perror("errno"); 
                     iRet=-1;
                     break;
@@ -293,7 +307,7 @@ int TcpServer::Recv(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen,int 
         }
         else
         {
-            TCP_LOG("errno FD_ISSET err"); 
+            TCP_LOGE("errno FD_ISSET err"); 
             iRet=-1;
         	break;
         }
@@ -302,11 +316,11 @@ int TcpServer::Recv(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen,int 
     {
         string strRecv(o_acRecvBuf);
         *o_piRecvLen = i_iRecvBufMaxLen - iLeftRecvLen;
-        TCP_LOG("SvcRecv :%s\r\n",strRecv);
+        TCP_LOGD("SvcRecv :%s\r\n",strRecv.c_str());
     }
     else
     {
-        //TCP_LOG("Recv err:"<<iRecvAllLen);
+        //TCP_LOGE("Recv err:"<<iRecvAllLen);
     }
     return iRet;
 }
@@ -330,7 +344,7 @@ void TcpServer::Close(int i_iClientSocketFd)
 	}
 	else
 	{
-		TCP_LOG("Close err:%d",i_iClientSocketFd);
+		TCP_LOGE("Close err:%d",i_iClientSocketFd);
 	}
 }
 
@@ -374,16 +388,24 @@ TcpClient ::~TcpClient()
 * -----------------------------------------------
 * 2017/09/21	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-int TcpClient::Init(string i_strIP,unsigned short i_wPort)
+int TcpClient::Init(string *i_strIP,unsigned short i_wPort)
 {
 	int iRet=-1;
 	int iSocketFd=-1;
 	struct sockaddr_in tServerAddr;
+
+	
+	if(i_strIP==NULL)
+	{
+		perror(NULL);
+		TCP_LOGE("TcpSocketInit NULL");
+	}
+
 	iSocketFd=socket(AF_INET,SOCK_STREAM,0);
 	if(iSocketFd<0)
 	{
 		perror(NULL);
-		TCP_LOG("TcpSocketInit err");
+		TCP_LOGE("TcpSocketInit err");
 	}
 	else
 	{
@@ -393,7 +415,7 @@ int TcpClient::Init(string i_strIP,unsigned short i_wPort)
         int tmp = 1;
         if (setsockopt(iSocketFd, SOL_SOCKET, SO_REUSEADDR, (char *)&tmp, sizeof(tmp)) < 0) 
         {
-            TCP_LOG("TcpClient setsockopt err");
+            TCP_LOGE("TcpClient setsockopt err");
             close(iSocketFd);
             iSocketFd=-1;
             return iRet;
@@ -402,11 +424,11 @@ int TcpClient::Init(string i_strIP,unsigned short i_wPort)
 		bzero(&tServerAddr, sizeof(tServerAddr));
 		tServerAddr.sin_family = AF_INET;
 		tServerAddr.sin_port = htons(i_wPort);
-		tServerAddr.sin_addr.s_addr = inet_addr(i_strIP.c_str());
+		tServerAddr.sin_addr.s_addr = inet_addr(i_strIP->c_str());
 		if(connect(iSocketFd, (struct sockaddr *)&tServerAddr, sizeof(tServerAddr)) < 0 && errno != EINPROGRESS) 
 		{
 			perror(NULL);
-			TCP_LOG("TcpSocket connect err");
+			TCP_LOGE("TcpSocket connect err");
 			close(iSocketFd);
 			iSocketFd=-1;
 		}
@@ -437,7 +459,7 @@ int TcpClient::Send(char * i_acSendBuf,int i_iSendLen,int i_iClientSocketFd)
 	int iRet=-1;
 	if(i_acSendBuf==NULL ||i_iSendLen<=0)
 	{
-        TCP_LOG("Send err");
+        TCP_LOGE("Send err");
 	}
 	else
 	{
@@ -451,7 +473,7 @@ int TcpClient::Send(char * i_acSendBuf,int i_iSendLen,int i_iClientSocketFd)
             iRet=0;
         }
         string strSend(i_acSendBuf);
-        TCP_LOG("Send :\r\n",strSend);
+        TCP_LOGD("Send :%s\r\n",strSend.c_str());
 	}
 	
 	return iRet;
@@ -481,7 +503,7 @@ int TcpClient::Recv(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen,int 
 
     if(NULL == o_acRecvBuf ||NULL == o_piRecvLen ||i_iRecvBufMaxLen <= 0)
     {
-        TCP_LOG("TcpClient::Recv NULL");
+        TCP_LOGE("TcpClient::Recv NULL");
         return iRet;
     }   
     while(iLeftRecvLen > 0)
@@ -495,7 +517,7 @@ int TcpClient::Recv(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen,int 
         iRet = select(m_iClientSocketFd + 1, &tReadFds, NULL, NULL, &tTimeValue);//调用select（）监控函数//NULL 一直等到有变化
         if(iRet<0)  
         {
-            TCP_LOG("select Recv err\n");  
+            TCP_LOGE("select Recv err\n");  
             close(m_iClientSocketFd);
             iRet=-1;
             break;
@@ -537,11 +559,11 @@ int TcpClient::Recv(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen,int 
     {
         string strRecv(o_acRecvBuf);
         *o_piRecvLen = i_iRecvBufMaxLen - iLeftRecvLen;
-        TCP_LOG("Recv :\r\n",strRecv);
+        TCP_LOGD("Recv :%s\r\n",strRecv.c_str());
     }
     else
     {
-        //TCP_LOG("Recv err:"<<iRecvAllLen);
+        //TCP_LOGE("Recv err:"<<iRecvAllLen);
     }
     return iRet;
 }
@@ -566,7 +588,7 @@ void TcpClient::Close(int i_iClientSocketFd)
 	}
 	else
 	{
-		TCP_LOG("Close err:",m_iClientSocketFd);
+		TCP_LOGE("Close err:%d",m_iClientSocketFd);
 	}
 }
 
@@ -641,7 +663,7 @@ int TcpServerEpoll::Init(unsigned short i_wPort,char * i_strIP)
         if(iSocketFd<0)
         {
             perror(NULL);
-            TCP_LOG("TcpSocketInit err");
+            TCP_LOGE("TcpSocketInit err");
         }
         else
         {
@@ -651,7 +673,7 @@ int TcpServerEpoll::Init(unsigned short i_wPort,char * i_strIP)
             int tmp = 1;
             if (setsockopt(iSocketFd, SOL_SOCKET, SO_REUSEADDR, (char *)&tmp, sizeof(tmp)) < 0) 
             {
-                TCP_LOG("TcpSocket setsockopt err");
+                TCP_LOGE("TcpSocket setsockopt err");
                 close(iSocketFd);
                 iSocketFd=-1;
                 return iRet;
@@ -660,7 +682,7 @@ int TcpServerEpoll::Init(unsigned short i_wPort,char * i_strIP)
             if (setsockopt(iSocketFd, IPPROTO_TCP, TCP_NODELAY, (char *)&chOpt, sizeof(chOpt)) < 0) 
             {
                 perror(NULL);
-                TCP_LOG("TcpSocket setsockopt TCP_NODELAY err");
+                TCP_LOGE("TcpSocket setsockopt TCP_NODELAY err");
                 close(iSocketFd);
                 iSocketFd=-1;
                 return iRet;
@@ -677,7 +699,7 @@ int TcpServerEpoll::Init(unsigned short i_wPort,char * i_strIP)
             if(bind(iSocketFd,(struct sockaddr*)&tServerAddr,sizeof(tServerAddr))<0)
             {
                 perror(NULL);
-                TCP_LOG("TcpSocket bind err");
+                TCP_LOGE("TcpSocket bind err");
                 close(iSocketFd);
                 iSocketFd=-1;
             }
@@ -688,7 +710,7 @@ int TcpServerEpoll::Init(unsigned short i_wPort,char * i_strIP)
                 if(listen(iSocketFd,m_iMaxListenSocket)<0) 
                 {
                     perror(NULL);
-                    TCP_LOG("TcpSocket listen err\r\n");
+                    TCP_LOGE("TcpSocket listen err\r\n");
                     close(iSocketFd);
                     iSocketFd=-1;
                 }
@@ -709,7 +731,7 @@ int TcpServerEpoll::Init(unsigned short i_wPort,char * i_strIP)
         iRet = epoll_ctl(m_iServerEpollFd, EPOLL_CTL_ADD, m_iServerSocketFd, &ev);
         if(iRet < 0)
         {
-            TCP_LOG("epoll_ctl err \r\n");
+            TCP_LOGE("epoll_ctl err \r\n");
             CloseServer();
             iRet = -1;
         }
@@ -744,7 +766,7 @@ int TcpServerEpoll::Accept()
     
     if(m_iServerSocketFd < 0 || m_iServerEpollFd < 0)
     {
-        TCP_LOG("Accept err no init\r\n");
+        TCP_LOGE("Accept err no init\r\n");
         return iRet;
     }
     
@@ -759,7 +781,7 @@ int TcpServerEpoll::Accept()
                 iClientSocketFd=accept(m_iServerSocketFd,(struct sockaddr*)&tClientAddr,&iLen);  //这里会等待客户端连接
                 if(iClientSocketFd<0)  
                 {  
-                    TCP_LOG("cannot accept client connect request");  
+                    TCP_LOGE("cannot accept client connect request");  
                 } 
                 else
                 {
@@ -772,7 +794,7 @@ int TcpServerEpoll::Accept()
                     iRet = epoll_ctl(m_iClientEpollFd, EPOLL_CTL_ADD, iClientSocketFd, &ev);
                     if(iRet < 0)
                     {
-                        TCP_LOG("epoll_ctl EPOLL_CTL_ADD err \r\n");
+                        TCP_LOGE("epoll_ctl EPOLL_CTL_ADD err \r\n");
                         close(iClientSocketFd);
                         iRet = -1;
                     }
@@ -803,7 +825,7 @@ int TcpServerEpoll::Send(char * i_acSendBuf,int i_iSendLen,int i_iClientSocketFd
 	int iRet=-1;
 	if(i_acSendBuf==NULL ||i_iSendLen<=0)
 	{
-        TCP_LOG("Send err");
+        TCP_LOGE("Send err");
 	}
 	else
 	{
@@ -839,7 +861,7 @@ int TcpServerEpoll::Recv(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen
 
     if(NULL == o_acRecvBuf ||NULL == o_piRecvLen ||i_iRecvBufMaxLen <= 0)
     {
-        TCP_LOG("TcpServer::Recv NULL");
+        TCP_LOGE("TcpServer::Recv NULL");
         return iRet;
     }   
     memset(o_acRecvBuf,0,i_iRecvBufMaxLen);;
@@ -848,7 +870,7 @@ int TcpServerEpoll::Recv(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen
         iEvents = epoll_wait(m_iClientEpollFd, events, sizeof(events)/sizeof(struct epoll_event), i_iTimeoutMs);//故超时时间最好大于0以便让出cpu(后续优化)
         if(iEvents < 0)//超时时间0，-1阻塞单位ms 
         {
-            TCP_LOG("epoll_wait Recv err\n");  
+            TCP_LOGE("epoll_wait Recv err\n");  
             iRet=-1;
             break;
         }
@@ -866,7 +888,7 @@ int TcpServerEpoll::Recv(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen
                 {
                     if(errno != EINTR)
                     {
-                        TCP_LOG("errno Recv err%d\r\n",iRecvLen); 
+                        TCP_LOGE("errno Recv err%d\r\n",iRecvLen); 
                         iRet=-1;
                         return iRet;
                     }
