@@ -29,7 +29,7 @@ INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}
 	${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/webrtc_client/include
 	${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/base64/include
 #peerconnection_client中又依赖http	
-	${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/http/include
+	${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/net/include
 #    ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/rtp/media/include
 	${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/rtp/include
 #rtp.h又依赖其内部头文件		
@@ -51,7 +51,7 @@ TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/b
 TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/webrtc_client/libwebrtc_client.a)
 TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/rtp/librtp.a)
 TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/media/libmedia.a)
-TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/http/libhttp.a)
+TARGET_LINK_LIBRARIES(webrtc ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/net/libnet.a)
 
 #第三方库(libwebrtc.a中包含了这些库暂时注释掉)
 if(${CMAKE_ToolChain} STREQUAL "")

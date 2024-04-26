@@ -112,14 +112,14 @@ else
         exit -1
     fi
     cd ..
-    
+<<COMMENT
     cd peerconnection_client
     sh build.sh $1
     if [ $? -ne 0 ]; then
         exit -1
     fi
     cd ..
-    
+COMMENT
     cd webrtc_client
     sh build.sh $1
     if [ $? -ne 0 ]; then
@@ -142,6 +142,13 @@ else
     cd ..   
     
     cd base64
+    sh build.sh $1
+    if [ $? -ne 0 ]; then
+        exit -1
+    fi
+    cd ..
+    
+    cd net
     sh build.sh $1
     if [ $? -ne 0 ]; then
         exit -1
