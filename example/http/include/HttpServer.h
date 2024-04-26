@@ -13,6 +13,11 @@
 #define HTTP_SERVER_H
 
 #include "HttpCommon.h"
+#include "Http.h"
+#include <string>
+
+
+using std::string;
 
 /*****************************************************************************
 -Class			: HttpServer
@@ -21,15 +26,18 @@
 * -----------------------------------------------
 * 2019/09/21	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-class HttpServer
+class HttpServer : private Http
 {
 public:
 	HttpServer();
 	~HttpServer();
     int ParseRequest(char *i_pcReqData,int i_iDataLen,T_HttpReqPacket *o_ptHttpReqPacket);
-	int CreateResponse(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen);
+	int CreateResponse(int i_iCode = 200, const char * i_strMsg = "OK",const char * i_strVersion = HTTP_VERSION);
+	int SetResHeaderValue(const char *i_strKey,const char *i_strValue);
+	int FormatResToStream(char *i_pcContentData,int i_iDataLen,char *o_acBuf,int i_iBufMaxLen);
 private:
-    int Regex(const char *i_strPattern,char *i_strBuf,regmatch_t *o_ptMatch);//·ÅHTTP
+    string *strResHeader;
+    string strResponse;
 };
 
 

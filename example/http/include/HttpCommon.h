@@ -13,6 +13,13 @@
 #define HTTP_COMMON_H
 
 
+#define  HTTP_LOGW(...)     printf(__VA_ARGS__)
+#define  HTTP_LOGE(...)     printf(__VA_ARGS__)
+#define  HTTP_LOGD(...)     printf(__VA_ARGS__)
+#define  HTTP_LOGI(...)     printf(__VA_ARGS__)
+
+
+
 #define HTTP_PACKET_MAX_LEN (10240)
 #define HTTP_PACKET_BODY_MAX_LEN (8*1024)
 
@@ -24,6 +31,7 @@
 #define HTTP_VERSION "HTTP/1.1"// "HTTP/1.0"
 
 #define HTTP_CONTENT_TYPE_TEXT     "text/plain"
+#define HTTP_CONTENT_FLAG "\r\n\r\n"
 
 
 
@@ -46,6 +54,20 @@ typedef struct HttpReqPacket
     char strContentType[128];
 
     char acBody[HTTP_PACKET_BODY_MAX_LEN];
+    int iBodyLength;
 }T_HttpReqPacket;
+
+typedef struct HttpResPacket
+{
+    char strVersion[16];
+    int iStatusCode;
+    char strStatusMsg[128];
+    char strConnection[32];
+    int iContentLength;
+    char strContentType[128];
+
+    char acBody[HTTP_PACKET_BODY_MAX_LEN];
+    int iBodyLength;
+}T_HttpResPacket;
 
 #endif

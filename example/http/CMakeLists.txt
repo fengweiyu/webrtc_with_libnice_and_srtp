@@ -12,8 +12,9 @@ project (WebRTC)
 
 
 SET(src_list
+    HttpClient.cpp
+    HttpServer.cpp
     Http.cpp
-	TcpSocket.cpp
 	)		
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}
 	${PROJECT_SOURCE_DIR}/include

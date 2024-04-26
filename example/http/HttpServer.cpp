@@ -1,7 +1,7 @@
 /*****************************************************************************
 * Copyright (C) 2020-2025 Hanson Yu  All rights reserved.
 ------------------------------------------------------------------------------
-* File Module           :       HttpClient.c
+* File Module           :       HttpServer.c
 * Description           : 	
 * Created               :       2020.01.13.
 * Author                :       Yu Weifeng
@@ -9,20 +9,20 @@
 * Last Modified         : 	
 * History               : 	
 ******************************************************************************/
-#include "HttpClient.h"
+#include "HttpServer.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <iostream>
-#include <string>
 
 
 using std::cout;
 using std::endl;
 
+
 /*****************************************************************************
--Fuction		: HttpClient
--Description	: HttpClient
+-Fuction		: HttpServer
+-Description	: HttpServer
 -Input			: 
 -Output 		: 
 -Return 		: 
@@ -32,12 +32,12 @@ using std::endl;
 ******************************************************************************/
 HttpServer :: HttpServer()
 {
-
+    strResHeader = NULL;
 }
 
 /*****************************************************************************
--Fuction		: ~HttpClient
--Description	: ~HttpClient
+-Fuction		: ~HttpServer
+-Description	: ~HttpServer
 -Input			: 
 -Output 		: 
 -Return 		: 
@@ -45,9 +45,13 @@ HttpServer :: HttpServer()
 * -----------------------------------------------
 * 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-HttpServer :: ~HttpClient()
+HttpServer :: ~HttpServer()
 {
-
+    if(NULL != strResHeader)
+    {
+        delete strResHeader;
+        strResHeader = NULL;
+    }   
 }
 
 
@@ -64,55 +68,69 @@ HttpServer :: ~HttpClient()
 int HttpServer :: ParseRequest(char *i_pcReqData,int i_iDataLen,T_HttpReqPacket *o_ptHttpReqPacket)
 {
     int iRet = -1;
-    
+    char *pBody = NULL;
+    const char * strHttpBodyFlag = HTTP_CONTENT_FLAG;
+	string strHttpHeader;
+	string strFindRes;
+	regmatch_t atMatch[HTTP_MAX_MATCH_NUM];
+	const char *strFirstLinePatten="([A-Z]+) ([A-Za-z0-9/.]+) ([A-Z0-9/.]+)\r\n";
+	const char *strConnectionPatten="Connection: ([A-Za-z0-9-]+)\r\n";
+	const char *strContentLenPatten="Content-Length: ([0-9]+)\r\n";
+	const char *strContentTypePatten="Content-type: ([A-Za-z0-9-/;.]+)\r\n";
+	
     if(NULL == i_pcReqData ||NULL == o_ptHttpReqPacket )
     {
-        printf("ParseRequest NULL\r\n");
+        HTTP_LOGE("ParseRequest NULL\r\n");
         return iRet;
     }
-    
-    if(NULL != m_pTcpClient)
+    pBody = strstr(i_pcReqData,strHttpBodyFlag);
+    if(NULL != pBody && HTTP_PACKET_BODY_MAX_LEN>=i_iDataLen-(pBody-i_pcReqData+strlen(strHttpBodyFlag)))
     {
-        delete m_pTcpClient;
-        m_pTcpClient =NULL;
+        o_ptHttpReqPacket->iBodyLength = i_iDataLen-(pBody-i_pcReqData+strlen(strHttpBodyFlag));
+        memcpy(o_ptHttpReqPacket->acBody,pBody+strlen(strHttpBodyFlag),o_ptHttpReqPacket->iBodyLength);
     }
-    m_pTcpClient = new TcpClient();//http短连接从新建立连接
-    if(NULL == m_pTcpClient)
+    strHttpHeader.assign(i_pcReqData,0,pBody-i_pcReqData);
+
+    memset(atMatch,0,sizeof(atMatch));
+    if(REG_NOERROR == Http::Regex(strFirstLinePatten,(char *)strHttpHeader.c_str(),atMatch))
     {
-        printf("HttpClient :: Send NULL\r\n");
-        return iRet;
+        strFindRes.assign(strHttpHeader,atMatch[1].rm_so,atMatch[1].rm_eo-atMatch[1].rm_so);//0是整行
+        snprintf(o_ptHttpReqPacket->strMethod,sizeof(o_ptHttpReqPacket->strMethod),"%s",strFindRes.c_str());
+        strFindRes.assign(strHttpHeader,atMatch[2].rm_so,atMatch[2].rm_eo-atMatch[2].rm_so);
+        snprintf(o_ptHttpReqPacket->strURL,sizeof(o_ptHttpReqPacket->strURL),"%s",strFindRes.c_str());
+        strFindRes.assign(strHttpHeader,atMatch[3].rm_so,atMatch[3].rm_eo-atMatch[3].rm_so);
+        snprintf(o_ptHttpReqPacket->strVersion,sizeof(o_ptHttpReqPacket->strVersion),"%s",strFindRes.c_str());
     }
-    m_pTcpClient->Init(m_strServerIp,m_iServerPort);
-
-    pSendBuf = (char *)malloc(i_iSendLen+512);//512是头部大小
-    if(NULL != pSendBuf)
+    memset(atMatch,0,sizeof(atMatch));
+    if(REG_NOERROR == Http::Regex(strConnectionPatten,(char *)strHttpHeader.c_str(),atMatch))
     {
-        memset(pSendBuf,0,i_iSendLen+512);
-        iSendLen+=snprintf(pSendBuf+iSendLen,i_iSendLen+512-iSendLen,"%s %s %s\r\n",i_strMethod,i_strURL,HTTP_VERSION);
-        if(NULL != i_strContentType)
-        {
-            iSendLen+=snprintf(pSendBuf+iSendLen,i_iSendLen+512-iSendLen,"Content-Length:%d\r\nContent-Type:%s\r\n",i_iSendLen,i_strContentType);
-        }
-        iSendLen+=snprintf(pSendBuf+iSendLen,i_iSendLen+512-iSendLen,"\r\n");
-        if(NULL != i_acSendBuf)
-        {
-            memcpy(pSendBuf+iSendLen,i_acSendBuf,i_iSendLen);
-            iSendLen+=i_iSendLen;
-        }
-
-        iRet=m_pTcpClient->Send(pSendBuf,iSendLen);
-
-        
-        free(pSendBuf);
+        strFindRes.assign(strHttpHeader,atMatch[1].rm_so,atMatch[1].rm_eo-atMatch[1].rm_so);
+        snprintf(o_ptHttpReqPacket->strConnection,sizeof(o_ptHttpReqPacket->strConnection),"%s",strFindRes.c_str());
     }
-    
+    memset(atMatch,0,sizeof(atMatch));
+    if(REG_NOERROR == Http::Regex(strContentLenPatten,(char *)strHttpHeader.c_str(),atMatch))
+    {
+        strFindRes.assign(strHttpHeader,atMatch[1].rm_so,atMatch[1].rm_eo-atMatch[1].rm_so);
+        o_ptHttpReqPacket->iContentLength=atoi(strFindRes.c_str());
+    }
+    memset(atMatch,0,sizeof(atMatch));
+    if(REG_NOERROR == Http::Regex(strContentTypePatten,(char *)strHttpHeader.c_str(),atMatch))
+    {
+        strFindRes.assign(strHttpHeader,atMatch[1].rm_so,atMatch[1].rm_eo-atMatch[1].rm_so);
+        snprintf(o_ptHttpReqPacket->strContentType,sizeof(o_ptHttpReqPacket->strContentType),"%s",strFindRes.c_str());
+    }
+
+    if(0 != strlen(o_ptHttpReqPacket->strMethod) && 0 != strlen(o_ptHttpReqPacket->strURL))
+    {
+        iRet = 0;
+    }
     return iRet;
 } 
 
 
 /*****************************************************************************
--Fuction		: RecvBody
--Description	: 200返回码后续作判断
+-Fuction		: CreateResponse
+-Description	: 
 -Input			: 
 -Output 		: 
 -Return 		: 
@@ -120,110 +138,91 @@ int HttpServer :: ParseRequest(char *i_pcReqData,int i_iDataLen,T_HttpReqPacket 
 * -----------------------------------------------
 * 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-int HttpServer :: CreateResponse(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen)
+int HttpServer :: CreateResponse(int i_iCode, const char * i_strMsg,const char * i_strVersion)
 {
     int iRet = -1;
-    char acRecvBuf[HTTP_PACKET_MAX_LEN];
-    int iRecvLen=0;
-    char *pBody = NULL;
-    const char * strHttpBodyFlag = "\r\n\r\n";
+    char strRes[32];
+
     
-    if(NULL == o_acRecvBuf ||NULL == o_piRecvLen)
+    if(NULL == i_strMsg || NULL == i_strVersion)
     {
-        cout<<"RecvBody NULL"<<endl;
+        HTTP_LOGE("CreateResponse NULL\r\n");
         return iRet;
     }
-    if(NULL == m_pTcpClient)
-    {
-        printf("HttpClient :: RecvBody err no request\r\n");
-        return iRet;
-    }
+    iRet=snprintf(strRes,sizeof(strRes),"%s %d %s",i_strVersion,i_iCode,i_strMsg);
+    strResHeader = new string(strRes);
     
-    memset(acRecvBuf,0,sizeof(acRecvBuf));
-    iRet=m_pTcpClient->Recv(acRecvBuf,&iRecvLen,sizeof(acRecvBuf));
-    if(iRet == 0)
-    {
-        pBody = strstr(acRecvBuf,strHttpBodyFlag);
-        if(NULL != pBody && i_iRecvBufMaxLen>=iRecvLen-(pBody-acRecvBuf+strlen(strHttpBodyFlag)))
-        {
-            *o_piRecvLen = iRecvLen-(pBody-acRecvBuf+strlen(strHttpBodyFlag));
-            memcpy(o_acRecvBuf,pBody+strlen(strHttpBodyFlag),*o_piRecvLen);
-        }
-        else
-        {
-            iRet = -1;
-            printf("HttpClient :: Recv err ,%p,%d,%d\r\n",pBody,i_iRecvBufMaxLen,(int)(iRecvLen-(pBody-acRecvBuf+strlen(strHttpBodyFlag))));
-        }
-    }
-    //delete m_pTcpClient;//每次发的时候会释放
-    //m_pTcpClient =NULL;//因为可能有接收两次的情况
     return iRet;
 }
 
+
 /*****************************************************************************
--Fuction		: Regex
--Description	: 正则表达式
-.点				匹配除“\r\n”之外的任何单个字符
-*				匹配前面的子表达式任意次。例如，zo*能匹配“z”，也能匹配“zo”以及“zoo”。*等价于o{0,}
-				其中.*的匹配结果不会存储到结果数组里
-(pattern)		匹配模式串pattern并获取这一匹配。所获取的匹配可以从产生的Matches集合得到
-[xyz]			字符集合。匹配所包含的任意一个字符。例如，“[abc]”可以匹配“plain”中的“a”。
-+				匹配前面的子表达式一次或多次(大于等于1次）。例如，“zo+”能匹配“zo”以及“zoo”，但不能匹配“z”。+等价于{1,}。
-				//如下例子中不用+，默认是一次，即只能匹配到一个数字6
-				
-[A-Za-z0-9] 	26个大写字母、26个小写字母和0至9数字
-[A-Za-z0-9+/=]	26个大写字母、26个小写字母0至9数字以及+/= 三个字符
-
-
--Input			: i_strPattern 模式串,i_strBuf待匹配字符串,
--Output 		: o_ptMatch 存储匹配串位置的数组,用于存储匹配结果在待匹配串中的下标范围
-//数组0单元存放主正则表达式匹配结果的位置,即所有正则组合起来的匹配结果，后边的单元依次存放子正则表达式匹配结果的位置
+-Fuction		: SetResHeaderValue
+-Description	: 
+-Input			: 
+-Output 		: 
 -Return 		: 
 * Modify Date	  Version		 Author 		  Modification
 * -----------------------------------------------
-* 2017/11/01	  V1.0.0		 Yu Weifeng 	  Created
+* 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-int HttpServer::Regex(const char *i_strPattern,char *i_strBuf,regmatch_t *o_ptMatch)
+int HttpServer :: SetResHeaderValue(const char *i_strKey,const char *i_strValue)
 {
-    char acErrBuf[256];
-    int iRet=-1;
-    regex_t tReg;    //定义一个正则实例
-    //const size_t dwMatch = 6;    //定义匹配结果最大允许数       //表示允许几个匹配
+    int iRet = -1;
+    char strRes[128];
+    
+    if(NULL == i_strKey || NULL == i_strValue)
+    {
+        HTTP_LOGE("SetResHeaderValue NULL\r\n");
+        return iRet;
+    }
+    if(NULL == strResHeader)
+    {
+        HTTP_LOGE("SetResHeaderValue strResHeader NULL\r\n");
+        return iRet;
+    }
+    iRet=snprintf(strRes,sizeof(strRes),"%s: %s",i_strKey,i_strValue);
+    strResHeader->append(strRes);
+    
+    return iRet;
+}
 
 
-    //REG_ICASE 匹配字母时忽略大小写。
-    iRet =regcomp(&tReg, i_strPattern, REG_EXTENDED);    //编译正则模式串
-    if(iRet != 0) 
+/*****************************************************************************
+-Fuction		: FormatResToStream
+-Description	: 
+-Input			: 
+-Output 		: 
+-Return 		: int *o_piBufLen,
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
+int HttpServer :: FormatResToStream(char *i_pcContentData,int i_iDataLen,char *o_acBuf,int i_iBufMaxLen)
+{
+    int iRet = -1;
+    char strRes[128];
+    
+    if(NULL == i_pcContentData || NULL == o_acBuf)
     {
-        regerror(iRet, &tReg, acErrBuf, sizeof(acErrBuf));
-        WEBRTC_LOGE("Regex Error:\r\n");
+        HTTP_LOGE("FormatResToStream NULL\r\n");
+        return iRet;
     }
-    else
+    if(NULL == strResHeader)
     {
-        iRet = regexec(&tReg, i_strBuf, MAX_MATCH_NUM, o_ptMatch, 0); //匹配他
-        if (iRet == REG_NOMATCH)
-        { //如果没匹配上
-            WEBRTC_LOGE("Regex No Match!\r\n");
-        }
-        else if (iRet == REG_NOERROR)
-        { //如果匹配上了
-            /*WEBRTC_LOGD("Match\r\n");
-            int i=0,j=0;
-			for(j=0;j<MAX_MATCH_NUM;j++)
-			{
-				for (i= o_ptMatch[j].rm_so; i < o_ptMatch[j].rm_eo; i++)
-				{ //遍历输出匹配范围的字符串
-					printf("%c", i_strBuf[i]);
-				}
-				printf("\n");
-			}*/
-        }
-        else
-        {
-            WEBRTC_LOGE("Regex Unknow err:\r\n");
-        }
-        regfree(&tReg);  //释放正则表达式
+        HTTP_LOGE("FormatResToStream strResHeader NULL\r\n");
+        return iRet;
     }
+    if(strResHeader->length()+i_iDataLen+strlen(HTTP_CONTENT_FLAG) > i_iBufMaxLen)
+    {
+        HTTP_LOGE("strResHeader->length()%d+i_iDataLen%d > i_iBufMaxLen%d err\r\n",strResHeader->length(),i_iDataLen,i_iBufMaxLen);
+        return iRet;
+    }
+    iRet=strResHeader->length();
+    memcpy(o_acBuf,(char *)strResHeader->c_str(),iRet);
+    iRet+=snprintf(o_acBuf+iRet,i_iBufMaxLen-iRet,"%s",HTTP_CONTENT_FLAG);
+    memcpy(o_acBuf+iRet,i_pcContentData,i_iDataLen);
+    iRet+=i_iDataLen;
     
     return iRet;
 }

@@ -9,6 +9,8 @@
 * Last Modified         : 	
 * History               : 	
 ******************************************************************************/
+#if 0
+
 #include "HttpClient.h"
 #include <stdlib.h>
 #include <stdio.h>
@@ -222,4 +224,4 @@ int HttpClient :: Recv(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen)
     return iRet;
 }
 
-
+#endif

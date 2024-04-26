@@ -1,7 +1,7 @@
 /*****************************************************************************
 * Copyright (C) 2020-2025 Hanson Yu  All rights reserved.
 ------------------------------------------------------------------------------
-* File Module           :       HttpClient.h
+* File Module           :       Http.h
 * Description           : 	
 * Created               :       2020.01.13.
 * Author                :       Yu Weifeng
@@ -9,32 +9,28 @@
 * Last Modified         : 	
 * History               : 	
 ******************************************************************************/
-#ifndef HTTP_CLIENT_H
-#define HTTP_CLIENT_H
+#ifndef HTTP_H
+#define HTTP_H
 
-#include "HttpCommon.h"
+#include <regex.h>
 
+#define HTTP_MAX_MATCH_NUM       8
 
 /*****************************************************************************
--Class			: HttpClient
+-Class			: Http
 -Description	: 
 * Modify Date	  Version		 Author 		  Modification
 * -----------------------------------------------
 * 2019/09/21	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-class HttpClient
+class Http
 {
 public:
-	HttpClient();
-	~HttpClient();
-	int Init(char * i_strIP,unsigned short i_wPort);
-	int Send(const char * i_srtMethod,char * i_srtURL,char * i_acSendBuf,int i_iSendLen,const char * i_srtContentType=NULL);
-	int RecvBody(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen);
-	int Recv(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen);
+	Http();
+	~Http();
+    int Regex(const char *i_strPattern,char *i_strBuf,regmatch_t *o_ptMatch);
 private:
-	TcpClient *m_pTcpClient;
-	string m_strServerIp;
-	int m_iServerPort;
+
 };
 
 

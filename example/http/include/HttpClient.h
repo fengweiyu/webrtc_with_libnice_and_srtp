@@ -14,7 +14,7 @@
 
 #include "HttpCommon.h"
 
-
+#if 0
 /*****************************************************************************
 -Class			: HttpClient
 -Description	: 
@@ -40,7 +40,7 @@ private:
 
 
 
-
+#endif
 
 
 
