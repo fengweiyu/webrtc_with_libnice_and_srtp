@@ -13,7 +13,7 @@
 #define PEERCONNECTION_CLIENT_H
 
 
-#include "Http.h"
+#include "HttpClient.h"
 
 
 /*****************************************************************************
