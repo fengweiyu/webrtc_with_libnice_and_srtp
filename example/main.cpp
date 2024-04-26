@@ -9,6 +9,8 @@
 * Last Modified         : 	
 * History               : 	
 ******************************************************************************/
+#if 0
+
 #include <stdio.h>  
 #include <stdlib.h>
 #include <string.h>
@@ -507,4 +509,4 @@ static int AnswerProc(WebRTC * i_pWebRTC,char * i_strServerIp, int i_iServerPort
 
     return iRet;
 }
-
+#endif
