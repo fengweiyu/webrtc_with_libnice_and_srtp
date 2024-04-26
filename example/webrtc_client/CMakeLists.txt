@@ -16,7 +16,7 @@ SET(src_list
 	)		
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}
 	${PROJECT_SOURCE_DIR}/include
-	${PROJECT_SOURCE_DIR}/../http/include
+	${PROJECT_SOURCE_DIR}/../net/include
 	)
 ADD_LIBRARY(webrtc_client_static STATIC ${src_list})
 SET_TARGET_PROPERTIES(webrtc_client_static PROPERTIES OUTPUT_NAME webrtc_client)
