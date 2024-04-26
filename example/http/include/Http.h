@@ -1,7 +1,7 @@
 /*****************************************************************************
 * Copyright (C) 2020-2025 Hanson Yu  All rights reserved.
 ------------------------------------------------------------------------------
-* File Module           :       webrtc.c
+* File Module           :       HttpClient.h
 * Description           : 	
 * Created               :       2020.01.13.
 * Author                :       Yu Weifeng
@@ -9,21 +9,12 @@
 * Last Modified         : 	
 * History               : 	
 ******************************************************************************/
-#ifndef HTTP_H
-#define HTTP_H
+#ifndef HTTP_CLIENT_H
+#define HTTP_CLIENT_H
 
-#include "TcpSocket.h"
+#include "HttpCommon.h"
 
 
-#define HTTP_PACKET_MAX_LEN 2048
-
-#define HTTP_METHOD_GET "GET"
-#define HTTP_METHOD_PUT "PUT"
-#define HTTP_METHOD_POST "POST"
-
-#define HTTP_VERSION "HTTP/1.0"
-
-#define HTTP_CONTENT_TYPE_TEXT     "text/plain"
 /*****************************************************************************
 -Class			: HttpClient
 -Description	: 
@@ -49,24 +40,6 @@ private:
 
 
 
-
-/*****************************************************************************
--Class			: HttpServer
--Description	: 
-* Modify Date	  Version		 Author 		  Modification
-* -----------------------------------------------
-* 2019/09/21	  V1.0.0		 Yu Weifeng 	  Created
-******************************************************************************/
-class HttpServer: public TcpServer
-{
-public:
-
-
-
-private:
-
-
-};
 
 
 
