@@ -17,9 +17,11 @@ function GenerateCmakeFile()
     if [ $1 == x86 ]; then
         echo "SET(CMAKE_C_COMPILER \"gcc\")" >> $CmakeFile  
         echo "SET(CMAKE_CXX_COMPILER \"g++\")" >> $CmakeFile    
+        echo "SET(CMAKE_ToolChain \"$1\")" >> $CmakeFile 
     else
         echo "SET(CMAKE_C_COMPILER \"$1-gcc\")" >> $CmakeFile
         echo "SET(CMAKE_CXX_COMPILER \"$1-g++\")" >> $CmakeFile
+        echo "SET(CMAKE_ToolChain \"$1\")" >> $CmakeFile 
     fi
 }
 function BuildLib()

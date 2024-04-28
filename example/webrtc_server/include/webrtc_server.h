@@ -14,6 +14,10 @@
 
 
 #include "TcpSocket.h"
+#include "webrtc_http_session.h"
+#include <mutex>
+
+using std::mutex;
 
 /*****************************************************************************
 -Class			: WebRtcServer
@@ -28,9 +32,17 @@ public:
 	WebRtcServer(int i_iServerPort);
 	virtual ~WebRtcServer();
     int Proc(char * i_strStunAddr,unsigned int i_dwStunPort);
-
-protected:
-
+    int DelHttpSession(void *i_pSrcIoHandle,int i_iClientSocketFd);
+    
+private:
+    static int HttpSessionExit(void *i_pSrcIoHandle,int i_iClientSocketFd,void *i_pIoHandle);
+    int DelMapHttpSession(WebRtcHttpSession * i_pWebRtcHttpSession,int i_iClientSocketFd);
+    int AddMapHttpSession(WebRtcHttpSession * i_pWebRtcHttpSession,int i_iClientSocketFd);
+    
+    map<int, WebRtcHttpSession *>  m_DelHttpSessionMap;
+    mutex m_DelMapMtx;
+    map<int, WebRtcHttpSession *>  m_HttpSessionMap;
+    mutex m_MapMtx;
 };
 
 #endif

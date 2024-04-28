@@ -13,10 +13,18 @@ project (WebRTC)
 
 SET(src_list
     webrtc_server.cpp
+    webrtc_http_session.cpp
+    webrtc_session.cpp
 	)		
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}
 	${PROJECT_SOURCE_DIR}/include
-	${PROJECT_SOURCE_DIR}/../net/include
+	${PROJECT_SOURCE_DIR}/../http/include
+    ${PROJECT_SOURCE_DIR}/../net/include
+	${PROJECT_SOURCE_DIR}/../base64/include
+    ${PROJECT_SOURCE_DIR}/../media/include
+    ${PROJECT_SOURCE_DIR}/../rtp/include
+    ${PROJECT_SOURCE_DIR}/../../build/${CMAKE_ToolChain}/lib/include
+    ${PROJECT_SOURCE_DIR}/../../build/${CMAKE_ToolChain}/third_lib/cJSON
 	)
 ADD_LIBRARY(webrtc_server_static STATIC ${src_list})
 SET_TARGET_PROPERTIES(webrtc_server_static PROPERTIES OUTPUT_NAME webrtc_server)
