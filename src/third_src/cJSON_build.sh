@@ -82,7 +82,7 @@ function CopyLib()
     cp $CurPwd/build/lib/libcjson.a .
     
 
-#   cp $CurPwd/cJSON.h .
+   cp $CurPwd/cJSON.h .
 
 
 }
