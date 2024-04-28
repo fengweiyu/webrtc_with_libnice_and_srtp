@@ -94,14 +94,15 @@ WebRtcClientOffer :: ~WebRtcClientOffer()
 int WebRtcClientOffer :: Login(char * i_strServerIp,int i_iServerPort)
 {
     int iRet = -1;
-
+    string strIP;
+    
     if(NULL==i_strServerIp || i_iServerPort<0)
     {
         printf("WebRtcClientOffer :: login NULL\r\n");
         return iRet;
     }
-
-    iRet=m_pTcpClient->Init(i_strServerIp,i_iServerPort);
+    strIP.assign(i_strServerIp);
+    iRet=m_pTcpClient->Init(&strIP,i_iServerPort);
     return iRet;
 }
 
