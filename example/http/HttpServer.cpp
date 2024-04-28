@@ -14,7 +14,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <iostream>
-
+#include "Http.h"
 
 using std::cout;
 using std::endl;
@@ -32,7 +32,7 @@ using std::endl;
 ******************************************************************************/
 HttpServer :: HttpServer()
 {
-    strResHeader = NULL;
+    m_pHttp = new Http();
 }
 
 /*****************************************************************************
@@ -47,11 +47,10 @@ HttpServer :: HttpServer()
 ******************************************************************************/
 HttpServer :: ~HttpServer()
 {
-    if(NULL != strResHeader)
+    if(NULL != m_pHttp)
     {
-        delete strResHeader;
-        strResHeader = NULL;
-    }   
+        delete (Http *)m_pHttp;
+    }
 }
 
 
@@ -77,6 +76,7 @@ int HttpServer :: ParseRequest(char *i_pcReqData,int i_iDataLen,T_HttpReqPacket 
 	const char *strConnectionPatten="Connection: ([A-Za-z0-9-]+)\r\n";
 	const char *strContentLenPatten="Content-Length: ([0-9]+)\r\n";
 	const char *strContentTypePatten="Content-type: ([A-Za-z0-9-/;.]+)\r\n";
+	Http *pHttp = ((Http *)m_pHttp);
 	
     if(NULL == i_pcReqData ||NULL == o_ptHttpReqPacket )
     {
@@ -92,7 +92,7 @@ int HttpServer :: ParseRequest(char *i_pcReqData,int i_iDataLen,T_HttpReqPacket 
     strHttpHeader.assign(i_pcReqData,0,pBody-i_pcReqData);
 
     memset(atMatch,0,sizeof(atMatch));
-    if(REG_NOERROR == Http::Regex(strFirstLinePatten,(char *)strHttpHeader.c_str(),atMatch))
+    if(REG_NOERROR == pHttp->Regex(strFirstLinePatten,(char *)strHttpHeader.c_str(),atMatch))
     {
         strFindRes.assign(strHttpHeader,atMatch[1].rm_so,atMatch[1].rm_eo-atMatch[1].rm_so);//0ÊÇÕûÐÐ
         snprintf(o_ptHttpReqPacket->strMethod,sizeof(o_ptHttpReqPacket->strMethod),"%s",strFindRes.c_str());
@@ -102,19 +102,19 @@ int HttpServer :: ParseRequest(char *i_pcReqData,int i_iDataLen,T_HttpReqPacket 
         snprintf(o_ptHttpReqPacket->strVersion,sizeof(o_ptHttpReqPacket->strVersion),"%s",strFindRes.c_str());
     }
     memset(atMatch,0,sizeof(atMatch));
-    if(REG_NOERROR == Http::Regex(strConnectionPatten,(char *)strHttpHeader.c_str(),atMatch))
+    if(REG_NOERROR == pHttp->Regex(strConnectionPatten,(char *)strHttpHeader.c_str(),atMatch))
     {
         strFindRes.assign(strHttpHeader,atMatch[1].rm_so,atMatch[1].rm_eo-atMatch[1].rm_so);
         snprintf(o_ptHttpReqPacket->strConnection,sizeof(o_ptHttpReqPacket->strConnection),"%s",strFindRes.c_str());
     }
     memset(atMatch,0,sizeof(atMatch));
-    if(REG_NOERROR == Http::Regex(strContentLenPatten,(char *)strHttpHeader.c_str(),atMatch))
+    if(REG_NOERROR == pHttp->Regex(strContentLenPatten,(char *)strHttpHeader.c_str(),atMatch))
     {
         strFindRes.assign(strHttpHeader,atMatch[1].rm_so,atMatch[1].rm_eo-atMatch[1].rm_so);
         o_ptHttpReqPacket->iContentLength=atoi(strFindRes.c_str());
     }
     memset(atMatch,0,sizeof(atMatch));
-    if(REG_NOERROR == Http::Regex(strContentTypePatten,(char *)strHttpHeader.c_str(),atMatch))
+    if(REG_NOERROR == pHttp->Regex(strContentTypePatten,(char *)strHttpHeader.c_str(),atMatch))
     {
         strFindRes.assign(strHttpHeader,atMatch[1].rm_so,atMatch[1].rm_eo-atMatch[1].rm_so);
         snprintf(o_ptHttpReqPacket->strContentType,sizeof(o_ptHttpReqPacket->strContentType),"%s",strFindRes.c_str());
@@ -149,8 +149,8 @@ int HttpServer :: CreateResponse(int i_iCode, const char * i_strMsg,const char *
         HTTP_LOGE("CreateResponse NULL\r\n");
         return iRet;
     }
-    iRet=snprintf(strRes,sizeof(strRes),"%s %d %s",i_strVersion,i_iCode,i_strMsg);
-    strResHeader = new string(strRes);
+    iRet=snprintf(strRes,sizeof(strRes),"%s %d %s\r\n",i_strVersion,i_iCode,i_strMsg);
+    strResHeader.assign(strRes);
     
     return iRet;
 }
@@ -176,13 +176,13 @@ int HttpServer :: SetResHeaderValue(const char *i_strKey,const char *i_strValue)
         HTTP_LOGE("SetResHeaderValue NULL\r\n");
         return iRet;
     }
-    if(NULL == strResHeader)
+    if(0 == strResHeader.length())
     {
         HTTP_LOGE("SetResHeaderValue strResHeader NULL\r\n");
         return iRet;
     }
-    iRet=snprintf(strRes,sizeof(strRes),"%s: %s",i_strKey,i_strValue);
-    strResHeader->append(strRes);
+    iRet=snprintf(strRes,sizeof(strRes),"%s: %s\r\n",i_strKey,i_strValue);
+    strResHeader.append(strRes);
     
     return iRet;
 }
@@ -203,26 +203,29 @@ int HttpServer :: FormatResToStream(char *i_pcContentData,int i_iDataLen,char *o
     int iRet = -1;
     char strRes[128];
     
-    if(NULL == i_pcContentData || NULL == o_acBuf)
+    if(NULL == o_acBuf)
     {
         HTTP_LOGE("FormatResToStream NULL\r\n");
         return iRet;
     }
-    if(NULL == strResHeader)
+    if(0 == strResHeader.length())
     {
         HTTP_LOGE("FormatResToStream strResHeader NULL\r\n");
         return iRet;
     }
-    if(strResHeader->length()+i_iDataLen+strlen(HTTP_CONTENT_FLAG) > i_iBufMaxLen)
+    if(strResHeader.length()+i_iDataLen+strlen("\r\n") > i_iBufMaxLen)
     {
-        HTTP_LOGE("strResHeader->length()%d+i_iDataLen%d > i_iBufMaxLen%d err\r\n",strResHeader->length(),i_iDataLen,i_iBufMaxLen);
+        HTTP_LOGE("strResHeader->length()%d+i_iDataLen%d > i_iBufMaxLen%d err\r\n",strResHeader.length(),i_iDataLen,i_iBufMaxLen);
         return iRet;
     }
-    iRet=strResHeader->length();
-    memcpy(o_acBuf,(char *)strResHeader->c_str(),iRet);
-    iRet+=snprintf(o_acBuf+iRet,i_iBufMaxLen-iRet,"%s",HTTP_CONTENT_FLAG);
-    memcpy(o_acBuf+iRet,i_pcContentData,i_iDataLen);
-    iRet+=i_iDataLen;
+    iRet=strResHeader.length();
+    memcpy(o_acBuf,(char *)strResHeader.c_str(),iRet);
+    iRet+=snprintf(o_acBuf+iRet,i_iBufMaxLen-iRet,"%s","\r\n");
+    if(NULL != i_pcContentData)
+    {
+        memcpy(o_acBuf+iRet,i_pcContentData,i_iDataLen);
+        iRet+=i_iDataLen;
+    }
     
     return iRet;
 }

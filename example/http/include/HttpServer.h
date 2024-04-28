@@ -13,7 +13,6 @@
 #define HTTP_SERVER_H
 
 #include "HttpCommon.h"
-#include "Http.h"
 #include <string>
 
 
@@ -26,7 +25,7 @@ using std::string;
 * -----------------------------------------------
 * 2019/09/21	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-class HttpServer : private Http
+class HttpServer
 {
 public:
 	HttpServer();
@@ -36,8 +35,9 @@ public:
 	int SetResHeaderValue(const char *i_strKey,const char *i_strValue);
 	int FormatResToStream(char *i_pcContentData,int i_iDataLen,char *o_acBuf,int i_iBufMaxLen);
 private:
-    string *strResHeader;
+    string strResHeader;
     string strResponse;
+    void *m_pHttp;
 };
 
 
