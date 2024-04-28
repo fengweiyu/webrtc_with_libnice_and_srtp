@@ -16,7 +16,7 @@
 
 #include <pthread.h>
 #include <sys/prctl.h>
-#include "webrtc_server.h"
+#include "webrtc_server_interface.h"
 
 static void PrintUsage(char *i_strProcName);
 
@@ -50,7 +50,7 @@ int main(int argc, char* argv[])
         snprintf(strStunIp,sizeof(strStunIp),"%s",argv[2]);
         dwStunPort=atoi(argv[3]);
     }
-    WebRtcServer *pWebRtcServer = new WebRtcServer(dwServerPort);
+    WebRtcServerInf *pWebRtcServer = new WebRtcServerInf(dwServerPort);
     iRet=pWebRtcServer->Proc(strStunIp,dwStunPort);//×èÈû
     
     return iRet;

@@ -12,6 +12,10 @@ SET(USE_STATIC_LIB_LINKAGE ON)
 #SET(CMAKE_C_FLAGS "-g")
 SET(CMAKE_CXX_FLAGS "-g")
 
+# 设置C++标准为C++11
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 if(${CMAKE_ToolChain} STREQUAL "")
 
 else()
@@ -28,9 +32,9 @@ INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}
 
 ADD_EXECUTABLE(webrtcServer ${SRC_LIST})
 
+TARGET_LINK_LIBRARIES(webrtcServer ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/webrtc_server/libwebrtc_server.a)
 TARGET_LINK_LIBRARIES(webrtcServer ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/lib/libwebrtc.a)
 TARGET_LINK_LIBRARIES(webrtcServer ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/base64/libbase64.a)
-TARGET_LINK_LIBRARIES(webrtcServer ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/webrtc_server/libwebrtc_server.a)
 TARGET_LINK_LIBRARIES(webrtcServer ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/rtp/librtp.a)
 TARGET_LINK_LIBRARIES(webrtcServer ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/media/libmedia.a)
 TARGET_LINK_LIBRARIES(webrtcServer ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/http/libhttp.a)
