@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 /*****************************************************************************
 -Fuction		: WebRtcServer
@@ -78,7 +79,7 @@ WebRtcHttpSession :: ~WebRtcHttpSession()
 * -----------------------------------------------
 * 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-WebRtcHttpSession :: Proc()
+int WebRtcHttpSession :: Proc()
 {
     int iRet=-1;
     char *pcRecvBuf=NULL;
@@ -192,8 +193,10 @@ int WebRtcHttpSession :: HandleHttpReq(T_HttpReqPacket *i_ptHttpReqPacket,char *
         HttpServer *pHttpServer=new HttpServer();
         iRet=pHttpServer->CreateResponse();
         iRet|=pHttpServer->SetResHeaderValue("Access-Control-Allow-Method", "POST, GET, OPTIONS, DELETE, PUT");
-        iRet|=pHttpServer->SetResHeaderValue("Access-Control-Max-Age", 600);
+        iRet|=pHttpServer->SetResHeaderValue("Access-Control-Max-Age", "600");
         iRet|=pHttpServer->SetResHeaderValue("Access-Control-Allow-Headers", "access-control-allow-headers,accessol-allow-origin,content-type");//解决浏览器跨域问题
+        iRet|=pHttpServer->SetResHeaderValue("Access-Control-Allow-Origin", "*");
+        iRet|=pHttpServer->SetResHeaderValue("Connection", "Keep-Alive");
         iRet=pHttpServer->FormatResToStream(NULL,0,o_acBuf,i_iBufMaxLen);
         delete pHttpServer;
         return iRet;
@@ -334,7 +337,7 @@ int WebRtcHttpSession::SendHttpContent(const char * i_strData)
     iRet|=pHttpServer->SetResHeaderValue("Connection", "Keep-Alive");
     iRet|=pHttpServer->SetResHeaderValue("Content-Type", "application/json; charset=utf-8");
     iRet|=pHttpServer->SetResHeaderValue("Access-Control-Allow-Origin", "*");
-    iRet=pHttpServer->FormatResToStream(i_strData,strlen(i_strData),pcSendBuf,HTTP_PACKET_MAX_LEN);
+    iRet=pHttpServer->FormatResToStream((char *)i_strData,strlen(i_strData),pcSendBuf,HTTP_PACKET_MAX_LEN);
     delete pHttpServer;
     if(iRet > 0)
     {
@@ -391,7 +394,7 @@ int WebRtcHttpSession::SendErrCode(void *i_pSrcIoHandle,int i_iErrorCode)
             strErrCode = "500 URL Timeout";
             break;
         }
-        case 500:
+        case 502:
         {
             iCode = 500;
             strErrCode = "500 Media Timeout";
@@ -454,7 +457,7 @@ int WebRtcHttpSession::Exit(void *i_pSrcIoHandle,int i_iErr)
         m_pWebRtcSession = NULL;
     }*/
     
-    WEBRTC_LOGW2("WebRtcHttpSession::Exit\r\n");
+    WEBRTC_LOGW("WebRtcHttpSession::Exit\r\n");
     m_iHttpSessionProcFlag = 0;
 
     return iRet;

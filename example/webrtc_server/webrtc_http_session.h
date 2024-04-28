@@ -15,14 +15,11 @@
 #include "HttpServer.h"
 #include "TcpSocket.h"
 #include "webrtc_session.h"
-#include <thread>
-
-using std::thread;
 
 typedef struct WebRtcHttpSessionCb
 {
     int (*HttpSessionExit)(void *i_pSrcIoHandle,int i_iClientSocketFd,void *i_pIoHandle);
-    void *pObj;//注意多线程竞争关系
+    void *pObj;//
 }T_WebRtcHttpSessionCb;
 
 /*****************************************************************************
@@ -39,10 +36,12 @@ public:
 	virtual ~WebRtcHttpSession();
     int Proc();
     int SendHttpContent(const char * i_strData);
+    int SendErrCode(void *i_pSrcIoHandle,int i_iErrorCode);
+    int Exit(void *i_pSrcIoHandle,int i_iErr);
 private:
     static int SessionSendData(const char * i_strData,void *i_pIoHandle);
     static int SessionSendErrorCodeAndExit(void *i_pSrcIoHandle,int i_iErrorCode,void *i_pIoHandle);
-    int HandleHttpReq(T_HttpReqPacket *i_ptHttpReqPacket);
+    int HandleHttpReq(T_HttpReqPacket *i_ptHttpReqPacket,char *o_acBuf,int i_iBufMaxLen);
     WebRtcSession* NewWebRtcSession();
 
     int m_iClientSocketFd;

@@ -12,15 +12,12 @@
 #ifndef WEBRTC_SESSION_H
 #define WEBRTC_SESSION_H
 
+#include <thread>
 #include "webrtc_interface.h"
 #include "MediaHandle.h"
 #include "rtp_interface.h"
 
-#define  WEBRTCS_LOGW(...)     printf(__VA_ARGS__)
-#define  WEBRTCS_LOGE(...)     printf(__VA_ARGS__)
-#define  WEBRTCS_LOGD(...)     printf(__VA_ARGS__)
-#define  WEBRTCS_LOGI(...)     printf(__VA_ARGS__)
-
+using std::thread;
 
 typedef struct WebRtcSessionCb
 {
@@ -41,9 +38,29 @@ class WebRtcSession
 public:
 	WebRtcSession(char * i_strStunAddr,unsigned int i_dwStunPort,T_WebRtcSessionCb i_tWebRtcSessionCb,int i_iID);
 	virtual ~WebRtcSession();
-    int Proc();
+    int SetReqData(const char *i_strReqURL,const char *i_strReqBody);
+    int StopSession(int i_iError);
+    
 	string * m_pFileName;
 private:
+    static int PushRtpData(char * i_acDataBuf,int i_iDataLen,void *i_pIoHandle);
+    static int RecvClientStopMsg(void *i_pIoHandle);
+    static int IsRtpCb(char * i_acDataBuf,int i_iDataLen,void *i_pIoHandle);
+    
+    int TestURL(const char * url);
+    int HandleRequest(const char * strURL);
+    void TestProc();
+    int SendErrorCodeAndExit(int i_iErrorCode) ;
+    int HandleRemoteSDP();
+    int HandleMediaFrame(T_MediaFrameInfo * i_ptFrameInfo) ;
+    int SendDatas(T_MediaFrameInfo * i_ptFrameInfo);
+    int SendLocalSDP(T_VideoEncodeParam * i_ptVideoEncodeParam);
+    int GetSupportedVideoInfoFromSDP(const char * i_strVideoFormatName,unsigned int i_dwVideoTimestampFrequency,unsigned char i_bPacketizationMode,unsigned int i_dwProfileLevelId,T_VideoInfo *o_ptVideoInfo);
+    int GetSupportedAudioInfoFromSDP(const char * i_strAudioFormatName,unsigned int i_dwAudioTimestampFrequency,T_AudioInfo *o_ptAudioInfo);
+    unsigned int GetTickCount();  // milliseconds
+    int IsRtp(char * i_acDataBuf,int i_iDataLen);
+
+        
     T_WebRtcSessionCb m_tWebRtcSessionCb;
 
     WebRtcInterface * m_pWebRTC;

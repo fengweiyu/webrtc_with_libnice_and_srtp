@@ -9,9 +9,12 @@ SET(CMAKE_TOOLCHAIN_FILE "build/ToolChain.cmake")
 project (WebRTC)
  
 #SET(CMAKE_C_FLAGS "-g")
-
+# 设置C++标准为C++11
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 SET(src_list
+    webrtc_server_interface.cpp
     webrtc_server.cpp
     webrtc_http_session.cpp
     webrtc_session.cpp

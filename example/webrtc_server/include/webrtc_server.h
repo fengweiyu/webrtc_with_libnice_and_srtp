@@ -12,11 +12,15 @@
 #ifndef WEBRTC_SERVER_H
 #define WEBRTC_SERVER_H
 
-
-#include "TcpSocket.h"
-#include "webrtc_http_session.h"
 #include <mutex>
+#include <string>
+#include <list>
+#include <map>
+#include "webrtc_http_session.h"
 
+using std::map;
+using std::string;
+using std::list;
 using std::mutex;
 
 /*****************************************************************************
@@ -36,7 +40,8 @@ public:
     
 private:
     static int HttpSessionExit(void *i_pSrcIoHandle,int i_iClientSocketFd,void *i_pIoHandle);
-    int DelMapHttpSession(WebRtcHttpSession * i_pWebRtcHttpSession,int i_iClientSocketFd);
+    int CheckHttpSession();
+    int DelMapHttpSession(int i_iClientSocketFd,WebRtcHttpSession * i_pWebRtcHttpSession);
     int AddMapHttpSession(WebRtcHttpSession * i_pWebRtcHttpSession,int i_iClientSocketFd);
     
     map<int, WebRtcHttpSession *>  m_DelHttpSessionMap;

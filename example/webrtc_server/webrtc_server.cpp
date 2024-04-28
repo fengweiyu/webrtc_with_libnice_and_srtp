@@ -13,6 +13,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <iostream>
+#include <utility>
+
+using std::make_pair;
 
 /*****************************************************************************
 -Fuction		: WebRtcServer
@@ -53,7 +57,7 @@ WebRtcServer :: ~WebRtcServer()
 * -----------------------------------------------
 * 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-WebRtcServer :: Proc(char * i_strStunAddr,unsigned int i_dwStunPort)
+int WebRtcServer :: Proc(char * i_strStunAddr,unsigned int i_dwStunPort)
 {
     int iClientSocketFd=-1;
     WebRtcHttpSession *pWebRtcHttpSession = NULL;

@@ -9,13 +9,15 @@
 * Last Modified         : 	
 * History               : 	
 ******************************************************************************/
-#include "webrtc_session.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
+#include <unistd.h>
+#include "webrtc_session.h"
 #include "cJSON.h"
 #include "Base64.h"
+#include "rtp_adapter.h"
 
 #define WEBRTC_VIDEO_ENCODE_FORMAT_NAME "H264"
 #define WEBRTC_H264_TIMESTAMP_FREQUENCY 90000
@@ -355,7 +357,7 @@ void WebRtcSession::TestProc()
             usleep((dwSleepTime-(dwFileCurTick-dwFileLastTick))*1000);
         }
         //usleep(20*1000);//¿¨¶Ù
-        dwFileLastTick = GetTickCount;
+        dwFileLastTick = GetTickCount();
         
         iRet = this->SendDatas(&m_tFileFrameInfo);
         //WEBRTC_LOGD2(m_iLogID,"%d SendDatas iRet %d dwSleepTime%d\r\n",m_iLastRecvDataTime,iRet,dwSleepTime);
