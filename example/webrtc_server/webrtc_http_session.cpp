@@ -54,7 +54,7 @@ WebRtcHttpSession :: ~WebRtcHttpSession()
 {
     if(NULL!= m_pHttpSessionProc)
     {
-        WEBRTC_LOGW("~WebRtcHttpSession start exit\r\n");
+        WEBRTC_LOGW("WebRtcHttpSession start exit\r\n");
         m_iHttpSessionProcFlag = 0;//m_pWebRTC->StopProc();
         while(0 == m_iExitProcFlag){usleep(10);};
         //m_pHttpSessionProc->join();//用join()等待退出这里会一直阻塞//自己join自己肯定不行
@@ -122,7 +122,12 @@ int WebRtcHttpSession :: Proc()
         iRecvLen = 0;
         memset(pcRecvBuf,0,HTTP_PACKET_MAX_LEN);
         iRet=TcpServer::Recv(pcRecvBuf,&iRecvLen,HTTP_PACKET_MAX_LEN,m_iClientSocketFd);
-        if(iRet < 0 || iRecvLen<=0)
+        if(iRet < 0)
+        {
+            WEBRTC_LOGE("TcpServer::Recv err exit %d\r\n",iRecvLen);
+            break;
+        }
+        if(iRecvLen<=0)
         {
             continue;
         }
@@ -195,7 +200,7 @@ int WebRtcHttpSession :: HandleHttpReq(T_HttpReqPacket *i_ptHttpReqPacket,char *
         iRet|=pHttpServer->SetResHeaderValue("Access-Control-Allow-Method", "POST, GET, OPTIONS, DELETE, PUT");
         iRet|=pHttpServer->SetResHeaderValue("Access-Control-Max-Age", "600");
         iRet|=pHttpServer->SetResHeaderValue("Access-Control-Allow-Headers", "access-control-allow-headers,accessol-allow-origin,content-type");//解决浏览器跨域问题
-        iRet|=pHttpServer->SetResHeaderValue("Access-Control-Allow-Origin", "*");
+        iRet|=pHttpServer->SetResHeaderValue("Access-Control-Allow-Origin","*");
         iRet|=pHttpServer->SetResHeaderValue("Connection", "Keep-Alive");
         iRet=pHttpServer->FormatResToStream(NULL,0,o_acBuf,i_iBufMaxLen);
         delete pHttpServer;
@@ -210,8 +215,7 @@ int WebRtcHttpSession :: HandleHttpReq(T_HttpReqPacket *i_ptHttpReqPacket,char *
                 WEBRTC_LOGE("unsupport repeat req HTTP_METHOD_POST %s\r\n",i_ptHttpReqPacket->strURL);
             }
             m_pWebRtcSession = NewWebRtcSession();
-            
-            iRet = 0;
+            iRet = m_pWebRtcSession->SetReqData(i_ptHttpReqPacket->strURL, i_ptHttpReqPacket->acBody);
         }
         return iRet;
     }
@@ -336,6 +340,7 @@ int WebRtcHttpSession::SendHttpContent(const char * i_strData)
     iRet=pHttpServer->CreateResponse();
     iRet|=pHttpServer->SetResHeaderValue("Connection", "Keep-Alive");
     iRet|=pHttpServer->SetResHeaderValue("Content-Type", "application/json; charset=utf-8");
+    iRet|=pHttpServer->SetResHeaderValue("Content-Length", (int)strlen(i_strData));
     iRet|=pHttpServer->SetResHeaderValue("Access-Control-Allow-Origin", "*");
     iRet=pHttpServer->FormatResToStream((char *)i_strData,strlen(i_strData),pcSendBuf,HTTP_PACKET_MAX_LEN);
     delete pHttpServer;
@@ -418,7 +423,7 @@ int WebRtcHttpSession::SendErrCode(void *i_pSrcIoHandle,int i_iErrorCode)
         }
     }
     HttpServer *pHttpServer=new HttpServer();
-    iRet=pHttpServer->CreateResponse();
+    iRet=pHttpServer->CreateResponse(iCode,strErrCode);
     iRet|=pHttpServer->SetResHeaderValue("Connection", "Keep-Alive");
     iRet|=pHttpServer->SetResHeaderValue("Access-Control-Allow-Origin", "*");
     iRet=pHttpServer->FormatResToStream(NULL,0,strHttpRes,sizeof(strHttpRes));
@@ -460,6 +465,6 @@ int WebRtcHttpSession::Exit(void *i_pSrcIoHandle,int i_iErr)
     WEBRTC_LOGW("WebRtcHttpSession::Exit\r\n");
     m_iHttpSessionProcFlag = 0;
 
-    return iRet;
+    return 0;
 }
 

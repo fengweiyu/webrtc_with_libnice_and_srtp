@@ -15,6 +15,7 @@
 #include <string.h>
 #include <iostream>
 #include <utility>
+#include <unistd.h>
 
 using std::make_pair;
 
@@ -70,6 +71,7 @@ int WebRtcServer :: Proc(char * i_strStunAddr,unsigned int i_dwStunPort)
         iClientSocketFd=TcpServer::Accept();
         if(iClientSocketFd<0)  
         {  
+            usleep(10*1000);
             CheckHttpSession();
             continue;
         } 
@@ -121,8 +123,8 @@ int WebRtcServer::DelHttpSession(void *i_pSrcIoHandle,int i_iClientSocketFd)
         return -1;
     }
     WebRtcHttpSession * pWebRtcHttpSession = (WebRtcHttpSession *)i_pSrcIoHandle;
-    
-    std::lock_guard<std::mutex> lock(m_DelMapMtx);//std::lock_guard对象会在其作用域结束时自动释放互斥量
+    WEBRTC_LOGE("DelHttpSession i_iClientSocketFd %d\r\n",i_iClientSocketFd);
+    std::lock_guard<std::mutex> lock(m_DelMapMtx);//std::i_iClientSocketFd对象会在其作用域结束时自动释放互斥量
     m_DelHttpSessionMap.insert(make_pair(i_iClientSocketFd,pWebRtcHttpSession));
     return 0;
 }
@@ -145,7 +147,7 @@ int WebRtcServer::CheckHttpSession()
     for (map<int, WebRtcHttpSession *>::iterator iter = m_DelHttpSessionMap.begin(); iter != m_DelHttpSessionMap.end();)
     {
         DelMapHttpSession(iter->first,iter->second);
-        iter=m_HttpSessionMap.erase(iter);// 擦除元素并返回下一个元素的迭代器
+        iter=m_DelHttpSessionMap.erase(iter);// 擦除元素并返回下一个元素的迭代器
     }
     return 0;
 }
@@ -174,7 +176,7 @@ int WebRtcServer::DelMapHttpSession(int i_iClientSocketFd,WebRtcHttpSession * i_
     {
         if(i_iClientSocketFd == iter->first && i_pWebRtcHttpSession == iter->second)
         {
-            WEBRTC_LOGW("DelHttpSession[%p]%d",i_pWebRtcHttpSession,iter->first);
+            WEBRTC_LOGW("DelHttpSession[%p]%d\r\n",i_pWebRtcHttpSession,iter->first);
             delete i_pWebRtcHttpSession;
             iter=m_HttpSessionMap.erase(iter);// 擦除元素并返回下一个元素的迭代器
         }

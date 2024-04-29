@@ -2,7 +2,7 @@
 * Copyright (C) 2020-2025 Hanson Yu  All rights reserved.
 ------------------------------------------------------------------------------
 * File Module           :       WebRtcSession.c
-* Description           : 	
+* Description           : 	    webrtc媒体通道建立完成时间优化到600-700ms
 * Created               :       2023.01.13.
 * Author                :       Yu Weifeng
 * Function List         : 	
@@ -290,7 +290,8 @@ void WebRtcSession::TestProc()
 	unsigned int dwSleepTime=0;
 	unsigned int dwFileCurTick=0;
 	unsigned int dwFileLastTick=0;
-
+	
+    memset(&m_tFileFrameInfo,0,sizeof(T_MediaFrameInfo));
     m_tFileFrameInfo.pbFrameBuf = new unsigned char [WEBRTC_FRAME_BUF_MAX_LEN];
     m_tFileFrameInfo.iFrameBufMaxLen = WEBRTC_FRAME_BUF_MAX_LEN;
     m_iFileProcFlag = 1;
