@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<!--
+ *  Copyright (c) 2015 The WebRTC project authors. All Rights Reserved.
+ *
+ *  Use of this source code is governed by a BSD-style license
+ *  that can be found in the LICENSE file in the root of the source
+ *  tree.
+-->
+<html>
+<head>
+
+    <meta charset="utf-8">
+    <meta name="description" content="WebRTC code samples">
+    <meta name="viewport" content="width=device-width, user-scalable=yes, initial-scale=1, maximum-scale=1">
+    <meta itemprop="description" content="Client-side WebRTC code samples">
+    <meta itemprop="name" content="WebRTC code samples">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta id="theme-color" name="theme-color" content="#ffffff">
+
+    <base target="_blank">
+
+    <title>Peer connection</title>
+
+</head>
+
+<body>
+
+<div id="container">
+    <video id="remoteVideo" playsinline controls autoplay muted style="width: 80%;"></video>
+	<p/>
+	<!-- <textarea name="" id="getPlayUrlInput" cols="75" rows="6" style="display: none;"></textarea> -->
+	<textarea name="" id="getPlayUrlInput" cols="75" rows="6" style="display: none;"></textarea>
+	<textarea name="" id="getTalkUrlInput" cols="75" rows="6" style="display: none;"></textarea>
+	<div class="box">
+		<button id="GetPlayUrlButton" style="display: none;">GetPlayUrl</button>
+		<button id="GetTalkUrlButton" style="display: none;">GetTalkUrl</button>
+		<br><br><br>
+    </div>
+
+	<textarea name="" id="palyUrlInput" cols="75" rows="6"></textarea>
+	<div class="box">
+		<button id="callButton">Call</button>
+		<button id="hangupButton">Hangup</button>
+		<br><br><br>
+    </div>
+	<!-- <audio id="remoteAuido" controls autoplay style="display: none;"></audio> -->
+	<audio id="remoteAuido" controls autoplay></audio>
+	<p/>
+	<textarea name="" id="talkUrlInput" cols="75" rows="6"></textarea>
+	<div class="box">
+		<button id="startTalkButton">startTalk</button>
+		<button id="stopTalkButton">stopTalk</button>
+		<br><br><br>
+    </div>
+
+</div>
+<script src="https://cdn.jsdelivr.net/npm/vconsole@latest/dist/vconsole.min.js"></script>
+<script  type="text/javascript">
+	'use strict';
+	var vConsole = new window.VConsole();//获取麦克风权限必须使用https访问本文件，https访问index则必须这里请求的也是https，不然可以使用src="http
+	const callButton = document.getElementById('callButton');
+	const startTalkButton = document.getElementById('startTalkButton');
+	const stopTalkButton = document.getElementById('stopTalkButton');
+	const hangupButton = document.getElementById('hangupButton');
+	const setAnswerButton = document.getElementById('setAnswerButton');
+	const playUrlInput = document.getElementById('palyUrlInput')
+	const talkUrlInput = document.getElementById('talkUrlInput')
+
+	const getPlayUrlInput = document.getElementById('getPlayUrlInput')
+	const getTalkUrlInput = document.getElementById('getTalkUrlInput')
+	const GetPlayUrlButton = document.getElementById('GetPlayUrlButton');
+	const GetTalkUrlButton = document.getElementById('GetTalkUrlButton');
+
+	callButton.disabled = false;
+	startTalkButton.disabled = false;
+	stopTalkButton.disabled = true;
+	hangupButton.disabled = true;
+	callButton.addEventListener('click', call);
+	startTalkButton.addEventListener('click', setTalkEnable);
+	stopTalkButton.addEventListener('click', setTalkDisable);
+
+	GetPlayUrlButton.addEventListener('click', GetPlayUrl);
+	GetTalkUrlButton.addEventListener('click', GetTalkUrl);
+	hangupButton.addEventListener('click', hangup);
+	//playUrlInput.value = 'https://gwm-000-cn-0448.bcloud365.net:9113/test/202404h264g711a.flv.webrtc'//https访问index则必须这里请求的也是https,使用nginx代理，为了防止复用一个socket链接，则端口号也不同
+    //playUrlInput.value = 'http://139.9.149.150:9112/test/202404h264g711a.flv.webrtc'//
+    playUrlInput.value = 'https://139.9.149.150:9113/test/H264G711A.flv.webrtc'//依赖nginx代理
+	//talkUrlInput.value = 'https://gwm-000-cn-0448.bcloud365.net:9113/testTalk/202404h264g711a.flv.webrtc'//'https://139.9.149.150:9030/testTalk/202404h264g711a.flv.webrtc'
+	talkUrlInput.value = 'https://139.9.149.150:9113/testTalk/H264G711A.flv.webrtc'//依赖nginx代理
+    //playUrlInput.value = 'https://gwm-000-cn-0448.bcloud365.net:9018/live/44b35a3d597ffd1c/Mnx8Y2U3ZTg2YmYxOGZmZTE3YmQ0NDRkZWUxMTcyN2FjZTd8fDQ0YjM1YTNkNTk3ZmZkMWN8fGU5N2NlZmQ3ZDJjYTU4ZWQ3MDY2YTM3M2Y52YTQ1MjlmYzllOTIzZmYwOTM1NmJjZmM3YTdjNmI5YTk5YTU3MGR8fHdlYnJ0Y3x8MTcxMjcyODcxMTc2Nnx8MTc5OTkwMTU4MDM5M3x8R1dN.5c1d2c2839fdd47ba7c8f328eb5708a7.webrtc';//http://139.9.149.150:9018/test/202404h264g711a.flv.webrtc
+	//talkUrlInput.value = 'https://gwm-000-cn-0448.bcloud365.net:8889/talk/44b35a3d597ffd1c/Mnx8Y2U3ZTg2YmYxOGZmZTE3YmQ0NDRkZWUxMTcyN2FjZTd8fDQ0YjM1YTNkNTk3ZmZkMWN8fGQ5MjMxZGM0MjVkMWNkYTdkZjU5NzljNGJk7MTIwMjhhYjcyZTkwOTEyYzNkNjA2ZGQyOGM4ZWZjNWY5MGQxMTJ8fHJ0bXB8fDE3MTI3MzAxMDU5NzN8fDE3OTk5MDE1ODAzOTN8fEdXTQ%3D%3D.2560e5067a6f46f81a382cd95ca5f7a1.webrtc';//https://139.9.149.150:9030/test_videoCall/202404h264g711a.flv.webrtc
+	getPlayUrlInput.value = 'https://gwm-000-cn-0448.bcloud365.net:8188/media?appKey=ce7e86bf18ffe17bd444dee11727ace7&channel=0&expireTime=1799901580393&mediaType=webrtc&stream=1&token=YWNiZTQxOWI0Nnw0NGIzNWEzZDU5N2ZmZDFjfGV5SndJam9pUkd4VGFuUTJNR3dpTENKMU9lqb2lZV1J0YVc0aWZRPT18MTY5OTkwMTU3OTAxOXxnd3B8MTIyLjkuMTM0LjI3fG1kNQ%3D%3D.3dd1fee793cf334b6b029320e4012116&type=ts&userToken=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJycyIsImFwcEtleSI6ImNlN2U4NmJmMThmZmUxN2JkNDQ0ZGVlMTE3MjdhY2U3IiwiZXhwIjoxNzAyMTg4MTEyLCJ0eXBlIjoiY29tIiwiYWNjb3VudCI6IjJlZjEwNDc3NzM0NjQzYTJiYTg4ZjkwN2MwYzIyMjhkIn0.xfUcPJk8W3No6GPr_eZkwpWUWy2N0myKdf52J-1AXzY.1'
+	//getPlayUrlInput.value = 'https://gwm-000-cn-0448.bcloud365.net:8188/media?appKey=6561964f7cbfe8c23e1d79399428351a&appKey=6561964f7cbfe8c23e1d79399428351a&channel=0&expireTime=1791528896490&mediaType=webrtc&stream=1&token=YWNiZTQxOWI0NnwyZjZmYjgwOTU4YzdiODFhfGV5SndJam9pZGpWd1VuVjJURmtpTENKMU6lqb2lZV1J0YVc0aWZRPT18MTcxMTU2NDU5NzEwNnxnd3B8MTIxLjM3LjE0Ny4xMTV8bWQ1.c71618bebb7a8f09206c9af5ba5b71c1&type=ts&userToken=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJycyIsImFwcEtleSI6IjY1NjE5NjRmN2NiZmU4YzIzZTFkNzkzOTk0MjgzNTFhIiwiZXhwIjoxNzE0MTIwNTg4LCJ0eXBlIjoiY29tIiwiYWNjb3VudCI6IjY1ZGQ4NDk4NzgxNmFiMTFhODEyZGIxNyJ9.MSn0EJ9G4fJHAGCmqDEDVwx5Gtb1A9TqGRy_Nlu2Xy4.1'
+	getTalkUrlInput.value = 'https://gwm-000-cn-0448.bcloud365.net:8188/talk?appKey=ce7e86bf18ffe17bd444dee11727ace7&channel=0&expireTime=1799901580393&mediaType=webrtc&stream=1&token=YWNiZTQxOWI0Nnw0NGIzNWEzZDU5N2ZmZDFjfGV5SndJam9pUkd4VGFuUTJNR3dpTENKMU9lqb2lZV1J0YVc0aWZRPT18MTY5OTkwMTU3OTAxOXxnd3B8MTIyLjkuMTM0LjI3fG1kNQ%3D%3D.3dd1fee793cf334b6b029320e4012116&type=ts&userToken=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJycyIsImFwcEtleSI6ImNlN2U4NmJmMThmZmUxN2JkNDQ0ZGVlMTE3MjdhY2U3IiwiZXhwIjoxNzAyMTg4MTEyLCJ0eXBlIjoiY29tIiwiYWNjb3VudCI6IjJlZjEwNDc3NzM0NjQzYTJiYTg4ZjkwN2MwYzIyMjhkIn0.xfUcPJk8W3No6GPr_eZkwpWUWy2N0myKdf52J-1AXzY.1'
+	//getTalkUrlInput.value = 'https://gwm-000-cn-0448.bcloud365.net:8188/talk?appKey=6561964f7cbfe8c23e1d79399428351a&appKey=6561964f7cbfe8c23e1d79399428351a&channel=0&expireTime=1791528896490&mediaType=webrtc&stream=1&token=YWNiZTQxOWI0NnwyZjZmYjgwOTU4YzdiODFhfGV5SndJam9pZGpWd1VuVjJURmtpTENKMU6lqb2lZV1J0YVc0aWZRPT18MTcxMTU2NDU5NzEwNnxnd3B8MTIxLjM3LjE0Ny4xMTV8bWQ1.c71618bebb7a8f09206c9af5ba5b71c1&type=ts&userToken=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJycyIsImFwcEtleSI6IjY1NjE5NjRmN2NiZmU4YzIzZTFkNzkzOTk0MjgzNTFhIiwiZXhwIjoxNzE0MTIwNTg4LCJ0eXBlIjoiY29tIiwiYWNjb3VudCI6IjY1ZGQ4NDk4NzgxNmFiMTFhODEyZGIxNyJ9.MSn0EJ9G4fJHAGCmqDEDVwx5Gtb1A9TqGRy_Nlu2Xy4.1'
+	
+	const remoteVideo = document.getElementById('remoteVideo');//
+	const remoteAuido = document.getElementById('remoteAuido');
+	//const conf={iceServers:[{urls:'stun:stun.ideasip.com:3478'}]}//
+	const pc = new RTCPeerConnection({
+				iceServers: [
+					{
+					urls: ['stun:stun.voipbuster.com:3478'] //stun:stun.oss.aliyuncs.com:3478
+					}
+				]
+				});
+	const _tracks = []
+	var _remoteStream = null
+	var localSDP=null
+	var candidateSDP=null
+	let iceCandidateCount = 0; // 用于计数ICE候选的数量
+	let iceCandidateCountOK = 0;
+	let hasLocalIP = false; // 是否发现了内网IP
+	pc.onicecandidate = function(event){
+		handleCandidate(event,playUrlInput.value);
+	};
+	pc.onicecandidateerror = function(event){
+	};
+	function handleCandidate(event,url) 
+	{
+		if (event.candidate) {
+			iceCandidateCount++; // 每收到一个候选都增加计数
+			log('Remote ICE candidate: \r\n ' + event.candidate.candidate+'\r\niceCandidateCount'+iceCandidateCount);
+			const candidateIP = event.candidate.candidate.split(' ')[4] // 提取ICE候选中的IP地址
+			hasLocalIP=isLocalIP(candidateIP)
+			if (!hasLocalIP) {//过滤掉无效的，比如.local这种会导致服务设置candidate失败
+				if (candidateSDP) 
+				{
+					candidateSDP += 'a=' + event.candidate.candidate + '\r\n'
+				}
+				else
+				{
+					candidateSDP = 'a=' + event.candidate.candidate + '\r\n'	
+				}
+				iceCandidateCountOK++;
+				if(iceCandidateCountOK==1)
+				{
+					var searchStringAudio = 'm=audio';
+					var indexAudio = localSDP.indexOf(searchStringAudio);	
+					var searchStringVideo = 'm=video';
+					var indexVideo = localSDP.indexOf(searchStringVideo);	
+					var indexPos = 0;
+					if(indexVideo > indexAudio)
+					{
+						indexPos = indexVideo;
+					}
+					else
+					{
+						indexPos = indexAudio;
+					}
+					localSDP = localSDP.substring(0, indexPos) +candidateSDP+ localSDP.substring(indexPos);
+					//candidateSDP=null;
+				}
+				if(iceCandidateCountOK>=2)
+				{
+					log('ICE negotiation finished. All ICE candidates have been done.',url);
+					// // Send the candidate to the remote peer
+					//localSDP.replace(/a=ice-options:trickle/g, '');
+					var searchString = 'a=ice-options:trickle';
+					var index = localSDP.indexOf(searchString);//去掉a=ice-options:trickle，candidate和sdp一起发
+					localSDP = localSDP.substring(0, index) + localSDP.substring(index + searchString.length+2);
+					var index = localSDP.indexOf(searchString);//去掉a=ice-options:trickle，candidate和sdp一起发
+					localSDP = localSDP.substring(0, index) + localSDP.substring(index + searchString.length+2);
+					localSDP+=candidateSDP;
+					log('localSDP:', localSDP);
+					doCall(localSDP,url);
+					candidateSDP=null;
+					localSDP=null;
+					iceCandidateCountOK = 0;
+					iceCandidateCount = 0;
+				}
+			}
+		}
+    }
+	// 获取本地音频流
+	/*var localStream = null;
+	navigator.mediaDevices.getUserMedia({ audio: true })
+	.then(function(stream) {
+		console.log('getUserMedia audio');
+		localStream = stream;
+	})
+	.catch(function(err) {
+		console.error('无法获取本地音频流:', err);
+	});
+	*/
+
+	pc.ontrack = function(event){
+		if (event.track.kind === 'audio') {
+        	// 处理音频流
+        	log('audio:');//, event.track.length
+		} else if (event.track.kind === 'video') {
+			// 处理视频流
+			log('video:');//, event.track.length
+		}
+		hangupButton.disabled = false;
+		//startTalkButton.disabled = false;
+
+		_tracks.push(event.track);
+		if (remoteVideo && event.streams && event.streams.length > 0) {
+			let eventStream = event.streams[0];
+			eventStream.getTracks().forEach(track => {
+				if (track.kind === 'audio') {
+					console.log('This is an audio track',event.streams.length);
+					} else if (track.kind === 'video') {
+					console.log('This is a video track',event.streams.length);
+				}
+  			})
+		  remoteVideo.srcObject = eventStream;
+		  _remoteStream = eventStream;
+		} else {
+		  if (pc.getReceivers().length == this._tracks.length) {
+		    log('play remote stream ');
+		    _remoteStream = new MediaStream(this._tracks);
+		    remoteVideo.srcObject = this._remoteStream;
+		  } else {
+		    log('wait stream track finish');
+		  }
+		}
+	};
+	pc.onconnectionstatechange = function(event){
+		console.log('当前状态==>',event.currentTarget.connectionState);
+	};
+	
+	function isLocalIP(ip) {
+        // 检查IP地址是否是内网地址
+        // 排除私有地址范围
+        if (
+          /^10\./.test(ip) || // 10.x.x.x
+          /^192\.168\./.test(ip) || // 192.168.x.x
+          /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(ip) // 172.16.x.x - 172.31.x.x
+        ) {
+          return true
+        }
+
+        // 排除保留地址
+        if (
+          /^127\./.test(ip) || // 127.x.x.x (loopback)
+          /^169\.254\./.test(ip) // 169.254.x.x (link-local)
+          // 还可以添加其他保留地址的检查，如多播地址等
+        ) {
+          return true
+        }
+        if (ip.length > 15) {
+          console.log('ip length --->', ip.length)
+          return true
+        }
+        log('ip=====>', ip)
+        // 其他条件下认为是公网地址
+        return false
+      }
+	function call() {
+
+		callButton.disabled = true;
+		var AudioTransceiverInit = null;
+
+		const VideoTransceiverInit = {
+			direction: 'sendrecv',//recvonly
+			sendEncodings: []
+		};
+		pc.addTransceiver('video', VideoTransceiverInit);
+		/*if(null != localStream)
+		{
+			AudioTransceiverInit = {
+				//streams:[localStream],//这个是添加接收者的
+				direction: 'sendrecv'//recvonly
+			};
+			pc.addTransceiver(localStream.getTracks()[0], AudioTransceiverInit);//这么做虽然可以发送音频流，但是无法动态的启停
+			console.log('AudioTransceiverInit sendrecv');
+		}
+		else*/
+		{
+			AudioTransceiverInit = {
+				direction: 'sendrecv'//recvonly
+			};
+			pc.addTransceiver('audio', AudioTransceiverInit);//这样会触发两次onicecandidate
+		}
+
+		pc.createOffer().then(desc => {
+			//log('offer:', desc.sdp);
+			pc.setLocalDescription(desc).then(() => {
+			//			doCall(desc.sdp)
+				localSDP=desc.sdp;
+			});
+			}).catch(e => {
+				log(e);
+		});
+	}
+	const pcTalk = new RTCPeerConnection({
+				iceServers: [{
+					urls: ['stun:stun.voipbuster.com:3478'] //stun:stun.oss.aliyuncs.com:3478
+		}]});
+	function setTalkEnable() 
+	{
+		console.log('startTalk');
+		var talkURL=talkUrlInput.value;
+		pcTalk.onicecandidate = function(event){
+			handleCandidate(event,talkURL);
+		};
+		pcTalk.onicecandidateerror = function(event){
+			//console.log('onicecandidateerror');
+		};
+		pcTalk.onconnectionstatechange = function(event){
+			console.log('对讲状态==>',event.currentTarget.connectionState);
+		};
+		var searchStringVideoCall = 'videoCall';
+		var indexVideoCall = talkURL.indexOf(searchStringVideoCall);	
+		if(indexVideoCall<=0)
+		{//语音对讲
+			navigator.mediaDevices.getUserMedia({audio: true }).then(function(stream) {//后续考虑使用同步阻塞的
+				console.log('getUserMedia audio');//const userMedia = navigator.mediaDevices.getUserMedia({ audio: true });
+    			pcTalk.addTransceiver('video', { direction: 'sendrecv' });//sendonly
+    			pcTalk.addTransceiver(stream.getTracks()[0], { direction: 'sendrecv' });//sendonly
+				SetTalkLocalOffer();
+  			})
+			.catch(function(error) {
+				console.log('getUserMedia audio err',error);
+			});
+		}
+		else
+		{//音视频对讲
+			navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(function(stream) {
+				console.log('getUserMedia audio video');
+    			pcTalk.addTransceiver(stream.getVideoTracks()[0], { direction: 'sendrecv' });//音视频对讲可参考
+    			pcTalk.addTransceiver(stream.getAudioTracks()[0], { direction: 'sendrecv' });//sendonly
+				SetTalkLocalOffer();
+			})
+			.catch(function(error) {
+				console.log('getUserMedia audio video err',error);
+			});
+		}	
+	}
+	pcTalk.ontrack = function(event){
+		if (event.track.kind === 'audio') {
+        	// 处理音频流
+        	log('pcTalk audio:',event.streams.length);//, event.track.length
+			if (remoteAuido && event.streams && event.streams.length > 0) {
+				let eventStream = event.streams[0];
+				remoteAuido.srcObject = eventStream;
+			} else {
+				log('pcTalk wait stream track finish');
+			}
+		}
+	};
+	function setTalkDisable() 
+	{
+		console.log('stopTalk');
+		pcTalk.close();
+		//pcTalk = null;//不注释会报错
+		stopTalkButton.disabled = true;
+		startTalkButton.disabled = false;
+		return;
+		let senderList = pc.getSenders();
+		if(null != senderList)
+		{
+			console.log('senderList false');
+			senderList.forEach((sender) => 
+			{
+				if(null != sender)
+				{
+					console.log('sender false');
+					if(null != sender.track)
+					{
+						console.log('track false');
+						sender.track.enabled = false;	//无作用
+					}
+				}			
+			});
+		}
+	}
+	function SetTalkLocalOffer() 
+	{
+		pcTalk.createOffer().then(desc => {
+			console.log('pcTalk.createOffer');
+			pcTalk.setLocalDescription(desc).then(() => {
+				//console.log('pcTalk.setLocalDescription',desc.sdp);
+				localSDP=desc.sdp;
+			});
+			}).catch(e => {
+				log(e);
+		});
+		stopTalkButton.disabled = false;
+		startTalkButton.disabled = true;
+	}
+	function log(message, ...optionalParams) {
+	    console.log(message, ...optionalParams);
+	}
+	
+	function hangup() {
+	  console.log('Ending call');
+	  pc.close();
+	  //pc = null;//不注释会报错
+	  hangupButton.disabled = true;
+	  callButton.disabled = false;
+	}
+	
+	function doCall(param,url)
+	{
+		let playUrl = url
+		if(playUrl == talkUrlInput.value)
+		{
+			TalkNegotiateSDP(param,url);
+		}
+		else
+		{
+			NegotiateSDP(param,url);
+		}
+	}
+	function NegotiateSDP(param,url)
+	{
+		var json = {
+			"action":"offer",
+			"sdp":param,
+		}
+		//var jsonStr = JSON.stringify(json);
+		//console.log(jsonStr)
+		let playUrl = url
+		//var playUrl = "http://139.9.149.150:9018/test/202404h264g711a.flv.webrtc";//test 2024h264aac.h264 2024h264g711a.flv
+		var xhr=new XMLHttpRequest();
+		xhr.onreadystatechange = function(){
+		             console.log('xhr readyState',xhr.readyState);
+		            //alert(xhr.status);
+		            if(xhr.readyState==4){
+		                if(xhr.status==200||xhr.status==304){
+		                    var data = xhr.responseText;
+							var jsonstr = JSON.parse(data)
+		                    console.log(jsonstr);
+							let anwser = {};
+							anwser.sdp = jsonstr.sdp;
+							anwser.type = 'answer';
+							log('answer:', jsonstr.sdp);
+							pc.setRemoteDescription(anwser).then(() => {
+							  	log('NegotiateSDP pc set remote sucess');
+								// 每隔30秒发送一次心跳请求
+								//setInterval(sendPlayHeartbeat, 30000)
+								GetPlayStatus();//一次就够，维持长链接
+								}).catch(e => {
+								log( e);
+							});
+		                }
+		            }
+		         }
+		xhr.open("POST",playUrl,true);
+		//如果是POST请求方式，设置请求首部信息
+		xhr.setRequestHeader("Content-type","application/json; charset=utf-8");
+		//xhr.setRequestHeader("Connection","Keep-Alive");
+		xhr.setRequestHeader("Access-Control-Allow-Headers","Access-Control-Allow-Origin, ClientType,Accept-Encoding,Content-Type,Access-Token,Authorization,authorization,Token,Tag,Cache-Control");
+		xhr.setRequestHeader("Accessol-Allow-Origin","*");
+		var jsonStr = JSON.stringify(json);
+		xhr.send(jsonStr);
+	}
+	function TalkNegotiateSDP(param,url)//因为要创建一个新的http链接，所以需要新的函数
+	{
+		var json = {
+			"action":"offer",
+			"sdp":param,
+		}
+		//var jsonStr = JSON.stringify(json);
+		//console.log(jsonStr)
+		let playUrl = url
+		//var playUrl = "https://139.9.149.150:9031/testTalk/202404h264g711a.flv.webrtc"//暂时使用9031这样不同的端口代理实现不复用一个socket
+		var xhrTalk=new XMLHttpRequest();//这样还是对讲和预览还是会复用一个socket，会导致服务出错，除非修改服务架构，根据不同的url创建不同的session
+		xhrTalk.onreadystatechange = function(){
+		            console.log('xhrTalk readyState',xhrTalk.readyState);
+		            if(xhrTalk.readyState==4){
+		                if(xhrTalk.status==200||xhrTalk.status==304){
+		                    var data = xhrTalk.responseText;
+							var jsonstr = JSON.parse(data)
+		                    console.log(jsonstr);
+							let anwser = {};
+							anwser.sdp = jsonstr.sdp;
+							anwser.type = 'answer';
+							log('answer:', jsonstr.sdp);
+							pcTalk.setRemoteDescription(anwser).then(() => {
+							  	log('TalkNegotiateSDP pc set remote sucess');
+								// 每隔30秒发送一次心跳请求
+								//setInterval(sendTalkHeartbeat, 30000)
+								GetTalkStatus();//一次就够，维持长链接
+								}).catch(e => {
+								log( e);
+							});
+		                }
+		            }
+		         }
+		xhrTalk.open("POST",playUrl,true);
+		//如果是POST请求方式，设置请求首部信息
+		xhrTalk.setRequestHeader("Content-type","application/json; charset=utf-8");
+		//xhrTalk.setRequestHeader("Connection","Keep-Alive");
+		xhrTalk.setRequestHeader("Access-Control-Allow-Headers","Access-Control-Allow-Origin, ClientType,Accept-Encoding,Content-Type,Access-Token,Authorization,authorization,Token,Tag,Cache-Control");
+		xhrTalk.setRequestHeader("Accessol-Allow-Origin","*");
+		var jsonStr = JSON.stringify(json);
+		xhrTalk.send(jsonStr);
+	}
+	function GetPlayStatus() 
+	{
+    	var xhr = new XMLHttpRequest();
+    	xhr.open('GET', playUrlInput.value, true);
+		xhr.setRequestHeader("Accessol-Allow-Origin","*");
+    	xhr.onreadystatechange = function() {
+			if (xhr.readyState === XMLHttpRequest.DONE) {
+				if (xhr.status === 200||xhr.status === 204) {
+					// 收到服务器响应，连接仍然活跃
+					console.log('PlayStatus(exit) OK ,status:'+xhr.status+' msg:'+xhr.statusText);
+				} else {
+					// 连接出现问题，处理断开连接的逻辑
+					console.log('PlayStatus err,code:'+xhr.status+' msg:'+xhr.statusText);
+				}
+			}
+   	 	};
+    	xhr.send();
+	}
+	function GetTalkStatus() 
+	{
+    	var xhr = new XMLHttpRequest();
+    	xhr.open('GET', talkUrlInput.value, true);
+		xhr.setRequestHeader("Accessol-Allow-Origin","*");
+    	xhr.onreadystatechange = function() {
+			if (xhr.readyState === XMLHttpRequest.DONE) {
+				if (xhr.status === 200||xhr.status === 204) {
+					// 收到服务器响应，连接仍然活跃
+					console.log('TalkStatus(exit) OK ,status:'+xhr.status+' msg:'+xhr.statusText);
+				} else {
+					// 连接出现问题，处理断开连接的逻辑sendTalkHeartbeat
+					console.log('TalkStatus err,code:'+xhr.status+' msg:'+xhr.statusText);
+				}
+			}
+   	 	};
+    	xhr.send();
+	}
+
+	function GetPlayUrl() 
+	{
+		if (getPlayUrlInput.value === '')
+		{
+			return;	
+		}
+    	var xhrGet = new XMLHttpRequest();
+    	xhrGet.open('POST', getPlayUrlInput.value, true);
+		xhrGet.setRequestHeader("Accessol-Allow-Origin","*");
+    	xhrGet.onreadystatechange = function() {
+			if (xhrGet.readyState === XMLHttpRequest.DONE) {
+				if (xhrGet.status === 200) {
+					// 收到服务器响应，连接仍然活跃
+					var data = xhrGet.responseText;
+					var jsonstr = JSON.parse(data)
+					console.log('GetPlayUrl successfully',jsonstr);
+					playUrlInput.value = jsonstr.retMsg;
+				} else {
+					// 连接出现问题，处理断开连接的逻辑sendTalkHeartbeat
+					console.log('GetPlayUrl failed');
+				}
+			}
+   	 	};
+		xhrGet.send();
+	}
+	function GetTalkUrl() 
+	{
+		if (getTalkUrlInput.value === '')
+		{
+			return;	
+		}
+    	var xhrGet = new XMLHttpRequest();
+    	xhrGet.open('POST', getTalkUrlInput.value, true);
+		xhrGet.setRequestHeader("Accessol-Allow-Origin","*");
+    	xhrGet.onreadystatechange = function() {
+			if (xhrGet.readyState === XMLHttpRequest.DONE) {
+				if (xhrGet.status === 200) {
+					// 收到服务器响应，连接仍然活跃
+					var data = xhrGet.responseText;
+					var jsonstr = JSON.parse(data)
+					console.log('GetPlayUrl successfully',jsonstr);
+					talkUrlInput.value = jsonstr.retMsg;
+				} else {
+					// 连接出现问题，处理断开连接的逻辑sendTalkHeartbeat
+					console.log('talkUrlInput failed');
+				}
+			}
+   	 	};
+		xhrGet.send();
+	}
+</script>
+</body>
+</html>
