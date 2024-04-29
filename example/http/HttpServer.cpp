@@ -189,6 +189,38 @@ int HttpServer :: SetResHeaderValue(const char *i_strKey,const char *i_strValue)
 
 
 /*****************************************************************************
+-Fuction		: SetResHeaderValue
+-Description	: 
+-Input			: 
+-Output 		: 
+-Return 		: 
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
+int HttpServer :: SetResHeaderValue(const char *i_strKey,int i_iValue)
+{
+    int iRet = -1;
+    char strRes[128];
+    
+    if(NULL == i_strKey)
+    {
+        HTTP_LOGE("SetResHeaderValue i_iValue NULL\r\n");
+        return iRet;
+    }
+    if(0 == strResHeader.length())
+    {
+        HTTP_LOGE("SetResHeaderValue strResHeader i_iValue NULL\r\n");
+        return iRet;
+    }
+    iRet=snprintf(strRes,sizeof(strRes),"%s: %d\r\n",i_strKey,i_iValue);
+    strResHeader.append(strRes);
+    
+    return iRet;
+}
+
+
+/*****************************************************************************
 -Fuction		: FormatResToStream
 -Description	: 
 -Input			: 

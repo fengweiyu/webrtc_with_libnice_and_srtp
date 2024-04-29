@@ -33,6 +33,7 @@ public:
     int ParseRequest(char *i_pcReqData,int i_iDataLen,T_HttpReqPacket *o_ptHttpReqPacket);
 	int CreateResponse(int i_iCode = 200, const char * i_strMsg = "OK",const char * i_strVersion = HTTP_VERSION);
 	int SetResHeaderValue(const char *i_strKey,const char *i_strValue);
+    int SetResHeaderValue(const char *i_strKey,int i_iValue);
 	int FormatResToStream(char *i_pcContentData,int i_iDataLen,char *o_acBuf,int i_iBufMaxLen);
 private:
     string strResHeader;
