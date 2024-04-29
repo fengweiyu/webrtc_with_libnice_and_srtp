@@ -50,6 +50,7 @@ MediaHandle::MediaHandle()
 ******************************************************************************/
 MediaHandle::~MediaHandle()
 {
+    //MH_LOGW("~MediaHandle ~MediaHandle\r\n");
 	if(m_pMediaHandle !=NULL)
 	{
         delete m_pMediaHandle;
@@ -63,6 +64,7 @@ MediaHandle::~MediaHandle()
     if(NULL != m_pMediaFile)
     {
         fclose(m_pMediaFile);
+        m_pMediaFile = NULL;
     }
 }
 
@@ -338,6 +340,8 @@ int MediaHandle::GetFrame(T_MediaFrameInfo *m_ptFrame)
         }
         else
         {
+            fclose(m_pMediaFile);//fseek(m_pMediaFile,0,SEEK_SET); 
+            m_pMediaFile = NULL;
             MH_LOGE("fseek err m_pMediaFile %d\r\n",m_ptFrame->iFrameProcessedLen);
         }
         return iRet;
