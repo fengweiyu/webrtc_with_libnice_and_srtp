@@ -1,10 +1,34 @@
-﻿
+﻿webrtcServer:
+1.编译：
+	使用cmake进行编译，必须先安装cmake，安装后(执行./build.sh x86 或者 ./build.sh x86 Server)：
+	ywf@ywf-pc:/work/workspace/webrtc_with_libnice_and_srtp$ ./build.sh x86 
+	编译成功后，会在如下路径生成webrtc应用程序：
+	ywf@ywf-pc:/work/workspace/webrtc_with_libnice_and_srtp/build/x86$ ls webrtcServer
+	webrtcServer
+
+
+2.使用：
+    1.启动webrtcServer服务(将example/WebDemo/H264G711A.flv拷贝到webrtcServer程序同目录)
+        ./webrtcServer
+    2.配置nginx代理(不使用https的url可不用配置，不过由于浏览器的安全机制http的url不支持对讲(浏览器对于http的链接无法获取麦克风或者摄像头的权限))
+        使用nginx的https代理webrtcServer的http，可将example/WebDemo/nginx_webrtc_https.conf导入到nginx配置文件中，并重启nginx(nginx -s reload)
+    2.启动浏览器页面
+        使用浏览器打开example/WebDemo/index.html
+    4.输入播放url或者对讲url
+        播放，点击call出图，注意默认静音，需手动点击一下
+        对讲，点击startTalk出流，注意webrtcServer接收到浏览器的声音会有打印输出"RecvData %p,iFrameLen %d \r\n"
+    5.查看WebRTC运行状态
+        直接在地址栏输入：chrome://webrtc-internals/
+
+
+******************************************************************************
+webrtcClient:
 1.编译：
 	使用cmake进行编译，必须先安装cmake，安装后：
-	ywf@ywf-pc:/work/workspace/webrtc_with_libnice_and_srtp$ ./build.sh x86
+	ywf@ywf-pc:/work/workspace/webrtc_with_libnice_and_srtp$ ./build.sh x86 client
 	编译成功后，会在如下路径生成webrtc应用程序：
-	ywf@ywf-pc:/work/workspace/webrtc_with_libnice_and_srtp/build/x86$ ls webrtc
-	webrtc
+	ywf@ywf-pc:/work/workspace/webrtc_with_libnice_and_srtp/build/x86$ ls webrtcClient
+	webrtcClient
 
 
 2.使用：
