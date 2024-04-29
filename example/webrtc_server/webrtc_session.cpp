@@ -44,7 +44,7 @@ WebRtcSession :: WebRtcSession(char * i_strStunAddr,unsigned int i_dwStunPort,T_
     memset(&m_tWebRtcSdpMediaInfo,0,sizeof(T_WebRtcSdpMediaInfo));
 
     memset(&tWebRtcCb,0,sizeof(T_WebRtcCb));
-    tWebRtcCb.RecvRtpData = WebRtcSession::PushRtpData;
+    tWebRtcCb.RecvRtpData = WebRtcSession::RecvRtpData;
     tWebRtcCb.RecvStopMsg = WebRtcSession::RecvClientStopMsg;
     tWebRtcCb.IsRtp = WebRtcSession::IsRtpCb;
     tWebRtcCb.IsRtcp = NULL;
@@ -80,13 +80,16 @@ WebRtcSession :: WebRtcSession(char * i_strStunAddr,unsigned int i_dwStunPort,T_
     m_iSendSdpSuccess = -1;
     m_iPackNum = -1;
     
+    memset(&m_tPushFrameInfo,0,sizeof(T_MediaFrameInfo));
+    m_tPushFrameInfo.pbFrameBuf = new unsigned char [WEBRTC_FRAME_BUF_MAX_LEN];
+    m_tPushFrameInfo.iFrameBufMaxLen = WEBRTC_FRAME_BUF_MAX_LEN;
     m_pFileProc = NULL;
     m_iFileProcFlag = 0;
     m_iFileExitProcFlag = 0;
     m_pFileName = NULL;
     m_iTalkTestFlag = 0;
     
-    m_iLogID = 0;
+    m_iLogID = i_iID;
 }
 
 /*****************************************************************************
@@ -146,6 +149,11 @@ WebRtcSession :: ~WebRtcSession()
         delete m_pWebRtcProc;
         m_pWebRtcProc = NULL;//
     }
+    if(NULL!= m_tPushFrameInfo.pbFrameBuf)
+    {
+        delete[] m_tPushFrameInfo.pbFrameBuf;
+        m_tPushFrameInfo.pbFrameBuf = NULL;
+    }
     if(NULL!= m_tFileFrameInfo.pbFrameBuf)
     {
         delete[] m_tFileFrameInfo.pbFrameBuf;
@@ -184,7 +192,7 @@ int WebRtcSession::SetReqData(const char *i_strReqURL,const char *i_strReqBody)
     m_pWebRTC->DtlsInit();//dtls初始化耗时300ms
     
     //iRet = m_pWebRTC->GetGatheringDoneFlag();//正好收集地址(耗时300ms)并行处理
-    WEBRTC_LOGW2(m_iLogID,"m_pWebRTC->GetGatheringDoneFlag() %d,%s \r\n",iRet,i_strReqURL);
+    //WEBRTC_LOGW2(m_iLogID,"m_pWebRTC->GetGatheringDoneFlag() %d,%s \r\n",iRet,i_strReqURL);
     if(0 == TestURL(i_strReqURL))
     {
         iRet = this->HandleRequest(i_strReqURL);
@@ -729,6 +737,39 @@ int WebRtcSession::GetSupportedAudioInfoFromSDP(const char * i_strAudioFormatNam
     return iRet;
 }
 
+/*****************************************************************************
+-Fuction        : PushRtpData
+-Description    : 
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version        Author           Modification
+* -----------------------------------------------
+* 2023/09/21      V1.0.0         Yu Weifeng       Created
+******************************************************************************/
+int WebRtcSession::ParseRtpData(char * i_acDataBuf,int i_iDataLen)
+{
+    int iRet = -1;
+    
+    if(NULL == i_acDataBuf)
+    {
+        WEBRTC_LOGE("ParseRtpData NULL \r\n");
+        return iRet;
+    }
+    if(NULL == m_pRtpInterface)
+    {
+        WEBRTC_LOGE("ParseRtpData m_pRtpInterface NULL \r\n");
+        return iRet;
+    }
+    iRet =m_pRtpInterface->ParseRtpPacket((unsigned char *)i_acDataBuf,i_iDataLen,(void *)&m_tPushFrameInfo);
+    if(iRet < 0)
+    {
+        WEBRTC_LOGD("RecvData ParseRtpPacket err %d \r\n",m_tPushFrameInfo.iFrameLen);
+        return iRet;
+    }
+	WEBRTC_LOGD("RecvData %p,iFrameLen %d \r\n",m_tPushFrameInfo.pbFrameStartPos,m_tPushFrameInfo.iFrameLen);//iFrameLen指向裸流数据长度，可保存为文件
+    return iRet;
+}
 
 /*****************************************************************************
 -Fuction        : StopSession
@@ -833,7 +874,7 @@ int WebRtcSession::IsRtp(char * i_acDataBuf,int i_iDataLen)
 * -----------------------------------------------
 * 2023/09/21      V1.0.0         Yu Weifeng       Created
 ******************************************************************************/
-int WebRtcSession::PushRtpData(char * i_acDataBuf,int i_iDataLen,void *i_pIoHandle)
+int WebRtcSession::RecvRtpData(char * i_acDataBuf,int i_iDataLen,void *i_pIoHandle)
 {
     int iRet = -1;
     
@@ -841,9 +882,10 @@ int WebRtcSession::PushRtpData(char * i_acDataBuf,int i_iDataLen,void *i_pIoHand
     {
         WEBRTC_LOGE("PushRtpData NULL \r\n");
     }
-	WEBRTC_LOGD("RecvRtpData %d \r\n",i_iDataLen);
+	//WEBRTC_LOGD("RecvRtpData %d \r\n",i_iDataLen);
     WebRtcSession *pWebRtcSession = (WebRtcSession *)i_pIoHandle;
-    return 0;
+    
+    return pWebRtcSession->ParseRtpData(i_acDataBuf,i_iDataLen);
 }
 
 /*****************************************************************************

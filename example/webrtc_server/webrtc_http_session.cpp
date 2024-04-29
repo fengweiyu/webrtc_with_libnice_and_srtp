@@ -86,6 +86,7 @@ int WebRtcHttpSession :: Proc()
     char *pcSendBuf=NULL;
     int iRecvLen=-1;
     T_HttpReqPacket *ptHttpReqPacket=NULL;
+    timeval tTimeValue;
     
     if(m_iClientSocketFd < 0)
     {
@@ -121,7 +122,9 @@ int WebRtcHttpSession :: Proc()
     {
         iRecvLen = 0;
         memset(pcRecvBuf,0,HTTP_PACKET_MAX_LEN);
-        iRet=TcpServer::Recv(pcRecvBuf,&iRecvLen,HTTP_PACKET_MAX_LEN,m_iClientSocketFd);
+        tTimeValue.tv_sec = 0;//超时时间，超时返回错误
+        tTimeValue.tv_usec = (30*1000);//加快出图时间
+        iRet=TcpServer::Recv(pcRecvBuf,&iRecvLen,HTTP_PACKET_MAX_LEN,m_iClientSocketFd,&tTimeValue);
         if(iRet < 0)
         {
             WEBRTC_LOGE("TcpServer::Recv err exit %d\r\n",iRecvLen);

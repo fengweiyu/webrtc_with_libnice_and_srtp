@@ -39,11 +39,12 @@ public:
 	WebRtcSession(char * i_strStunAddr,unsigned int i_dwStunPort,T_WebRtcSessionCb i_tWebRtcSessionCb,int i_iID);
 	virtual ~WebRtcSession();
     int SetReqData(const char *i_strReqURL,const char *i_strReqBody);
+    int ParseRtpData(char * i_acDataBuf,int i_iDataLen);
     int StopSession(int i_iError);
     
 	string * m_pFileName;
 private:
-    static int PushRtpData(char * i_acDataBuf,int i_iDataLen,void *i_pIoHandle);
+    static int RecvRtpData(char * i_acDataBuf,int i_iDataLen,void *i_pIoHandle);
     static int RecvClientStopMsg(void *i_pIoHandle);
     static int IsRtpCb(char * i_acDataBuf,int i_iDataLen,void *i_pIoHandle);
     
@@ -75,7 +76,8 @@ private:
     int m_iPackNum;//0 success
     string m_strReqBody;
     string m_strReqURL;
-
+    T_MediaFrameInfo m_tPushFrameInfo;
+    
     int m_iLogID;
     T_MediaFrameInfo m_tFileFrameInfo;
     thread *m_pFileProc;
