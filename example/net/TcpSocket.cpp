@@ -65,6 +65,10 @@ TcpServer::TcpServer()
 ******************************************************************************/
 TcpServer::~TcpServer()
 {
+	if(m_iServerSocketFd >= 0)
+	{
+        close(m_iServerSocketFd);  
+	}
 }
 
 /*****************************************************************************
@@ -118,6 +122,22 @@ int TcpServer::Init(string *i_strIP,unsigned short i_wPort)
                 iSocketFd=-1;
                 return iRet;
             }
+            int flags = fcntl(iSocketFd, F_GETFL, 0);//设置非阻塞
+            if (flags < 0) 
+            {
+                TCP_LOGE("Error getting socket flags");
+                close(iSocketFd);
+                iSocketFd=-1;
+                return iRet;
+            }
+            if (fcntl(iSocketFd, F_SETFL, flags | O_NONBLOCK) < 0) //设置非阻塞
+            {
+                TCP_LOGE("Error setting socket to non-blocking mode");
+                close(iSocketFd);
+                iSocketFd=-1;
+                return iRet;
+            }
+            
             // Connect to server
             //this->GetIpAndPort(i_URL,&IP,&wPort);
             bzero(&tServerAddr, sizeof(tServerAddr));
@@ -161,7 +181,7 @@ int TcpServer::Init(string *i_strIP,unsigned short i_wPort)
 
 /*****************************************************************************
 -Fuction		: Accept
--Description	: 阻塞的操作形式
+-Description	: 非阻塞
 -Input			: 
 -Output 		: 
 -Return 		: 
@@ -187,8 +207,8 @@ int TcpServer::Accept()
     iClientSocketFd=accept(m_iServerSocketFd,(struct sockaddr*)&tClientAddr,&iLen);  //这里会等待客户端连接
     if(iClientSocketFd<0)  
     {  
-        TCP_LOGE("cannot accept client connect request");  
-        close(m_iServerSocketFd);  
+        //TCP_LOGE("cannot accept client connect request");  //非阻塞在没有连接的情况下，就会返回负数
+        //close(m_iServerSocketFd);  
         //unlink(UNIX_DOMAIN);  //错误： ‘UNIX_DOMAIN’在此作用域中尚未声明
     } 
 	else
