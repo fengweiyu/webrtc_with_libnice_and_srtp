@@ -635,8 +635,8 @@ int WebRtcSession::SendLocalSDP(T_VideoEncodeParam * i_ptVideoEncodeParam)
     WEBRTC_LOGD2(m_iLogID,"SendLocalSDP strSDP %s\r\n",strSDP);
     
     cJSON * root = cJSON_CreateObject();
-    cJSON_AddStringToObject(root,"action","answer");
-    cJSON_AddStringToObject(root,"sdp",strSDP);
+    cJSON_AddItemToObject(root, "action", cJSON_CreateString("answer"));//cJSON_AddStringToObject(root,"action","answer");
+    cJSON_AddItemToObject(root, "sdp", cJSON_CreateString(strSDP));//cJSON_AddStringToObject(root,"sdp",strSDP);
     char * buf = cJSON_PrintUnformatted(root);
     if(buf)
     {
