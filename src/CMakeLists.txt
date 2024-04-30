@@ -11,6 +11,9 @@ project (WebRTC)
 #SET(CMAKE_C_FLAGS "-g")
 
 #add_definitions(-DMEDIA_SEVER_TYPE_WEBRTC)
+# 设置C++标准为C++11
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 SET(src_list
     dtls_only_handshake.cpp
