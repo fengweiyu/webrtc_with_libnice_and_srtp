@@ -12,6 +12,7 @@ SET(USE_STATIC_LIB_LINKAGE ON)
 #SET(CMAKE_C_FLAGS "-g")
 SET(CMAKE_CXX_FLAGS "-g")
 
+#SET(use_external_log "") #SET(use_external_log "xxx")
 # 设置C++标准为C++11
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -40,7 +41,13 @@ TARGET_LINK_LIBRARIES(webrtcServer ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolCh
 TARGET_LINK_LIBRARIES(webrtcServer ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/http/libhttp.a)
 TARGET_LINK_LIBRARIES(webrtcServer ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/net/libnet.a)
 
+#防止libcjson库和 use_external_log 中使用的cJSON库 重复冲突
+#if(${use_external_log} STREQUAL "")
 TARGET_LINK_LIBRARIES(webrtcServer ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/third_lib/cJSON/libcjson.a)
+#else()
+
+#endif()
+ 
 #第三方库(libwebrtc.a中包含了这些库暂时注释掉)
 if(${CMAKE_ToolChain} STREQUAL "")
 
