@@ -11,8 +11,18 @@
     1.启动webrtcServer服务(将example/WebDemo/H264G711A.flv拷贝到webrtcServer程序同目录)
         ./webrtcServer
     2.配置nginx代理(不使用https的url可不用配置，不过由于浏览器的安全机制http的url不支持对讲(浏览器对于http的链接无法获取麦克风或者摄像头的权限))
-        使用nginx的https代理webrtcServer的http，可将example/WebDemo/nginx_webrtc_https.conf导入到nginx配置文件中，并重启nginx(nginx -s reload)
-    2.启动浏览器页面
+        使用nginx的https代理webrtcServer的http，可将doc/webrtc.conf导入到nginx配置文件中(webrtc.conf放到/etc/nginx/conf.d/目录下，同时在/etc/nginx/nginx.conf中添加一行 include /etc/nginx/conf.d/*.conf;)，
+        并重启nginx(nginx -s reload),
+        如果遇到跨域问题，可在 proxy_set_header和proxy_pass之间加入if ($request_method = 'OPTIONS') {...}这些配置即可
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Real-Port $remote_port;
+            if ($request_method = 'OPTIONS') {
+                add_header Access-Control-Allow-Headers 'access-control-allow-headers,accessol-allow-origin,content-type';
+                #add_header Access-Control-Allow-Origin '*' ;
+                add_header Access-Control-Allow-Methods 'GET, POST, OPTIONS';        
+            }
+            proxy_pass http://_server;
+    3.启动浏览器页面
         使用浏览器打开example/WebDemo/index.html
     4.输入播放url或者对讲url
         播放，点击call出图，注意默认静音，需手动点击一下
