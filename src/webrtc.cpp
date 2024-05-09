@@ -424,7 +424,7 @@ int WebRTC::HandleRecvSrtp(char * i_acSrtpBuf,int i_iSrtpBufLen,DtlsOnlyHandshak
     {//srtcp
         //WEBRTC_LOGD("UnProtectRtcp->UnProtectRtcp %d,bPayload %d,Len %d,pt %d\r\n",iRet,bPayload,i_iSrtpBufLen,(unsigned char)i_acSrtpBuf[1]);
         iRet = pSrtp->UnProtectRtcp(i_acSrtpBuf,&i_iSrtpBufLen);
-        WEBRTC_LOGD("pSrtp->UnProtectRtcp %d,bPayload %d,Len %d,pt %d\r\n",iRet,bPayload,i_iSrtpBufLen,(unsigned char)i_acSrtpBuf[1]);
+        //WEBRTC_LOGD("pSrtp->UnProtectRtcp %d,bPayload %d,Len %d,pt %d\r\n",iRet,bPayload,i_iSrtpBufLen,(unsigned char)i_acSrtpBuf[1]);
         return iRet;
     }
     iRet = pSrtp->UnProtectRtp(i_acSrtpBuf,&i_iSrtpBufLen);
