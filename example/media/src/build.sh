@@ -24,7 +24,7 @@ function GenerateCmakeFile()
 }
 function BuildLib()
 {
-    echo -e "Start building rtp..."
+    echo -e "Start building media..."
     OutputPath="./build"
     if [ -e "$OutputPath" ]; then
         rm $OutputPath -rf
@@ -72,10 +72,18 @@ function CopyLib()
     fi
     
     cd media
+    cp $CurPwd/include . -rf
+    
+    if [ -e "lib" ]; then
+        echo "lib exit"
+    else
+        mkdir lib
+    fi
+    cd lib
+    cp $CurPwd/build/lib/libmedia.a .
+    cd ..
 
     
-    cp $CurPwd/build/lib/libmedia.a .
-    cp $CurPwd/include . -rf
 #由于对外头文件又依赖内部头文件，所以要拷贝，暂时这么处理后续优化   
 #    cp $CurPwd/*.h .
 }
@@ -86,7 +94,7 @@ if [ $# == 0 ]; then
 else
 #   GenerateCmakeFile $1
     BuildLib $1
-    CopyLib ../../build/$1
+    CopyLib ../../../build/$1
 fi
 
 

@@ -9,10 +9,15 @@ SET(CMAKE_TOOLCHAIN_FILE "build/ToolChain.cmake")
 project (WebRTC)
  
 #SET(CMAKE_C_FLAGS "-g")
-
+# 设置C++标准为C++11
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 SET(src_list
     MediaHandle.cpp
+    FMP4/FMP4HandleInterface.cpp
+    FMP4/FMP4Handle.cpp
+    FMP4/FMP4.cpp
     FLV/FlvHandleInterface.cpp
     FLV/FlvHandle.cpp
     RawVideoHandle.cpp
@@ -22,6 +27,8 @@ INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}
 	${PROJECT_SOURCE_DIR}/include
     ${PROJECT_SOURCE_DIR}/FLV/include
     ${PROJECT_SOURCE_DIR}/FLV
+    ${PROJECT_SOURCE_DIR}/FMP4/include
+    ${PROJECT_SOURCE_DIR}/FMP4
 	)
 ADD_LIBRARY(media_static STATIC ${src_list})
 SET_TARGET_PROPERTIES(media_static PROPERTIES OUTPUT_NAME media)
