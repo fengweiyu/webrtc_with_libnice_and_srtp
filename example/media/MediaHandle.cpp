@@ -16,6 +16,7 @@
 #include "RawVideoHandle.h"
 #include "RawAudioHandle.h"
 #include "FlvHandleInterface.h"
+#include "FMP4HandleInterface.h"
 
 using std::cout;//ะ่าช<iostream>
 using std::endl;
@@ -35,7 +36,7 @@ MediaHandle::MediaHandle()
 	m_pMediaHandle =NULL;
 	m_pMediaAudioHandle =NULL;
     m_pMediaFile = NULL;
-	
+	m_pMediaPackHandle =NULL;
 }
 
 /*****************************************************************************
@@ -60,6 +61,11 @@ MediaHandle::~MediaHandle()
 	{
         delete m_pMediaAudioHandle;
         m_pMediaAudioHandle = NULL;
+	}
+	if(m_pMediaPackHandle !=NULL)
+	{
+        delete m_pMediaPackHandle;
+        m_pMediaPackHandle = NULL;
 	}
     if(NULL != m_pMediaFile)
     {
@@ -86,7 +92,7 @@ int MediaHandle::Init(char *i_strPath)
         cout<<"Init NULL"<<endl;
         return iRet;
     }
-    m_pMediaFile = fopen(i_strPath,"rb");
+    m_pMediaFile = fopen(i_strPath,"rb");//
     if(NULL == m_pMediaFile)
     {
         cout<<"Init "<<i_strPath<<"failed !"<<endl;
@@ -96,6 +102,13 @@ int MediaHandle::Init(char *i_strPath)
     if(NULL != strstr(i_strPath,FlvHandleInterface::m_strFormatName))
     {
         m_pMediaHandle=new FlvHandleInterface();
+        if(NULL !=m_pMediaHandle)
+            iRet=m_pMediaHandle->Init(i_strPath);
+        return iRet;
+    }
+    if(NULL != strstr(i_strPath,FMP4HandleInterface::m_strFormatName))
+    {
+        m_pMediaHandle=new FMP4HandleInterface();
         if(NULL !=m_pMediaHandle)
             iRet=m_pMediaHandle->Init(i_strPath);
         return iRet;
@@ -416,6 +429,52 @@ int MediaHandle::GetFrame(T_MediaFrameInfo *m_ptFrame)
     if(FALSE == iRet)
     {
         MH_LOGE("GetNextFrame FALSE:eStreamType%d,eEncType%d\r\n",m_ptFrame->eStreamType, m_ptFrame->eEncType);
+    }
+    
+	return iRet;
+}
+
+/*****************************************************************************
+-Fuction		: MediaHandle
+-Description	: 
+-Input			: 
+-Output 		: 
+-Return 		: 
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2017/09/21	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
+int MediaHandle::FrameToContainer(T_MediaFrameInfo *i_ptFrame,E_StreamType i_eStreamType,unsigned char * o_pbBuf, unsigned int i_dwMaxBufLen,int *o_piHeaderOffset)
+{
+    int iRet=FALSE;
+    int iWriteLen = 0;
+    
+    if(NULL == i_ptFrame)
+    {
+        MH_LOGE("FrameToContainer NULL\r\n");
+        return iRet;
+    }
+    
+    if(NULL == o_pbBuf)
+    {
+        MH_LOGE("FrameToContainer o_pbBuf NULL\r\n");
+        return iRet;
+    }
+    if(STREAM_TYPE_FMP4_STREAM == i_eStreamType)
+    {
+        if(NULL == m_pMediaPackHandle)
+        {
+            m_pMediaPackHandle=new FMP4HandleInterface();
+        }
+    }
+    if(NULL != m_pMediaPackHandle)
+    {
+        iRet = m_pMediaPackHandle->FrameToContainer(i_ptFrame,i_eStreamType,o_pbBuf,i_dwMaxBufLen,o_piHeaderOffset);
+    }
+
+    if(iRet < 0)
+    {
+        MH_LOGE("FrameToContainer FALSE:eStreamType%d,%d\r\n",i_eStreamType,i_dwMaxBufLen);
     }
     
 	return iRet;

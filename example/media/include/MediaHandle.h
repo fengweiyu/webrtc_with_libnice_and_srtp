@@ -22,6 +22,9 @@ using std::string;
 #define FRAME_BUFFER_MAX_SIZE               (2*1024*1024)   //2m
 #define MAX_NALU_CNT_ONE_FRAME              12
 #define VIDEO_ENC_PARAM_BUF_MAX_LEN     	64
+#define VIDEO_SPS_MAX_SIZE 128
+#define VIDEO_PPS_MAX_SIZE 64
+#define VIDEO_VPS_MAX_SIZE 256
 
 typedef enum
 {
@@ -30,6 +33,7 @@ typedef enum
     STREAM_TYPE_AUDIO_STREAM,
     STREAM_TYPE_MUX_STREAM,//包含音视频两路裸流
     STREAM_TYPE_FLV_STREAM,
+    STREAM_TYPE_FMP4_STREAM,
 }E_StreamType;
 
 typedef enum
@@ -98,11 +102,11 @@ typedef struct AudioEncodeParam
 
 typedef struct VideoEncodeParam
 {
-	unsigned char abSPS[VIDEO_ENC_PARAM_BUF_MAX_LEN];
+	unsigned char abSPS[VIDEO_SPS_MAX_SIZE];
 	int iSizeOfSPS;
-	unsigned char abPPS[VIDEO_ENC_PARAM_BUF_MAX_LEN];
+	unsigned char abPPS[VIDEO_PPS_MAX_SIZE];
 	int iSizeOfPPS;
-	unsigned char abVPS[VIDEO_ENC_PARAM_BUF_MAX_LEN];
+	unsigned char abVPS[VIDEO_VPS_MAX_SIZE];
 	int iSizeOfVPS;
 }T_VideoEncodeParam;
 
@@ -170,14 +174,16 @@ public:
     virtual int GetVideoEncParam(T_VideoEncodeParam *o_ptVideoEncodeParam);
     virtual int GetMediaInfo(T_MediaInfo *o_ptMediaInfo);
     //一个接口可以取代前面3个接口，包含Init GetNextFrame GetVideoEncParam GetMediaInfo 功能
-    virtual int GetFrame(T_MediaFrameInfo *m_ptFrame);//
+    virtual int GetFrame(T_MediaFrameInfo *m_ptFrame);
+    virtual int FrameToContainer(T_MediaFrameInfo *i_ptFrame,E_StreamType i_eStreamType,unsigned char * o_pbBuf, unsigned int i_dwMaxBufLen,int *o_piHeaderOffset=NULL);//
 protected:
 	T_MediaInfo m_tMediaInfo;
 	
-private:
+private://也可以考虑直接调用本类方法再调用子类方法
     MediaHandle             *m_pMediaHandle;//默认VideoHandle(裸流时，表示视频裸数据处理)
     MediaHandle             *m_pMediaAudioHandle;//音视频两路裸流时,这个会被赋值表示音频裸数据处理
-    
+
+    MediaHandle             *m_pMediaPackHandle;
 	FILE                    *m_pMediaFile;
 	//unsigned int 			m_dwFileReadOffset;
 	

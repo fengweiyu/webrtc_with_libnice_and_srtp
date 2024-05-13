@@ -784,7 +784,7 @@ int FlvHandle::AddAdtsHeader(unsigned int i_dwSampleRate,unsigned int i_dwChanne
 int FlvHandle::SpsToH264Resolution(unsigned char *i_pbSpsData,unsigned short i_wSpsLen,T_FlvH265Extradata *o_ptH265Extradata)
 {
     int iRet = -1;
-    unsigned char abSodbSPS[VIDEO_ENC_PARAM_BUF_MAX_LEN];
+    unsigned char abSodbSPS[VIDEO_SPS_MAX_SIZE];
     int iSodbLen = 0;
     
     unsigned char id;
@@ -955,7 +955,7 @@ int FlvHandle::SpsToH264Resolution(unsigned char *i_pbSpsData,unsigned short i_w
 int FlvHandle::SpsToH265Extradata(unsigned char *i_pbSpsData,unsigned short i_wSpsLen,T_FlvH265Extradata *o_ptH265Extradata)
 {
     int iRet = -1;
-    unsigned char abSodbSPS[VIDEO_ENC_PARAM_BUF_MAX_LEN];
+    unsigned char abSodbSPS[VIDEO_SPS_MAX_SIZE];
     int iSodbLen = 0;
     unsigned char sps;
     unsigned char sps_max_sub_layers_minus1;
