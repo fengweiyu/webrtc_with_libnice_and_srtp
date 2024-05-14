@@ -37,7 +37,7 @@ int main(int argc, char* argv[])
     if(argc !=3)
     {
         PrintUsage(argv[0]);
-        return proc("H264G711A.flv","H264G711A.mp4");
+        return proc("H264AAC.flv","H264AAC.mp4");
     }
     return proc(argv[1],argv[2]);
 }
@@ -63,6 +63,8 @@ static int proc(const char * i_strSrcFilePath,const char *i_strDstFilePath)
     cMediaHandle.Init((char *)i_strSrcFilePath);
     do
     {
+        memset(&m_tFileFrameInfo,0,sizeof(T_MediaFrameInfo));
+
         pbFileBuf = new unsigned char [MEDIA_FILE_BUF_MAX_LEN];
         if(NULL == pbFileBuf)
         {
@@ -76,7 +78,6 @@ static int proc(const char * i_strSrcFilePath,const char *i_strDstFilePath)
             break;
         } 
         
-        memset(&m_tFileFrameInfo,0,sizeof(T_MediaFrameInfo));
         m_tFileFrameInfo.pbFrameBuf = new unsigned char [MEDIA_BUF_MAX_LEN];
         if(NULL == m_tFileFrameInfo.pbFrameBuf)
         {
