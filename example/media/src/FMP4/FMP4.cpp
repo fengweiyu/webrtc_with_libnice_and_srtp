@@ -494,7 +494,7 @@ private:
         iLen++;
         o_pbBuf[iLen]=(unsigned char)(0x80 | (i_dwLen >> 7));
         iLen++;
-        o_pbBuf[iLen]=(unsigned char)(0x80 | (0x7F & i_dwLen));
+        o_pbBuf[iLen]=(unsigned char)(0x7F & i_dwLen);
         iLen++;
         return iLen;
     }
@@ -790,7 +790,7 @@ public:
         m_eEncType = i_eEncType;
         m_wChannelCount = i_wChannel;
         m_wSampleSize = i_wSampleSize;
-        m_dwSampleRate = i_dwSampleRate;
+        m_dwSampleRate = ((unsigned int)(i_dwSampleRate > 56635 ? 0 : i_dwSampleRate)) << 16;
 
         switch(m_eEncType)
         {
@@ -1424,9 +1424,13 @@ public:
 	{
 	    int iRet = -1;
 	    iRet = m_Stsd.SetParams(i_dwTrakHandlerType);//先放前面，才能确定后面的大小
+        m_dwTrakHandlerType=i_dwTrakHandlerType;
         FMP4BaseBox::m_dwBoxSize += m_Stsd.m_dwBoxSize;
         FMP4BaseBox::m_dwBoxSize += m_Stts.m_dwBoxSize;
-        FMP4BaseBox::m_dwBoxSize += m_Stss.m_dwBoxSize;
+        if(FMP4_VIDEO == m_dwTrakHandlerType)
+        {
+            FMP4BaseBox::m_dwBoxSize += m_Stss.m_dwBoxSize;
+        }
         FMP4BaseBox::m_dwBoxSize += m_Stsc.m_dwBoxSize;
         FMP4BaseBox::m_dwBoxSize += m_Stsz.m_dwBoxSize;
         FMP4BaseBox::m_dwBoxSize += m_Stco.m_dwBoxSize;
@@ -1452,7 +1456,10 @@ public:
         
         iLen += m_Stsd.ToBits(o_pbBuf+iLen,i_dwMaxBufLen-iLen);
         iLen += m_Stts.ToBits(o_pbBuf+iLen,i_dwMaxBufLen-iLen);
-        iLen += m_Stss.ToBits(o_pbBuf+iLen,i_dwMaxBufLen-iLen);
+        if(FMP4_VIDEO == m_dwTrakHandlerType)
+        {
+            iLen += m_Stss.ToBits(o_pbBuf+iLen,i_dwMaxBufLen-iLen);
+        }
         iLen += m_Stsc.ToBits(o_pbBuf+iLen,i_dwMaxBufLen-iLen);
         iLen += m_Stsz.ToBits(o_pbBuf+iLen,i_dwMaxBufLen-iLen);
         iLen += m_Stco.ToBits(o_pbBuf+iLen,i_dwMaxBufLen-iLen);
@@ -1463,7 +1470,7 @@ public:
 	FMP4StsdBox m_Stsd;
 private:
 	FMP4SttsBox m_Stts;//
-	FMP4StssBox m_Stss;//
+	FMP4StssBox m_Stss;// video only
 	//FMP4CttsBox ctts;//
 	FMP4StscBox m_Stsc;//
 	FMP4StszBox m_Stsz;//
@@ -1929,8 +1936,9 @@ class FMP4MehdBox : public FMP4FullBaseBox
 public:
 	FMP4MehdBox() 
 	{
-        FMP4FullBaseBox::m_dwBoxSize += sizeof(m_dwFragmentDuration);
+        FMP4FullBaseBox::m_dwBoxSize += sizeof(m_ddwFragmentDuration);
         memcpy(FMP4FullBaseBox::m_acBoxType,"mehd",sizeof(FMP4FullBaseBox::m_acBoxType));//""
+        FMP4FullBaseBox::m_bVersion=1;
 	};
     int ToBits(unsigned char *o_pbBuf,unsigned int i_dwMaxBufLen)
     {
@@ -1944,15 +1952,16 @@ public:
             return iLen;
         }
         iLen += FMP4FullBaseBox::ToBits(o_pbBuf,i_dwMaxBufLen);
-        
-        Write32BE((o_pbBuf+iLen),m_dwFragmentDuration);/*  */
-        iLen+=4;
 
+        Write32BE((o_pbBuf+iLen),(unsigned int)(m_ddwFragmentDuration>> 32));/*  */
+        iLen+=4;
+        Write32BE((o_pbBuf+iLen),(unsigned int)m_ddwFragmentDuration);/*  */
+        iLen+=4;
         return iLen;
     };
     
 private:
-	unsigned int m_dwFragmentDuration = 0;
+	uint64_t m_ddwFragmentDuration = 0;
 };
 /*****************************************************************************
 -Class          : FMP4TrexBox()
@@ -2473,7 +2482,7 @@ public:
                 return -1;
             }
             m_Mdia.m_Minf.m_Stbl.m_Stsd.m_VideoBox.SetParams(ptVideoFrameInfo->eEncType,ptVideoFrameInfo->tVideoEncParam.dwWidth,ptVideoFrameInfo->tVideoEncParam.dwHeight);
-            m_Mdia.m_Hdlr.SetParams(i_dwTrakHandlerType,"VideoHandler");
+            m_Mdia.m_Hdlr.SetParams(i_dwTrakHandlerType,(char *)"VideoHandler");
             m_Mdia.SetParams(i_dwTrakHandlerType);
             m_Tkhd.SetParams(FMP4_TKHD_FLAG_TRACK_ENABLE|FMP4_TKHD_FLAG_TRACK_IN_MOVIE,i_dwTrackID,
             0,ptVideoFrameInfo->tVideoEncParam.dwWidth,ptVideoFrameInfo->tVideoEncParam.dwHeight);
@@ -2499,7 +2508,7 @@ public:
             }
             m_Mdia.m_Minf.m_Stbl.m_Stsd.m_AudioBox.SetParams(ptAudioFrameInfo->eEncType,ptAudioFrameInfo->tAudioEncParam.dwChannels, 
             ptAudioFrameInfo->tAudioEncParam.dwBitsPerSample, ptAudioFrameInfo->dwSampleRate);
-            m_Mdia.m_Hdlr.SetParams(i_dwTrakHandlerType,"SoundHandler");
+            m_Mdia.m_Hdlr.SetParams(i_dwTrakHandlerType,(char *)"SoundHandler");
             m_Mdia.SetParams(i_dwTrakHandlerType);
             m_Tkhd.SetParams(FMP4_TKHD_FLAG_TRACK_ENABLE|FMP4_TKHD_FLAG_TRACK_IN_MOVIE,i_dwTrackID,0x0100,0,0);
         }
