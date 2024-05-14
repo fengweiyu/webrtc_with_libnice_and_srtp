@@ -69,6 +69,67 @@ enum
 #define FMP4_TREX_FLAG_SAMPLE_DEPENDS_ON_I_PICTURE       0x02000000
 #define FMP4_TREX_FLAG_SAMPLE_DEPENDS_ON_NOT_I_PICTURE   0x01000000
 
+// ISO/IEC 14496-1:2010(E) 7.2.6.6 DecoderConfigDescriptor
+// Table 6 - streamType Values (p51)
+typedef enum
+{
+    FMP4_STREAM_ODS     = 0x01, /* ObjectDescriptorStream */
+    FMP4_STREAM_CRS     = 0x02, /* ClockReferenceStream */
+    FMP4_STREAM_SDS     = 0x03, /* SceneDescriptionStream */
+    FMP4_STREAM_VISUAL  = 0x04, /* VisualStream *///video
+    FMP4_STREAM_AUDIO   = 0x05, /* AudioStream */
+    FMP4_STREAM_MP7     = 0x06, /* MPEG7Stream */
+    FMP4_STREAM_IPMP    = 0x07, /* IPMPStream */
+    FMP4_STREAM_OCIS    = 0x08, /* ObjectContentInfoStream */
+    FMP4_STREAM_MPEGJ   = 0x09, /* MPEGJStream */
+    FMP4_STREAM_IS      = 0x0A, /* Interaction Stream */
+    FMP4_STREAM_IPMPTOOL = 0x0B, /* IPMPToolStream */
+}E_FMP4_STREAM_TYPE;
+
+// ISO/IEC 14496-1:2010(E) 7.2.6.6 DecoderConfigDescriptor (p48)
+// MPEG-4 systems ObjectTypeIndication
+// http://www.mp4ra.org/object.html
+typedef enum
+{
+    FMP4_OBJECT_TYPE_NONE       = 0x00 ,// unknown object id
+    FMP4_OBJECT_TYPE_TEXT       = 0x08 ,// Text Stream
+    FMP4_OBJECT_TYPE_MP4V       = 0x20 ,// Visual ISO/IEC 14496-2 (c)
+    FMP4_OBJECT_TYPE_H264       = 0x21 ,// Visual ITU-T Recommendation H.264 | ISO/IEC 14496-10
+    FMP4_OBJECT_TYPE_H265       = 0x23 ,// Visual ISO/IEC 23008-2 | ITU-T Recommendation H.265
+    FMP4_OBJECT_TYPE_AAC        = 0x40 ,// Audio ISO/IEC 14496-3
+    FMP4_OBJECT_TYPE_MP2V       = 0x60 ,// Visual ISO/IEC 13818-2 Simple Profile
+    FMP4_OBJECT_TYPE_AAC_MAIN   = 0x66 ,// MPEG-2 AAC Main
+    FMP4_OBJECT_TYPE_AAC_LOW    = 0x67 ,// MPEG-2 AAC Low
+    FMP4_OBJECT_TYPE_AAC_SSR    = 0x68 ,// MPEG-2 AAC SSR
+    FMP4_OBJECT_TYPE_MP3        = 0x69 ,// Audio ISO/IEC 13818-3
+    FMP4_OBJECT_TYPE_MP1V       = 0x6A ,// Visual ISO/IEC 11172-2
+    FMP4_OBJECT_TYPE_MP1A       = 0x6B ,// Audio ISO/IEC 11172-3
+    FMP4_OBJECT_TYPE_JPEG       = 0x6C ,// Visual ISO/IEC 10918-1 (JPEG)
+    FMP4_OBJECT_TYPE_PNG        = 0x6D ,// Portable Network Graphics (f)
+    FMP4_OBJECT_TYPE_JPEG2000   = 0x6E ,// Visual ISO/IEC 15444-1 (JPEG 2000)
+    FMP4_OBJECT_TYPE_VC1        = 0xA3 ,// SMPTE VC-1 Video
+    FMP4_OBJECT_TYPE_DIRAC      = 0xA4 ,// Dirac Video Coder
+    FMP4_OBJECT_TYPE_AC3        = 0xA5 ,// AC-3
+    FMP4_OBJECT_TYPE_EAC3       = 0xA6 ,// Enhanced AC-3
+    FMP4_OBJECT_TYPE_G719       = 0xA8 ,// ITU G.719 Audio
+    FMP4_OBJECT_TYPE_DTS        = 0xA9 ,// Core Substream
+    FMP4_OBJECT_TYPE_OPUS       = 0xAD ,// Opus audio https:,//opus-codec.org/docs/opus_in_isobmff.html
+    FMP4_OBJECT_TYPE_VP9        = 0xB1 ,// VP9 Video
+    FMP4_OBJECT_TYPE_FLAC       = 0xC1 ,// nonstandard from FFMPEG
+    FMP4_OBJECT_TYPE_VP8        = 0xC2 ,// nonstandard
+    FMP4_OBJECT_TYPE_H266       = 0xFC ,// ITU-T Recommendation H.266
+    FMP4_OBJECT_TYPE_G711A      = 0xFD ,// ITU G.711 alaw
+    FMP4_OBJECT_TYPE_G711U      = 0xFE ,// ITU G.711 ulaw
+    FMP4_OBJECT_TYPE_AV1        = 0xFF ,// AV1: https:,//aomediacodec.github.io/av1-isobmff
+
+}E_FMP4_OBJECT_TYPE;
+#define FMP4_OBJECT_TYPE_AVC        FMP4_OBJECT_TYPE_H264
+#define FMP4_OBJECT_TYPE_HEVC       FMP4_OBJECT_TYPE_H265
+#define FMP4_OBJECT_TYPE_VVC        FMP4_OBJECT_TYPE_H266
+#define FMP4_OBJECT_TYPE_ALAW       FMP4_OBJECT_TYPE_G711A
+#define FMP4_OBJECT_TYPE_ULAW       FMP4_OBJECT_TYPE_G711U
+
+
 typedef struct VideoSampleEncParam
 {
     unsigned int dwWidth;//
@@ -94,7 +155,7 @@ typedef struct FMP4SampleInfo
     unsigned int dwSampleDuration;//持续时间
 
 
-    E_FMP4_ENC_TYPE eEncType;
+    E_FMP4_OBJECT_TYPE eEncType;
     unsigned int dwSampleRate;//dwSamplesPerSecond
     T_VideoSampleEncParam tVideoEncParam;
     T_AudioSampleEncParam tAudioEncParam;
@@ -262,7 +323,7 @@ public:
 	};
     int SetParams(unsigned char *i_pbExtraData,int i_iExtraDataLen) 
     {
-        if(NULL == i_pbExtraData || i_iExtraDataLen < sizeof(m_abExtraData))
+        if(NULL == i_pbExtraData || i_iExtraDataLen > sizeof(m_abExtraData))
         {
             FMP4_LOGE("FMP4HvcCBox SetParams err %d,%d\r\n",i_iExtraDataLen,sizeof(m_abExtraData));
             return -1;
@@ -309,55 +370,155 @@ private:
 * -----------------------------------------------
 * 2023/11/21      V1.0.0         Yu Weifeng       Created
 ******************************************************************************/
-class FMP4EsdsBox : public FMP4BaseBox 
+class FMP4EsdsBox : public FMP4FullBaseBox 
 {
 public:
 	FMP4EsdsBox() 
 	{
-	    m_iExtraDataLen = 0;
-        FMP4BaseBox::m_dwBoxSize += m_iExtraDataLen;//设置参数后才知道长度
-        memcpy(FMP4BaseBox::m_acBoxType,"esds",sizeof(FMP4BaseBox::m_acBoxType));
+	    memset(m_abExtraData,0,sizeof(m_abExtraData));
+	    memset(m_abBufferSizeDb,0,sizeof(m_abBufferSizeDb));
+        FMP4FullBaseBox::m_dwBoxSize += sizeof(m_bEsDescrTag)+sizeof(m_dwEsDescrTagSize)+sizeof(m_wTrackID)+sizeof(m_bFlags)+
+        sizeof(m_bDecoderConfigDescrTag)+sizeof(m_dwDecoderConfigDescrTagSize)+sizeof(m_bObjectTypeIndication)+sizeof(m_bStreamType)+
+        sizeof(m_abBufferSizeDb)+sizeof(m_dwMaxBitRate)+sizeof(m_dwAvgBitRate)+sizeof(m_bSlConfigDescrTag)+sizeof(m_dwSlConfigDescrTagSize)+sizeof(m_bSlConfig);
+        memcpy(FMP4FullBaseBox::m_acBoxType,"esds",sizeof(FMP4FullBaseBox::m_acBoxType));
 	};
-    int SetParams(unsigned char *i_pbExtraData,int i_iExtraDataLen) 
+    int SetParams(unsigned short i_wTrackID,E_FMP4_OBJECT_TYPE i_eEncType,unsigned char *i_pbExtraData,int i_iExtraDataLen) 
     {
-        if(NULL == i_pbExtraData || i_iExtraDataLen < sizeof(m_abExtraData))
+        FMP4_LOGD("FMP4EsdsBox SetParams %d %d,i_iExtraDataLen %d\r\n",i_wTrackID,i_eEncType,i_iExtraDataLen);
+        if(NULL == i_pbExtraData || i_iExtraDataLen > sizeof(m_abExtraData))
         {
-            FMP4_LOGE("FMP4HvcCBox SetParams err %d,%d",i_iExtraDataLen,sizeof(m_abExtraData));
+            FMP4_LOGE("FMP4EsdsBox SetParams err %d,%d\r\n",i_iExtraDataLen,sizeof(m_abExtraData));
             return -1;
         }
-        memcpy(m_abExtraData,i_pbExtraData,i_iExtraDataLen);
-        m_iExtraDataLen = i_iExtraDataLen;
+        m_bEsDescrTag = FMP4EsdsBox::ISO_ES_DESCR_TAG;
+        m_dwEsDescrTagSize+= 5 + 13 + (i_iExtraDataLen > 0 ? i_iExtraDataLen + 5 : 0); // mp4_write_decoder_config_descriptor
+        m_dwEsDescrTagSize += 5 + 1; // mp4_write_sl_config_descriptor
+        m_wTrackID = i_wTrackID;
+        
+        m_bDecoderConfigDescrTag = FMP4EsdsBox::ISO_DECODER_CONFIG_DESCR_TAG;
+        m_dwDecoderConfigDescrTagSize=13 + (i_iExtraDataLen > 0 ? i_iExtraDataLen + 5 : 0);
+        m_bObjectTypeIndication=(unsigned char)i_eEncType;
+
+        if(i_iExtraDataLen > 0)
+        {
+            m_bDecSpecificInfoTag = FMP4EsdsBox::ISO_DEC_SPEC_INFO_TAG;
+            memcpy(m_abExtraData,i_pbExtraData,i_iExtraDataLen);
+            m_dwExtraDataLen = (unsigned int)i_iExtraDataLen;
+            FMP4FullBaseBox::m_dwBoxSize += sizeof(m_bDecSpecificInfoTag)+sizeof(m_dwExtraDataLen)+m_dwExtraDataLen;//设置参数后才知道长度
+        }
+        
+        m_bSlConfigDescrTag = FMP4EsdsBox::ISO_SL_CONFIG_DESCR_TAG;
         return 0;
     };
     int ToBits(unsigned char *o_pbBuf,unsigned int i_dwMaxBufLen)
     {
-        FMP4BaseBox::m_dwBoxSize += m_iExtraDataLen;//设置参数后才知道长度
-		unsigned int dwMaxLen = FMP4BaseBox::m_dwBoxSize;//
+		unsigned int dwMaxLen = FMP4FullBaseBox::m_dwBoxSize;//
         int iLen = 0;
         int i ;
         
         if(NULL == o_pbBuf || i_dwMaxBufLen < dwMaxLen)
         {
-            FMP4_LOGE("FMP4HvcCBox ToBits err %d,%d",i_dwMaxBufLen,dwMaxLen);
-            return iLen;
-        }
-        if(m_iExtraDataLen <= 0)
-        {
-            FMP4_LOGE("FMP4HvcCBox m_iExtraDataLen err %d,%d",m_iExtraDataLen);
+            FMP4_LOGE("FMP4EsdsBox ToBits err %d,%d",i_dwMaxBufLen,dwMaxLen);
             return iLen;
         }
 
-        iLen += FMP4BaseBox::ToBits(o_pbBuf,i_dwMaxBufLen);
+        iLen += FMP4FullBaseBox::ToBits(o_pbBuf,i_dwMaxBufLen);
         
-        memcpy(o_pbBuf+iLen,m_abExtraData,m_iExtraDataLen);
-        iLen+=m_iExtraDataLen;
+        o_pbBuf[iLen]=m_bEsDescrTag;
+        iLen++;
+        iLen+=WriteTagLen(m_dwEsDescrTagSize,o_pbBuf+iLen,i_dwMaxBufLen-iLen);
+        Write16BE((o_pbBuf+iLen),m_wTrackID);
+        iLen+=2;
+        o_pbBuf[iLen]=m_bFlags;
+        iLen++;
+
+        o_pbBuf[iLen]=m_bDecoderConfigDescrTag;
+        iLen++;
+        iLen+=WriteTagLen(m_dwDecoderConfigDescrTagSize,o_pbBuf+iLen,i_dwMaxBufLen-iLen);
+        o_pbBuf[iLen]=m_bObjectTypeIndication;
+        iLen++;
+        o_pbBuf[iLen]=0x01/*reserved*/ | (m_bStreamType << 2);
+        iLen++;
+        memcpy(o_pbBuf+iLen,m_abBufferSizeDb,sizeof(m_abBufferSizeDb));
+        iLen+=sizeof(m_abBufferSizeDb);
+        Write32BE((o_pbBuf+iLen),m_dwMaxBitRate);
+        iLen+=4;
+        Write32BE((o_pbBuf+iLen),m_dwAvgBitRate);
+        iLen+=4;
+        
+        if(m_dwExtraDataLen > 0)
+        {
+            o_pbBuf[iLen]=m_bDecSpecificInfoTag;
+            iLen++;
+            iLen+=WriteTagLen(m_dwExtraDataLen,o_pbBuf+iLen,i_dwMaxBufLen-iLen);
+            memcpy(o_pbBuf+iLen,m_abExtraData,m_dwExtraDataLen);
+            iLen+=m_dwExtraDataLen;
+        }
+        
+        o_pbBuf[iLen]=m_bSlConfigDescrTag;
+        iLen++;
+        iLen+=WriteTagLen(m_dwSlConfigDescrTagSize,o_pbBuf+iLen,i_dwMaxBufLen-iLen);
+        o_pbBuf[iLen]=m_bSlConfig;
+        iLen++;
 
         return iLen;
     };
+    // ISO/IEC 14496-1:2010(E)
+    // 7.2.2 Common data structures
+    // Table-1 List of Class Tags for Descriptors (p31)
+    static const unsigned int ISO_OBJECT_DESCR_TAG                  = 0x01;
+    static const unsigned int ISO_INITAL_OBJECT_DESCR_TAG	        = 0x02;
+    static const unsigned int ISO_ES_DESCR_TAG                      = 0x03;
+    static const unsigned int ISO_DECODER_CONFIG_DESCR_TAG          = 0x04;
+    static const unsigned int ISO_DEC_SPEC_INFO_TAG                 = 0x05;
+    static const unsigned int ISO_SL_CONFIG_DESCR_TAG               = 0x06;
+    static const unsigned int ISO_CONTENT_IDENT_DESCR_TAG           = 0x07;
+    static const unsigned int ISO_SUPPL_CONTENT_IDENT_DESCR_TAG     = 0x08;
+    static const unsigned int ISO_IPI_DESCR_POINTER_TAG             = 0x09;
+    static const unsigned int ISO_IPMP_DESCR_POINTER_TAG            = 0x0A;
+    static const unsigned int ISO_IPMP_DESCR_TAG                    = 0x0B;
+    static const unsigned int ISO_QOS_DESCR_TAG                     = 0x0C;
+    static const unsigned int ISO_REGISTRATION_DESCR_TAG            = 0x0D;
+    static const unsigned int ISO_ES_ID_INC_TAG                     = 0x0E;
+    static const unsigned int ISO_ES_ID_REF_TAG                     = 0x0F;
+    static const unsigned int ISO_MP4_IOD_TAG                       = 0x10;
+    static const unsigned int ISO_MP4_OD_TAG                        = 0x11;
     
 private:
+    int WriteTagLen(unsigned int i_dwLen,unsigned char *o_pbBuf,unsigned int i_dwMaxBufLen)
+    {
+        int iLen = 0;
+        o_pbBuf[iLen]=(unsigned char)(0x80 | (i_dwLen >> 21));
+        iLen++;
+        o_pbBuf[iLen]=(unsigned char)(0x80 | (i_dwLen >> 14));
+        iLen++;
+        o_pbBuf[iLen]=(unsigned char)(0x80 | (i_dwLen >> 7));
+        iLen++;
+        o_pbBuf[iLen]=(unsigned char)(0x80 | (0x7F & i_dwLen));
+        iLen++;
+        return iLen;
+    }
+
+    unsigned char m_bEsDescrTag=0x03;//ISO_ES_DESCR_TAG
+    unsigned int m_dwEsDescrTagSize=3; // mp4_write_decoder_config_descriptor
+    unsigned short m_wTrackID=1;
+    unsigned char m_bFlags=0x00; // flags (= no flags)
+    
+    unsigned char m_bDecoderConfigDescrTag=0x04;//ISO_DECODER_CONFIG_DESCR_TAG
+    unsigned int m_dwDecoderConfigDescrTagSize=0; // 
+    unsigned char m_bObjectTypeIndication=0; // 
+    unsigned char m_bStreamType=(unsigned char)FMP4_STREAM_AUDIO;
+    unsigned char m_abBufferSizeDb[3];
+    unsigned int m_dwMaxBitRate=88360;
+    unsigned int m_dwAvgBitRate=88360;
+
+    unsigned char m_bDecSpecificInfoTag=0x05;//ISO_DEC_SPEC_INFO_TAG
+    unsigned int m_dwExtraDataLen=0;
     unsigned char m_abExtraData[512]; // H.265 sps/pps
-    int m_iExtraDataLen;
+
+    unsigned char m_bSlConfigDescrTag=0x06;//ISO_SL_CONFIG_DESCR_TAG
+    unsigned int m_dwSlConfigDescrTagSize=1; // 
+    unsigned char m_bSlConfig=0x02;
 };
 
 /**********************************Level 7************************************/
@@ -409,27 +570,27 @@ class FMP4VideoBox : public FMP4BaseBox
 public:
 	FMP4VideoBox() 
 	{
-	    m_eEncType = FMP4_UNKNOW_ENC_TYPE;
+	    m_eEncType = FMP4_OBJECT_TYPE_NONE;
         FMP4BaseBox::m_dwBoxSize += sizeof(m_abR0)+ sizeof(m_wDataReferenceIndex)+ sizeof(m_wPreDefined0)+ sizeof(m_wR1)+ sizeof(m_dwPreDefined1)+sizeof(m_dwPreDefined2)+
         sizeof(m_dwPreDefined3)+sizeof(m_wWidth)+sizeof(m_wHeight)+sizeof(m_dwHorizResolution)+sizeof(m_dwVerResolution)+sizeof(m_dwR2)+sizeof(m_wFramesCount)+
         sizeof(m_abCompressrName)+sizeof(m_wBitDepth)+sizeof(m_wPreDefined4);
         memcpy(FMP4BaseBox::m_acBoxType,"avc1",sizeof(FMP4BaseBox::m_acBoxType));//"h264"
 	};
 
-    int SetParams(E_FMP4_ENC_TYPE i_eEncType,unsigned short i_wWidth,unsigned short i_wHeight) 
+    int SetParams(E_FMP4_OBJECT_TYPE i_eEncType,unsigned short i_wWidth,unsigned short i_wHeight) 
     {
         int iRet = 0;
         //FMP4_LOGW("FMP4VideoBox%d  SetParams %d   %d %d\r\n",FMP4BaseBox::m_dwBoxSize,i_eEncType,i_wWidth,i_wHeight);
         m_eEncType = i_eEncType;
         switch(i_eEncType)
         {
-            case FMP4_ENC_H264:
+            case FMP4_OBJECT_TYPE_H264:
             {
                 FMP4BaseBox::m_dwBoxSize += m_AvcCBox.m_dwBoxSize;
                 memcpy(FMP4BaseBox::m_acBoxType,"avc1",sizeof(FMP4BaseBox::m_acBoxType));// AVCSampleEntry  (ISO/IEC 14496-15:2010)
                 break;
             }
-            case FMP4_ENC_H265:
+            case FMP4_OBJECT_TYPE_H265:
             {
                 FMP4BaseBox::m_dwBoxSize += m_HvcCBox.m_dwBoxSize;
                 memcpy(FMP4BaseBox::m_acBoxType,"hvc1",sizeof(FMP4BaseBox::m_acBoxType));//"h265"// HEVCSampleEntry (ISO/IEC 14496-15:2013)
@@ -560,12 +721,12 @@ public:
         
         switch(m_eEncType)
         {
-            case FMP4_ENC_H264:
+            case FMP4_OBJECT_TYPE_H264:
             {
                 iLen += m_AvcCBox.ToBits(o_pbBuf+iLen,i_dwMaxBufLen-iLen);
                 break;
             }
-            case FMP4_ENC_H265:
+            case FMP4_OBJECT_TYPE_H265:
             {
                 iLen += m_HvcCBox.ToBits(o_pbBuf+iLen,i_dwMaxBufLen-iLen);
                 break;
@@ -601,7 +762,7 @@ private:
 	unsigned short m_wBitDepth = 0x18;
 	unsigned short m_wPreDefined4 = 0xFFFF;
 
-    E_FMP4_ENC_TYPE m_eEncType;
+    E_FMP4_OBJECT_TYPE m_eEncType;
 };
 
 /*****************************************************************************
@@ -616,35 +777,47 @@ class FMP4AudioBox : public FMP4BaseBox
 public:
 	FMP4AudioBox() 
 	{
-	    m_eEncType = FMP4_UNKNOW_ENC_TYPE;
+	    m_eEncType = FMP4_OBJECT_TYPE_NONE;
         FMP4BaseBox::m_dwBoxSize += sizeof(m_abR0)+ sizeof(m_wDataReferenceIndex)+ sizeof(m_wPreDefined0)+ sizeof(m_wR1)+ sizeof(m_dwPreDefined1)+sizeof(m_wChannelCount)+
         sizeof(m_wSampleSize)+sizeof(m_wPreDefined2)+sizeof(m_wR2)+sizeof(m_dwSampleRate);
         memcpy(FMP4BaseBox::m_acBoxType,"mp4a",sizeof(FMP4BaseBox::m_acBoxType));//"aac"
 	};
 
-    int SetParams(E_FMP4_ENC_TYPE i_eEncType,unsigned short i_wChannel,unsigned short i_wSampleSize,unsigned int i_dwSampleRate) 
+    int SetParams(E_FMP4_OBJECT_TYPE i_eEncType,unsigned short i_wChannel,unsigned short i_wSampleSize,unsigned int i_dwSampleRate) 
     {
         int iRet = 0;
         FMP4_LOGW("FMP4AudioBox SetParams %d,   %d ,%d, %d\r\n",i_eEncType,i_wChannel,i_wSampleSize,i_dwSampleRate);
         m_eEncType = i_eEncType;
-        switch(i_eEncType)
+        m_wChannelCount = i_wChannel;
+        m_wSampleSize = i_wSampleSize;
+        m_dwSampleRate = i_dwSampleRate;
+
+        switch(m_eEncType)
         {
-            case FMP4_ENC_G711A:
-            case FMP4_ENC_G711U:
+            case FMP4_OBJECT_TYPE_G711A:
             {
+                memcpy(FMP4BaseBox::m_acBoxType,"alaw",sizeof(FMP4BaseBox::m_acBoxType));
                 break;
             }
-            case FMP4_ENC_AAC:
+            case FMP4_OBJECT_TYPE_G711U:
+            {
+                memcpy(FMP4BaseBox::m_acBoxType,"ulaw",sizeof(FMP4BaseBox::m_acBoxType));
+                break;
+            }
+            case FMP4_OBJECT_TYPE_AAC:
+            case FMP4_OBJECT_TYPE_MP3:
+            {
+                FMP4BaseBox::m_dwBoxSize += m_EsdsBox.m_dwBoxSize;
+                memcpy(FMP4BaseBox::m_acBoxType,"mp4a",sizeof(FMP4BaseBox::m_acBoxType));
+                break;
+            }
             default:
             {
-                FMP4_LOGE("FMP4AudioBox SetParams err i_eEncType %d",i_eEncType);
+                FMP4_LOGE("FMP4AudioBox SetParams err i_eEncType %d",m_eEncType);
                 iRet = -1;
                 break;
             }
         }
-        m_wChannelCount = i_wChannel;
-        m_wSampleSize = i_wSampleSize;
-        m_dwSampleRate = i_dwSampleRate;
         return iRet;
     };
     int ToBits(unsigned char *o_pbBuf,unsigned int i_dwMaxBufLen)
@@ -690,30 +863,32 @@ public:
         pbBuf+=4;
         
         iLen=pbBuf-o_pbBuf;
-#if 0        
         switch(m_eEncType)
         {
-            case FMP4_ENC_AAC:
-            case FMP4_ENC_MP3:
+            case FMP4_OBJECT_TYPE_AAC:
+            case FMP4_OBJECT_TYPE_MP3:
             {
                 iLen += m_EsdsBox.ToBits(o_pbBuf+iLen,i_dwMaxBufLen-iLen);
                 break;
             }
             case FMP4_ENC_OPUS:
             {
-                iLen += m_DopsBox.ToBits(o_pbBuf+iLen,i_dwMaxBufLen-iLen);
-                break;
+                //iLen += m_DopsBox.ToBits(o_pbBuf+iLen,i_dwMaxBufLen-iLen);
+                //break;
             }
             default:
             {
-                FMP4_LOGE("FMP4VideoBox ToBits err i_eEncType %d",m_eEncType);
+                FMP4_LOGE("FMP4AudioBox ToBits err i_eEncType %d",m_eEncType);
                 break;
             }
         }
-#endif        
         return iLen;
     };
     
+public:
+	//根据m_eEncType ，下列选一个
+	FMP4EsdsBox m_EsdsBox;
+	//FMP4DopsBox m_DopsBox;
 private:
 	unsigned char m_abR0[6] = { 0 };
 	unsigned short m_wDataReferenceIndex = 1;// ref [dref] Data Reference Boxes
@@ -730,10 +905,8 @@ private:
 	
 	unsigned int m_dwSampleRate = 0;/* { default samplerate of media } << 16  48000<<16*/
 
-	//根据m_eEncType ，下列选一个
-	//FMP4EsdsBox m_EsdsBox;
-	//FMP4DopsBox m_DopsBox;
-    E_FMP4_ENC_TYPE m_eEncType;
+
+    E_FMP4_OBJECT_TYPE m_eEncType;
 };
 
 /**********************************Level 6************************************/
@@ -2286,11 +2459,11 @@ public:
                 FMP4_LOGE("FMP4TrakBox SetParams NULL == ptVideoFrameInfo %d\r\n",i_dwTrakHandlerType);
                 return -1;
             }
-            if(FMP4_ENC_H264 == ptVideoFrameInfo->eEncType)
+            if(FMP4_OBJECT_TYPE_H264 == ptVideoFrameInfo->eEncType)
             {//level低的放前面，否则会影响level高中的boxsize大小
                 m_Mdia.m_Minf.m_Stbl.m_Stsd.m_VideoBox.m_AvcCBox.SetParams(ptVideoFrameInfo->abEncExtraData,ptVideoFrameInfo->iEncExtraDataLen);
             }
-            else if(FMP4_ENC_H265 == ptVideoFrameInfo->eEncType)
+            else if(FMP4_OBJECT_TYPE_H265 == ptVideoFrameInfo->eEncType)
             {
                 m_Mdia.m_Minf.m_Stbl.m_Stsd.m_VideoBox.m_HvcCBox.SetParams(ptVideoFrameInfo->abEncExtraData,ptVideoFrameInfo->iEncExtraDataLen);
             }
@@ -2310,6 +2483,18 @@ public:
             if(NULL == ptAudioFrameInfo)
             {
                 FMP4_LOGE("FMP4TrakBox SetParams NULL == ptAudioFrameInfo %d\r\n",i_dwTrakHandlerType);
+                return -1;
+            }
+            if(FMP4_OBJECT_TYPE_G711A == ptAudioFrameInfo->eEncType ||FMP4_OBJECT_TYPE_G711U == ptAudioFrameInfo->eEncType)
+            {//level低的放前面，否则会影响level高中的boxsize大小
+            }
+            else if(FMP4_OBJECT_TYPE_AAC == ptAudioFrameInfo->eEncType ||FMP4_OBJECT_TYPE_MP3 == ptAudioFrameInfo->eEncType)
+            {//level低的放前面，否则会影响level高中的boxsize大小
+                m_Mdia.m_Minf.m_Stbl.m_Stsd.m_AudioBox.m_EsdsBox.SetParams(i_dwTrackID,ptAudioFrameInfo->eEncType,ptAudioFrameInfo->abEncExtraData,ptAudioFrameInfo->iEncExtraDataLen);
+            }
+            else
+            {
+                FMP4_LOGE("FMP4TrakBox SetParams ptAudioFrameInfo->eEncType err %d\r\n",ptAudioFrameInfo->eEncType);
                 return -1;
             }
             m_Mdia.m_Minf.m_Stbl.m_Stsd.m_AudioBox.SetParams(ptAudioFrameInfo->eEncType,ptAudioFrameInfo->tAudioEncParam.dwChannels, 
@@ -3020,7 +3205,6 @@ int FMP4::CreateHeader(list<T_Fmp4FrameInfo> * i_pFMP4Media,unsigned char *o_pbB
         return iRet;
     }
     FMP4FtypBox FtypBox;
-    iDataLen = FtypBox.ToBits(o_pbBuf+iDataLen,i_dwMaxBufLen-iDataLen);
     
     memset(&tVideoFrameInfo,0,sizeof(T_FMP4SampleInfo));
     memset(&tAudioFrameInfo,0,sizeof(T_FMP4SampleInfo));
@@ -3032,7 +3216,24 @@ int FMP4::CreateHeader(list<T_Fmp4FrameInfo> * i_pFMP4Media,unsigned char *o_pbB
             m_adwTrakHandlerType[m_iCurTrakNum]=FMP4_VIDEO;
             m_iCurTrakNum++;
             tVideoFrameInfo.eFrameType = FMP4_VIDEO_KEY_FRAME;//其余暂不需要设置
-            tVideoFrameInfo.eEncType = iter->eEncType;
+            switch(iter->eEncType)
+            {
+                case FMP4_ENC_H264:
+                {
+                    tVideoFrameInfo.eEncType=FMP4_OBJECT_TYPE_H264;
+                    break;
+                }
+                case FMP4_ENC_H265:
+                {
+                    tVideoFrameInfo.eEncType=FMP4_OBJECT_TYPE_H265;
+                    break;
+                }
+                default:
+                {
+                    FMP4_LOGE("CreateHeader FMP4_VIDEO_FRAME err eEncType %d",iter->eEncType);
+                    return iRet;
+                }
+            }
             tVideoFrameInfo.dwSampleRate= iter->ddwSampleRate;
             tVideoFrameInfo.tVideoEncParam.dwWidth= iter->tVideoEncParam.dwWidth;
             tVideoFrameInfo.tVideoEncParam.dwHeight= iter->tVideoEncParam.dwHeight;
@@ -3048,7 +3249,29 @@ int FMP4::CreateHeader(list<T_Fmp4FrameInfo> * i_pFMP4Media,unsigned char *o_pbB
             m_adwTrakHandlerType[m_iCurTrakNum]=FMP4_AUDIO;
             m_iCurTrakNum++;
             tAudioFrameInfo.eFrameType = FMP4_AUDIO_FRAME;//其余暂不需要设置
-            tAudioFrameInfo.eEncType = iter->eEncType;
+            switch(iter->eEncType)
+            {
+                case FMP4_ENC_G711A:
+                {
+                    tAudioFrameInfo.eEncType=FMP4_OBJECT_TYPE_G711A;
+                    break;
+                }
+                case FMP4_ENC_G711U:
+                {
+                    tAudioFrameInfo.eEncType=FMP4_OBJECT_TYPE_G711U;
+                    break;
+                }
+                case FMP4_ENC_AAC:
+                {
+                    tAudioFrameInfo.eEncType=FMP4_OBJECT_TYPE_AAC;
+                    break;
+                }
+                default:
+                {
+                    FMP4_LOGE("CreateHeader FMP4_AUDIO_FRAME err eEncType %d",iter->eEncType);
+                    return iRet;
+                }
+            }
             tAudioFrameInfo.dwSampleRate= iter->ddwSampleRate;
             tAudioFrameInfo.tAudioEncParam.dwChannels= iter->tAudioEncParam.dwChannels;
             tAudioFrameInfo.tAudioEncParam.dwBitsPerSample= iter->tAudioEncParam.dwBitsPerSample;
@@ -3063,6 +3286,8 @@ int FMP4::CreateHeader(list<T_Fmp4FrameInfo> * i_pFMP4Media,unsigned char *o_pbB
         return iRet;
     }
     FMP4MoovBox MoovBox(m_iCurTrakNum,m_adwTrakHandlerType,&tVideoFrameInfo,&tAudioFrameInfo);
+
+    iDataLen = FtypBox.ToBits(o_pbBuf+iDataLen,i_dwMaxBufLen-iDataLen);
     iDataLen+=MoovBox.ToBits(o_pbBuf+iDataLen,i_dwMaxBufLen-iDataLen);
     
     return iDataLen;
@@ -3150,7 +3375,25 @@ int FMP4::CreateSegment(list<T_Fmp4FrameInfo> * i_pFMP4Media,unsigned int i_dwSe
                 aptVideoSampleInfo[j-1].dwSampleDuration=(unsigned int)(iter->ddwTimeStamp-ddwLastVideoTimeStamp);
             ddwLastVideoTimeStamp=iter->ddwTimeStamp;
             //aptVideoSampleInfo[j].dwSampleDuration = aptVideoSampleInfo[j-1].dwSampleDuration;
-            aptVideoSampleInfo[j].eEncType = iter->eEncType;
+            switch(iter->eEncType)
+            {
+                case FMP4_ENC_H264:
+                {
+                    aptVideoSampleInfo[j].eEncType = FMP4_OBJECT_TYPE_H264;
+                    break;
+                }
+                case FMP4_ENC_H265:
+                {
+                    aptVideoSampleInfo[j].eEncType = FMP4_OBJECT_TYPE_H265;
+                    break;
+                }
+                default:
+                {
+                    FMP4_LOGE("CreateSegment FMP4_VIDEO_FRAME err eEncType %d",iter->eEncType);
+                    free(aptVideoSampleInfo);
+                    return iRet;
+                }
+            }
             aptVideoSampleInfo[j].dwSampleRate= iter->ddwSampleRate;
             aptVideoSampleInfo[j].tVideoEncParam.dwWidth= iter->tVideoEncParam.dwWidth;
             aptVideoSampleInfo[j].tVideoEncParam.dwHeight= iter->tVideoEncParam.dwHeight;
@@ -3186,7 +3429,31 @@ int FMP4::CreateSegment(list<T_Fmp4FrameInfo> * i_pFMP4Media,unsigned int i_dwSe
                 aptAudioSampleInfo[j].dwSampleDuration = aptAudioSampleInfo[j-1].dwSampleDuration;//音频可用上一帧的
             }
             ddwLastAudioTimeStamp=iter->ddwTimeStamp;
-            aptAudioSampleInfo[j].eEncType = iter->eEncType;
+            switch(iter->eEncType)
+            {
+                case FMP4_ENC_G711A:
+                {
+                    aptAudioSampleInfo[j].eEncType = FMP4_OBJECT_TYPE_G711A;
+                    break;
+                }
+                case FMP4_ENC_G711U:
+                {
+                    aptAudioSampleInfo[j].eEncType = FMP4_OBJECT_TYPE_G711U;
+                    break;
+                }
+                case FMP4_ENC_AAC:
+                {
+                    aptAudioSampleInfo[j].eEncType=FMP4_OBJECT_TYPE_AAC;
+                    break;
+                }
+                default:
+                {
+                    FMP4_LOGE("CreateSegment FMP4_AUDIO_FRAME err eEncType %d",iter->eEncType);
+                    free(aptVideoSampleInfo);
+                    free(aptAudioSampleInfo);
+                    return iRet;
+                }
+            }
             aptAudioSampleInfo[j].dwSampleRate= iter->ddwSampleRate;
             aptAudioSampleInfo[j].tAudioEncParam.dwChannels= iter->tAudioEncParam.dwChannels;
             aptAudioSampleInfo[j].tAudioEncParam.dwBitsPerSample= iter->tAudioEncParam.dwBitsPerSample;
