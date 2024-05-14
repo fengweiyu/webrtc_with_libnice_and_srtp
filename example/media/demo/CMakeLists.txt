@@ -16,13 +16,13 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 SET(src_list
-    Main.cpp
+    main.cpp
 	)		
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}
     ${PROJECT_SOURCE_DIR}/../src/include
 	)
-ADD_EXECUTABLE(MediaConvert ${SRC_LIST})
-TARGET_LINK_LIBRARIES(MediaConvert ${PROJECT_SOURCE_DIR}/build/lib/libmedia.a)
+ADD_EXECUTABLE(MediaConvert ${src_list})
+TARGET_LINK_LIBRARIES(MediaConvert ${PROJECT_SOURCE_DIR}/../src/build/lib/libmedia.a)
 
 
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/build)

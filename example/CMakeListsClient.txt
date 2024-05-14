@@ -50,7 +50,7 @@ TARGET_LINK_LIBRARIES(webrtcClient ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolCh
 TARGET_LINK_LIBRARIES(webrtcClient ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/base64/libbase64.a)
 TARGET_LINK_LIBRARIES(webrtcClient ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/webrtc_client/libwebrtc_client.a)
 TARGET_LINK_LIBRARIES(webrtcClient ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/rtp/librtp.a)
-TARGET_LINK_LIBRARIES(webrtcClient ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/media/libmedia.a)
+TARGET_LINK_LIBRARIES(webrtcClient ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/media/lib/libmedia.a)
 TARGET_LINK_LIBRARIES(webrtcClient ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/net/libnet.a)
 
 #第三方库(libwebrtc.a中包含了这些库暂时注释掉)

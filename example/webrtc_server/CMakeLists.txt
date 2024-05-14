@@ -24,7 +24,7 @@ INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}
 	${PROJECT_SOURCE_DIR}/../http/include
     ${PROJECT_SOURCE_DIR}/../net/include
 	${PROJECT_SOURCE_DIR}/../base64/include
-    ${PROJECT_SOURCE_DIR}/../media/include
+    ${PROJECT_SOURCE_DIR}/../media/src/include
     ${PROJECT_SOURCE_DIR}/../rtp/include
     ${PROJECT_SOURCE_DIR}/../../build/${CMAKE_ToolChain}/lib/include
     ${PROJECT_SOURCE_DIR}/../../build/${CMAKE_ToolChain}/third_lib/cJSON

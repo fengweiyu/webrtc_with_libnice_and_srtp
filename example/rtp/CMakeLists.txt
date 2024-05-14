@@ -21,7 +21,7 @@ SET(src_list
 	)		
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}
 	${PROJECT_SOURCE_DIR}/include
-    ${PROJECT_SOURCE_DIR}/../media/include
+    ${PROJECT_SOURCE_DIR}/../media/src/include
     ${PROJECT_SOURCE_DIR}/../http/include
 	)
 ADD_LIBRARY(rtp_static STATIC ${src_list})

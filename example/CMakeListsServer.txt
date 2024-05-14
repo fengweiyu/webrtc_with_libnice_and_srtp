@@ -37,7 +37,7 @@ TARGET_LINK_LIBRARIES(webrtcServer ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolCh
 TARGET_LINK_LIBRARIES(webrtcServer ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/lib/libwebrtc.a)
 TARGET_LINK_LIBRARIES(webrtcServer ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/base64/libbase64.a)
 TARGET_LINK_LIBRARIES(webrtcServer ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/rtp/librtp.a)
-TARGET_LINK_LIBRARIES(webrtcServer ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/media/libmedia.a)
+TARGET_LINK_LIBRARIES(webrtcServer ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/media/lib/libmedia.a)
 TARGET_LINK_LIBRARIES(webrtcServer ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/http/libhttp.a)
 TARGET_LINK_LIBRARIES(webrtcServer ${PROJECT_SOURCE_DIR}/../build/${CMAKE_ToolChain}/net/libnet.a)
 
