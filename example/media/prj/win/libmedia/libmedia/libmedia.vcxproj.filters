@@ -1,0 +1,77 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="demo">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="src\FLV">
+      <UniqueIdentifier>{3e5b38bc-8418-4a54-bc15-e235268ce2fb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\FMP4">
+      <UniqueIdentifier>{0ee6d7de-c2e4-4a88-953f-f9a5d1f624e4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\include">
+      <UniqueIdentifier>{7f21e612-1f6f-44c7-b906-d795d24f824b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\FLV\include">
+      <UniqueIdentifier>{9f7ea87f-8b1e-4433-89bd-53979d71ec55}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\FMP4\include">
+      <UniqueIdentifier>{7b70b59a-c40c-451e-9372-4e0c13c61a85}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\..\src\MediaHandle.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\RawAudioHandle.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\RawVideoHandle.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\FLV\FlvHandle.cpp">
+      <Filter>src\FLV</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\FLV\FlvHandleInterface.cpp">
+      <Filter>src\FLV</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\FMP4\FMP4.cpp">
+      <Filter>src\FMP4</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\FMP4\FMP4Handle.cpp">
+      <Filter>src\FMP4</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\FMP4\FMP4HandleInterface.cpp">
+      <Filter>src\FMP4</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\..\src\RawAudioHandle.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\src\RawVideoHandle.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\src\FLV\FlvHandle.h">
+      <Filter>src\FLV</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\src\FMP4\FMP4.h">
+      <Filter>src\FMP4</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\src\FMP4\FMP4Handle.h">
+      <Filter>src\FMP4</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\src\FLV\include\FlvHandleInterface.h">
+      <Filter>src\FLV\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\src\FMP4\include\FMP4HandleInterface.h">
+      <Filter>src\FMP4\include</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
