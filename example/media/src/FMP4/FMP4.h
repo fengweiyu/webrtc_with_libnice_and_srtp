@@ -140,6 +140,8 @@ private:
     //T_Fmp4MediaInfo m_tMedia;
     unsigned int m_adwTrakHandlerType[FMP4_MAX_TRAK_NUM];
     int m_iCurTrakNum;
+    int m_iFindFirstFrame;//0 ·ñ1ÊÇ
+    unsigned int m_dwSegmentBaseDecTime;
 };
 
 

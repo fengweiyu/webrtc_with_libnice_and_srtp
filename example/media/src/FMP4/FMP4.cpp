@@ -1429,7 +1429,7 @@ public:
         FMP4BaseBox::m_dwBoxSize += m_Stts.m_dwBoxSize;
         if(FMP4_VIDEO == m_dwTrakHandlerType)
         {
-            FMP4BaseBox::m_dwBoxSize += m_Stss.m_dwBoxSize;
+            FMP4BaseBox::m_dwBoxSize += m_Stss.m_dwBoxSize;//ffmpeg 无
         }
         FMP4BaseBox::m_dwBoxSize += m_Stsc.m_dwBoxSize;
         FMP4BaseBox::m_dwBoxSize += m_Stsz.m_dwBoxSize;
@@ -1458,7 +1458,7 @@ public:
         iLen += m_Stts.ToBits(o_pbBuf+iLen,i_dwMaxBufLen-iLen);
         if(FMP4_VIDEO == m_dwTrakHandlerType)
         {
-            iLen += m_Stss.ToBits(o_pbBuf+iLen,i_dwMaxBufLen-iLen);
+            iLen += m_Stss.ToBits(o_pbBuf+iLen,i_dwMaxBufLen-iLen);//ffmpeg 无
         }
         iLen += m_Stsc.ToBits(o_pbBuf+iLen,i_dwMaxBufLen-iLen);
         iLen += m_Stsz.ToBits(o_pbBuf+iLen,i_dwMaxBufLen-iLen);
@@ -1574,7 +1574,7 @@ public:
         iLen+=4;
         Write32BE((o_pbBuf+iLen),m_dwModificationTime);/* modification_time */
         iLen+=4;
-        Write32BE((o_pbBuf+iLen), m_dwTimeScale); /* timescale */
+        Write32BE((o_pbBuf+iLen), m_dwTimeScale); /* timescale ,ffmpeg video 12800,aac 44100采样率*/
         iLen+=4;
         
         Write32BE((o_pbBuf+iLen), m_dwDuration); /* duration */
@@ -1588,8 +1588,8 @@ public:
 private:
 	unsigned int m_dwCreationTime = time(NULL) + 0x7C25B080; // 1970 based -> 1904 based;;// seconds sine midnight, Jan. 1, 1904, UTC
 	unsigned int m_dwModificationTime = time(NULL) + 0x7C25B080; // seconds sine midnight, Jan. 1, 1904, UTC
-	unsigned int m_dwTimeScale = 0X15F90;// second
-	unsigned int m_dwDuration = 0;
+	unsigned int m_dwTimeScale = 0X15F90;// second  //m_dwTimeScale 表示整个mp4中的时间单位是1/1000s，即当前的时间单位为ms
+	unsigned int m_dwDuration = 0;//            //比如，	tfhd中的default_sample_duration值为40，则表示当前帧持续时间为40ms
 	unsigned char m_abLanguage[4] = {/* ISO-639-2/T language code */ 0x55, 0xc4, /* pre_defined (quality) */0x00, 0x00 };
 
 };
@@ -2379,7 +2379,7 @@ public:
 	int SetParams(unsigned int i_dwNextTrackID) 
 	{
         FMP4_LOGW("FMP4MvhdBox SetParams %d,%d\r\n",m_dwNextTrackID,i_dwNextTrackID);
-        m_dwNextTrackID = i_dwNextTrackID;
+        m_dwNextTrackID = i_dwNextTrackID;//ffmpeg 2,media 3
         return 0;
 	};
     int ToBits(unsigned char *o_pbBuf,unsigned int i_dwMaxBufLen)
@@ -2460,7 +2460,6 @@ public:
 	int SetParams(unsigned int i_dwTrakHandlerType,unsigned int i_dwTrackID,T_FMP4SampleInfo *ptVideoFrameInfo,T_FMP4SampleInfo *ptAudioFrameInfo) 
 	{
         FMP4_LOGW("FMP4TrakBox SetParams %d %d \r\n",i_dwTrakHandlerType,i_dwTrackID);
-        m_Mdia.m_Mdhd.SetParams(1000);
         if(FMP4_VIDEO == i_dwTrakHandlerType)
         {
             if(NULL == ptVideoFrameInfo)
@@ -2468,6 +2467,7 @@ public:
                 FMP4_LOGE("FMP4TrakBox SetParams NULL == ptVideoFrameInfo %d\r\n",i_dwTrakHandlerType);
                 return -1;
             }
+            m_Mdia.m_Mdhd.SetParams(1000);//表示整个mp4中的时间单位是1/1000s，即当前的时间单位为ms
             if(FMP4_OBJECT_TYPE_H264 == ptVideoFrameInfo->eEncType)
             {//level低的放前面，否则会影响level高中的boxsize大小
                 m_Mdia.m_Minf.m_Stbl.m_Stsd.m_VideoBox.m_AvcCBox.SetParams(ptVideoFrameInfo->abEncExtraData,ptVideoFrameInfo->iEncExtraDataLen);
@@ -2494,6 +2494,7 @@ public:
                 FMP4_LOGE("FMP4TrakBox SetParams NULL == ptAudioFrameInfo %d\r\n",i_dwTrakHandlerType);
                 return -1;
             }
+            m_Mdia.m_Mdhd.SetParams(1000);//比如，	tfhd中的default_sample_duration值为40，则表示当前帧持续时间为40ms
             if(FMP4_OBJECT_TYPE_G711A == ptAudioFrameInfo->eEncType ||FMP4_OBJECT_TYPE_G711U == ptAudioFrameInfo->eEncType)
             {//level低的放前面，否则会影响level高中的boxsize大小
             }
@@ -2602,7 +2603,7 @@ public:
             m_pTrex[i]->SetParams(i_pdwTrackId[i]);
         }
 
-        FMP4BaseBox::m_dwBoxSize += m_Mehd.m_dwBoxSize;
+        FMP4BaseBox::m_dwBoxSize += m_Mehd.m_dwBoxSize;//ffmpeg 无
         for(i = 0;i<m_dwTrexCnt;i++)
         {
             FMP4BaseBox::m_dwBoxSize += m_pTrex[i]->m_dwBoxSize;
@@ -2626,7 +2627,7 @@ public:
         
         iLen += FMP4BaseBox::ToBits(o_pbBuf,i_dwMaxBufLen);
         
-        iLen += m_Mehd.ToBits(o_pbBuf+iLen,i_dwMaxBufLen-iLen);
+        iLen += m_Mehd.ToBits(o_pbBuf+iLen,i_dwMaxBufLen-iLen);////ffmpeg 无
         for(i = 0;i<m_dwTrexCnt;i++)
         {
             iLen += m_pTrex[i]->ToBits(o_pbBuf+iLen,i_dwMaxBufLen-iLen);
@@ -2863,7 +2864,7 @@ public:
         m_apCompatibleBrands[2] = FMP4_BRAND_AVC1;
         m_apCompatibleBrands[3] = FMP4_BRAND_ISO6;
         m_apCompatibleBrands[4] = FMP4_BRAND_MP41;
-        m_apCompatibleBrands[5] = FMP4_BRAND_MSDH;
+        //m_apCompatibleBrands[5] = FMP4_BRAND_MSDH;//ffmpeg 无，media 有
         
         FMP4BaseBox::m_dwBoxSize += strlen(m_strMajorBrand)+sizeof(m_dwMinorVersion);
         for(i =0;i<sizeof(m_apCompatibleBrands)/sizeof(const char *);i++)
@@ -2895,9 +2896,9 @@ public:
         return iLen;
     };
 public:
-	const char * m_strMajorBrand = FMP4_BRAND_MSDH;//FMP4_BRAND_ISOM;
+	const char * m_strMajorBrand = FMP4_BRAND_ISOM;//ffmpeg FMP4_BRAND_ISOM;media FMP4_BRAND_MSDH
 	unsigned int m_dwMinorVersion = 0X00000200;
-	const char * m_apCompatibleBrands[6] ;//"isom iso2 avc1 iso6 mp41";//兼容不放FMP4_BRAND_HVC1也行,ios用FMP4_BRAND_MP42 代替MP41
+	const char * m_apCompatibleBrands[5] ;//ffmpeg 5;media 6 //"isom iso2 avc1 iso6 mp41";//兼容不放FMP4_BRAND_HVC1也行,ios用FMP4_BRAND_MP42 代替MP41
 };
 
 
@@ -3142,6 +3143,8 @@ FMP4::FMP4()
     memset(m_adwTrakHandlerType,0,sizeof(m_adwTrakHandlerType));
     m_adwTrakHandlerType[0]=FMP4_VIDEO;
     m_adwTrakHandlerType[1]=FMP4_AUDIO;
+    m_dwSegmentBaseDecTime = 0;
+    m_iFindFirstFrame = 0;
 }
 
 /*****************************************************************************
@@ -3170,6 +3173,8 @@ FMP4::FMP4(E_Fmp4StreamType eFmp4StreamType)
         m_iCurTrakNum = 1;
         m_adwTrakHandlerType[0]=FMP4_AUDIO;
     }
+    m_dwSegmentBaseDecTime = 0;
+    m_iFindFirstFrame = 0;
 }
 
 /*****************************************************************************
@@ -3398,7 +3403,7 @@ int FMP4::CreateSegment(list<T_Fmp4FrameInfo> * i_pFMP4Media,unsigned int i_dwSe
                 }
                 default:
                 {
-                    FMP4_LOGE("CreateSegment FMP4_VIDEO_FRAME err eEncType %d",iter->eEncType);
+                    FMP4_LOGE("CreateSegment FMP4_VIDEO_FRAME err eEncType %d\r\n",iter->eEncType);
                     free(aptVideoSampleInfo);
                     return iRet;
                 }
@@ -3457,7 +3462,7 @@ int FMP4::CreateSegment(list<T_Fmp4FrameInfo> * i_pFMP4Media,unsigned int i_dwSe
                 }
                 default:
                 {
-                    FMP4_LOGE("CreateSegment FMP4_AUDIO_FRAME err eEncType %d",iter->eEncType);
+                    FMP4_LOGE("CreateSegment FMP4_AUDIO_FRAME err eEncType %d\r\n",iter->eEncType);
                     free(aptVideoSampleInfo);
                     free(aptAudioSampleInfo);
                     return iRet;
@@ -3478,13 +3483,22 @@ int FMP4::CreateSegment(list<T_Fmp4FrameInfo> * i_pFMP4Media,unsigned int i_dwSe
         {
             atTrackInfo[i].aptSampleInfo=aptVideoSampleInfo;
             atTrackInfo[i].dwSampleCount=dwVideoSampleCount-1;//去掉当前帧，外层会保存，下次再打包
-            atTrackInfo[i].dwStartDts=atTrackInfo[i].aptSampleInfo[0].ddwDTS;//时间戳开始，便于内部使用相对时间戳
+            if(0 == m_iFindFirstFrame)
+            {
+                m_dwSegmentBaseDecTime = atTrackInfo[i].aptSampleInfo[0].ddwDTS;//时间戳开始，便于内部使用相对时间戳
+                m_iFindFirstFrame = 1;
+            }
+            atTrackInfo[i].dwStartDts=m_dwSegmentBaseDecTime;
         }
         else if(1 == i)
         {
             atTrackInfo[i].aptSampleInfo= aptAudioSampleInfo;
             atTrackInfo[i].dwSampleCount= dwAudioSampleCount;
-            atTrackInfo[i].dwStartDts=atTrackInfo[i].aptSampleInfo[0].ddwDTS;
+            if(0 == m_iFindFirstFrame)
+            {
+                FMP4_LOGE("0 == m_iFindFirstFrame err %d\r\n",m_dwSegmentBaseDecTime);
+            }
+            atTrackInfo[i].dwStartDts=m_dwSegmentBaseDecTime;//音视频时钟同源
         }
     }
 
