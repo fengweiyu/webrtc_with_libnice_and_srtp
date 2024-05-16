@@ -302,7 +302,7 @@ int FMP4Handle::CreateAudioSpecCfgAAC(unsigned int i_dwFrequency,unsigned int i_
     int iAudioSpecCfgLen = 0;
     unsigned char bProfile = 1;
     unsigned char bAudioObjectType = 0;
-    unsigned char bChannelConfiguration = 0;
+    unsigned char bChannelConfiguration = 0;//声道模式0 = 单声道1 = 双声道（立体声）
     unsigned char bSamplingFrequencyIndex = 0;
     int i = 0;
     ///索引表  
@@ -323,8 +323,10 @@ int FMP4Handle::CreateAudioSpecCfgAAC(unsigned int i_dwFrequency,unsigned int i_
             break;
         }
     }
-    bChannelConfiguration = (unsigned char)i_dwChannels;
-    
+    if(i_dwChannels>0)
+        bChannelConfiguration = (unsigned char)(i_dwChannels-1);//声道=通道-1
+    else
+        bChannelConfiguration=0;
     o_pbAudioData[0] = (bAudioObjectType << 3) | (bSamplingFrequencyIndex >> 1);
     o_pbAudioData[1] = (bSamplingFrequencyIndex << 7) | (bChannelConfiguration << 3);
     iAudioSpecCfgLen = 2;
