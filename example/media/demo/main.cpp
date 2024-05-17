@@ -37,7 +37,7 @@ int main(int argc, char* argv[])
     if(argc !=3)
     {
         PrintUsage(argv[0]);
-        return proc("H264AAC.flv","H264AAC.mp4");
+        return proc("H264AAC.flv","H264AAC.mp4");//proc("H264G711A.flv","H264G711A.mp4");H264AAC
     }
     return proc(argv[1],argv[2]);
 }
