@@ -3,6 +3,8 @@
 ------------------------------------------------------------------------------
 * File Module		: 	TcpSocket.cpp
 * Description		: 	TcpSocket  _WIN32 operation center
+后续支持epoll可使用wepoll
+https://github.com/ZLMediaKit/ZLMediaKit.git/3rdpart/wepoll
 * Created			: 	2017.09.21.
 * Author			: 	Yu Weifeng
 * Function List		: 	
@@ -126,7 +128,7 @@ int TcpServer::Init(string *i_strIP,unsigned short i_wPort)
         }
         // Connect to server
         //this->GetIpAndPort(i_URL,&IP,&wPort);
-        bzero(&tServerAddr, sizeof(tServerAddr));
+		memset(&tServerAddr,0, sizeof(tServerAddr));
         tServerAddr.sin_family = AF_INET;
         tServerAddr.sin_port = htons(wPort);//
         if(i_strIP == NULL)
@@ -176,8 +178,8 @@ int TcpServer::Init(string *i_strIP,unsigned short i_wPort)
 int TcpServer::Accept()
 {
     int iClientSocketFd=-1;
-    struct sockaddr_un tClientAddr; 
-    socklen_t iLen=0;
+    SOCKADDR_IN    tClientAddr; 
+    int iLen = sizeof(tClientAddr);
     
     //have connect request use accept  
     iLen=sizeof(tClientAddr);  
@@ -190,7 +192,7 @@ int TcpServer::Accept()
         WSACleanup();
     } 
     // 设置socket为非阻塞模式
-    int mode = 1;
+    u_long mode = 1;
     if (ioctlsocket(iClientSocketFd, FIONBIO, &mode) == SOCKET_ERROR) 
     {
         TCP_LOGE("Failed to set socket to non-blocking mode\r\n");  
@@ -426,7 +428,7 @@ int TcpClient::Init(string *i_strIP,unsigned short i_wPort)
             break;
         }
 		// Connect to server
-		bzero(&tServerAddr, sizeof(tServerAddr));
+		memset(&tServerAddr,0, sizeof(tServerAddr));
 		tServerAddr.sin_family = AF_INET;
 		tServerAddr.sin_port = htons(i_wPort);
 		tServerAddr.sin_addr.s_addr = inet_addr(i_strIP->c_str());
@@ -765,19 +767,6 @@ void TcpServerEpoll::CloseClient(int i_iClientSocketFd)
 * 2017/09/21	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
 void TcpServerEpoll::CloseServer()
-{
-}
-/*****************************************************************************
--Fuction		: Close
--Description	: Close
--Input			:
--Output 		:
--Return 		:
-* Modify Date	  Version		 Author 		  Modification
-* -----------------------------------------------
-* 2017/09/21	  V1.0.0		 Yu Weifeng 	  Created
-******************************************************************************/
-void TcpServerEpoll::CloseSocket(int i_iSocketFd)
 {
 }
 
