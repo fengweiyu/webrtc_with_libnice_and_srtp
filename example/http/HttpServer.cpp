@@ -84,10 +84,10 @@ int HttpServer :: ParseRequest(char *i_pcReqData,int i_iDataLen,T_HttpReqPacket 
         return iRet;
     }
     pBody = strstr(i_pcReqData,strHttpBodyFlag);
-    if(NULL != pBody && HTTP_PACKET_BODY_MAX_LEN>=i_iDataLen-(pBody-i_pcReqData+strlen(strHttpBodyFlag)))
+    if(NULL != pBody && NULL != o_ptHttpReqPacket->pcBody && o_ptHttpReqPacket->iBodyMaxLen>=i_iDataLen-(pBody-i_pcReqData+strlen(strHttpBodyFlag)))
     {
-        o_ptHttpReqPacket->iBodyLength = i_iDataLen-(pBody-i_pcReqData+strlen(strHttpBodyFlag));
-        memcpy(o_ptHttpReqPacket->acBody,pBody+strlen(strHttpBodyFlag),o_ptHttpReqPacket->iBodyLength);
+        o_ptHttpReqPacket->iBodyCurLen= i_iDataLen-(pBody-i_pcReqData+strlen(strHttpBodyFlag));
+        memcpy(o_ptHttpReqPacket->pcBody,pBody+strlen(strHttpBodyFlag),o_ptHttpReqPacket->iBodyCurLen);
     }
     strHttpHeader.assign(i_pcReqData,0,pBody-i_pcReqData);
 

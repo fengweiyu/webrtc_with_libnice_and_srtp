@@ -53,8 +53,9 @@ typedef struct HttpReqPacket
     int iContentLength;
     char strContentType[128];
 
-    char acBody[HTTP_PACKET_BODY_MAX_LEN];
-    int iBodyLength;
+    char * pcBody;
+    int iBodyCurLen;
+    int iBodyMaxLen;
 }T_HttpReqPacket;
 
 typedef struct HttpResPacket
@@ -66,8 +67,9 @@ typedef struct HttpResPacket
     int iContentLength;
     char strContentType[128];
 
-    char acBody[HTTP_PACKET_BODY_MAX_LEN];
-    int iBodyLength;
+    char * pcBody;
+    int iBodyCurLen;
+    int iBodyMaxLen;
 }T_HttpResPacket;
 
 #endif
