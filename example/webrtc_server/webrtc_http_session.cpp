@@ -85,7 +85,8 @@ int WebRtcHttpSession :: Proc()
     char *pcRecvBuf=NULL;
     char *pcSendBuf=NULL;
     int iRecvLen=-1;
-    T_HttpReqPacket *ptHttpReqPacket=NULL;
+    T_HttpReqPacket tHttpReqPacket;
+    char *pcBody=NULL;
     timeval tTimeValue;
     
     if(m_iClientSocketFd < 0)
@@ -106,8 +107,8 @@ int WebRtcHttpSession :: Proc()
         delete[] pcRecvBuf;
         return -1;
     }
-    ptHttpReqPacket = new T_HttpReqPacket();
-    if(NULL == ptHttpReqPacket)
+    pcBody= new char[HTTP_PACKET_BODY_MAX_LEN];
+    if(NULL == pcBody)
     {
         WEBRTC_LOGE("WebRtcHttpSession NULL == ptHttpReqPacket err\r\n");
         delete[] pcRecvBuf;
@@ -134,15 +135,17 @@ int WebRtcHttpSession :: Proc()
         {
             continue;
         }
-        memset(ptHttpReqPacket,0,sizeof(T_HttpReqPacket));
-        iRet=HttpServer::ParseRequest(pcRecvBuf,iRecvLen,ptHttpReqPacket);
+        memset(&tHttpReqPacket,0,sizeof(T_HttpReqPacket));
+        tHttpReqPacket.pcBody=pcBody;
+        tHttpReqPacket.iBodyMaxLen= HTTP_PACKET_BODY_MAX_LEN;
+        iRet=HttpServer::ParseRequest(pcRecvBuf,iRecvLen,&tHttpReqPacket);
         if(iRet < 0)
         {
             WEBRTC_LOGE("HttpServer::ParseRequest err%d\r\n",iRecvLen);
             continue;
         }
         memset(pcSendBuf,0,HTTP_PACKET_MAX_LEN);
-        iRet=this->HandleHttpReq(ptHttpReqPacket,pcSendBuf,HTTP_PACKET_MAX_LEN);
+        iRet=this->HandleHttpReq(&tHttpReqPacket,pcSendBuf,HTTP_PACKET_MAX_LEN);
         if(iRet > 0)
         {
             TcpServer::Send(pcSendBuf,iRet,m_iClientSocketFd);
@@ -163,9 +166,9 @@ int WebRtcHttpSession :: Proc()
     {
         delete[] pcRecvBuf;
     }
-    if(NULL != ptHttpReqPacket)
+    if(NULL != pcBody)
     {
-        delete ptHttpReqPacket;//delete (T_HttpReqPacket *)ptHttpReqPacket;
+        delete[] pcBody;//delete (T_HttpReqPacket *)ptHttpReqPacket;
     }
     m_iExitProcFlag = 1;
     
@@ -218,7 +221,7 @@ int WebRtcHttpSession :: HandleHttpReq(T_HttpReqPacket *i_ptHttpReqPacket,char *
                 WEBRTC_LOGE("unsupport repeat req HTTP_METHOD_POST %s\r\n",i_ptHttpReqPacket->strURL);
             }
             m_pWebRtcSession = NewWebRtcSession();
-            iRet = m_pWebRtcSession->SetReqData(i_ptHttpReqPacket->strURL, i_ptHttpReqPacket->acBody);
+            iRet = m_pWebRtcSession->SetReqData(i_ptHttpReqPacket->strURL, i_ptHttpReqPacket->pcBody);
         }
         return iRet;
     }
