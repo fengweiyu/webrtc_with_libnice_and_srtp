@@ -288,7 +288,7 @@ public:
         }
         if(m_iExtraDataLen <= 0)
         {
-            FMP4_LOGE("FMP4AvcCBox m_iExtraDataLen err %d,%d\r\n",m_iExtraDataLen);
+            FMP4_LOGE("FMP4AvcCBox m_iExtraDataLen err %d\r\n",m_iExtraDataLen);
             return iLen;
         }
 
@@ -341,12 +341,12 @@ public:
         
         if(NULL == o_pbBuf || i_dwMaxBufLen < dwMaxLen)
         {
-            FMP4_LOGE("FMP4HvcCBox ToBits err %d,%d",i_dwMaxBufLen,dwMaxLen);
+            FMP4_LOGE("FMP4HvcCBox ToBits err %d,%d\r\n",i_dwMaxBufLen,dwMaxLen);
             return iLen;
         }
         if(m_iExtraDataLen <= 0)
         {
-            FMP4_LOGE("FMP4HvcCBox m_iExtraDataLen err %d,%d",m_iExtraDataLen);
+            FMP4_LOGE("FMP4HvcCBox m_iExtraDataLen err %d\r\n",m_iExtraDataLen);
             return iLen;
         }
 
@@ -2863,7 +2863,7 @@ public:
         m_apCompatibleBrands[1] = FMP4_BRAND_ISO2;
         m_apCompatibleBrands[2] = FMP4_BRAND_AVC1;
         m_apCompatibleBrands[3] = FMP4_BRAND_ISO6;
-        m_apCompatibleBrands[4] = FMP4_BRAND_MP41;
+        m_apCompatibleBrands[4] = FMP4_BRAND_MP42;//apple FMP4_BRAND_MP42;ffmpeg media FMP4_BRAND_MP41
         //m_apCompatibleBrands[5] = FMP4_BRAND_MSDH;//ffmpeg 无，media 有
         
         FMP4BaseBox::m_dwBoxSize += strlen(m_strMajorBrand)+sizeof(m_dwMinorVersion);
@@ -2896,7 +2896,7 @@ public:
         return iLen;
     };
 public:
-	const char * m_strMajorBrand = FMP4_BRAND_ISOM;//ffmpeg FMP4_BRAND_ISOM;media FMP4_BRAND_MSDH
+	const char * m_strMajorBrand = FMP4_BRAND_MP42;//apple FMP4_BRAND_MP42;ffmpeg FMP4_BRAND_ISOM;media FMP4_BRAND_MSDH
 	unsigned int m_dwMinorVersion = 0X00000200;
 	const char * m_apCompatibleBrands[5] ;//ffmpeg 5;media 6 //"isom iso2 avc1 iso6 mp41";//兼容不放FMP4_BRAND_HVC1也行,ios用FMP4_BRAND_MP42 代替MP41
 };
