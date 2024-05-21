@@ -15,8 +15,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <iostream>
-#include <string>
-
 
 using std::cout;
 using std::endl;
@@ -73,46 +71,30 @@ Http :: ~Http()
 * -----------------------------------------------
 * 2017/11/01	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-int Http::Regex(const char *i_strPattern,char *i_strBuf,regmatch_t *o_ptMatch)
+int Http::Regex(const char *i_strPattern,string *i_strBuf,smatch &o_Match)
 {
     char acErrBuf[256];
     int iRet=-1;
-    regex_t tReg;    //定义一个正则实例
-    //const size_t dwMatch = 6;    //定义匹配结果最大允许数       //表示允许几个匹配
 
+    // 定义正则表达式模式
+    regex Pattern(i_strPattern);
+    // 使用 std::regex_search 查找匹配的内容
+    if (std::regex_search(*i_strBuf, o_Match, Pattern)) //某次匹配失败，std::smatch对象将不会保存上一次的匹配结果
+    {//o_Match指向的子串内存在i_strBuf中，所以需要保证i_strBuf的作用域，即i_strBuf不能先被释放掉
+        // 输出第一个匹配到的子串
+        std::cout << "Match found: " <<o_Match.size()<< o_Match.str() << std::endl;
 
-    //REG_ICASE 匹配字母时忽略大小写。
-    iRet =regcomp(&tReg, i_strPattern, REG_EXTENDED);    //编译正则模式串
-    if(iRet != 0) 
-    {
-        regerror(iRet, &tReg, acErrBuf, sizeof(acErrBuf));
-        HTTP_LOGE("Regex Error:\r\n");
-    }
-    else
-    {
-        iRet = regexec(&tReg, i_strBuf, HTTP_MAX_MATCH_NUM, o_ptMatch, 0); //匹配他
-        if (iRet == REG_NOMATCH)
-        { //如果没匹配上
-            HTTP_LOGE("Regex No Match!\r\n");
-        }
-        else if (iRet == REG_NOERROR)
-        { //如果匹配上了
-            HTTP_LOGD("Match\r\n");
-            int i=0,j=0;
-			for(j=0;j<HTTP_MAX_MATCH_NUM;j++)
-			{
-				for (i= o_ptMatch[j].rm_so; i < o_ptMatch[j].rm_eo; i++)
-				{ //遍历输出匹配范围的字符串
-					printf("%c", i_strBuf[i]);
-				}
-				printf("\n");
-			}
-        }
-        else
+        // 输出所有匹配到的子串
+        for (size_t i = 0; i < o_Match.size(); ++i) 
         {
-            HTTP_LOGE("Regex Unknow err:\r\n");
+            std::string matchStr = o_Match[i].str(); // 将 std::sub_match 转换为字符串
+            std::cout << "Match " << i << ": " << matchStr << std::endl;
         }
-        regfree(&tReg);  //释放正则表达式
+        iRet = 0;
+    } 
+    else 
+    {
+        std::cout << "No match found." << std::endl;
     }
     
     return iRet;

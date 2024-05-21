@@ -12,7 +12,14 @@
 #ifndef HTTP_H
 #define HTTP_H
 
-#include <regex.h>
+#include <regex>
+#include <string>
+
+using std::string;
+using std::smatch;
+using std::regex;
+
+
 
 #define HTTP_MAX_MATCH_NUM       8
 
@@ -28,7 +35,7 @@ class Http
 public:
 	Http();
 	~Http();
-    int Regex(const char *i_strPattern,char *i_strBuf,regmatch_t *o_ptMatch);
+    int Regex(const char *i_strPattern,string *i_strBuf,smatch &o_Match);
 private:
 
 };

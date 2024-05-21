@@ -71,7 +71,7 @@ int HttpServer :: ParseRequest(char *i_pcReqData,int i_iDataLen,T_HttpReqPacket 
     const char * strHttpBodyFlag = HTTP_CONTENT_FLAG;
 	string strHttpHeader;
 	string strFindRes;
-	regmatch_t atMatch[HTTP_MAX_MATCH_NUM];
+	smatch Match;
 	const char *strFirstLinePatten="([A-Z]+) ([A-Za-z0-9/.]+) ([A-Z0-9/.]+)\r\n";
 	const char *strConnectionPatten="Connection: ([A-Za-z0-9-]+)\r\n";
 	const char *strContentLenPatten="Content-Length: ([0-9]+)\r\n";
@@ -91,32 +91,29 @@ int HttpServer :: ParseRequest(char *i_pcReqData,int i_iDataLen,T_HttpReqPacket 
     }
     strHttpHeader.assign(i_pcReqData,0,pBody-i_pcReqData);
 
-    memset(atMatch,0,sizeof(atMatch));
-    if(REG_NOERROR == pHttp->Regex(strFirstLinePatten,(char *)strHttpHeader.c_str(),atMatch))
+    if(0 == pHttp->Regex(strFirstLinePatten,&strHttpHeader,Match))
     {
-        strFindRes.assign(strHttpHeader,atMatch[1].rm_so,atMatch[1].rm_eo-atMatch[1].rm_so);//0是整行
+        strFindRes.assign(Match[1].str());//0是整行
         snprintf(o_ptHttpReqPacket->strMethod,sizeof(o_ptHttpReqPacket->strMethod),"%s",strFindRes.c_str());
-        strFindRes.assign(strHttpHeader,atMatch[2].rm_so,atMatch[2].rm_eo-atMatch[2].rm_so);
+        strFindRes.assign(Match[2].str());
         snprintf(o_ptHttpReqPacket->strURL,sizeof(o_ptHttpReqPacket->strURL),"%s",strFindRes.c_str());
-        strFindRes.assign(strHttpHeader,atMatch[3].rm_so,atMatch[3].rm_eo-atMatch[3].rm_so);
+        strFindRes.assign(Match[3].str());
         snprintf(o_ptHttpReqPacket->strVersion,sizeof(o_ptHttpReqPacket->strVersion),"%s",strFindRes.c_str());
     }
-    memset(atMatch,0,sizeof(atMatch));
-    if(REG_NOERROR == pHttp->Regex(strConnectionPatten,(char *)strHttpHeader.c_str(),atMatch))
+    //memset(atMatch,0,sizeof(atMatch));//某次匹配失败，std::smatch对象将不会保存上一次的匹配结果
+    if(0 == pHttp->Regex(strConnectionPatten,&strHttpHeader,Match))
     {
-        strFindRes.assign(strHttpHeader,atMatch[1].rm_so,atMatch[1].rm_eo-atMatch[1].rm_so);
+        strFindRes.assign(Match[1].str());//0是整行
         snprintf(o_ptHttpReqPacket->strConnection,sizeof(o_ptHttpReqPacket->strConnection),"%s",strFindRes.c_str());
     }
-    memset(atMatch,0,sizeof(atMatch));
-    if(REG_NOERROR == pHttp->Regex(strContentLenPatten,(char *)strHttpHeader.c_str(),atMatch))
+    if(0 == pHttp->Regex(strContentLenPatten,&strHttpHeader,Match))
     {
-        strFindRes.assign(strHttpHeader,atMatch[1].rm_so,atMatch[1].rm_eo-atMatch[1].rm_so);
+        strFindRes.assign(Match[1].str());//0是整行
         o_ptHttpReqPacket->iContentLength=atoi(strFindRes.c_str());
     }
-    memset(atMatch,0,sizeof(atMatch));
-    if(REG_NOERROR == pHttp->Regex(strContentTypePatten,(char *)strHttpHeader.c_str(),atMatch))
+    if(0 == pHttp->Regex(strContentTypePatten,&strHttpHeader,Match))
     {
-        strFindRes.assign(strHttpHeader,atMatch[1].rm_so,atMatch[1].rm_eo-atMatch[1].rm_so);
+        strFindRes.assign(Match[1].str());//0是整行
         snprintf(o_ptHttpReqPacket->strContentType,sizeof(o_ptHttpReqPacket->strContentType),"%s",strFindRes.c_str());
     }
 
