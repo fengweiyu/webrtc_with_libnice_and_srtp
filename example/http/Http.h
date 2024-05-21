@@ -12,6 +12,7 @@
 #ifndef HTTP_H
 #define HTTP_H
 
+#include "HttpCommon.h"
 #include <regex>
 #include <string>
 
@@ -35,6 +36,7 @@ class Http
 public:
 	Http();
 	~Http();
+    int ParseReqHeader(string *i_strHttpHeader,T_HttpReqPacket *o_ptHttpReqPacket);
     int Regex(const char *i_strPattern,string *i_strBuf,smatch &o_Match);
 private:
 

@@ -72,7 +72,7 @@ int HttpServer :: ParseRequest(char *i_pcReqData,int i_iDataLen,T_HttpReqPacket 
 	string strHttpHeader;
 	string strFindRes;
 	smatch Match;
-	const char *strFirstLinePatten="([A-Z]+) ([A-Za-z0-9/.]+) ([A-Z0-9/.]+)\r\n";
+	const char *strFirstLinePatten="([A-Z]+) ([A-Za-z0-9/._]+) ([A-Z0-9/.]+)\r\n";
 	const char *strConnectionPatten="Connection: ([A-Za-z0-9-]+)\r\n";
 	const char *strContentLenPatten="Content-Length: ([0-9]+)\r\n";
 	const char *strContentTypePatten="Content-type: ([A-Za-z0-9-/;.]+)\r\n";
@@ -90,7 +90,8 @@ int HttpServer :: ParseRequest(char *i_pcReqData,int i_iDataLen,T_HttpReqPacket 
         memcpy(o_ptHttpReqPacket->pcBody,pBody+strlen(strHttpBodyFlag),o_ptHttpReqPacket->iBodyCurLen);
     }
     strHttpHeader.assign(i_pcReqData,0,pBody-i_pcReqData);
-
+    
+    return pHttp->ParseReqHeader(&strHttpHeader,o_ptHttpReqPacket);//由于C++正则需要gcc 4.9及以上的版本，所以使用该函数，若是4.9或以上可注释掉该该行
     if(0 == pHttp->Regex(strFirstLinePatten,&strHttpHeader,Match))
     {
         strFindRes.assign(Match[1].str());//0是整行
