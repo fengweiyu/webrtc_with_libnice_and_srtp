@@ -22,7 +22,7 @@ https://github.com/ZLMediaKit/ZLMediaKit.git/3rdpart/wepoll
 
 
 //#ifdef _WIN32
-#include<WinSock2.h> //win 没有epoll只有类似的IOCP 
+#include <WinSock2.h> //win 没有epoll只有类似的IOCP 
 
 #include "TcpSocket.h"
 #include "NetAdapter.h"
@@ -87,11 +87,6 @@ int TcpServer::Init(string *i_strIP,unsigned short i_wPort)
 	unsigned short wPort=i_wPort;
 	struct sockaddr_in tServerAddr;
 
-	if(i_strIP==NULL)
-	{
-        TCP_LOGE("TcpSocketInit i_strIP NULL\r\n");
-        return iRet;
-	}
 	if(m_iServerSocketFd !=-1)
 	{
         return 0;
@@ -190,14 +185,15 @@ int TcpServer::Accept()
         closesocket(m_iServerSocketFd);
         m_iServerSocketFd = INVALID_SOCKET;
         WSACleanup();
+        return iClientSocketFd;
     } 
-    // 设置socket为非阻塞模式
+    // 设置socket为非阻塞模式 //由于用select,暂不设置 
     u_long mode = 1;
-    if (ioctlsocket(iClientSocketFd, FIONBIO, &mode) == SOCKET_ERROR) 
+    //if (ioctlsocket(iClientSocketFd, FIONBIO, &mode) == SOCKET_ERROR) 
     {
-        TCP_LOGE("Failed to set socket to non-blocking mode\r\n");  
-        closesocket(iClientSocketFd);
-        iClientSocketFd = INVALID_SOCKET;
+        //TCP_LOGE("Failed to set socket to non-blocking mode\r\n");
+        //closesocket(iClientSocketFd);
+        //iClientSocketFd = INVALID_SOCKET;
     }
 	return iClientSocketFd;
 }
@@ -248,7 +244,7 @@ o_piRecvLen 表示接收到的长度
 * -----------------------------------------------
 * 2017/09/21	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-int TcpServer::Recv(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen,int i_iClientSocketFd,timeval *i_ptTime)
+int TcpServer::Recv(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen,int i_iClientSocketFd,milliseconds *i_pTime)
 {
     int iRecvLen=-1;
     int iRet=-1;
@@ -269,8 +265,14 @@ int TcpServer::Recv(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen,int 
         FD_SET(i_iClientSocketFd, &tReadFds); //设置描述符集合
         tTimeValue.tv_sec      = 1;//超时时间，超时返回错误
         tTimeValue.tv_usec     = 0;
-        if(NULL != i_ptTime)
-            memcpy(&tTimeValue,i_ptTime,sizeof(timeval));
+        if(NULL != i_pTime)
+        {
+            // 获取毫秒时间间隔的值
+            long long millisecondsValue = i_pTime->count();
+            tTimeValue.tv_sec      = millisecondsValue/1000;//超时时间，超时返回错误
+            tTimeValue.tv_usec     = millisecondsValue%1000*1000;
+        }
+            
         iRet = select(i_iClientSocketFd + 1, &tReadFds, NULL, NULL, &tTimeValue);//调用select（）监控函数//NULL 一直等到有变化
         if(iRet<0)  
         {
@@ -508,7 +510,7 @@ o_piRecvLen 表示接收到的长度
 * -----------------------------------------------
 * 2017/09/21	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-int TcpClient::Recv(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen,int i_iClientSocketFd,timeval *i_ptTime)
+int TcpClient::Recv(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen,int i_iClientSocketFd,milliseconds *i_pTime)
 {
     int iRecvLen=-1;
     int iRet=-1;
@@ -537,8 +539,13 @@ int TcpClient::Recv(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen,int 
         FD_SET(iSocketFd, &tReadFds); //设置描述符集合
         tTimeValue.tv_sec  =1;//超时时间，超时返回错误
         tTimeValue.tv_usec = 0;
-        if(NULL != i_ptTime)
-            memcpy(&tTimeValue,i_ptTime,sizeof(timeval));
+        if(NULL != i_pTime)
+        {
+            // 获取毫秒时间间隔的值
+            long long millisecondsValue = i_pTime->count();
+            tTimeValue.tv_sec      = millisecondsValue/1000;//超时时间，超时返回错误
+            tTimeValue.tv_usec     = millisecondsValue%1000*1000;
+        }
         iRet = select(iSocketFd + 1, &tReadFds, NULL, NULL, &tTimeValue);//调用select（）监控函数//NULL 一直等到有变化
         if(iRet<0)  
         {

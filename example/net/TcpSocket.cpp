@@ -265,7 +265,7 @@ o_piRecvLen 表示接收到的长度
 * -----------------------------------------------
 * 2017/09/21	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-int TcpServer::Recv(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen,int i_iClientSocketFd,timeval *i_ptTime)
+int TcpServer::Recv(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen,int i_iClientSocketFd,milliseconds *i_pTime)
 {
     int iRecvLen=-1;
     int iRet=-1;
@@ -286,8 +286,13 @@ int TcpServer::Recv(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen,int 
         FD_SET(i_iClientSocketFd, &tReadFds); //设置描述符集合
         tTimeValue.tv_sec      = 1;//超时时间，超时返回错误
         tTimeValue.tv_usec     = 0;
-        if(NULL != i_ptTime)
-            memcpy(&tTimeValue,i_ptTime,sizeof(timeval));
+        if(NULL != i_pTime)
+        {
+            // 获取毫秒时间间隔的值
+            long long millisecondsValue = i_pTime->count();
+            tTimeValue.tv_sec      = millisecondsValue/1000;//超时时间，超时返回错误
+            tTimeValue.tv_usec     = millisecondsValue%1000*1000;
+        }
         iRet = select(i_iClientSocketFd + 1, &tReadFds, NULL, NULL, &tTimeValue);//调用select（）监控函数//NULL 一直等到有变化
         if(iRet<0)  
         {
@@ -512,7 +517,7 @@ o_piRecvLen 表示接收到的长度
 * -----------------------------------------------
 * 2017/09/21	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-int TcpClient::Recv(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen,int i_iClientSocketFd,timeval *i_ptTime)
+int TcpClient::Recv(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen,int i_iClientSocketFd,milliseconds *i_pTime)
 {
     int iRecvLen=-1;
     int iRet=-1;
@@ -532,8 +537,13 @@ int TcpClient::Recv(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen,int 
         FD_SET(m_iClientSocketFd, &tReadFds); //设置描述符集合
         tTimeValue.tv_sec  =1;//超时时间，超时返回错误
         tTimeValue.tv_usec = 0;
-        if(NULL != i_ptTime)
-            memcpy(&tTimeValue,i_ptTime,sizeof(timeval));
+        if(NULL != i_pTime)
+        {
+            // 获取毫秒时间间隔的值
+            long long millisecondsValue = i_pTime->count();
+            tTimeValue.tv_sec      = millisecondsValue/1000;//超时时间，超时返回错误
+            tTimeValue.tv_usec     = millisecondsValue%1000*1000;
+        }
         iRet = select(m_iClientSocketFd + 1, &tReadFds, NULL, NULL, &tTimeValue);//调用select（）监控函数//NULL 一直等到有变化
         if(iRet<0)  
         {
