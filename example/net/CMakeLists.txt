@@ -9,7 +9,9 @@ SET(CMAKE_TOOLCHAIN_FILE "build/ToolChain.cmake")
 project (WebRTC)
  
 #SET(CMAKE_C_FLAGS "-g")
-
+# 设置C++标准为C++11
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 SET(src_list
     UdpSocket.cpp

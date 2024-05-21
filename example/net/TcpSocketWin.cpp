@@ -226,7 +226,7 @@ int TcpServer::Send(char * i_acSendBuf,int i_iSendLen,int i_iClientSocketFd)
     }
     iRet=0;
     string strSend(i_acSendBuf);
-    TCP_LOGD("Send : %s\r\n",strSend);
+    //TCP_LOGD("Send : %s\r\n",strSend.c_str());
 
 	return iRet;
 }
@@ -492,7 +492,7 @@ int TcpClient::Send(char * i_acSendBuf,int i_iSendLen,int i_iClientSocketFd)
     }
     iRet=0;
     string strSend(i_acSendBuf);
-    TCP_LOGD("Send : %s\r\n",strSend);
+    //TCP_LOGD("Send : %s\r\n",strSend.c_str());
     
 	return iRet;
 }
