@@ -14,7 +14,7 @@ function GenerateCmakeFile()
 #   mkdir -p build
     CmakeFile="$2/ToolChain.cmake"
     echo "SET(CMAKE_SYSTEM_NAME \"Linux\")" > $CmakeFile
-    if [ $1 == x86 ]; then
+    if [ $1 == x86 -o $1 == x64 ]; then
         echo "SET(CMAKE_C_COMPILER \"gcc\")" >> $CmakeFile  
         echo "SET(CMAKE_CXX_COMPILER \"g++\")" >> $CmakeFile    
     else
@@ -84,7 +84,7 @@ if [ $# == 0 ]; then
 else
 #   GenerateCmakeFile $1
     BuildLib $1
-    CopyLib ../../build/$1
+    CopyLib $2
 fi
 
 
