@@ -105,9 +105,9 @@ if [ $# == 0 ]; then
     PrintUsage
     exit -1
 else
-
+    CopyPwd=$PWD/../build/$1
     cd http
-    sh build.sh $1
+    sh build.sh $1 $CopyPwd
     if [ $? -ne 0 ]; then
         exit -1
     fi
@@ -128,7 +128,7 @@ COMMENT
     cd ..
     
     cd media
-    sh build.sh $1
+    sh build.sh $1 $CopyPwd
     if [ $? -ne 0 ]; then
         exit -1
     fi
@@ -149,7 +149,7 @@ COMMENT
     cd ..
     
     cd net
-    sh build.sh $1
+    sh build.sh $1 $CopyPwd
     if [ $? -ne 0 ]; then
         exit -1
     fi
