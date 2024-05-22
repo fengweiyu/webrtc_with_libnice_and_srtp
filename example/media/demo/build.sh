@@ -92,7 +92,7 @@ if [ $# == 0 ]; then
 else
 #   GenerateCmakeFile $1
     BuildLib $1
-    CopyExe ../../../build/$1
+    CopyExe $2
 fi
 
 
