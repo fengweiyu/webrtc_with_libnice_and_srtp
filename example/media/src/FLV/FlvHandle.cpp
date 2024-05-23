@@ -32,7 +32,21 @@ using std::endl;
 #define FLV_H264_SAMPLE_RATE 90000
 #define FLV_H265_SAMPLE_RATE 90000
 
+#define FLV_TO_U32(a, b, c, d) (((a) << 24) | ((b) << 16) | ((c) << 8) | (d))
+#define FLV_VIDEO_ENC_AV1	FLV_TO_U32('a', 'v', '0', '1') //注意不是avc(h264)
+#define FLV_VIDEO_ENC_VP9	FLV_TO_U32('v', 'p', '0', '9') 
+#define FLV_VIDEO_ENC_H265	FLV_TO_U32('h', 'v', 'c', '1') //HEVC
 
+#define PACKET_TYPE_SEQUENCE_START 0
+typedef enum
+{
+    FLV_PACKET_TYPE_SEQUENCE_START=0,
+    FLV_PACKET_TYPE_CODED_FRAMES,
+    FLV_PACKET_TYPE_SEQUENCE_END,
+    FLV_PACKET_TYPE_CODED_FRAMES_X,
+    FLV_PACKET_TYPE_METADATA,
+    FLV_PACKET_TYPE_MPEG2_TS_SEQUENCE_START,
+}E_FlvPacketType;
 
 /*****************************************************************************
 -Fuction		: H264Handle
@@ -269,6 +283,14 @@ int FlvHandle::GetVideoData(unsigned char *i_pbVideoTag,int i_iTagLen,T_MediaFra
     int i = 0,j = 0;
     unsigned int dwNaluLen = 0;
     unsigned char bNaluType = 0;
+    unsigned char bIsExHeader = 0;
+    unsigned char * pbVideoTagHeader=NULL;
+    unsigned char bFrameType = 0;
+    unsigned char bCodecId = 0;
+    unsigned char bPacketType = 0;
+    unsigned int dwFourCC = 0;
+    int cts;        /// video composition time(PTS - DTS), AVC/HEVC/AV1 only
+
     
     if(NULL == i_pbVideoTag || NULL == m_ptFrameInfo || NULL == o_pbVideoData)
     {
@@ -276,55 +298,122 @@ int FlvHandle::GetVideoData(unsigned char *i_pbVideoTag,int i_iTagLen,T_MediaFra
         return -1;
     }
     //tag Header 1 byte
-    switch(i_pbVideoTag[iProcessedLen])
-    {
-        case 0x17:
+    pbVideoTagHeader= &i_pbVideoTag[iProcessedLen];
+    bIsExHeader = ((i_pbVideoTag[iProcessedLen]>>7)&0x01);
+    if(0 == bIsExHeader)
+    {//如果bIsExHeader未使能， 还遵循之前的rtmp/flv传统规范
+        bFrameType = ((i_pbVideoTag[iProcessedLen]>>4)&0x0f);////1 = key frame, 2 = inter frame
+        bCodecId = (i_pbVideoTag[iProcessedLen]&0x0f);//4bits的codecId，H.264的值为7.
+        iProcessedLen++;
+        
+        bIsAvcSeqHeader = i_pbVideoTag[iProcessedLen] == 0 ? 1:0;//tag Body(AVC packet type) 1 byte
+        iProcessedLen++;
+        //tag Body(AVC SeqHeader or AVC Raw)
+        cts = (i_pbVideoTag[iProcessedLen] << 16) | (i_pbVideoTag[iProcessedLen+1] << 8) | i_pbVideoTag[iProcessedLen+2];
+        cts = (cts + 0xFF800000) ^ 0xFF800000; // signed 24-integer
+        iProcessedLen+=3;
+        
+        switch(pbVideoTagHeader[0])
         {
-            m_ptFrameInfo->eFrameType = MEDIA_FRAME_TYPE_VIDEO_I_FRAME;
-            m_ptFrameInfo->eEncType = MEDIA_ENCODE_TYPE_H264;
-            break;
-        }
-        case 0x27:
-        {
-            m_ptFrameInfo->eFrameType = MEDIA_FRAME_TYPE_VIDEO_P_FRAME;//RTMP_VIDEO_INNER_FRAME;
-            m_ptFrameInfo->eEncType = MEDIA_ENCODE_TYPE_H264;
-            break;
-        }
-        case 0x1c:
-        {
-            m_ptFrameInfo->eFrameType = MEDIA_FRAME_TYPE_VIDEO_I_FRAME;
-            m_ptFrameInfo->eEncType = MEDIA_ENCODE_TYPE_H265;
-            break;
-        }
-        case 0x2c:
-        {
-            m_ptFrameInfo->eFrameType = MEDIA_FRAME_TYPE_VIDEO_P_FRAME;//RTMP_VIDEO_INNER_FRAME;
-            m_ptFrameInfo->eEncType = MEDIA_ENCODE_TYPE_H265;
-            break;
-        }
-        default:
-        {
-            m_ptFrameInfo->eFrameType = MEDIA_FRAME_TYPE_UNKNOW;
-            m_ptFrameInfo->eEncType = MEDIA_ENCODE_TYPE_UNKNOW;
-            break;
+            case 0x17:
+            {
+                m_ptFrameInfo->eFrameType = MEDIA_FRAME_TYPE_VIDEO_I_FRAME;
+                m_ptFrameInfo->eEncType = MEDIA_ENCODE_TYPE_H264;
+                break;
+            }
+            case 0x27:
+            {
+                m_ptFrameInfo->eFrameType = MEDIA_FRAME_TYPE_VIDEO_P_FRAME;//RTMP_VIDEO_INNER_FRAME;
+                m_ptFrameInfo->eEncType = MEDIA_ENCODE_TYPE_H264;
+                break;
+            }
+            case 0x1c:
+            {
+                m_ptFrameInfo->eFrameType = MEDIA_FRAME_TYPE_VIDEO_I_FRAME;
+                m_ptFrameInfo->eEncType = MEDIA_ENCODE_TYPE_H265;
+                break;
+            }
+            case 0x2c:
+            {
+                m_ptFrameInfo->eFrameType = MEDIA_FRAME_TYPE_VIDEO_P_FRAME;//RTMP_VIDEO_INNER_FRAME;
+                m_ptFrameInfo->eEncType = MEDIA_ENCODE_TYPE_H265;
+                break;
+            }
+            default:
+            {
+                m_ptFrameInfo->eFrameType = MEDIA_FRAME_TYPE_UNKNOW;
+                m_ptFrameInfo->eEncType = MEDIA_ENCODE_TYPE_UNKNOW;
+                break;
+            }
         }
     }
+    else
+    {// IsExHeader使能，表示Enhanced-Rtmp格式使能
+        bFrameType = ((i_pbVideoTag[iProcessedLen]>>4)&0x07);////1 = key frame, 2 = inter frame
+        bPacketType = (i_pbVideoTag[iProcessedLen]&0x0f);// 0 = PacketTypeSequenceStart // 1 = PacketTypeCodedFrames
+                                                   // 2 = PacketTypeSequenceEnd // 3 = PacketTypeCodedFramesX
+                                                   // 4 = PacketTypeMetadata // 5 = PacketTypeMPEG2TSSequenceStart
+        iProcessedLen++;
+        Read32BE((i_pbVideoTag + iProcessedLen),&dwFourCC);
+        iProcessedLen+=4;
+
+        if (bPacketType == FLV_PACKET_TYPE_SEQUENCE_START)//如果PacketType是PacketTypeSequenceStart，表示后续H265的数据内容是DecoderConfigurationRecord，也就是常说的sequence header;
+        {
+            bIsAvcSeqHeader=1;
+        }
+        else if (bPacketType == FLV_PACKET_TYPE_CODED_FRAMES || bPacketType == FLV_PACKET_TYPE_CODED_FRAMES_X)
+        {
+            if (bPacketType == FLV_PACKET_TYPE_CODED_FRAMES)
+            {
+                //如果PacketType是PacketTypeCodedFrames，就是pts与dts有差值
+                cts = (i_pbVideoTag[iProcessedLen] << 16) | (i_pbVideoTag[iProcessedLen+1] << 8) | i_pbVideoTag[iProcessedLen+2];//24bits，表示pts与dts的差值
+                cts = (cts + 0xFF800000) ^ 0xFF800000; // signed 24-integer
+                iProcessedLen+=3;
+            }
+            else //如果PacketType是PacketTypeCodedFramesX
+            {
+                //无CompositionTime，节省3字节的空间
+            }
+            //随后是正常的H265数据
+        }
+        if(dwFourCC != FLV_VIDEO_ENC_H265)
+        {
+            MH_LOGE("dwFourCC err %x\r\n",dwFourCC);
+            m_ptFrameInfo->eEncType = MEDIA_ENCODE_TYPE_UNKNOW;
+        }
+        else
+        {
+            m_ptFrameInfo->eEncType = MEDIA_ENCODE_TYPE_H265;
+        }
+        switch(bFrameType)
+        {
+            case 1:
+            {
+                m_ptFrameInfo->eFrameType = MEDIA_FRAME_TYPE_VIDEO_I_FRAME;
+                break;
+            }
+            case 2:
+            {
+                m_ptFrameInfo->eFrameType = MEDIA_FRAME_TYPE_VIDEO_P_FRAME;//RTMP_VIDEO_INNER_FRAME;
+                break;
+            }
+            default:
+            {
+                m_ptFrameInfo->eFrameType = MEDIA_FRAME_TYPE_UNKNOW;
+                break;
+            }
+        }
+    }
+
+    
     if(MEDIA_ENCODE_TYPE_UNKNOW == m_ptFrameInfo->eEncType)
     {
         MH_LOGE("m_ptFrameInfo->eEncType err %d\r\n",i_pbVideoTag[iProcessedLen]);
         return -1;
     }
-    iProcessedLen++;
 
     if(MEDIA_ENCODE_TYPE_H264 == m_ptFrameInfo->eEncType)
     {
-        bIsAvcSeqHeader = i_pbVideoTag[iProcessedLen] == 0 ? 1:0;//tag Body(AVC packet type) 1 byte
-        iProcessedLen++;
-        //tag Body(AVC SeqHeader or AVC Raw)
-        int cts;        /// video composition time(PTS - DTS), AVC/HEVC/AV1 only
-        cts = (i_pbVideoTag[iProcessedLen] << 16) | (i_pbVideoTag[iProcessedLen+1] << 8) | i_pbVideoTag[iProcessedLen+2];
-        cts = (cts + 0xFF800000) ^ 0xFF800000; // signed 24-integer
-        iProcessedLen+=3;
         if(0 == bIsAvcSeqHeader)
         {
             T_FlvH265Extradata tH265Extradata;
@@ -385,15 +474,7 @@ int FlvHandle::GetVideoData(unsigned char *i_pbVideoTag,int i_iTagLen,T_MediaFra
         }
     }
     else if(MEDIA_ENCODE_TYPE_H265 == m_ptFrameInfo->eEncType)
-    {        
-        bIsAvcSeqHeader = i_pbVideoTag[iProcessedLen] == 0 ? 1:0;//tag Body(AVC packet type) 1 byte
-        iProcessedLen++;
-        //tag Body(AVC SeqHeader or AVC Raw)
-        int cts;        /// video composition time(PTS - DTS), AVC/HEVC/AV1 only
-        cts = (i_pbVideoTag[iProcessedLen] << 16) | (i_pbVideoTag[iProcessedLen+1] << 8) | i_pbVideoTag[iProcessedLen+2];
-        cts = (cts + 0xFF800000) ^ 0xFF800000; // signed 24-integer
-        iProcessedLen+=3;
-        
+    {                
         T_FlvH265Extradata tH265Extradata;
         if(0 == bIsAvcSeqHeader)
         {
@@ -441,19 +522,19 @@ int FlvHandle::GetVideoData(unsigned char *i_pbVideoTag,int i_iTagLen,T_MediaFra
             pbVideoParams = &pbVideoData[23];
             for (i = 0; i < numOfArrays; i++)
             {
-                nalutype = pbVideoParams[0];
+                nalutype = pbVideoParams[0];//取出的是已经处理过的
                 numOfVideoParameterSets = (pbVideoParams[1] << 8) | pbVideoParams[2];
                 pbVideoParams += 3;
                 for (j = 0; j < numOfVideoParameterSets; j++)
                 {
                     lenOfVideoParameterSets = (pbVideoParams[0] << 8) | pbVideoParams[1];
-                    switch(nalutype & 0x3F)
+                    switch(nalutype)
                     {
                         case 32:
                         {//VPS
-                            m_ptFrameInfo->tVideoEncodeParam.iSizeOfVPS= lenOfVideoParameterSets;
+                            m_ptFrameInfo->tVideoEncodeParam.iSizeOfVPS= lenOfVideoParameterSets;//pbVideoParams[2]是没处理的，原始的
                             memcpy(m_ptFrameInfo->tVideoEncodeParam.abVPS,&pbVideoParams[2],m_ptFrameInfo->tVideoEncodeParam.iSizeOfVPS);
-                            break;
+                            break;//bNaluType = (pbVideoParams[2] & 0x7E)>>1;//取nalu类型
                         }
                         case 33:
                         {//SPS
@@ -467,6 +548,10 @@ int FlvHandle::GetVideoData(unsigned char *i_pbVideoTag,int i_iTagLen,T_MediaFra
                             memcpy(m_ptFrameInfo->tVideoEncodeParam.abPPS,&pbVideoParams[2],m_ptFrameInfo->tVideoEncodeParam.iSizeOfPPS);
                             break;
                         }
+                        case 39:
+                        {//sei
+                            break;
+                        }
                         default:
                         {
                             MH_LOGE("nalutype & 0x3F err %d\r\n",nalutype & 0x3F);
@@ -478,6 +563,7 @@ int FlvHandle::GetVideoData(unsigned char *i_pbVideoTag,int i_iTagLen,T_MediaFra
                     pbVideoParams += 2 + lenOfVideoParameterSets;
                 }
             }
+            m_ptFrameInfo->bNaluLenSize = tH265Extradata.lengthSizeMinusOne+1;
         }
     }
     else
@@ -523,6 +609,20 @@ int FlvHandle::GetVideoDataNalu(unsigned char *i_pbVideoData,int i_iDataLen,T_Me
 #endif
     if(m_ptFrameInfo->eFrameType == MEDIA_FRAME_TYPE_VIDEO_I_FRAME)//与ffmpeg h264_mp4toannexb一致
     {//只是第一个nalu前加,一个tag data 中nalu类型是一样的
+        if(m_ptFrameInfo->tVideoEncodeParam.iSizeOfVPS > 0)
+        {
+            m_ptFrameInfo->atNaluInfo[m_ptFrameInfo->dwNaluCount].pbData = &o_pbVideoData[iVideoDataLen];
+            
+            memset(&o_pbVideoData[iVideoDataLen],0x00,3);
+            iVideoDataLen+=3;
+            o_pbVideoData[iVideoDataLen]=1;
+            iVideoDataLen++;
+            memcpy(&o_pbVideoData[iVideoDataLen], m_ptFrameInfo->tVideoEncodeParam.abVPS,m_ptFrameInfo->tVideoEncodeParam.iSizeOfVPS);
+            iVideoDataLen += m_ptFrameInfo->tVideoEncodeParam.iSizeOfVPS;
+            
+            m_ptFrameInfo->atNaluInfo[m_ptFrameInfo->dwNaluCount].dwDataLen = &o_pbVideoData[iVideoDataLen]-m_ptFrameInfo->atNaluInfo[m_ptFrameInfo->dwNaluCount].pbData;
+            m_ptFrameInfo->dwNaluCount++;
+        }
         if(m_ptFrameInfo->tVideoEncodeParam.iSizeOfSPS > 0)
         {
             m_ptFrameInfo->atNaluInfo[m_ptFrameInfo->dwNaluCount].pbData = &o_pbVideoData[iVideoDataLen];
@@ -585,10 +685,13 @@ int FlvHandle::GetVideoDataNalu(unsigned char *i_pbVideoData,int i_iDataLen,T_Me
             iProcessedLen+= m_ptFrameInfo->bNaluLenSize;
             
             if((0x67 == i_pbVideoData[iProcessedLen] && m_ptFrameInfo->tVideoEncodeParam.iSizeOfSPS > 0) ||
-            (0x68 == i_pbVideoData[iProcessedLen] && m_ptFrameInfo->tVideoEncodeParam.iSizeOfPPS > 0))
-            {//已经加过参数了，则不再加
-                iProcessedLen += dwNaluLen;
-                iVideoDataLen -= 4;
+            (0x68 == i_pbVideoData[iProcessedLen] && m_ptFrameInfo->tVideoEncodeParam.iSizeOfPPS > 0) ||
+            (0x40 == i_pbVideoData[iProcessedLen] && m_ptFrameInfo->tVideoEncodeParam.iSizeOfVPS > 0) ||
+            (0x42 == i_pbVideoData[iProcessedLen] && m_ptFrameInfo->tVideoEncodeParam.iSizeOfSPS > 0) ||
+            (0x44 == i_pbVideoData[iProcessedLen] && m_ptFrameInfo->tVideoEncodeParam.iSizeOfPPS > 0))//已经加过参数了，则不再加
+            {//后续优化为取nalu类型，暂时直接使用值判断
+                iProcessedLen += dwNaluLen;//bNaluType = (i_pbVideoData[iProcessedLen] & 0x7E)>>1;//h265取nalu类型20 32 33 34
+                iVideoDataLen -= m_ptFrameInfo->bNaluLenSize;//bNaluType = pcNaluStartPos[3] & 0x1f;;//h264取nalu类型7 8 1 5
                 continue;
             }
 
