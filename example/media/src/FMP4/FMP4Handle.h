@@ -120,6 +120,7 @@ private:
     int m_iHeaderCreatedFlag;//fmp4头已打包过的标志，0 否，1是
     FMP4 m_FMP4; 
     list<T_Fmp4FrameInfo> m_FMP4MediaList;
+    int m_iFindedKeyFrame;//0 否，1是
 };
 
 

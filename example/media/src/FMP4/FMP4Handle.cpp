@@ -45,6 +45,7 @@ FMP4Handle::FMP4Handle()
     m_iCurMediaDataLen = 0;
     m_pbFmp4Header = new unsigned char[FMP4_HEADER_BUF_MAX_LEN];
     m_iFmp4HeaderLen = 0;
+    m_iFindedKeyFrame = 0;
 }
 
 
@@ -101,8 +102,13 @@ int FMP4Handle::GetMuxData(T_Fmp4AnnexbFrameInfo *i_ptFmp4FrameInfo,unsigned cha
         FMP4_LOGE("GetMuxData err NULL\r\n");
         return iRet;
     }
+    if(m_iFindedKeyFrame==0&&i_ptFmp4FrameInfo->eFrameType!=FMP4_VIDEO_KEY_FRAME)
+    {
+        FMP4_LOGW("Skip frame:%d\r\n",i_ptFmp4FrameInfo->eFrameType);//内部打包开始时间使用第一个i帧为参考基准时间
+        return 0;//所以第一帧必须i帧，其余帧要过滤掉
+    }
     SaveFrame(i_ptFmp4FrameInfo);
-    if(m_FMP4MediaList.size()>1 && (i_ptFmp4FrameInfo->eFrameType==FMP4_VIDEO_KEY_FRAME ||0 != i_iForcePack))
+    if(m_iFindedKeyFrame!=0 && m_FMP4MediaList.size()>1 && (i_ptFmp4FrameInfo->eFrameType==FMP4_VIDEO_KEY_FRAME ||0 != i_iForcePack))
     {
         if(0==m_iHeaderCreatedFlag)
         {
@@ -118,6 +124,10 @@ int FMP4Handle::GetMuxData(T_Fmp4AnnexbFrameInfo *i_ptFmp4FrameInfo,unsigned cha
         iDataLen+=m_FMP4.CreateSegment(&m_FMP4MediaList,++m_iFragSeq,o_pbBuf+iDataLen,i_dwMaxBufLen-iDataLen);
         DelAllFrame();
         SaveFrame(i_ptFmp4FrameInfo);
+    }
+    if(i_ptFmp4FrameInfo->eFrameType==FMP4_VIDEO_KEY_FRAME)
+    {
+        m_iFindedKeyFrame=1;
     }
     return iDataLen;
 }

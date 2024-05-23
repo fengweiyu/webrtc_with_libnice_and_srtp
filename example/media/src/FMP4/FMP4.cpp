@@ -2222,7 +2222,7 @@ public:
 	    unsigned int dwFlags;
         if (i_dwSampleCount < 1 || NULL == i_aptSampleInfo) 
         {
-            FMP4_LOGE("FMP4TrunBox SetParams empty err %d,%d",i_dwSampleCount,m_dwSampleCount);
+            FMP4_LOGE("FMP4TrunBox SetParams empty err %d,%d\r\n",i_dwSampleCount,m_dwSampleCount);
             return -1;
         }
         FMP4_LOGW("FMP4TrunBox SetParams %d,%d, %d,%d, %d\r\n",i_dwSampleCount,i_dwDefaultSampleSize,i_dwDefaultSampleDuration,i_dwSampleCount,i_dwDataOffset);
