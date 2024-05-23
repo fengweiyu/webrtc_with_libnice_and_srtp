@@ -75,9 +75,9 @@ int HttpRegex(const char *i_strPattern,char *i_strBuf,regmatch_t *o_ptMatch)
 			{
 				for (i= o_ptMatch[j].rm_so; i < o_ptMatch[j].rm_eo; i++)
 				{ //±éÀúÊä³öÆ¥Åä·¶Î§µÄ×Ö·û´®
-					printf("%c", i_strBuf[i]);
+					//printf("%c", i_strBuf[i]);
 				}
-				printf("\n");
+				//printf("\n");
 			}
         }
         else
