@@ -329,8 +329,9 @@ void WebRtcSession::TestProc()
         iRet = this->HandleMediaFrame(&m_tFileFrameInfo);
         if(iRet<0)
         {
-            WEBRTC_LOGE2(m_iLogID,"TestProc exit %d[%s]\r\n",iRet,m_pFileName->c_str());
-            this->StopSession(-2==iRet?400:402);
+            unsigned int dwProfileLevelId = (m_tFileFrameInfo.tVideoEncodeParam.abSPS[1]<<16) | (m_tFileFrameInfo.tVideoEncodeParam.abSPS[2]<<8) | m_tFileFrameInfo.tVideoEncodeParam.abSPS[3];
+            WEBRTC_LOGE2(m_iLogID,"TestProc exit %d,%s,dwProfileLevelId %#x\r\n",iRet,m_pFileName->c_str(),dwProfileLevelId);
+            this->StopSession(-2==iRet?400:(int)dwProfileLevelId);
             break;
         }
         if(m_tFileFrameInfo.dwTimeStamp<dwFileLastTimeStamp)
@@ -654,6 +655,14 @@ int WebRtcSession::SendLocalSDP(T_VideoEncodeParam * i_ptVideoEncodeParam)
 /*****************************************************************************
 -Fuction        : GetSupportedVideoInfoFromSDP
 -Description    : 
+Webrtc 对于High profile则sps要一致(兼容ios，level要比要求的低，
+第二字节是00则标志都是0则是无要求则不用比对，
+谷歌的由于64001f 中间是00也就是无特殊要求)，
+对于main和base，要第一字节一致，并且第三字节即level要比要求的低
+(比如浏览器是1f,则服务端的流要<=1f的流，level等级高则码率高，浏览器接受不了，
+(如果严格一点的话，则第二字节也就是编码规范标志高2位也要符合，
+比如浏览器要求e0则服务流至少要c0,如果浏览器第二字节是00则标志都是0
+则是无要求则不用比对))
 -Input          : 
 -Output         : 
 -Return         : len
@@ -665,7 +674,13 @@ int WebRtcSession::GetSupportedVideoInfoFromSDP(const char * i_strVideoFormatNam
 {
     int i=0;
     int iRet = -1;
-    
+    unsigned char bLocalProfile =(unsigned char)((i_dwProfileLevelId>>16)&0xff);//0x64 high ,0x4d main,0x42 base
+    unsigned char bLocalConstraintFlag =(unsigned char)((i_dwProfileLevelId>>8)&0xff);//
+    unsigned char bLocalLevel =(unsigned char)((i_dwProfileLevelId)&0xff);//
+    unsigned char bRemoteProfile =0;//0x64 high ,0x4d main,0x42 base
+    unsigned char bRemoteConstraintFlag =0;//
+    unsigned char bRemoteLevel =0;//
+
     if(NULL == o_ptVideoInfo||NULL == i_strVideoFormatName)
     {
         WEBRTC_LOGE2(m_iLogID,"GetSupportedVideoInfoFromSDP NULL");
@@ -673,6 +688,22 @@ int WebRtcSession::GetSupportedVideoInfoFromSDP(const char * i_strVideoFormatNam
     }
     for(i=0;i<WEBRTC_SDP_MEDIA_INFO_MAX_NUM;i++)
     {
+        bRemoteProfile =(unsigned char)((m_tWebRtcSdpMediaInfo.tVideoInfos[i].dwProfileLevelId>>16)&0xff);//0x64 high ,0x4d main,0x42 base
+        bRemoteConstraintFlag =(unsigned char)((m_tWebRtcSdpMediaInfo.tVideoInfos[i].dwProfileLevelId>>8)&0xff);//0x64 high ,0x4d main,0x42 base
+        bRemoteLevel =(unsigned char)((m_tWebRtcSdpMediaInfo.tVideoInfos[i].dwProfileLevelId)&0xff);//
+        //WEBRTC_LOGD2(m_iLogID,"i_dwProfileLevelId %#x,%#x,%#x,%#x,%#x,%#x,\r\n",bLocalProfile,bLocalConstraintFlag,bLocalLevel,bRemoteProfile,bRemoteConstraintFlag,bRemoteLevel);
+        if(bLocalProfile!=bRemoteProfile ||bLocalLevel>bRemoteLevel)
+        {
+            continue;
+        }
+        if(0x64 == bLocalProfile)
+        {//严格处理ConstraintFlag也要符合(兼容ios，ios highprofile ConstraintFlag有编码有特殊规范，所以也要符合)
+            if(0 != bRemoteConstraintFlag && (bLocalConstraintFlag&bRemoteConstraintFlag)!=bRemoteConstraintFlag)
+            {//浏览器置位代表有要求，则服务端对应的位置也要置位
+                continue;
+            }
+        }
+
         if(0 == strcmp(i_strVideoFormatName,m_tWebRtcSdpMediaInfo.tVideoInfos[i].strFormatName) && i_dwVideoTimestampFrequency==m_tWebRtcSdpMediaInfo.tVideoInfos[i].dwTimestampFrequency &&
         i_bPacketizationMode==m_tWebRtcSdpMediaInfo.tVideoInfos[i].bPacketizationMode)//bLevelAsymmetryAllowed都是1
         {
@@ -687,11 +718,11 @@ int WebRtcSession::GetSupportedVideoInfoFromSDP(const char * i_strVideoFormatNam
     }
     if(i>=WEBRTC_SDP_MEDIA_INFO_MAX_NUM)
     {
-        WEBRTC_LOGE2(m_iLogID,"GetSupportedVideoInfoFromSDP err %x,%d,%s,%d\r\n",i_dwProfileLevelId,i_bPacketizationMode,i_strVideoFormatName,i_dwVideoTimestampFrequency);
+        WEBRTC_LOGW2(m_iLogID,"GetSupportedVideoInfoFromSDP err %x,%d,%s,%d\r\n",i_dwProfileLevelId,i_bPacketizationMode,i_strVideoFormatName,i_dwVideoTimestampFrequency);
         for(i=0;i<WEBRTC_SDP_MEDIA_INFO_MAX_NUM;i++)
         {
             if(0 != strlen(m_tWebRtcSdpMediaInfo.tVideoInfos[i].strFormatName))
-                WEBRTC_LOGE2(m_iLogID,"tVideoInfos %d,err %x,%d,%s,%d\r\n",i,m_tWebRtcSdpMediaInfo.tVideoInfos[i].dwProfileLevelId,m_tWebRtcSdpMediaInfo.tVideoInfos[i].bPacketizationMode,m_tWebRtcSdpMediaInfo.tVideoInfos[i].strFormatName,m_tWebRtcSdpMediaInfo.tVideoInfos[i].dwTimestampFrequency);
+                WEBRTC_LOGW2(m_iLogID,"tVideoInfos %d,err %x,%d,%s,%d\r\n",i,m_tWebRtcSdpMediaInfo.tVideoInfos[i].dwProfileLevelId,m_tWebRtcSdpMediaInfo.tVideoInfos[i].bPacketizationMode,m_tWebRtcSdpMediaInfo.tVideoInfos[i].strFormatName,m_tWebRtcSdpMediaInfo.tVideoInfos[i].dwTimestampFrequency);
         }
     }
     return iRet;
