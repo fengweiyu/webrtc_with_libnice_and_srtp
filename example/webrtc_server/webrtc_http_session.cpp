@@ -85,6 +85,7 @@ int WebRtcHttpSession :: Proc()
     char *pcRecvBuf=NULL;
     char *pcSendBuf=NULL;
     int iRecvLen=-1;
+    int iDataLen=0;
     T_HttpReqPacket tHttpReqPacket;
     char *pcBody=NULL;
     //timeval tTimeValue;
@@ -126,7 +127,7 @@ int WebRtcHttpSession :: Proc()
         milliseconds timeMS(30);// 表示30毫秒
         //tTimeValue.tv_sec = 0;//超时时间，超时返回错误
         //tTimeValue.tv_usec = (30*1000);//加快出图时间
-        iRet=TcpServer::Recv(pcRecvBuf,&iRecvLen,HTTP_PACKET_MAX_LEN,m_iClientSocketFd,&timeMS);
+        iRet=TcpServer::Recv(pcRecvBuf+iDataLen,&iRecvLen,HTTP_PACKET_MAX_LEN,m_iClientSocketFd,&timeMS);
         if(iRet < 0)
         {
             WEBRTC_LOGE("TcpServer::Recv err exit %d\r\n",iRecvLen);
@@ -139,12 +140,18 @@ int WebRtcHttpSession :: Proc()
         memset(&tHttpReqPacket,0,sizeof(T_HttpReqPacket));
         tHttpReqPacket.pcBody=pcBody;
         tHttpReqPacket.iBodyMaxLen= HTTP_PACKET_BODY_MAX_LEN;
-        iRet=HttpServer::ParseRequest(pcRecvBuf,iRecvLen,&tHttpReqPacket);
+        iRet=HttpServer::ParseRequest(pcRecvBuf,iRecvLen+iDataLen,&tHttpReqPacket);
         if(iRet < 0)
         {
             WEBRTC_LOGE("HttpServer::ParseRequest err %d,%s\r\n",iRecvLen,pcRecvBuf);
             continue;
         }
+        if(iRecvLen+iDataLen < tHttpReqPacket.iContentLength)
+        {
+            WEBRTC_LOGD("iRecvLen < tHttpReqPacket.iContentLength %d,%d,%d\r\n",iRecvLen,iDataLen,tHttpReqPacket.iContentLength);
+            continue;
+        }
+        iDataLen=0;
         memset(pcSendBuf,0,HTTP_PACKET_MAX_LEN);
         iRet=this->HandleHttpReq(&tHttpReqPacket,pcSendBuf,HTTP_PACKET_MAX_LEN);
         if(iRet > 0)
@@ -376,7 +383,7 @@ int WebRtcHttpSession::SendHttpContent(const char * i_strData)
 int WebRtcHttpSession::SendErrCode(void *i_pSrcIoHandle,int i_iErrorCode) 
 {
     int iRet =-1;
-    const char *strErrCode = NULL;
+    char strErrCode[64];;
     int iCode = 0;
     char strHttpRes[512];
     
@@ -397,37 +404,42 @@ int WebRtcHttpSession::SendErrCode(void *i_pSrcIoHandle,int i_iErrorCode)
         case 0:
         {
             iCode = 204;
-            strErrCode = "Client Exit";
+            snprintf(strErrCode,sizeof(strErrCode),"%s","Client Exit");
             break;
         }
         case 500:
         {
             iCode = 500;
-            strErrCode = "500 URL Timeout";
+            snprintf(strErrCode,sizeof(strErrCode),"%s","URL Timeout");
             break;
         }
         case 502:
         {
             iCode = 500;
-            strErrCode = "500 Media Timeout";
+            snprintf(strErrCode,sizeof(strErrCode),"%s","Media Timeout");
             break;
         }
         case 400:
         {
-            strErrCode = "bad request";
+            snprintf(strErrCode,sizeof(strErrCode),"%s","bad request");
             break;
         }
         case 402:
         {
-            strErrCode = "Media Limited";
+            snprintf(strErrCode,sizeof(strErrCode),"%s","Media Limited");
             break;
         }
         case 404:
         default:
         {
-            strErrCode = "Not Found";
+            snprintf(strErrCode,sizeof(strErrCode),"%s","Not Found");
             break;
         }
+    }
+    if(i_iErrorCode > 0xffff)
+    {
+        iCode = 402;
+        snprintf(strErrCode,sizeof(strErrCode),"Media Limited,profile-level-id=%x",i_iErrorCode);
     }
     HttpServer *pHttpServer=new HttpServer();
     iRet=pHttpServer->CreateResponse(iCode,strErrCode);
