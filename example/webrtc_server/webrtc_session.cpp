@@ -331,7 +331,7 @@ void WebRtcSession::TestProc()
         {
             unsigned int dwProfileLevelId = (m_tFileFrameInfo.tVideoEncodeParam.abSPS[1]<<16) | (m_tFileFrameInfo.tVideoEncodeParam.abSPS[2]<<8) | m_tFileFrameInfo.tVideoEncodeParam.abSPS[3];
             WEBRTC_LOGE2(m_iLogID,"TestProc exit %d,%s,dwProfileLevelId %#x\r\n",iRet,m_pFileName->c_str(),dwProfileLevelId);
-            this->StopSession(-2==iRet?400:(int)dwProfileLevelId);
+            this->StopSession(-2!=iRet?400:(int)dwProfileLevelId);
             break;
         }
         if(m_tFileFrameInfo.dwTimeStamp<dwFileLastTimeStamp)
@@ -688,19 +688,22 @@ int WebRtcSession::GetSupportedVideoInfoFromSDP(const char * i_strVideoFormatNam
     }
     for(i=0;i<WEBRTC_SDP_MEDIA_INFO_MAX_NUM;i++)
     {
-        bRemoteProfile =(unsigned char)((m_tWebRtcSdpMediaInfo.tVideoInfos[i].dwProfileLevelId>>16)&0xff);//0x64 high ,0x4d main,0x42 base
-        bRemoteConstraintFlag =(unsigned char)((m_tWebRtcSdpMediaInfo.tVideoInfos[i].dwProfileLevelId>>8)&0xff);//0x64 high ,0x4d main,0x42 base
-        bRemoteLevel =(unsigned char)((m_tWebRtcSdpMediaInfo.tVideoInfos[i].dwProfileLevelId)&0xff);//
-        //WEBRTC_LOGD2(m_iLogID,"i_dwProfileLevelId %#x,%#x,%#x,%#x,%#x,%#x,\r\n",bLocalProfile,bLocalConstraintFlag,bLocalLevel,bRemoteProfile,bRemoteConstraintFlag,bRemoteLevel);
-        if(bLocalProfile!=bRemoteProfile ||bLocalLevel>bRemoteLevel)
+        if(0 != i_dwProfileLevelId)//对讲则无需判断
         {
-            continue;
-        }
-        if(0x64 == bLocalProfile)
-        {//严格处理ConstraintFlag也要符合(兼容ios，ios highprofile ConstraintFlag有编码有特殊规范，所以也要符合)
-            if(0 != bRemoteConstraintFlag && (bLocalConstraintFlag&bRemoteConstraintFlag)!=bRemoteConstraintFlag)
-            {//浏览器置位代表有要求，则服务端对应的位置也要置位
+            bRemoteProfile =(unsigned char)((m_tWebRtcSdpMediaInfo.tVideoInfos[i].dwProfileLevelId>>16)&0xff);//0x64 high ,0x4d main,0x42 base
+            bRemoteConstraintFlag =(unsigned char)((m_tWebRtcSdpMediaInfo.tVideoInfos[i].dwProfileLevelId>>8)&0xff);//0x64 high ,0x4d main,0x42 base
+            bRemoteLevel =(unsigned char)((m_tWebRtcSdpMediaInfo.tVideoInfos[i].dwProfileLevelId)&0xff);//
+            //WEBRTC_LOGD2(m_iLogID,"i_dwProfileLevelId %#x,%#x,%#x,%#x,%#x,%#x,\r\n",bLocalProfile,bLocalConstraintFlag,bLocalLevel,bRemoteProfile,bRemoteConstraintFlag,bRemoteLevel);
+            if(bLocalProfile!=bRemoteProfile ||bLocalLevel>bRemoteLevel)
+            {
                 continue;
+            }
+            if(0x64 == bLocalProfile)
+            {//严格处理ConstraintFlag也要符合(兼容ios，ios highprofile ConstraintFlag有编码有特殊规范，所以也要符合)
+                if(0 != bRemoteConstraintFlag && (bLocalConstraintFlag&bRemoteConstraintFlag)!=bRemoteConstraintFlag)
+                {//浏览器置位代表有要求，则服务端对应的位置也要置位
+                    continue;
+                }
             }
         }
 
