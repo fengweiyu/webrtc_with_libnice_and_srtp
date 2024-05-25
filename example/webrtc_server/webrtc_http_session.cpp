@@ -410,13 +410,13 @@ int WebRtcHttpSession::SendErrCode(void *i_pSrcIoHandle,int i_iErrorCode)
         case 500:
         {
             iCode = 500;
-            snprintf(strErrCode,sizeof(strErrCode),"%s","URL Timeout");
+            snprintf(strErrCode,sizeof(strErrCode),"%d URL Timeout",i_iErrorCode);
             break;
         }
         case 502:
         {
             iCode = 500;
-            snprintf(strErrCode,sizeof(strErrCode),"%s","Media Timeout");
+            snprintf(strErrCode,sizeof(strErrCode),"%d Media Timeout",i_iErrorCode);
             break;
         }
         case 400:
