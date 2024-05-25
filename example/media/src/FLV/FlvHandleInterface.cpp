@@ -67,7 +67,7 @@ FlvHandleInterface::~FlvHandleInterface()
 int FlvHandleInterface::Init(char *i_strPath)
 {
     int iRet=FALSE;
-	return iRet;
+	return TRUE;
 }
 
 /*****************************************************************************
