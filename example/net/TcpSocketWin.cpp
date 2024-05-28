@@ -320,7 +320,7 @@ int TcpServer::Recv(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen,int 
     {
         string strRecv(o_acRecvBuf);
         *o_piRecvLen = i_iRecvBufMaxLen - iLeftRecvLen;
-        TCP_LOGE("SvcRecv :%s\r\n",strRecv.c_str());
+        TCP_LOGE("SvcRecv :%d\r\n",*o_piRecvLen);
     }
     else
     {
@@ -550,7 +550,7 @@ int TcpClient::Recv(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen,int 
         if(iRet<0)  
         {
             TCP_LOGE("select Recv err\n");  
-            Close(i_iClientSocketFd);
+            Close(iSocketFd);
             iRet=-1;
             break;
         }
@@ -565,7 +565,7 @@ int TcpClient::Recv(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen,int 
         }
         if (FD_ISSET(iSocketFd, &tReadFds))   //测试fd1是否可读  
         {
-            iRecvLen=recv(i_iClientSocketFd,pcRecvBuf,iLeftRecvLen,0);  
+            iRecvLen=recv(iSocketFd,pcRecvBuf,iLeftRecvLen,0);  
             if(iRecvLen<=0)
             {
                 if(errno != EINTR)
@@ -594,7 +594,7 @@ int TcpClient::Recv(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen,int 
     {
         string strRecv(o_acRecvBuf);
         *o_piRecvLen = i_iRecvBufMaxLen - iLeftRecvLen;
-        TCP_LOGE("Recv :%s\r\n",strRecv.c_str());
+        TCP_LOGE("Recv :%d\r\n",*o_piRecvLen);
     }
     else
     {
@@ -616,14 +616,24 @@ int TcpClient::Recv(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen,int 
 ******************************************************************************/
 void TcpClient::Close(int i_iClientSocketFd)
 {
-	if(m_iClientSocketFd!=-1)
+	int iClientSocketFd=-1;
+
+    if(i_iClientSocketFd<=0)
+    {
+        iClientSocketFd=m_iClientSocketFd;
+    }
+    else
+    {
+        iClientSocketFd=i_iClientSocketFd;
+    }
+	if(iClientSocketFd!=-1)
 	{
-		closesocket(m_iClientSocketFd);
+		closesocket(iClientSocketFd);
 		m_iClientSocketFd=-1;
 	}
 	else
 	{
-		TCP_LOGE("Close err:%d\r\n",i_iClientSocketFd);
+		TCP_LOGE("Close err:%d\r\n",iClientSocketFd);
 	}
 }
 
