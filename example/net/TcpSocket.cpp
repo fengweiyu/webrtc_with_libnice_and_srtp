@@ -246,7 +246,7 @@ int TcpServer::Send(char * i_acSendBuf,int i_iSendLen,int i_iClientSocketFd)
             iRet=0;
         }
         string strSend(i_acSendBuf);
-        TCP_LOGD("Send : %s\r\n",strSend.c_str());
+        TCP_LOGD("Send : %d\r\n",i_iSendLen);
 	}
 
 	return iRet;
@@ -341,7 +341,7 @@ int TcpServer::Recv(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen,int 
     {
         string strRecv(o_acRecvBuf);
         *o_piRecvLen = i_iRecvBufMaxLen - iLeftRecvLen;
-        TCP_LOGD("SvcRecv :%s\r\n",strRecv.c_str());
+        TCP_LOGD("SvcRecv :%d\r\n",*o_piRecvLen);
     }
     else
     {
@@ -482,24 +482,33 @@ int TcpClient::Init(string *i_strIP,unsigned short i_wPort)
 int TcpClient::Send(char * i_acSendBuf,int i_iSendLen,int i_iClientSocketFd)
 {
 	int iRet=-1;
+	int iClientSocketFd=-1;
+
+	
 	if(i_acSendBuf==NULL ||i_iSendLen<=0)
 	{
         TCP_LOGE("Send err");
+        return -1;
 	}
-	else
-	{
-        iRet=send(m_iClientSocketFd,i_acSendBuf,i_iSendLen,0);
-        if(iRet<0)
-        {
-            close(m_iClientSocketFd);
-        }
-        else
-        {
-            iRet=0;
-        }
-        string strSend(i_acSendBuf);
-        TCP_LOGD("Send :%s\r\n",strSend.c_str());
-	}
+    if(i_iClientSocketFd<=0)
+    {
+        iClientSocketFd=m_iClientSocketFd;
+    }
+    else
+    {
+        iClientSocketFd=i_iClientSocketFd;
+    }
+    iRet=send(iClientSocketFd,i_acSendBuf,i_iSendLen,0);
+    if(iRet<0)
+    {
+        close(iClientSocketFd);
+    }
+    else
+    {
+        iRet=0;
+    }
+    string strSend(i_acSendBuf);
+    TCP_LOGD("Send :%d\r\n",i_iSendLen);
 	
 	return iRet;
 }
@@ -525,16 +534,25 @@ int TcpClient::Recv(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen,int 
     timeval tTimeValue;
     char *pcRecvBuf=o_acRecvBuf;
     int iLeftRecvLen=i_iRecvBufMaxLen;
+	int iClientSocketFd=-1;
 
     if(NULL == o_acRecvBuf ||NULL == o_piRecvLen ||i_iRecvBufMaxLen <= 0)
     {
         TCP_LOGE("TcpClient::Recv NULL");
         return iRet;
-    }   
+    } 
+    if(i_iClientSocketFd<=0)
+    {
+        iClientSocketFd=m_iClientSocketFd;
+    }
+    else
+    {
+        iClientSocketFd=i_iClientSocketFd;
+    }
     while(iLeftRecvLen > 0)
     {
         FD_ZERO(&tReadFds); //清空描述符集合    
-        FD_SET(m_iClientSocketFd, &tReadFds); //设置描述符集合
+        FD_SET(iClientSocketFd, &tReadFds); //设置描述符集合
         tTimeValue.tv_sec  =1;//超时时间，超时返回错误
         tTimeValue.tv_usec = 0;
         if(NULL != i_pTime)
@@ -544,11 +562,11 @@ int TcpClient::Recv(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen,int 
             tTimeValue.tv_sec      = millisecondsValue/1000;//超时时间，超时返回错误
             tTimeValue.tv_usec     = millisecondsValue%1000*1000;
         }
-        iRet = select(m_iClientSocketFd + 1, &tReadFds, NULL, NULL, &tTimeValue);//调用select（）监控函数//NULL 一直等到有变化
+        iRet = select(iClientSocketFd + 1, &tReadFds, NULL, NULL, &tTimeValue);//调用select（）监控函数//NULL 一直等到有变化
         if(iRet<0)  
         {
             TCP_LOGE("select Recv err\n");  
-            close(m_iClientSocketFd);
+            close(iClientSocketFd);
             iRet=-1;
             break;
         }
@@ -561,7 +579,7 @@ int TcpClient::Recv(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen,int 
         else
         {
         }
-        if (FD_ISSET(m_iClientSocketFd, &tReadFds))   //测试fd1是否可读  
+        if (FD_ISSET(iClientSocketFd, &tReadFds))   //测试fd1是否可读  
         {
             iRecvLen=recv(i_iClientSocketFd,pcRecvBuf,iLeftRecvLen,0);  
             if(iRecvLen<=0)
@@ -589,7 +607,7 @@ int TcpClient::Recv(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen,int 
     {
         string strRecv(o_acRecvBuf);
         *o_piRecvLen = i_iRecvBufMaxLen - iLeftRecvLen;
-        TCP_LOGD("Recv :%s\r\n",strRecv.c_str());
+        TCP_LOGD("Recv :%d\r\n",*o_piRecvLen);
     }
     else
     {
@@ -611,14 +629,24 @@ int TcpClient::Recv(char *o_acRecvBuf,int *o_piRecvLen,int i_iRecvBufMaxLen,int 
 ******************************************************************************/
 void TcpClient::Close(int i_iClientSocketFd)
 {
-	if(m_iClientSocketFd!=-1)
+	int iClientSocketFd=-1;
+
+    if(i_iClientSocketFd<=0)
+    {
+        iClientSocketFd=m_iClientSocketFd;
+    }
+    else
+    {
+        iClientSocketFd=i_iClientSocketFd;
+    }
+	if(iClientSocketFd!=-1)
 	{
-		close(m_iClientSocketFd);
+		close(iClientSocketFd);
 		m_iClientSocketFd=-1;
 	}
 	else
 	{
-		TCP_LOGE("Close err:%d",m_iClientSocketFd);
+		TCP_LOGE("Close err:%d",iClientSocketFd);
 	}
 }
 
