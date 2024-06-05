@@ -596,12 +596,16 @@ int Rtp::ParseRtpPacket(unsigned char *i_pbPacketBuf,int i_iPacketLen,T_MediaFra
     }
     
     memset(&tParam,0,sizeof(T_RtpPacketParam));
-    o_ptFrame->pbFrameStartPos=o_ptFrame->pbFrameBuf;
-    o_ptFrame->iFrameLen=0;
-    iRet=m_RtpParse.Parse(i_pbPacketBuf,i_iPacketLen,&tParam,o_ptFrame->pbFrameStartPos,&o_ptFrame->iFrameLen,o_ptFrame->iFrameBufMaxLen);
+    //o_ptFrame->pbFrameStartPos=o_ptFrame->pbFrameBuf;
+    //o_ptFrame->iFrameLen=0;
+    iRet=m_RtpParse.Parse(i_pbPacketBuf,i_iPacketLen,&tParam,o_ptFrame->pbFrameBuf,&o_ptFrame->iFrameBufLen,o_ptFrame->iFrameBufMaxLen);
     if(iRet<0)
     {
         RTP_LOGE("m_RtpParse.Parse err%d\r\n",iRet);
+        return iRet;
+    }
+    if(o_ptFrame->iFrameBufLen<=0)
+    {
         return iRet;
     }
     switch (tParam.ePacketType)
@@ -609,7 +613,7 @@ int Rtp::ParseRtpPacket(unsigned char *i_pbPacketBuf,int i_iPacketLen,T_MediaFra
         case RTP_PACKET_TYPE_G711A:
         {
             o_ptFrame->eEncType=MEDIA_ENCODE_TYPE_G711A;
-            o_ptFrame->dwTimeStamp=tParam.dwTimestamp;
+            o_ptFrame->dwTimeStamp=tParam.dwTimestamp;///8;//*1000/8000先固定，后续优化为可变(外层处理)
             o_ptFrame->eFrameType=MEDIA_FRAME_TYPE_AUDIO_FRAME;
             iRet = 0;
             break;
@@ -617,8 +621,36 @@ int Rtp::ParseRtpPacket(unsigned char *i_pbPacketBuf,int i_iPacketLen,T_MediaFra
         case RTP_PACKET_TYPE_G711U:
         {
             o_ptFrame->eEncType=MEDIA_ENCODE_TYPE_G711U;
-            o_ptFrame->dwTimeStamp=tParam.dwTimestamp;
+            o_ptFrame->dwTimeStamp=tParam.dwTimestamp;///8;
             o_ptFrame->eFrameType=MEDIA_FRAME_TYPE_AUDIO_FRAME;
+            iRet = 0;
+            break;
+        }
+        case RTP_PACKET_TYPE_H264:
+        {
+            o_ptFrame->eEncType=MEDIA_ENCODE_TYPE_H264;
+            o_ptFrame->dwTimeStamp=tParam.dwTimestamp;///90;//*1000/90000 外层处理
+            switch(o_ptFrame->pbFrameBuf[4] & 0x1f)
+            {
+                case 0x5:
+                case 0x7: //sps
+                case 0x8://pps
+                {
+                    o_ptFrame->eFrameType=MEDIA_FRAME_TYPE_VIDEO_I_FRAME;
+                    break;
+                }
+                case 0x1:
+                {
+                    o_ptFrame->eFrameType=MEDIA_FRAME_TYPE_VIDEO_P_FRAME;
+                    break;
+                }
+                default:
+                {
+                    RTP_LOGE("o_ptFrame->pbFrameBuf[4] %x\r\n",o_ptFrame->pbFrameBuf[4]);
+                    o_ptFrame->eFrameType=MEDIA_FRAME_TYPE_UNKNOW;
+                    break;
+                }
+            }
             iRet = 0;
             break;
         }
