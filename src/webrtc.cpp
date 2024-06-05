@@ -1372,6 +1372,11 @@ int WebRtcAnswer::HandleMsg(char * i_strOfferMsg,int i_iNotJsonMsgFlag,T_WebRtcS
             }
         }
     }
+    if(string::npos == iVideoPos && string::npos == iAudioPos)
+    {
+        WEBRTC_LOGE("string::npos == iVideoPos && string::npos == iAudioPos err \r\n");
+        return iRet;
+    }
     m_iAvDiff=(int)(iAudioPos-iVideoPos);
     printf("HandleMsg m_iAvDiff %d \r\n",m_iAvDiff);
     if(NULL != o_ptSdpMediaInfo)
