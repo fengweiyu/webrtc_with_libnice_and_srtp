@@ -60,13 +60,15 @@ private:
     int GetSupportedAudioInfoFromSDP(const char * i_strAudioFormatName,unsigned int i_dwAudioTimestampFrequency,T_AudioInfo *o_ptAudioInfo);
     unsigned int GetTickCount();  // milliseconds
     int IsRtp(char * i_acDataBuf,int i_iDataLen);
-
+    int HandleRtpTimestamp();
+    
         
     T_WebRtcSessionCb m_tWebRtcSessionCb;
 
     WebRtcInterface * m_pWebRTC;
     RtpInterface * m_pRtpInterface;
     thread *m_pWebRtcProc;
+    MediaHandle m_cMediaHandle;
 
     T_WebRtcSdpMediaInfo m_tWebRtcSdpMediaInfo;
     unsigned char *m_pbPacketsBuf;
@@ -84,6 +86,13 @@ private:
     int m_iFileProcFlag;
     int m_iFileExitProcFlag;
     int m_iTalkTestFlag;//0 否，1是
+    
+    unsigned int m_dwPullTimeStamp;//ms
+    int m_iFindedKeyFrame;//0 否，1是
+    unsigned int dwLastAudioTimeStamp;//ms
+    unsigned int dwLastVideoTimeStamp;//ms
+    unsigned char * m_pbFileBuf;
+    FILE  *m_pMediaFile;
 };
 
 #endif
