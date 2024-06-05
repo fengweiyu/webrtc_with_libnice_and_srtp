@@ -563,7 +563,7 @@ int H264FU_A :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,in
         } 
         else if ((unsigned int)iNaluLen <= RTP_MAX_PACKET_SIZE- RTP_HEADER_LEN-FU_A_HEADER_LEN) //iNaluLen已经--了
         {//NALU Payload数据在1字节的FU indicator  和1字节的   FU header后面
-            iMark = 1;//最后一包
+            iMark = 1;//最后一包//视频标志一NALU的结束
         }
 
         if (iPackNum == 0) 
@@ -987,7 +987,7 @@ int RtpPacketG711 :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbFrame
         {
             if ((unsigned int)iFrameLen <= RTP_MAX_PACKET_SIZE - RTP_HEADER_LEN) 
             {
-                iMark = 1;
+                iMark = 1;//音频标记会话的开始,一般是整个会话(注意不是分包)第一包置位，其他都是0,参考webrtc
                 if(((iFrameLen+RTP_HEADER_LEN)%4)>0)
                 {
                     iPaddingLen = 4 -((iFrameLen+RTP_HEADER_LEN)%4);//4字节对齐
