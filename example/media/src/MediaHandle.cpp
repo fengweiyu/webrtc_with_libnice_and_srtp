@@ -474,7 +474,7 @@ int MediaHandle::FrameToContainer(T_MediaFrameInfo *i_ptFrame,E_StreamType i_eSt
 
     if(iRet < 0)
     {
-        MH_LOGE("FrameToContainer FALSE:eStreamType%d,%d\r\n",i_eStreamType,i_dwMaxBufLen);
+        MH_LOGE("FrameToContainer FALSE:eStreamType%d,iFrameLen %d\r\n",i_eStreamType,i_ptFrame->iFrameLen);
     }
     
 	return iRet;
