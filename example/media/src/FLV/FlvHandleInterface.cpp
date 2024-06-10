@@ -33,7 +33,7 @@ char * FlvHandleInterface::m_strFormatName=(char *)FLV_MUX_NAME;
 ******************************************************************************/
 FlvHandleInterface::FlvHandleInterface()
 {
-    m_pFlvHandle = new FlvHandle();
+    m_pFlvParseHandle = new FlvParseHandle();
 }
 /*****************************************************************************
 -Fuction		: ~FlvHandleInterface
@@ -47,9 +47,13 @@ FlvHandleInterface::FlvHandleInterface()
 ******************************************************************************/
 FlvHandleInterface::~FlvHandleInterface()
 {
-    if(NULL!= m_pFlvHandle)
+    if(NULL!= m_pFlvParseHandle)
     {
-        delete m_pFlvHandle;
+        delete m_pFlvParseHandle;
+    }
+    if(NULL!= m_pFlvPackHandle)
+    {
+        delete m_pFlvPackHandle;
     }
 }
 
@@ -150,7 +154,7 @@ int FlvHandleInterface::GetFrame(T_MediaFrameInfo *m_ptFrame)
     m_ptFrame->iFrameLen = 0;
     do
     {
-        iRet=m_pFlvHandle->GetFrameData(iProcessedLen,m_ptFrame);
+        iRet=m_pFlvParseHandle->GetFrameData(iProcessedLen,m_ptFrame);
         if(iRet <= 0)
         {
             MH_LOGE("m_pFlvHandle->GetFrameData err %d %d\r\n",iProcessedLen,iRet);
@@ -165,6 +169,46 @@ int FlvHandleInterface::GetFrame(T_MediaFrameInfo *m_ptFrame)
         m_ptFrame->iFrameProcessedLen += iProcessedLen;
 	}
     return 0;
+}
+
+/*****************************************************************************
+-Fuction        : FrameToContainer
+-Description    : m_ptFrame->iFrameBufLen 必须大于等于一帧数据大小否则会失败
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version        Author           Modification
+* -----------------------------------------------
+* 2023/09/21      V1.0.0         Yu Weifeng       Created
+******************************************************************************/
+int FlvHandleInterface::FrameToContainer(T_MediaFrameInfo *i_ptFrame,E_StreamType i_eStreamType,unsigned char * o_pbBuf, unsigned int i_dwMaxBufLen,int *o_piHeaderOffset)
+{
+    int iRet=FALSE;
+    int iEnhancedFlvFlag=0;
+    
+    if(NULL == i_ptFrame ||NULL == o_pbBuf ||NULL == i_ptFrame->pbFrameStartPos ||i_ptFrame->iFrameLen <= 0)
+    {
+        MH_LOGE("FrameToContainer err NULL\r\n");
+        return iRet;
+    }
+    if(STREAM_TYPE_FLV_STREAM == i_eStreamType)
+    {
+        iEnhancedFlvFlag=0;
+    }
+    else if(STREAM_TYPE_ENHANCED_FLV_STREAM == i_eStreamType)
+    {
+        iEnhancedFlvFlag=1;
+    }
+    else
+    {
+        MH_LOGE("FrameToContainer i_eStreamType err %d\r\n",i_eStreamType);
+        return iRet;
+    }
+    if(NULL== m_pFlvPackHandle)
+    {
+        m_pFlvPackHandle=new FlvPackHandle(iEnhancedFlvFlag);
+    }
+    return m_pFlvPackHandle->GetMuxData(i_ptFrame,o_pbBuf,i_dwMaxBufLen);
 }
 
 

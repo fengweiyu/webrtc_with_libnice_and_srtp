@@ -19,6 +19,8 @@ SET(src_list
     FMP4/FMP4Handle.cpp
     FMP4/FMP4.cpp
     FLV/FlvHandleInterface.cpp
+    FLV/FlvParseHandle.cpp
+    FLV/FlvPackHandle.cpp
     FLV/FlvHandle.cpp
     RawVideoHandle.cpp
     RawAudioHandle.cpp

@@ -460,11 +460,30 @@ int MediaHandle::FrameToContainer(T_MediaFrameInfo *i_ptFrame,E_StreamType i_eSt
         MH_LOGE("FrameToContainer o_pbBuf NULL\r\n");
         return iRet;
     }
-    if(STREAM_TYPE_FMP4_STREAM == i_eStreamType)
+    
+    switch(i_eStreamType)
     {
-        if(NULL == m_pMediaPackHandle)
+        case STREAM_TYPE_FMP4_STREAM :
         {
-            m_pMediaPackHandle=new FMP4HandleInterface();
+            if(NULL == m_pMediaPackHandle)
+            {
+                m_pMediaPackHandle=new FMP4HandleInterface();
+            }
+            break;
+        }
+        case STREAM_TYPE_FLV_STREAM :
+        case STREAM_TYPE_ENHANCED_FLV_STREAM :
+        {
+            if(NULL == m_pMediaPackHandle)
+            {
+                m_pMediaPackHandle=new FlvHandleInterface();
+            }
+            break;
+        }
+        default :
+        {
+            MH_LOGE("FrameToContainer i_eStreamType err%d\r\n",i_eStreamType);
+            break;
         }
     }
     if(NULL != m_pMediaPackHandle)

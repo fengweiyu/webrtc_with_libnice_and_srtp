@@ -16,7 +16,8 @@
 #include <stdio.h>
 #include <string>
 #include "MediaHandle.h"
-#include "FlvHandle.h"
+#include "FlvParseHandle.h"
+#include "FlvPackHandle.h"
 
 using std::string;
 
@@ -42,10 +43,12 @@ public:
     virtual int GetMediaInfo(T_MediaInfo *o_ptMediaInfo);
     
     virtual int GetFrame(T_MediaFrameInfo *m_ptFrame);//
-    
+    virtual int FrameToContainer(T_MediaFrameInfo *i_ptFrame,E_StreamType i_eStreamType,unsigned char * o_pbBuf, unsigned int i_dwMaxBufLen,int *o_piHeaderOffset=NULL);//
+
     static char *m_strFormatName;
 private:
-    FlvHandle *m_pFlvHandle;
+    FlvParseHandle *m_pFlvParseHandle;
+    FlvPackHandle *m_pFlvPackHandle;
 };
 
 
