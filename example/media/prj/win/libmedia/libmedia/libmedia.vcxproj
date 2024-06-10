@@ -21,6 +21,8 @@
   <ItemGroup>
     <ClCompile Include="..\..\..\..\src\FLV\FlvHandle.cpp" />
     <ClCompile Include="..\..\..\..\src\FLV\FlvHandleInterface.cpp" />
+    <ClCompile Include="..\..\..\..\src\FLV\FlvPackHandle.cpp" />
+    <ClCompile Include="..\..\..\..\src\FLV\FlvParseHandle.cpp" />
     <ClCompile Include="..\..\..\..\src\FMP4\FMP4.cpp" />
     <ClCompile Include="..\..\..\..\src\FMP4\FMP4Handle.cpp" />
     <ClCompile Include="..\..\..\..\src\FMP4\FMP4HandleInterface.cpp" />
@@ -30,6 +32,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\src\FLV\FlvHandle.h" />
+    <ClInclude Include="..\..\..\..\src\FLV\FlvPackHandle.h" />
+    <ClInclude Include="..\..\..\..\src\FLV\FlvParseHandle.h" />
     <ClInclude Include="..\..\..\..\src\FLV\include\FlvHandleInterface.h" />
     <ClInclude Include="..\..\..\..\src\FMP4\FMP4.h" />
     <ClInclude Include="..\..\..\..\src\FMP4\FMP4Handle.h" />
