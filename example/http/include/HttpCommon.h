@@ -52,6 +52,7 @@ typedef struct HttpReqPacket
     char strConnection[32];
     int iContentLength;
     char strContentType[128];
+    char strUserAgent[128];
 
     char * pcBody;
     int iBodyCurLen;

@@ -76,6 +76,7 @@ int HttpServer :: ParseRequest(char *i_pcReqData,int i_iDataLen,T_HttpReqPacket 
 	const char *strConnectionPatten="Connection: ([A-Za-z0-9-]+)\r\n";
 	const char *strContentLenPatten="Content-Length: ([0-9]+)\r\n";
 	const char *strContentTypePatten="Content-type: ([A-Za-z0-9-/;.]+)\r\n";
+	const char *strUserAgentPatten="User-Agent: ([A-Za-z0-9-/;. ]+)\r\n";
 	Http *pHttp = ((Http *)m_pHttp);
 	
     if(NULL == i_pcReqData ||NULL == o_ptHttpReqPacket )
@@ -116,6 +117,11 @@ int HttpServer :: ParseRequest(char *i_pcReqData,int i_iDataLen,T_HttpReqPacket 
     {
         strFindRes.assign(Match[1].str());//0是整行
         snprintf(o_ptHttpReqPacket->strContentType,sizeof(o_ptHttpReqPacket->strContentType),"%s",strFindRes.c_str());
+    }
+    if(0 == pHttp->Regex(strUserAgentPatten,&strHttpHeader,Match))
+    {
+        strFindRes.assign(Match[1].str());//0是整行
+        snprintf(o_ptHttpReqPacket->strUserAgent,sizeof(o_ptHttpReqPacket->strUserAgent),"%s",strFindRes.c_str());
     }
 
     if(0 != strlen(o_ptHttpReqPacket->strMethod) && 0 != strlen(o_ptHttpReqPacket->strURL))

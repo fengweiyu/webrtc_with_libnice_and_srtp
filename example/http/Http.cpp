@@ -109,7 +109,8 @@ int HttpParseReqHeader(string *i_strHttpHeader,T_HttpReqPacket *o_ptHttpReqPacke
 	const char *strConnectionPatten="Connection: ([A-Za-z0-9-]+)\r\n";
 	const char *strContentLenPatten="Content-Length: ([0-9]+)\r\n";
 	const char *strContentTypePatten="Content-type: ([A-Za-z0-9-/;.]+)\r\n";
-	
+	const char *strUserAgentPatten="User-Agent: ([A-Za-z0-9-/;. ]+)\r\n";
+
     if(NULL == i_strHttpHeader)
     {
         HTTP_LOGE("HttpParseReqHeader NULL\r\n");
@@ -143,6 +144,11 @@ int HttpParseReqHeader(string *i_strHttpHeader,T_HttpReqPacket *o_ptHttpReqPacke
     {
         strFindRes.assign(strHttpHeader,atMatch[1].rm_so,atMatch[1].rm_eo-atMatch[1].rm_so);
         snprintf(o_ptHttpReqPacket->strContentType,sizeof(o_ptHttpReqPacket->strContentType),"%s",strFindRes.c_str());
+    }
+    if(REG_NOERROR == HttpRegex(strUserAgentPatten,(char *)strHttpHeader.c_str(),atMatch))
+    {
+        strFindRes.assign(strHttpHeader,atMatch[1].rm_so,atMatch[1].rm_eo-atMatch[1].rm_so);
+        snprintf(o_ptHttpReqPacket->strUserAgent,sizeof(o_ptHttpReqPacket->strUserAgent),"%s",strFindRes.c_str());
     }
 
     if(0 != strlen(o_ptHttpReqPacket->strMethod) && 0 != strlen(o_ptHttpReqPacket->strURL))
@@ -269,7 +275,8 @@ int Http :: ParseReqHeader(string *i_strHttpHeader,T_HttpReqPacket *o_ptHttpReqP
 	const char *strConnectionPatten="Connection: ([A-Za-z0-9-]+)\r\n";
 	const char *strContentLenPatten="Content-Length: ([0-9]+)\r\n";
 	const char *strContentTypePatten="Content-type: ([A-Za-z0-9-/;.]+)\r\n";
-	
+	const char *strUserAgentPatten="User-Agent: ([A-Za-z0-9-/;. ]+)\r\n";
+
     if(NULL == i_strHttpHeader ||NULL == o_ptHttpReqPacket )
     {
         HTTP_LOGE("ParseReqHeader NULL\r\n");
@@ -308,6 +315,11 @@ int Http :: ParseReqHeader(string *i_strHttpHeader,T_HttpReqPacket *o_ptHttpReqP
     {
         strFindRes.assign(Match[1].str());//0是整行
         snprintf(o_ptHttpReqPacket->strContentType,sizeof(o_ptHttpReqPacket->strContentType),"%s",strFindRes.c_str());
+    }
+    if(0 == this->Regex(strUserAgentPatten,&strHttpHeader,Match))
+    {
+        strFindRes.assign(Match[1].str());//0是整行
+        snprintf(o_ptHttpReqPacket->strUserAgent,sizeof(o_ptHttpReqPacket->strUserAgent),"%s",strFindRes.c_str());
     }
 
     if(0 != strlen(o_ptHttpReqPacket->strMethod) && 0 != strlen(o_ptHttpReqPacket->strURL))
