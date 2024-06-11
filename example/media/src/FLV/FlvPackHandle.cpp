@@ -219,7 +219,7 @@ int FlvPackHandle::CreateTag(T_MediaFrameInfo * i_ptFrameInfo,unsigned char* o_p
             }
             memcpy(o_pbBuf+iLen,m_pbFrameBuf,tFlvTagHeader.dwSize);
             iLen+=tFlvTagHeader.dwSize;
-            memcpy(o_pbBuf+iLen,&iLen,sizeof(iLen));//dwPreviousTagSize
+            Write32BE((o_pbBuf+iLen),iLen);//dwPreviousTagSize
             iLen+=sizeof(iLen);
             iRet =this->GenerateVideoData(i_ptFrameInfo,0,m_pbFrameBuf,m_iFrameBufMaxLen);
             if(iRet <= 0)
@@ -266,7 +266,7 @@ int FlvPackHandle::CreateTag(T_MediaFrameInfo * i_ptFrameInfo,unsigned char* o_p
                 }
                 memcpy(o_pbBuf+iLen,m_pbFrameBuf,tFlvTagHeader.dwSize);
                 iLen+=tFlvTagHeader.dwSize;
-                memcpy(o_pbBuf+iLen,&iLen,sizeof(iLen));//dwPreviousTagSize
+                Write32BE((o_pbBuf+iLen),iLen);//dwPreviousTagSize
                 iLen+=sizeof(iLen);
                 
                 m_iAudioSeqHeaderSended=1;
@@ -300,7 +300,7 @@ int FlvPackHandle::CreateTag(T_MediaFrameInfo * i_ptFrameInfo,unsigned char* o_p
     iLen+=iRet;
     memcpy(o_pbBuf+iLen,m_pbFrameBuf,tFlvTagHeader.dwSize);
     iLen+=tFlvTagHeader.dwSize;
-    memcpy(o_pbBuf+iLen,&iLen,sizeof(iLen));//dwPreviousTagSize
+    Write32BE((o_pbBuf+iLen),(iRet+tFlvTagHeader.dwSize));//dwPreviousTagSize
     iLen+=sizeof(iLen);
 
 	return iLen;
@@ -569,11 +569,13 @@ int FlvPackHandle::GenerateVideoDataH264(T_MediaFrameInfo * i_ptFrameInfo,int i_
 #endif
         for(i=0;i<(int)i_ptFrameInfo->dwNaluCount;i++)
         {
+            unsigned char *pbNaluData=i_ptFrameInfo->atNaluInfo[i].pbData+4;
+            unsigned int dwDataLen=i_ptFrameInfo->atNaluInfo[i].dwDataLen-4;
             pbVideoData = &o_pbVideoData[iVideoDataLen];
-            Write32BE(pbVideoData,i_ptFrameInfo->atNaluInfo[i].dwDataLen);
-            iVideoDataLen += sizeof(i_ptFrameInfo->atNaluInfo[i].dwDataLen);
-            memcpy(&o_pbVideoData[iVideoDataLen], i_ptFrameInfo->atNaluInfo[i].pbData,i_ptFrameInfo->atNaluInfo[i].dwDataLen);
-            iVideoDataLen += i_ptFrameInfo->atNaluInfo[i].dwDataLen;
+            Write32BE(pbVideoData,dwDataLen);
+            iVideoDataLen += sizeof(dwDataLen);
+            memcpy(&o_pbVideoData[iVideoDataLen],pbNaluData,dwDataLen);
+            iVideoDataLen += dwDataLen;
         }
     }
     else
@@ -634,27 +636,51 @@ int FlvPackHandle::GenerateVideoDataH265(T_MediaFrameInfo * i_ptFrameInfo,int i_
     }
     pbVideoData = o_pbVideoData;
     //tag Header 1 byte
-    if(MEDIA_FRAME_TYPE_VIDEO_I_FRAME == i_ptFrameInfo->eFrameType)
+    if(0 == m_iEnhancedFlvFlag)
     {
-        *pbVideoData = 0x1c;
+        if(MEDIA_FRAME_TYPE_VIDEO_I_FRAME == i_ptFrameInfo->eFrameType)
+        {
+            *pbVideoData = 0x1c;
+        }
+        else
+        {
+            *pbVideoData = 0x2c;//微信小程序验证h265这种定义是可以的
+        }
+        pbVideoData += 1;
+        //tag Body(AVCC Header) 4 byte
+        if(0 == i_iIsAvcSeqHeader)
+        {
+            *pbVideoData = 0x1;
+        }
+        else
+        {
+            *pbVideoData = 0x0;//AvcSeqHeader
+        }
+        pbVideoData += 1;
+        memset(pbVideoData,0,3);
+        pbVideoData += 3;
     }
     else
     {
-        *pbVideoData = 0x2c;//微信小程序验证h265这种定义是可以的
+        unsigned char eFlvPacketType=FLV_PACKET_TYPE_CODED_FRAMES_X;
+        *pbVideoData = 0x80;
+        if(MEDIA_FRAME_TYPE_VIDEO_I_FRAME == i_ptFrameInfo->eFrameType)
+        {
+            *pbVideoData |= 0x10;
+        }
+        else
+        {
+            *pbVideoData |= 0x20;///1 = key frame, 2 = inter frame
+        }
+        if (0 != i_iIsAvcSeqHeader)//如果PacketType是PacketTypeSequenceStart，表示后续H265的数据内容是DecoderConfigurationRecord，也就是常说的sequence header;
+        {
+            eFlvPacketType=FLV_PACKET_TYPE_SEQUENCE_START;
+        }
+        *pbVideoData |= eFlvPacketType;
+        pbVideoData += 1;
+        Write32BE(pbVideoData,FLV_VIDEO_ENC_H265);
+        pbVideoData+=4;
     }
-    pbVideoData += 1;
-    //tag Body(AVCC Header) 4 byte
-    if(0 == i_iIsAvcSeqHeader)
-    {
-        *pbVideoData = 0x1;
-    }
-    else
-    {
-        *pbVideoData = 0x0;//AvcSeqHeader
-    }
-    pbVideoData += 1;
-    memset(pbVideoData,0,3);
-    pbVideoData += 3;
     
     //tag Body(AVCC Body)
     if(0 == i_iIsAvcSeqHeader)
@@ -662,10 +688,12 @@ int FlvPackHandle::GenerateVideoDataH265(T_MediaFrameInfo * i_ptFrameInfo,int i_
         int i=0;
         for(i=0;i<(int)i_ptFrameInfo->dwNaluCount;i++)
         {
-            Write32BE(pbVideoData,i_ptFrameInfo->atNaluInfo[i].dwDataLen);
-            pbVideoData += sizeof(i_ptFrameInfo->atNaluInfo[i].dwDataLen);
-            memcpy(pbVideoData, i_ptFrameInfo->atNaluInfo[i].pbData,i_ptFrameInfo->atNaluInfo[i].dwDataLen);
-            pbVideoData += i_ptFrameInfo->atNaluInfo[i].dwDataLen;
+            unsigned char *pbNaluData=i_ptFrameInfo->atNaluInfo[i].pbData+4;
+            unsigned int dwDataLen=i_ptFrameInfo->atNaluInfo[i].dwDataLen-4;
+            Write32BE(pbVideoData,dwDataLen);
+            pbVideoData += sizeof(dwDataLen);
+            memcpy(pbVideoData, pbNaluData,dwDataLen);
+            pbVideoData +=dwDataLen;
         }
     }
     else//23字节解析可参考SrsRawHEVCStream::mux_sequence_header,需要通过解析vps,sps才能得出这个HEVC extradata

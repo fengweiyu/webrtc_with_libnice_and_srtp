@@ -21,6 +21,22 @@
 using std::string;
 
 
+#define FLV_TO_U32(a, b, c, d) (((a) << 24) | ((b) << 16) | ((c) << 8) | (d))
+#define FLV_VIDEO_ENC_AV1	FLV_TO_U32('a', 'v', '0', '1') //×¢Òâ²»ÊÇavc(h264)
+#define FLV_VIDEO_ENC_VP9	FLV_TO_U32('v', 'p', '0', '9') 
+#define FLV_VIDEO_ENC_H265	FLV_TO_U32('h', 'v', 'c', '1') //HEVC
+
+typedef enum
+{
+    FLV_PACKET_TYPE_SEQUENCE_START=0,
+    FLV_PACKET_TYPE_CODED_FRAMES,
+    FLV_PACKET_TYPE_SEQUENCE_END,
+    FLV_PACKET_TYPE_CODED_FRAMES_X,
+    FLV_PACKET_TYPE_METADATA,
+    FLV_PACKET_TYPE_MPEG2_TS_SEQUENCE_START,
+}E_FlvPacketType;
+
+
 //#define FLV_MUX_NAME        ".flv"
 #define BIT(ptr, off) (((ptr)[(off) / 8] >> (7 - ((off) % 8))) & 0x01)
 
@@ -78,7 +94,6 @@ typedef struct FlvHevcDecoderConfigurationRecord
     unsigned int pic_width;
     unsigned int pic_height;
 }T_FlvH265Extradata;
-
 
 /*****************************************************************************
 -Class			: FlvHandle
