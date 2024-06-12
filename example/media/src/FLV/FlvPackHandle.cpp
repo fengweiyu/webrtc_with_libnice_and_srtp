@@ -107,14 +107,14 @@ int FlvPackHandle::GetMuxData(T_MediaFrameInfo * i_ptFrameInfo,unsigned char * o
     }
     if(m_iFindedKeyFrame==0&&i_ptFrameInfo->eFrameType!=MEDIA_FRAME_TYPE_VIDEO_I_FRAME)
     {
-        MH_LOGW("Skip frame:%d\r\n",i_ptFrameInfo->eFrameType);//内部打包开始时间使用第一个i帧为参考基准时间
-        return 0;//所以第一帧必须i帧，其余帧要过滤掉
+        //MH_LOGW("Skip frame:%d\r\n",i_ptFrameInfo->eFrameType);//内部打包开始时间使用第一个i帧为参考基准时间
+        //return 0;//所以第一帧必须i帧，其余帧要过滤掉
     }
     if(i_ptFrameInfo->eFrameType==MEDIA_FRAME_TYPE_VIDEO_I_FRAME)
     {
         m_iFindedKeyFrame=1;
     }
-    if(0==m_iHeaderCreatedFlag && i_ptFrameInfo->eFrameType==MEDIA_FRAME_TYPE_VIDEO_I_FRAME)
+    if(0==m_iHeaderCreatedFlag /*&& i_ptFrameInfo->eFrameType==MEDIA_FRAME_TYPE_VIDEO_I_FRAME*/)
     {
         iRet=this->CreateHeader(o_pbBuf+iDataLen,i_dwMaxBufLen-iDataLen);
         if(iRet <= 0)
