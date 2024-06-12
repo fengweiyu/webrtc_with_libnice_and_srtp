@@ -34,6 +34,7 @@ char * FlvHandleInterface::m_strFormatName=(char *)FLV_MUX_NAME;
 FlvHandleInterface::FlvHandleInterface()
 {
     m_pFlvParseHandle = new FlvParseHandle();
+    m_pFlvPackHandle=NULL;
 }
 /*****************************************************************************
 -Fuction		: ~FlvHandleInterface
