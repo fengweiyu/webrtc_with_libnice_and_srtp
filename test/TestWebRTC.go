@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/http"
 	"services"
+
+	"golang.org/x/net/websocket"
 	//    "encoding/json"
 	//    "bufio"
 	//    "os"
@@ -44,7 +46,7 @@ func main() {
 	// 执行命令
 	//err := cmdFile.Start()
 	//err := cmdCamera.Start()
-
+	http.Handle("/ws", websocket.Handler(services.TestResWebSocket))
 	http.HandleFunc("/testResult", services.TestResultHandler)
 	http.HandleFunc("/testPlay", services.TestHandler)
 	http.HandleFunc("/testTalk", services.TestTalkHandler)

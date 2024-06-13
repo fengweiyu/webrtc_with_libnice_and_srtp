@@ -581,9 +581,54 @@
    	 	};
 		xhrGet.send();
 	}
+	var socket;
+	function GetTestURL() 
+	{
+		socket = new WebSocket('ws://localhost:8166/ws');//使用localhost就不需要wss://10.10.22.121:8166/ws
+		// 打开WebSocket连接
+		socket.onopen = function(event) {
+			console.log('WebSocket连接已打开');
+			// 发送数据
+			socket.send('ReqPlayURL');
+		};
+
+		// 接收WebSocket消息
+		socket.onmessage = function(event) {
+			console.log('收到消息：' + event.data);
+			playUrlInput.value = event.data;	
+			TestCameraURL();
+		};
+		// 发生错误时的处理
+		socket.onerror = function(error) {
+			console.log('WebSocket发生错误 ' + error);
+		};
+		// 关闭WebSocket连接
+		socket.onclose = function(event) {
+			if (event.wasClean) {
+				console.log('WebSocket连接已关闭');
+			} else {
+				console.log('WebSocket连接断开');
+			}
+		};
+		// 关闭WebSocket连接（手动关闭）
+		// socket.close();
+	}
 	function PostTestRes() 
 	{
-		var testUrl=null
+		// 发送数据
+		if(testSuccessCnt > 0)
+		{
+			socket.send('PlaySuccess');
+		}
+		else
+		{
+			socket.send('PlayFail');
+		}
+		setTimeout(hangup, 5);
+		return;
+
+
+		/*var testUrl=null
 		if(testSuccessCnt >= 2)
 		{
 			testUrl="http://localhost:8166/testResult?res=1"
@@ -600,7 +645,7 @@
 				console.log('PostTestRes successfully',xhrTest.status);
 			}
    	 	};
-		xhrTest.send();
+		xhrTest.send();*/
 	}
 	function TestCameraURL() 
 	{
@@ -622,7 +667,7 @@
 	}
 	async function TestProc() 
 	{
-		setTimeout(GetPlayUrl, 5);
+		setTimeout(GetTestURL, 5);
 		//setTimeout(TestGetURL, 15000);
 	}
 	setTimeout(TestProc, 5);

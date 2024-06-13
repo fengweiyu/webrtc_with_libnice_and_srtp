@@ -6,10 +6,14 @@ import (
 	"os/exec"
 	"strconv"
 	"time"
+
+	"golang.org/x/net/websocket"
 )
 
 var testRes = 0
 var testTalkRes = 0
+var PlayURL = ""
+var TalkURL = ""
 
 // 函数名开头大写，表示可公开的
 func TestResultHandler(w http.ResponseWriter, r *http.Request) {
@@ -60,9 +64,17 @@ func TestResultHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 var google_args = " --no-sandbox --disable-setuid-sandbox --use-fake-ui-for-media-stream --use-fake-device-for-media-stream --use-file-for-fake-audio-capture=C:/Users/Admin/AppData/Local/Google/Chrome/Application/2024.wav --app=file://C:/Users/Admin/AppData/Local/Google/Chrome/Application/testTalk.html"
-var google_path = "C:/Users/Admin/AppData/Local/Google/Chrome/Application/chrome.exe"
-var google_talk_args = " --use-fake-ui-for-media-stream --use-fake-device-for-media-stream --app=file://C:/Program Files (x86)/Google/Chrome/Application/testTalk.html"
-var google_play_args = " --no-sandbox --disable-setuid-sandbox --app=file://C:/Program Files (x86)/Google/Chrome/Application/testCamera.html"
+
+// "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
+// "C:/Users/Admin/AppData/Local/Google/Chrome/Application/chrome.exe"
+var google_path = "C:/Program Files (x86)/Google/Chrome/Application/chrome.exe"
+
+// --no-sandbox --disable-setuid-sandbox --app=https://gwm-000-cn-0448.bcloud365.net:9123/testCamera.html
+// file://C:/Program Files (x86)/Google/Chrome/Application/testTalk.html
+//
+//	--no-sandbox --disable-setuid-sandbox --app=file://C:/Program Files (x86)/Google/Chrome/Application/testCamera.html
+var google_talk_args = " --disable-web-security --use-fake-ui-for-media-stream --use-fake-device-for-media-stream --app=https://gwm-000-cn-0448.bcloud365.net:9123/testTalk.html"
+var google_play_args = " --no-sandbox --disable-setuid-sandbox --app=https://gwm-000-cn-0448.bcloud365.net:9123/testCamera.html"
 
 func TestHandler(w http.ResponseWriter, r *http.Request) {
 	method := r.Method
@@ -82,7 +94,8 @@ func TestHandler(w http.ResponseWriter, r *http.Request) {
 		{
 			w.Header().Set("Access-Control-Allow-Origin", "*")
 			w.WriteHeader(http.StatusOK)
-
+			PlayURL = r.FormValue("url")
+			fmt.Println("PlayURL:", PlayURL)
 		}
 	case "GET":
 		{
@@ -147,7 +160,8 @@ func TestTalkHandler(w http.ResponseWriter, r *http.Request) {
 		{
 			w.Header().Set("Access-Control-Allow-Origin", "*")
 			w.WriteHeader(http.StatusOK)
-
+			TalkURL = r.FormValue("url")
+			fmt.Println("TalkURL:", TalkURL)
 		}
 	case "GET":
 		{
@@ -191,5 +205,50 @@ func TestTalkHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Received a DELETE request")
 	default:
 		fmt.Println("Received an unknown request method")
+	}
+}
+func TestResWebSocket(conn *websocket.Conn) {
+	for {
+		var msg string
+		err := websocket.Message.Receive(conn, &msg)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		// 打印接收到的消息
+		fmt.Println(msg)
+
+		if msg == "ReqTalkURL" {
+			if TalkURL == "" {
+				fmt.Println("recv ReqTalkURL,but TalkURL NULL")
+			} else {
+				websocket.Message.Send(conn, TalkURL)
+			}
+		}
+		if msg == "ReqPlayURL" {
+			if PlayURL == "" {
+				fmt.Println("recv ReqTalkURL,but PlayURL NULL")
+			} else {
+				websocket.Message.Send(conn, PlayURL)
+			}
+		}
+
+		if msg == "PlaySuccess" {
+			testRes++
+		}
+		if msg == "PlayFail" {
+			testRes = 0
+		}
+		if msg == "TalkSuccess" {
+			testTalkRes++
+		}
+		if msg == "TalkFail" {
+			testTalkRes = 0
+		}
+
+		// 回复消息
+		//err = websocket.Message.Send(conn, msg)
+
 	}
 }
