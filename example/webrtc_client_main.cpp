@@ -209,7 +209,8 @@ static int OfferProc(WebRtcInterface * i_pWebRTC,char * i_strServerIp, int i_iSe
                 tVideoInfo.dwTimestampFrequency=WEBRTC_H264_TIMESTAMP_FREQUENCY;  
                 tVideoInfo.bRtpPayloadType=WEBRTC_RTP_PAYLOAD_H264;//;-96
                 tVideoInfo.wPortNumForSDP=9;
-                tVideoInfo.iMediaID=0;
+                //tVideoInfo.iMediaID=0;
+                snprintf(tVideoInfo.strMediaID,sizeof(tVideoInfo.strMediaID),"%s","0");
                 unsigned int dwProfileLevelId = (abSPS[1]<<16) | (abSPS[2]<<8) | abSPS[3];
                 char * strSPS_Base64 = base64Encode((char*)abSPS, iSPS_Len);//可以考虑放到代码内部
                 char * strPPS_Base64 = base64Encode((char*)abPPS, iPPS_Len);//但会多依赖base64
