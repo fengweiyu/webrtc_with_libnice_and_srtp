@@ -15,13 +15,13 @@
 
 #ifdef MEDIA_SEVER_TYPE_WEBRTC
 #include "XLog.h"
-#define  WEBRTC_LOGW2(val,...)     logi(WEBRTC) << lkv(ClientPort, val) << lformat(WEBRTC,__VA_ARGS__) << lend;printf(__VA_ARGS__)
-#define  WEBRTC_LOGE2(val,...)     loge(WEBRTC) << lkv(ClientPort, val) << lformat(WEBRTC,__VA_ARGS__) << lend;printf(__VA_ARGS__)
-#define  WEBRTC_LOGD2(val,...)     logd(WEBRTC) << lkv(ClientPort, val) << lformat(WEBRTC,__VA_ARGS__) << lend;printf(__VA_ARGS__)
-#define  WEBRTC_LOGW(...)     logi(WEBRTC) << lformat(WEBRTC,__VA_ARGS__) << lend;printf(__VA_ARGS__)
-#define  WEBRTC_LOGE(...)     loge(WEBRTC) << lformat(WEBRTC,__VA_ARGS__) << lend;printf(__VA_ARGS__)
-#define  WEBRTC_LOGD(...)     logd(WEBRTC) << lformat(WEBRTC,__VA_ARGS__) << lend;printf(__VA_ARGS__)
-#define  WEBRTC_LOGI(...)     logi(WEBRTC) << lformat(WEBRTC,__VA_ARGS__) << lend;printf(__VA_ARGS__)
+#define  WEBRTC_LOGW2(val,...)     logi2(WEBRTC) << lkv(ClientPort, val) << lformat(WEBRTC,__VA_ARGS__) << lend;printf(__VA_ARGS__)
+#define  WEBRTC_LOGE2(val,...)     loge2(WEBRTC) << lkv(ClientPort, val) << lformat(WEBRTC,__VA_ARGS__) << lend;printf(__VA_ARGS__)
+#define  WEBRTC_LOGD2(val,...)     logd2(WEBRTC) << lkv(ClientPort, val) << lformat(WEBRTC,__VA_ARGS__) << lend;printf(__VA_ARGS__)
+#define  WEBRTC_LOGW(...)     logi2(WEBRTC) << lformat(WEBRTC,__VA_ARGS__) << lend;printf(__VA_ARGS__)
+#define  WEBRTC_LOGE(...)     loge2(WEBRTC) << lformat(WEBRTC,__VA_ARGS__) << lend;printf(__VA_ARGS__)
+#define  WEBRTC_LOGD(...)     logd2(WEBRTC) << lformat(WEBRTC,__VA_ARGS__) << lend;printf(__VA_ARGS__)
+#define  WEBRTC_LOGI(...)     logi2(WEBRTC) << lformat(WEBRTC,__VA_ARGS__) << lend;printf(__VA_ARGS__)
 #else
 #define  WEBRTC_LOGW2(val,fmt,...)      printf("<%d>:"fmt,val,##__VA_ARGS__)
 #define  WEBRTC_LOGE2(val,fmt,...)      printf("<%d>:"fmt,val,##__VA_ARGS__)
@@ -67,7 +67,7 @@ typedef struct VideoInfo
     unsigned char bPacketizationMode;
     unsigned char bLevelAsymmetryAllowed;//表示是否允许两端编码的Level不一致。注意必须两端的SDP中该值都为1才生效。
     unsigned char res[3];
-	int iMediaID;//0/mid
+	unsigned char strMediaID[8];//0/mid
 	unsigned int dwProfileLevelId;
 	char * strSPS_Base64;
 	char * strPPS_Base64;
@@ -83,7 +83,7 @@ typedef struct AudioInfo
     unsigned short wPortNumForSDP;//端口,官方demo都是 9
     unsigned char bRtpPayloadType;
     unsigned char res;
-	int iMediaID;//1/mid
+	char strMediaID[8];//1/mid
 	unsigned int dwSSRC;
 }T_AudioInfo;
 
