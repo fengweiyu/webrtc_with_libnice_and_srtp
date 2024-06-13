@@ -354,7 +354,7 @@ int Libnice::SetRemoteCandidateToGlist(char * i_strCandidate,int i_iStreamID)
     unsigned int i=0;
 	if(NULL == i_strCandidate || 0==m_tVideoStream.iID)
 	{
-        printf("line must have at least ufrag, password, and one candidate\r\n");
+        printf("line must have at least ufrag, password, and one candidate,iID%d\r\n",m_tVideoStream.iID);
         return iRet;
 	}
 	//candidate:31 1 udp 21 40e-6e07 50803 typ host generation 0 ufrag 5E1n network-cost
@@ -573,7 +573,7 @@ int Libnice::SetRemoteSdpToStream(char * i_strCandidate,int i_iStreamID,int i_iS
     }
     else if(NULL !=ufrag && NULL!=pwd)
     {//nice_agent_parse_remote_stream_sdp部分失败则用自己的逻辑
-        printf("failed to set remote candidates:%p,%p,%p,%d....use local\r\n",ufrag,pwd,plist,g_slist_length(plist));
+        printf("failed to set remote candidates:%x,%x,%p,%d....use local\r\n",ufrag[0],pwd[0],plist,g_slist_length(plist));
         SetRemoteCredentials(ufrag, pwd,i_iStreamID);
         SetRemoteCandidateToGlist(i_strCandidate,i_iStreamID);//i_strCandidate需要属于对应的streamID
         iRet = SetRemoteCandidates(i_iStreamID,i_iStreamNum);
