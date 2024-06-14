@@ -41,7 +41,7 @@ public:
     int HandleCandidateMsg(char * i_strCandidateMsg,int i_iNotJsonMsgFlag=0);
     int GetGatheringDoneFlag();//-1还未收集好,0收集成功
     int GetSendReadyFlag();//-1不可发送,0准备好通道可以发送
-    int SendProtectedRtp(char * i_acRtpBuf,int i_iRtpBufLen,int i_iStreamType=0);
+    int SendProtectedRtp(char * i_acRtpBuf,int i_iRtpBufLen,int i_iRtpBufMaxLen=0,int i_iStreamType=0);
     int HandleRecvSrtp(char * i_acSrtpBuf,int i_iSrtpBufLen,DtlsOnlyHandshake *pDtlsOnlyHandshake);
     virtual int GenerateLocalMsg(T_VideoInfo *i_ptVideoInfo,char * o_strMsg,int i_iMaxLen)=0;
     int GenerateLocalCandidateMsg(T_VideoInfo *i_ptVideoInfo,char * o_strCandidateMsg,int i_iCandidateMaxLen);
@@ -56,8 +56,8 @@ public:
     static int RecvVideoStopPacket(void * pArg);
     static int RecvAudioStopPacket(void * pArg);
 protected:
-    int SendProtectedVideoRtp(char * i_acRtpBuf,int i_iRtpBufLen);
-    int SendProtectedAudioRtp(char * i_acRtpBuf,int i_iRtpBufLen);
+    int SendProtectedVideoRtp(char * i_acRtpBuf,int i_iRtpBufLen,int i_iRtpBufMaxLen=0);
+    int SendProtectedAudioRtp(char * i_acRtpBuf,int i_iRtpBufLen,int i_iRtpBufMaxLen=0);
     static bool IsDtls(char *buf);
     bool IsSrtcp(char *buf);
     

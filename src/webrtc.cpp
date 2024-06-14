@@ -327,7 +327,7 @@ int WebRTC::HandleCandidateMsg(char * i_strCandidateMsg,int i_iNotJsonMsgFlag)
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int WebRTC::SendProtectedRtp(char * i_acRtpBuf,int i_iRtpBufLen,int i_iStreamType)
+int WebRTC::SendProtectedRtp(char * i_acRtpBuf,int i_iRtpBufLen,int i_iRtpBufMaxLen,int i_iStreamType)
 {
     int iRet = -1;
 
@@ -341,15 +341,15 @@ int WebRTC::SendProtectedRtp(char * i_acRtpBuf,int i_iRtpBufLen,int i_iStreamTyp
     {
         if(1 == i_iStreamType)
         {
-            iRet = SendProtectedVideoRtp(i_acRtpBuf,i_iRtpBufLen);
+            iRet = SendProtectedVideoRtp(i_acRtpBuf,i_iRtpBufLen,i_iRtpBufMaxLen);
         }
         else if(2 == i_iStreamType)
         {
-            iRet = SendProtectedVideoRtp(i_acRtpBuf,i_iRtpBufLen);
+            iRet = SendProtectedVideoRtp(i_acRtpBuf,i_iRtpBufLen,i_iRtpBufMaxLen);//SendProtectedAudioRtp
         }
         return iRet;
     }
-    return SendProtectedVideoRtp(i_acRtpBuf,i_iRtpBufLen);
+    return SendProtectedVideoRtp(i_acRtpBuf,i_iRtpBufLen,i_iRtpBufMaxLen);
 }
 
 /*****************************************************************************
@@ -423,7 +423,7 @@ int WebRTC::HandleRecvSrtp(char * i_acSrtpBuf,int i_iSrtpBufLen,DtlsOnlyHandshak
     if(IsSrtcp(i_acSrtpBuf))
     {//srtcp
         //WEBRTC_LOGD("UnProtectRtcp->UnProtectRtcp %d,bPayload %d,Len %d,pt %d\r\n",iRet,bPayload,i_iSrtpBufLen,(unsigned char)i_acSrtpBuf[1]);
-        iRet = pSrtp->UnProtectRtcp(i_acSrtpBuf,&i_iSrtpBufLen);
+        //iRet = pSrtp->UnProtectRtcp(i_acSrtpBuf,&i_iSrtpBufLen);//暂不解析rtcp，有问题易奔溃
         //WEBRTC_LOGD("pSrtp->UnProtectRtcp %d,bPayload %d,Len %d,pt %d\r\n",iRet,bPayload,i_iSrtpBufLen,(unsigned char)i_acSrtpBuf[1]);
         return iRet;
     }
@@ -452,7 +452,7 @@ int WebRTC::HandleRecvSrtp(char * i_acSrtpBuf,int i_iSrtpBufLen,DtlsOnlyHandshak
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int WebRTC::SendProtectedVideoRtp(char * i_acRtpBuf,int i_iRtpBufLen)
+int WebRTC::SendProtectedVideoRtp(char * i_acRtpBuf,int i_iRtpBufLen,int i_iRtpBufMaxLen)
 {
     int iRet = -1;
     T_PolicyInfo tPolicyInfo;
@@ -462,7 +462,11 @@ int WebRTC::SendProtectedVideoRtp(char * i_acRtpBuf,int i_iRtpBufLen)
         WEBRTC_LOGE("SendProtectedRtp NULL \r\n");
         return iRet;
     }
-    
+    if(i_iRtpBufLen+SRTP_MAX_TRAILER_LEN > i_iRtpBufMaxLen)
+    {
+        WEBRTC_LOGE("i_iRtpBufLen%d+SRTP_MAX_TRAILER_LEN%d > i_iRtpBufMaxLen%d err\r\n",i_iRtpBufLen,SRTP_MAX_TRAILER_LEN,i_iRtpBufMaxLen);
+        return iRet;
+    }
     if(0 == m_iVideoSrtpCreatedFlag)
     {
         memset(&tPolicyInfo,0,sizeof(T_PolicyInfo));
@@ -497,7 +501,7 @@ int WebRTC::SendProtectedVideoRtp(char * i_acRtpBuf,int i_iRtpBufLen)
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int WebRTC::SendProtectedAudioRtp(char * i_acRtpBuf,int i_iRtpBufLen)
+int WebRTC::SendProtectedAudioRtp(char * i_acRtpBuf,int i_iRtpBufLen,int i_iRtpBufMaxLen)
 {
     int iRet = -1;
     T_PolicyInfo tPolicyInfo;
@@ -507,7 +511,11 @@ int WebRTC::SendProtectedAudioRtp(char * i_acRtpBuf,int i_iRtpBufLen)
         WEBRTC_LOGE("SendProtectedRtp NULL \r\n");
         return iRet;
     }
-    
+    if(i_iRtpBufLen+SRTP_MAX_TRAILER_LEN > i_iRtpBufMaxLen)
+    {
+        WEBRTC_LOGE("Audio i_iRtpBufLen%d+SRTP_MAX_TRAILER_LEN%d > i_iRtpBufMaxLen%d err\r\n",i_iRtpBufLen,SRTP_MAX_TRAILER_LEN,i_iRtpBufMaxLen);
+        return iRet;
+    }
     if(0 == m_iAudioSrtpCreatedFlag)
     {
         memset(&tPolicyInfo,0,sizeof(T_PolicyInfo));

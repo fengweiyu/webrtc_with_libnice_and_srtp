@@ -52,7 +52,7 @@ public:
     int HandleCandidateMsg(char * i_strCandidateMsg,int i_iNotJsonMsgFlag=0);
     int GetGatheringDoneFlag();//-1还未收集好,0收集成功
     int GetSendReadyFlag();//-1不可发送,0准备好通道可以发送
-    int SendProtectedRtp(char * i_acRtpBuf,int i_iRtpBufLen,int i_iStreamType=0);
+    int SendProtectedRtp(char * i_acRtpBuf,int i_iRtpBufLen,int i_iRtpBufMaxLen=0,int i_iStreamType=0);
     
 private:
     void * m_pHandle;

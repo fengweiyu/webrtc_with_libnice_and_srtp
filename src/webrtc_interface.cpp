@@ -229,10 +229,10 @@ int WebRtcInterface::GetSendReadyFlag()
 * -----------------------------------------------
 * 2020/01/13      V1.0.0              Yu Weifeng       Created
 ******************************************************************************/
-int WebRtcInterface::SendProtectedRtp(char * i_acRtpBuf,int i_iRtpBufLen,int i_iStreamType)
+int WebRtcInterface::SendProtectedRtp(char * i_acRtpBuf,int i_iRtpBufLen,int i_iRtpBufMaxLen,int i_iStreamType)
 {
     WebRTC *pWebRTC = (WebRTC *)m_pHandle;
-    return pWebRTC->SendProtectedRtp(i_acRtpBuf,i_iRtpBufLen,i_iStreamType);
+    return pWebRTC->SendProtectedRtp(i_acRtpBuf,i_iRtpBufLen,i_iRtpBufMaxLen,i_iStreamType);
 }
 
 
