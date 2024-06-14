@@ -34,7 +34,7 @@
 		<button id="GetTalkUrlButton" style="display: none;">GetTalkUrl</button>
 		<br><br><br>
     </div>
-
+	<video id="recVideo" playsinline controls autoplay muted style="width: 80%;display: none;"></video>
 	<video id="localVideo" playsinline controls autoplay muted style="width: 80%;"></video>
 	<p/>
 	<textarea name="" id="talkUrlInput" cols="75" rows="6"></textarea>
@@ -71,6 +71,7 @@
 	
 	const remoteVideo = document.getElementById('remoteVideo');//
 	const localVideo = document.getElementById('localVideo');
+	const recVideo = document.getElementById('recVideo');
 	//const conf={iceServers:[{urls:'stun:stun.ideasip.com:3478'}]}//
 	var _remoteStream = null
 	var localSDP=null
@@ -165,7 +166,7 @@
         return false
       }
 
-	const pcTalk = new RTCPeerConnection({
+	var pcTalk = new RTCPeerConnection({
 				iceServers: [{
 					urls: ['stun:stun.voipbuster.com:3478'] //stun:stun.oss.aliyuncs.com:3478
 		}]});
@@ -174,7 +175,7 @@
 		console.log('startTalk');
 		var talkURL=talkUrlInput.value;
 		pcTalk.onicecandidate = function(event){
-			handleCandidate(event,talkURL);
+			handleCandidate(event,talkUrlInput.value);
 		};
 		pcTalk.onicecandidateerror = function(event){
 			//console.log('onicecandidateerror');
@@ -191,9 +192,10 @@
 		};
 		{//音视频对讲
 			navigator.mediaDevices.getUserMedia({ video: {
-				//width: 640,
-				///height: 480,
-				frameRate: { ideal: 30, max: 30 },
+				width: 640,
+				height: 480,
+				frameRate: 30,
+				//frameRate: { ideal: 25, max: 30 },//就算设置25，webrtc rtp时间戳间隔还是按照30的帧率
 				facingMode: 'user',
 				// 设置I帧间隔为10（大多数浏览器仅支持设置I帧间隔）
 				video: {mandatory: {maxKeyFrameInterval: 50}}
@@ -201,20 +203,54 @@
 			}).then(function(stream) {
 				let videoTrackS = stream.getVideoTracks()[0];
 				// 开始采集视频
-				//const mediaRecorder = new MediaRecorder(videoTrackS, options);
+				let mediaRecorder = new MediaRecorder(stream, options);
+				// 监听MediaRecorder的数据可用事件，将录制的数据存储到recordedChunks数组
+				mediaRecorder.ondataavailable = (event) => {
+					//console.log('ondataavailable ',event.data.size);
+					if (event.data.size > 0) {
+						let recordedBlob = new Blob([event.data], { type: 'video/webm' });
+						let url = URL.createObjectURL(recordedBlob);
+						localVideo.src = url;
+					}
+				};
+				// 监听视频元素播放事件，开始录制
+				/*recVideo.addEventListener('play', () => {
+					mediaRecorder.start();
+					console.log('Recording started...');
+				});
+				// 监听视频元素暂停事件，停止录制视频
+				recVideo.addEventListener('pause', () => {
+					console.log('recVideo pause...');
+					if (mediaRecorder.state === 'recording') {
+						mediaRecorder.stop();//stop才会调用ondataavailable
+						console.log('Recording stopped...');
+					}
+				})
+				recVideo.srcObject = stream;*/
+				//mediaRecorder.start(40);//40ms间隔调用ondataavailable
+
 				console.log('getUserMedia audio video');
-				localVideo.srcObject = stream;
 				localVideo.addEventListener('playing', function() {
 					console.log('localVideo.addEventListener');//这种重采样的方式还是无法设置帧率以及rtp时间戳，和前面直接采样的结果一样，
-					var streamV = localVideo.captureStream(30); // 这种方式设置，rtp的时间戳还是不均匀，特别是前面几帧都是秒级的，后面有33ms但也有一百多ms的
-    				pcTalk.addTransceiver(streamV.getAudioTracks()[0], { direction: 'sendrecv' });//可以这么设置，服务那边直接按照帧率计算时间戳
-    				pcTalk.addTransceiver(streamV.getVideoTracks()[0], { direction: 'sendrecv' });//音视频对讲
-					SetTalkLocalOffer();
+					//var streamV = localVideo.captureStream(25); // 这种方式设置，rtp的时间戳还是不均匀，特别是前面几帧都是秒级的，后面有33ms但也有一百多ms的
+    				//pcTalk.addTransceiver(streamV.getAudioTracks()[0], { direction: 'sendrecv' });//可以这么设置，服务那边直接按照帧率计算时间戳
+    				//pcTalk.addTransceiver(streamV.getVideoTracks()[0], { direction: 'sendrecv' });//音视频对讲
+					//SetTalkLocalOffer();
         		});
+								
+				localVideo.srcObject = stream;
+				// 获取视频轨道
+				const settingsVideoTrack = stream.getVideoTracks()[0];
+				// 获取并输出当前帧率
+				const settings = settingsVideoTrack.getSettings();
+				console.log('Current frame rate: ' + settings.frameRate);
+				// 设置新的帧率
+				const newSettings = Object.assign({}, settings, { frameRate: 25 });//就算设置25，webrtc rtp时间戳间隔还是按照30的帧率
+				//settingsVideoTrack.applyConstraints({ advanced: [newSettings] })
 
-				//pcTalk.addTransceiver(stream.getAudioTracks()[0], { direction: 'sendrecv' });//
-    			//pcTalk.addTransceiver(stream.getVideoTracks()[0], { direction: 'sendrecv' });//音视频对讲
-				//SetTalkLocalOffer();
+				pcTalk.addTransceiver(stream.getAudioTracks()[0], { direction: 'sendrecv' });//
+    			pcTalk.addTransceiver(stream.getVideoTracks()[0], { direction: 'sendrecv' });//音视频对讲
+				SetTalkLocalOffer();
 			})
 			.catch(function(error) {
 				console.log('getUserMedia audio video err',error);
@@ -352,6 +388,7 @@
 				} else {
 					// 连接出现问题，处理断开连接的逻辑sendTalkHeartbeat
 					console.log('TalkStatus err,code:'+xhr.status+' msg:'+xhr.statusText);
+					alert('TalkStatus err,code:'+xhr.status+' msg:'+xhr.statusText);
 				}
 			}
    	 	};
