@@ -517,6 +517,11 @@ int Libnice::SetRemoteCandidateAndSDP(char * i_strCandidate)
     {
         iRet = SetRemoteSdpToStream(i_strCandidate,m_tVideoStream.iID,m_tVideoStream.iNum,m_strRemoteSDP.c_str());
     }
+    if(0 != iRet)
+    {
+        printf("Libnice SetRemoteSdpToStream err ,try use SetRemoteSDP \r\n");
+        iRet = SetRemoteSDP((char *)m_strRemoteSDP.c_str());
+    }
 	return iRet;
 }
 
