@@ -1932,7 +1932,7 @@ int WebRtcAnswer::GetSdpVideoInfo(const char * i_strSDP,T_WebRtcSdpMediaInfo *o_
     int i = 0;
     unsigned short wPortNumForSDP=9;
     char *endptr;
-	unsigned char strMediaID[8];//0/mid
+	char strMediaID[8];//0/mid
 
     if (i_strSDP == NULL || NULL==o_ptSdpMediaInfo) 
     {
@@ -2047,7 +2047,7 @@ int WebRtcAnswer::GetSdpAudioInfo(const char * i_strSDP,T_WebRtcSdpMediaInfo *o_
     int i = 0;
     unsigned short wPortNumForSDP=9;
 	int iMediaID=1;//1/mid
-	unsigned char strMediaID[8];//1/mid
+	char strMediaID[8];//1/mid
 
 	
     if (i_strSDP == NULL || NULL==o_ptSdpMediaInfo) 

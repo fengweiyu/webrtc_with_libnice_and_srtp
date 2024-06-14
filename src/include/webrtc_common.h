@@ -67,7 +67,7 @@ typedef struct VideoInfo
     unsigned char bPacketizationMode;
     unsigned char bLevelAsymmetryAllowed;//表示是否允许两端编码的Level不一致。注意必须两端的SDP中该值都为1才生效。
     unsigned char res[3];
-	unsigned char strMediaID[8];//0/mid
+	char strMediaID[8];//0/mid
 	unsigned int dwProfileLevelId;
 	char * strSPS_Base64;
 	char * strPPS_Base64;
