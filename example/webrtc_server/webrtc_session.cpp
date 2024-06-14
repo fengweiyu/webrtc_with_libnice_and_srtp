@@ -714,6 +714,7 @@ int WebRtcSession::GetSupportedVideoInfoFromSDP(const char * i_strVideoFormatNam
     unsigned char bRemoteProfile =0;//0x64 high ,0x4d main,0x42 base
     unsigned char bRemoteConstraintFlag =0;//
     unsigned char bRemoteLevel =0;//
+    unsigned char bNoProfileLevelIdCnt =0;//
 
     if(NULL == o_ptVideoInfo||NULL == i_strVideoFormatName)
     {
@@ -722,6 +723,8 @@ int WebRtcSession::GetSupportedVideoInfoFromSDP(const char * i_strVideoFormatNam
     }
     for(i=0;i<WEBRTC_SDP_MEDIA_INFO_MAX_NUM;i++)
     {
+        if(0 == m_tWebRtcSdpMediaInfo.tVideoInfos[i].dwProfileLevelId)
+            bNoProfileLevelIdCnt++;
         if(0 != i_dwProfileLevelId)//对讲则无需判断
         {
             bRemoteProfile =(unsigned char)((m_tWebRtcSdpMediaInfo.tVideoInfos[i].dwProfileLevelId>>16)&0xff);//0x64 high ,0x4d main,0x42 base
@@ -749,6 +752,20 @@ int WebRtcSession::GetSupportedVideoInfoFromSDP(const char * i_strVideoFormatNam
             if(i_dwProfileLevelId==m_tWebRtcSdpMediaInfo.tVideoInfos[i].dwProfileLevelId)
             {
                 memcpy(o_ptVideoInfo,&m_tWebRtcSdpMediaInfo.tVideoInfos[i],sizeof(T_VideoInfo));
+                break;
+            }
+        }
+    }
+    if(bNoProfileLevelIdCnt>=WEBRTC_SDP_MEDIA_INFO_MAX_NUM)
+    {//兼容所有都不带fmtp的情况
+        for(i=0;i<WEBRTC_SDP_MEDIA_INFO_MAX_NUM;i++)
+        {
+            if(0 == strcmp(i_strVideoFormatName,m_tWebRtcSdpMediaInfo.tVideoInfos[i].strFormatName) && i_dwVideoTimestampFrequency==m_tWebRtcSdpMediaInfo.tVideoInfos[i].dwTimestampFrequency)//bLevelAsymmetryAllowed都是1
+            {
+                iRet = 0;
+                WEBRTC_LOGW2(m_iLogID,"fmtp bProfileLevelIdCnt>=WEBRTC_SDP_MEDIA_INFO_MAX_NUM %d,%d,%s,%d\r\n",bNoProfileLevelIdCnt,
+                WEBRTC_SDP_MEDIA_INFO_MAX_NUM,i_strVideoFormatName,i_dwVideoTimestampFrequency);
+                memcpy(o_ptVideoInfo,&m_tWebRtcSdpMediaInfo.tVideoInfos[i],sizeof(T_VideoInfo));//i_dwProfileLevelId不一样也可以
                 break;
             }
         }
