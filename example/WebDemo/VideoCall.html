@@ -194,11 +194,11 @@
 			navigator.mediaDevices.getUserMedia({ video: {
 				width: 640,
 				height: 480,
-				frameRate: 30,
-				//frameRate: { ideal: 25, max: 30 },//就算设置25，webrtc rtp时间戳间隔还是按照30的帧率
-				facingMode: 'user',
-				// 设置I帧间隔为10（大多数浏览器仅支持设置I帧间隔）
-				video: {mandatory: {maxKeyFrameInterval: 50}}
+				//frameRate: 30,
+				frameRate: { ideal: 30, max: 30 },//就算设置25，webrtc rtp时间戳间隔还是按照30的帧率
+				facingMode: 'user',//前置摄像头facingMode: user ,'environment'表示要使用后置摄像头
+				// 设置I帧间隔为60（大多数浏览器仅支持设置I帧间隔）
+				video: {mandatory: {maxKeyFrameInterval: 60}}
     			}, audio: true 
 			}).then(function(stream) {
 				let videoTrackS = stream.getVideoTracks()[0];
@@ -242,6 +242,11 @@
 				// 获取视频轨道
 				const settingsVideoTrack = stream.getVideoTracks()[0];
 				// 获取并输出当前帧率
+				const capabilities = settingsVideoTrack.getCapabilities();
+				if (capabilities.frameRate) {
+					const frameRate = capabilities.frameRate.max; // 设置帧率为最大支持的值
+					console.log('max frame rate: ' + frameRate);
+				};
 				const settings = settingsVideoTrack.getSettings();
 				console.log('Current frame rate: ' + settings.frameRate);
 				// 设置新的帧率
@@ -250,6 +255,30 @@
 
 				pcTalk.addTransceiver(stream.getAudioTracks()[0], { direction: 'sendrecv' });//
     			pcTalk.addTransceiver(stream.getVideoTracks()[0], { direction: 'sendrecv' });//音视频对讲
+				let senders = pcTalk.getSenders();
+				// 获取当前编码参数
+				// 遍历发送器列表
+				senders.forEach(sender => {
+					// 获取发送器的编码参数
+					if(sender.track.kind === 'video') {
+						let parameters = sender.getParameters();
+						// 获取编码器参数中的最大比特率
+						if(parameters.encodings && parameters.encodings.length > 0) {
+							console.log('sender.getParameters: ' + parameters.degradationPreference+'maxFramerate'+parameters.encodings[0].maxFramerate+'maxBitrate'+parameters.encodings[0].maxBitrate);
+							parameters.degradationPreference="maintain-framerate";
+							//parameters.encodings[0].maxTemporalLayer = 2;// 属性设置为2，您可以将I帧间隔设置为50
+							//parameters.encodings[0].maxKeyFrameDistance=60;
+							parameters.encodings[0].maxFramerate = 30; 
+							// 设置最大比特率为500000 bps（即1000kbps）
+							parameters.encodings[0].maxBitrate = 1500000;
+							// 应用更新的编码参数
+							//sender.setParameters(parameters);
+							//console.log('sender.setParameters: ' + parameters.encodings[0].maxTemporalLayer+'maxFramerate'+parameters.encodings[0].maxFramerate+'maxBitrate'+parameters.encodings[0].maxBitrate);
+							
+						}
+					}
+				});
+
 				SetTalkLocalOffer();
 			})
 			.catch(function(error) {
