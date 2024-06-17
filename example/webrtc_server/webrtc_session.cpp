@@ -840,19 +840,19 @@ int WebRtcSession::ParseRtpData(char * i_acDataBuf,int i_iDataLen)
     
     if(NULL == i_acDataBuf)
     {
-        WEBRTC_LOGE("ParseRtpData NULL \r\n");
+        WEBRTC_LOGE2(m_iLogID,"ParseRtpData NULL \r\n");
         return iRet;
     }
     if(NULL == m_pRtpInterface)
     {
-        WEBRTC_LOGE("ParseRtpData m_pRtpInterface NULL \r\n");
+        WEBRTC_LOGE2(m_iLogID,"ParseRtpData m_pRtpInterface NULL \r\n");
         return iRet;
     }
     m_tPushFrameInfo.iFrameBufLen=0;
     iRet =m_pRtpInterface->ParseRtpPacket((unsigned char *)i_acDataBuf,i_iDataLen,(void *)&m_tPushFrameInfo);
     if(iRet < 0)
     {
-        WEBRTC_LOGD("RecvData ParseRtpPacket err %d \r\n",i_iDataLen);
+        WEBRTC_LOGD2(m_iLogID,"RecvData ParseRtpPacket err %d \r\n",i_iDataLen);
         return iRet;
     }
     if(m_tPushFrameInfo.iFrameBufLen <= 0)
@@ -868,13 +868,13 @@ int WebRtcSession::ParseRtpData(char * i_acDataBuf,int i_iDataLen)
     iRet=m_cMediaHandle.GetFrame(&m_tPushFrameInfo);
     if(iRet < 0)
     {
-        WEBRTC_LOGD("m_cMediaHandle.GetFrame %d \r\n",m_tPushFrameInfo.iFrameBufLen);
+        WEBRTC_LOGE2(m_iLogID,"m_cMediaHandle.GetFrame %d \r\n",m_tPushFrameInfo.iFrameBufLen);
         return iRet;
     }
     iWriteLen=m_cMediaHandle.FrameToContainer(&m_tPushFrameInfo, STREAM_TYPE_FMP4_STREAM,m_pbFileBuf,WEBRTC_FRAME_BUF_MAX_LEN, &iHeaderLen);
     if(iWriteLen < 0)
     {
-        WEBRTC_LOGD("FrameToContainer err iWriteLen %d\r\n",iRet);
+        WEBRTC_LOGE2(m_iLogID,"FrameToContainer err iWriteLen %d\r\n",iRet);
         return iRet;
     }
     if(iWriteLen > 0)
@@ -882,12 +882,12 @@ int WebRtcSession::ParseRtpData(char * i_acDataBuf,int i_iDataLen)
         iRet = fwrite(m_pbFileBuf, 1,iWriteLen, m_pMediaFile);
         if(iRet != iWriteLen)
         {
-            WEBRTC_LOGD("fwrite err %d iWriteLen%d\r\n",iRet,iWriteLen);
+            WEBRTC_LOGD2(m_iLogID,"fwrite err %d iWriteLen%d\r\n",iRet,iWriteLen);
             return iRet;
         }
     }
     
-	WEBRTC_LOGD("RecvData %p,iFrameLen %d \r\n",m_tPushFrameInfo.pbFrameStartPos,m_tPushFrameInfo.iFrameBufLen);//iFrameLen指向裸流数据长度，可保存为文件
+	WEBRTC_LOGD2(m_iLogID,"RecvData %p,iFrameLen %d \r\n",m_tPushFrameInfo.pbFrameStartPos,m_tPushFrameInfo.iFrameBufLen);//iFrameLen指向裸流数据长度，可保存为文件
     return iRet;
 }
 
@@ -947,7 +947,7 @@ int WebRtcSession::HandleRtpTimestamp()
         }
         default:
         {
-            WEBRTC_LOGE2("m_tPushFrameInfo.eFrameType %d\r\n",m_tPushFrameInfo.eFrameType);
+            WEBRTC_LOGE2(m_iLogID,"m_tPushFrameInfo.eFrameType %d\r\n",m_tPushFrameInfo.eFrameType);
             break;
         }
     }
