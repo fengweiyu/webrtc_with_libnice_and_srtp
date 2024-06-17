@@ -934,7 +934,7 @@ int WebRtcSession::HandleRtpTimestamp()
             m_dwPullTimeStamp=dwLastAudioTimeStamp;//(dwRtpTimeStamp/(WEBRTC_G711A_TIMESTAMP_FREQUENCY/1000))-dwLastAudioTimeStamp;//20;//
             dwLastAudioTimeStamp+=20;///(WEBRTC_G711A_TIMESTAMP_FREQUENCY/1000);
             m_tPushFrameInfo.tAudioEncodeParam.dwChannels=1;//必须赋值，否则mp4无法播放
-            WEBRTC_LOGD("AUDIO->dwTimeStamp%d,dwLastAudioTimeStamp%d\r\n",m_dwPullTimeStamp,dwLastAudioTimeStamp);
+            WEBRTC_LOGD2(m_iLogID,"AUDIO->dwTimeStamp%d,dwLastAudioTimeStamp%d\r\n",m_dwPullTimeStamp,dwLastAudioTimeStamp);
             break;
         }
         case MEDIA_FRAME_TYPE_VIDEO_I_FRAME: //sps
@@ -942,12 +942,12 @@ int WebRtcSession::HandleRtpTimestamp()
         {
             m_dwPullTimeStamp=dwLastVideoTimeStamp;//(dwRtpTimeStamp/(WEBRTC_H264_TIMESTAMP_FREQUENCY/1000))-dwLastVideoTimeStamp;//33;//
             dwLastVideoTimeStamp+=33;///(WEBRTC_H264_TIMESTAMP_FREQUENCY/1000);
-            WEBRTC_LOGD("VIDEO->dwTimeStamp%d,dwLastVideoTimeStamp%d\r\n",m_dwPullTimeStamp,dwLastVideoTimeStamp);
+            WEBRTC_LOGD2(m_iLogID,"VIDEO->dwTimeStamp%d,dwLastVideoTimeStamp%d\r\n",m_dwPullTimeStamp,dwLastVideoTimeStamp);
             break;
         }
         default:
         {
-            RTP_LOGE("m_tPushFrameInfo.eFrameType %d\r\n",m_tPushFrameInfo.eFrameType);
+            WEBRTC_LOGE2("m_tPushFrameInfo.eFrameType %d\r\n",m_tPushFrameInfo.eFrameType);
             break;
         }
     }
@@ -984,7 +984,7 @@ int WebRtcSession::HandleRtpTimestamp()
             m_dwPullTimeStamp+=(dwRtpTimeStamp/(WEBRTC_G711A_TIMESTAMP_FREQUENCY/1000))-dwLastAudioTimeStamp;//20;//dwRtpTimeStamp-dwLastAudioTimeStamp;//
             dwLastAudioTimeStamp=dwRtpTimeStamp/(WEBRTC_G711A_TIMESTAMP_FREQUENCY/1000);//dwRtpTimeStamp;
             m_tPushFrameInfo.tAudioEncodeParam.dwChannels=1;//必须赋值，否则mp4无法播放
-            WEBRTC_LOGD("AUDIO->dwTimeStamp%d,dwLastAudioTimeStamp%d\r\n",m_dwPullTimeStamp,dwLastAudioTimeStamp);
+            WEBRTC_LOGD2(m_iLogID,"AUDIO->dwTimeStamp%d,dwLastAudioTimeStamp%d\r\n",m_dwPullTimeStamp,dwLastAudioTimeStamp);
             break;
         }
         case MEDIA_FRAME_TYPE_VIDEO_I_FRAME: //sps
@@ -992,12 +992,12 @@ int WebRtcSession::HandleRtpTimestamp()
         {
             m_dwPullTimeStamp+=(dwRtpTimeStamp/(WEBRTC_H264_TIMESTAMP_FREQUENCY/1000))-dwLastVideoTimeStamp;//33;//dwRtpTimeStamp-dwLastVideoTimeStamp;//
             dwLastVideoTimeStamp=dwRtpTimeStamp/(WEBRTC_H264_TIMESTAMP_FREQUENCY/1000);//dwRtpTimeStamp;
-            WEBRTC_LOGD("VIDEO->dwTimeStamp%d,dwLastVideoTimeStamp%d\r\n",m_dwPullTimeStamp,dwLastVideoTimeStamp);
+            WEBRTC_LOGD2(m_iLogID,"VIDEO->dwTimeStamp%d,dwLastVideoTimeStamp%d\r\n",m_dwPullTimeStamp,dwLastVideoTimeStamp);
             break;
         }
         default:
         {
-            RTP_LOGE("m_tPushFrameInfo.eFrameType %d\r\n",m_tPushFrameInfo.eFrameType);
+            WEBRTC_LOGE2(m_iLogID,"m_tPushFrameInfo.eFrameType %d\r\n",m_tPushFrameInfo.eFrameType);
             break;
         }
     }
