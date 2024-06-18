@@ -555,7 +555,7 @@ int WebRtcSession::SendDatas(T_MediaFrameInfo * i_ptFrameInfo)
     {
         for(i=0;i<m_iPackNum;i++)
         {
-            iRet = m_pWebRTC->SendProtectedRtp((char *)m_ppbPacketBuf[i], m_piEveryPacketLen[i]);
+            iRet = m_pWebRTC->SendProtectedRtp((char *)m_ppbPacketBuf[i], m_piEveryPacketLen[i],SRTP_PACKET_MAX_SIZE);
             if(iRet < 0)
             {
                 WEBRTC_LOGE2(m_iLogID,"m_pWebRTC->SendProtectedRtp err %d %d %d\r\n", iRet,i,i_ptFrameInfo->eFrameType);
@@ -772,7 +772,8 @@ int WebRtcSession::GetSupportedVideoInfoFromSDP(const char * i_strVideoFormatNam
     }
     if(i>=WEBRTC_SDP_MEDIA_INFO_MAX_NUM)
     {
-        WEBRTC_LOGW2(m_iLogID,"GetSupportedVideoInfoFromSDP err %x,%d,%s,%d\r\n",i_dwProfileLevelId,i_bPacketizationMode,i_strVideoFormatName,i_dwVideoTimestampFrequency);
+        WEBRTC_LOGW2(m_iLogID,"GetSupportedVideoInfoFromSDP warn %x,%d,%s,%d,find mid %s,Type %d,%x,%d,%s,%d\r\n",i_dwProfileLevelId,i_bPacketizationMode,i_strVideoFormatName,i_dwVideoTimestampFrequency,
+        o_ptVideoInfo->strMediaID,o_ptVideoInfo->bRtpPayloadType,o_ptVideoInfo->dwProfileLevelId,o_ptVideoInfo->bPacketizationMode,o_ptVideoInfo->strFormatName,o_ptVideoInfo->dwTimestampFrequency);
         for(i=0;i<WEBRTC_SDP_MEDIA_INFO_MAX_NUM;i++)
         {
             if(0 != strlen(m_tWebRtcSdpMediaInfo.tVideoInfos[i].strFormatName))
