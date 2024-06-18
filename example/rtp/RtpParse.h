@@ -52,6 +52,7 @@ private:
     unsigned char *m_pVideoFrameBuf;
     int m_iVideoFrameCurLen;
     int m_iFrameFlag;
+    int m_iFrameStartFlag;
 };
 
 

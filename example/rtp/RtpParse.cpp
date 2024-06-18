@@ -58,6 +58,7 @@ RtpParse :: RtpParse()
     memset(m_pVideoFrameBuf,0,RTP_VIDEO_FRAME_MAX_LEN);
     m_iVideoFrameCurLen=0;
     m_iFrameFlag = 0;
+    m_iFrameStartFlag = 0;
 }
 
 /*****************************************************************************
@@ -438,7 +439,7 @@ int RtpParse ::H264ParseFU_A(int i_iMark,unsigned char *i_pbRtpBodyBuf,int i_iBu
         }
     }
     else
-    {
+    {//分包结束
         memcpy(m_pVideoFrameBuf+m_iVideoFrameCurLen,i_pbRtpBodyBuf+2,i_iBufLen-2);
         m_iVideoFrameCurLen+=i_iBufLen-2;
         if(0 != m_iFrameFlag)
@@ -466,10 +467,54 @@ int RtpParse ::H264ParseFU_A(int i_iMark,unsigned char *i_pbRtpBodyBuf,int i_iBu
 int RtpParse ::H264ParseSingleNalu(int i_iMark,unsigned char *i_pbRtpBodyBuf,int i_iBufLen,unsigned char *o_pbParsedData,int *o_iDataLen,int i_iDataMaxLen)
 {
     int iFrameFlag=0;
-    
-	if (!i_pbRtpBodyBuf || i_iDataMaxLen < i_iBufLen || !o_pbParsedData|| !o_iDataLen||!i_iMark)
+	if (!i_pbRtpBodyBuf || i_iDataMaxLen < i_iBufLen || !o_pbParsedData|| !o_iDataLen/*||!i_iMark*/)//webrtc客户端下发过来的会是0
     {
-        printf("H264ParseSingleNalu err %d< %d,i_iMark %d \r\n",i_iDataMaxLen,i_iBufLen,i_iMark);
+        printf("H264ParseSingleNalu err %d< %d,i_iMark %d \r\n",i_iDataMaxLen,i_iBufLen,i_iMark);//i_iMark 0
+        return FALSE;
+    }
+    switch(i_pbRtpBodyBuf[0] & 0x1f)
+    {
+        case 0x5:
+        case 0x1:
+        {
+            if(0 == m_iFrameStartFlag)
+            {
+                memset(m_pVideoFrameBuf+m_iVideoFrameCurLen,0,3);
+                m_iVideoFrameCurLen += 3;
+                m_pVideoFrameBuf[m_iVideoFrameCurLen]=1;
+                m_iVideoFrameCurLen++;//add 00 00 00 01
+                m_iFrameStartFlag=1;
+            }
+        }
+        break;
+        case 0x7:
+        case 0x8:
+        {
+            memset(m_pVideoFrameBuf+m_iVideoFrameCurLen,0,3);
+            m_iVideoFrameCurLen += 3;
+            m_pVideoFrameBuf[m_iVideoFrameCurLen]=1;
+            m_iVideoFrameCurLen++;//add 00 00 00 01
+            break;
+        }
+        default:
+            break;
+    }
+    memcpy(m_pVideoFrameBuf+m_iVideoFrameCurLen,i_pbRtpBodyBuf,i_iBufLen);
+    m_iVideoFrameCurLen+=i_iBufLen;
+
+    if(0 != i_iMark)
+    {
+        memcpy(o_pbParsedData,m_pVideoFrameBuf,m_iVideoFrameCurLen);
+        *o_iDataLen = m_iVideoFrameCurLen;
+        m_iVideoFrameCurLen=0;
+        m_iFrameStartFlag=0;
+    }
+    return TRUE;
+    
+
+	if (!i_pbRtpBodyBuf || i_iDataMaxLen < i_iBufLen || !o_pbParsedData|| !o_iDataLen||!i_iMark)//webrtc客户端下发过来的会是0
+    {
+        printf("H264ParseSingleNalu err %d< %d,i_iMark %d \r\n",i_iDataMaxLen,i_iBufLen,i_iMark);//i_iMark 0
         return FALSE;
     }
     switch(i_pbRtpBodyBuf[0] & 0x1f)
