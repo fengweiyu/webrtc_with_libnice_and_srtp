@@ -260,7 +260,8 @@ int WebRtcSession::TestURL(const char * url)
         auto dwWebRtcTalkAvPos = strURL.find(".webrtc");
         m_pFileName = new string(strURL.substr(dwTestAvTalkPos+strlen("testVideoCall/"),dwWebRtcTalkAvPos-(dwTestAvTalkPos+strlen("testVideoCall/"))).c_str());
         string strFileFd(m_pFileName->c_str());
-        strFileFd.append(".mp4");
+        //strFileFd.append(".mp4");
+        strFileFd.append("_recv.flv");
         m_pMediaFile=fopen(strFileFd.c_str(),"wb");
         WEBRTC_LOGW2(m_iLogID,"testVideoCall m_pFileName %s\r\n",m_pFileName->c_str());
         return 0;
@@ -881,7 +882,8 @@ int WebRtcSession::ParseRtpData(char * i_acDataBuf,int i_iDataLen)
         WEBRTC_LOGE2(m_iLogID,"m_cMediaHandle.GetFrame %d \r\n",m_tPushFrameInfo.iFrameBufLen);
         return iRet;
     }
-    iWriteLen=m_cMediaHandle.FrameToContainer(&m_tPushFrameInfo, STREAM_TYPE_FMP4_STREAM,m_pbFileBuf,WEBRTC_FRAME_BUF_MAX_LEN, &iHeaderLen);
+    //iWriteLen=m_cMediaHandle.FrameToContainer(&m_tPushFrameInfo, STREAM_TYPE_FMP4_STREAM,m_pbFileBuf,WEBRTC_FRAME_BUF_MAX_LEN, &iHeaderLen);
+    iWriteLen=m_cMediaHandle.FrameToContainer(&m_tPushFrameInfo, STREAM_TYPE_FLV_STREAM,m_pbFileBuf,WEBRTC_FRAME_BUF_MAX_LEN, &iHeaderLen);
     if(iWriteLen < 0)
     {
         WEBRTC_LOGE2(m_iLogID,"FrameToContainer err iWriteLen %d\r\n",iRet);
