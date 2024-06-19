@@ -731,9 +731,14 @@ int WebRtcSession::GetSupportedVideoInfoFromSDP(const char * i_strVideoFormatNam
             bRemoteConstraintFlag =(unsigned char)((m_tWebRtcSdpMediaInfo.tVideoInfos[i].dwProfileLevelId>>8)&0xff);//0x64 high ,0x4d main,0x42 base
             bRemoteLevel =(unsigned char)((m_tWebRtcSdpMediaInfo.tVideoInfos[i].dwProfileLevelId)&0xff);//
             //WEBRTC_LOGD2(m_iLogID,"i_dwProfileLevelId %#x,%#x,%#x,%#x,%#x,%#x,\r\n",bLocalProfile,bLocalConstraintFlag,bLocalLevel,bRemoteProfile,bRemoteConstraintFlag,bRemoteLevel);
-            if(bLocalProfile!=bRemoteProfile ||bLocalLevel>bRemoteLevel)
+            if(bLocalProfile!=bRemoteProfile)
             {
                 continue;
+            }
+            if(bLocalLevel>bRemoteLevel)
+            {
+                WEBRTC_LOGW2(m_iLogID,"bLocalLevel>bRemoteLevel %#x,%#x,%#x,%#x,%#x,%#x,\r\n",bLocalProfile,bLocalConstraintFlag,bLocalLevel,bRemoteProfile,bRemoteConstraintFlag,bRemoteLevel);
+                //continue;//增强兼容性，暂时注释，可能会影响ios的播放
             }
             if(0x64 == bLocalProfile)
             {//严格处理ConstraintFlag也要符合(兼容ios，ios highprofile ConstraintFlag有编码有特殊规范，所以也要符合)
@@ -752,6 +757,10 @@ int WebRtcSession::GetSupportedVideoInfoFromSDP(const char * i_strVideoFormatNam
             if(i_dwProfileLevelId==m_tWebRtcSdpMediaInfo.tVideoInfos[i].dwProfileLevelId)
             {
                 memcpy(o_ptVideoInfo,&m_tWebRtcSdpMediaInfo.tVideoInfos[i],sizeof(T_VideoInfo));
+                break;
+            }
+            if(i_dwProfileLevelId==0 && 0x42 == (unsigned char)((m_tWebRtcSdpMediaInfo.tVideoInfos[i].dwProfileLevelId>>16)&0xff))
+            {//对讲情况下，优先选择baseline
                 break;
             }
         }
