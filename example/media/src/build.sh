@@ -4,7 +4,7 @@ function PrintUsage()
 {
     echo -e "Usage:"
     echo -e "./build.sh $ToolChain"
-    echo -e "ToolChain: arm-linux/x86"
+    echo -e "ToolChain: arm-linux/x86/x64/win"
     echo -e "EGG:"
     echo -e "./build.sh arm-linux"
     echo -e " or ./build.sh x86"
@@ -14,7 +14,7 @@ function GenerateCmakeFile()
 #   mkdir -p build
     CmakeFile="$2/ToolChain.cmake"
     echo "SET(CMAKE_SYSTEM_NAME \"Linux\")" > $CmakeFile
-    if [ $1 == x86 -o $1 == x64 ]; then
+    if [ $1 == x86 -o $1 == x64 -o $1 == win ]; then
         echo "SET(CMAKE_C_COMPILER \"gcc\")" >> $CmakeFile  
         echo "SET(CMAKE_CXX_COMPILER \"g++\")" >> $CmakeFile    
     else
@@ -43,7 +43,11 @@ function BuildLib()
     
     GenerateCmakeFile $1 $OutputPath    
     cd $OutputPath
-    cmake ..
+    if [ $1 == win ]; then
+        cmake .. -G "MinGW Makefiles" -DCMAKE_C_COMPILER_WORKS=TRUE -DCMAKE_CXX_COMPILER_WORKS=TRUE
+    else
+        cmake ..
+    fi
     if [ -e "Makefile" ]; then  
         make clean
         make -j4 > /dev/null
@@ -64,6 +68,11 @@ function CopyLib()
 {
 #   CurPwd = $PWD
     CurPwd=$PWD
+    if [ -e "$1" ]; then
+        echo "$1 exit"
+    else
+        mkdir $1
+    fi
     cd $1
     if [ -e "media" ]; then
         echo "media exit"

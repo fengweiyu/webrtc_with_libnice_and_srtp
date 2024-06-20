@@ -8,7 +8,9 @@ SET(CMAKE_TOOLCHAIN_FILE "build/ToolChain.cmake")
 
 project (MediaConvert)
 SET(USE_STATIC_LIB_LINKAGE ON)
-
+#g++.exe: error: unrecognized command-line option '-rdynamic'
+SET(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
+SET(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS "")
 #SET(CMAKE_C_FLAGS "-g")
 SET(CMAKE_CXX_FLAGS "-g")
 # 设置C++标准为C++11
