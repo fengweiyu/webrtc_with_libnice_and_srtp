@@ -1,5 +1,5 @@
 /*****************************************************************************
-* Copyright (C) 2023-2028 HANGZHOU JFTECH CO., LTD. All rights reserved.
+* Copyright (C) 2023-2028 Hanson Yu  All rights reserved.
 ------------------------------------------------------------------------------
 * File Module       :   FMP4.h
 * Description       :   FMP4 operation center
