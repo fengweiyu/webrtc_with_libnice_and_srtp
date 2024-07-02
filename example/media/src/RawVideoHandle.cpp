@@ -782,7 +782,9 @@ int H265Handle::GetFrame(T_MediaFrameInfo *m_ptFrame)
     unsigned char *pcFrameData = NULL;
     int iRemainDataLen = 0;
     unsigned char bNaluType = 0;
-    
+    unsigned char bStartCodeLen = 0;
+
+
     if(NULL == m_ptFrame || NULL == m_ptFrame->pbFrameBuf ||m_ptFrame->iFrameBufLen <= 4)
     {
         MH_LOGE("GetFrame NULL %d\r\n", m_ptFrame->iFrameBufLen);
@@ -795,7 +797,37 @@ int H265Handle::GetFrame(T_MediaFrameInfo *m_ptFrame)
     m_ptFrame->iFrameLen = 0;
     while(iRemainDataLen > 0)
     {
-        if (iRemainDataLen >= 4 && pcFrameData[0] == 0 && pcFrameData[1] == 0 && pcFrameData[2] == 0 && pcFrameData[3] == 1)
+        if (iRemainDataLen >= 3 && pcFrameData[0] == 0 && pcFrameData[1] == 0 && pcFrameData[2] == 1)
+        {
+            if(pcNaluStartPos != NULL)
+            {
+                pcNaluEndPos = pcFrameData;//此时是一个nalu的结束
+            }
+            else
+            {
+                pcNaluStartPos = pcFrameData;//此时是一个nalu的开始
+                bStartCodeLen = 3;
+                bNaluType = (pcNaluStartPos[bStartCodeLen] & 0x7E)>>1;//取nalu类型
+            }
+            if(pcNaluEndPos != NULL)
+            {
+                if(pcNaluEndPos - pcNaluStartPos > 3)
+                {
+                    iRet=SetH265NaluData(bNaluType,bStartCodeLen,pcNaluStartPos,pcNaluEndPos - pcNaluStartPos,m_ptFrame);
+                }
+                pcNaluStartPos = pcNaluEndPos;//上一个nalu的结束为下一个nalu的开始
+                bStartCodeLen = 3;
+                bNaluType = (pcNaluStartPos[bStartCodeLen] & 0x7E)>>1;//取nalu类型
+                pcNaluEndPos = NULL;
+                if(iRet == 0)
+                {
+                    break;//解析出一帧则退出
+                }
+            }
+            pcFrameData += 3;
+            iRemainDataLen -= 3;
+        }
+        else if (iRemainDataLen >= 4 && pcFrameData[0] == 0 && pcFrameData[1] == 0 && pcFrameData[2] == 0 && pcFrameData[3] == 1)
         {
             if(pcNaluStartPos != NULL)
             {
@@ -804,15 +836,17 @@ int H265Handle::GetFrame(T_MediaFrameInfo *m_ptFrame)
             else
             {
                 pcNaluStartPos = pcFrameData;
+                bStartCodeLen = 4;
                 bNaluType = (pcNaluStartPos[4] & 0x7E)>>1;//取nalu类型
             }
             if(pcNaluEndPos != NULL)
             {
                 if(pcNaluEndPos - pcNaluStartPos > 4)
                 {
-                    iRet = SetH265NaluData(bNaluType,4,pcNaluStartPos,pcNaluEndPos - pcNaluStartPos,m_ptFrame);//包括类型减4//去掉00 00 00 01
+                    iRet = SetH265NaluData(bNaluType,bStartCodeLen,pcNaluStartPos,pcNaluEndPos - pcNaluStartPos,m_ptFrame);//包括类型减4//去掉00 00 00 01
                 }
                 pcNaluStartPos = pcNaluEndPos;
+                bStartCodeLen = 4;
                 bNaluType = (pcNaluStartPos[4] & 0x7E)>>1;//取nalu类型
                 pcNaluEndPos = NULL;
                 if(iRet == 0)
@@ -831,14 +865,13 @@ int H265Handle::GetFrame(T_MediaFrameInfo *m_ptFrame)
     }
     if(pcNaluStartPos != NULL && iRet != 0)
     {
-        iRet=SetH265NaluData(bNaluType,4,pcNaluStartPos,pcFrameData - pcNaluStartPos,m_ptFrame);//包括类型减4开始码
+        iRet=SetH265NaluData(bNaluType,bStartCodeLen,pcNaluStartPos,pcFrameData - pcNaluStartPos,m_ptFrame);//包括类型减4开始码
         if(iRet < 0)
         {
             MH_LOGE("SetH265NaluData err %d %d\r\n", m_ptFrame->dwNaluCount,m_ptFrame->iFrameLen);
             return iRet;
         }
     }
-    
 	if(NULL != m_ptFrame->pbFrameStartPos)
 	{
         m_ptFrame->iFrameProcessedLen += m_ptFrame->pbFrameStartPos - m_ptFrame->pbFrameBuf + m_ptFrame->iFrameLen;
