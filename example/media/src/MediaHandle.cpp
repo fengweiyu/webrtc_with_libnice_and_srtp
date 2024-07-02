@@ -480,6 +480,18 @@ int MediaHandle::FrameToContainer(T_MediaFrameInfo *i_ptFrame,E_StreamType i_eSt
             }
             break;
         }
+        case STREAM_TYPE_VIDEO_STREAM :
+        case STREAM_TYPE_AUDIO_STREAM :
+        {
+            if(i_ptFrame->iFrameLen > i_dwMaxBufLen)
+            {
+                MH_LOGE("i_ptFrame->iFrameLen > i_dwMaxBufLen err\r\n");
+                break;
+            }
+            memcpy(o_pbBuf,i_ptFrame->pbFrameStartPos,i_ptFrame->iFrameLen);
+            iRet = i_ptFrame->iFrameLen;
+            break;
+        }
         default :
         {
             MH_LOGE("FrameToContainer i_eStreamType err%d\r\n",i_eStreamType);
