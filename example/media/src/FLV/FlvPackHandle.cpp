@@ -569,8 +569,19 @@ int FlvPackHandle::GenerateVideoDataH264(T_MediaFrameInfo * i_ptFrameInfo,int i_
 #endif
         for(i=0;i<(int)i_ptFrameInfo->dwNaluCount;i++)
         {
-            unsigned char *pbNaluData=i_ptFrameInfo->atNaluInfo[i].pbData+4;
-            unsigned int dwDataLen=i_ptFrameInfo->atNaluInfo[i].dwDataLen-4;
+            unsigned char *pbNaluData=i_ptFrameInfo->atNaluInfo[i].pbData;
+            unsigned int dwDataLen=i_ptFrameInfo->atNaluInfo[i].dwDataLen;
+            int iStartCodeLen=4;
+            if (dwDataLen >= 3 && pbNaluData[0] == 0 && pbNaluData[1] == 0 && pbNaluData[2] == 1)
+            {
+                iStartCodeLen=3;
+            }
+            else if (dwDataLen >= 4 && pbNaluData[0] == 0 && pbNaluData[1] == 0 && pbNaluData[2] == 0 && pbNaluData[3] == 1)
+            {
+                iStartCodeLen=4;
+            }
+            pbNaluData+=iStartCodeLen;
+            dwDataLen-=iStartCodeLen;
             pbVideoData = &o_pbVideoData[iVideoDataLen];
             Write32BE(pbVideoData,dwDataLen);
             iVideoDataLen += sizeof(dwDataLen);
@@ -688,8 +699,19 @@ int FlvPackHandle::GenerateVideoDataH265(T_MediaFrameInfo * i_ptFrameInfo,int i_
         int i=0;
         for(i=0;i<(int)i_ptFrameInfo->dwNaluCount;i++)
         {
-            unsigned char *pbNaluData=i_ptFrameInfo->atNaluInfo[i].pbData+4;
-            unsigned int dwDataLen=i_ptFrameInfo->atNaluInfo[i].dwDataLen-4;
+            unsigned char *pbNaluData=i_ptFrameInfo->atNaluInfo[i].pbData;
+            unsigned int dwDataLen=i_ptFrameInfo->atNaluInfo[i].dwDataLen;
+            int iStartCodeLen=4;
+            if (dwDataLen >= 3 && pbNaluData[0] == 0 && pbNaluData[1] == 0 && pbNaluData[2] == 1)
+            {
+                iStartCodeLen=3;
+            }
+            else if (dwDataLen >= 4 && pbNaluData[0] == 0 && pbNaluData[1] == 0 && pbNaluData[2] == 0 && pbNaluData[3] == 1)
+            {
+                iStartCodeLen=4;
+            }
+            pbNaluData+=iStartCodeLen;
+            dwDataLen-=iStartCodeLen;
             Write32BE(pbVideoData,dwDataLen);
             pbVideoData += sizeof(dwDataLen);
             memcpy(pbVideoData, pbNaluData,dwDataLen);
