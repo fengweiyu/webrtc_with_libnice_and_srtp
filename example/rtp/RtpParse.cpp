@@ -59,6 +59,9 @@ RtpParse :: RtpParse()
     m_iVideoFrameCurLen=0;
     m_iFrameFlag = 0;
     m_iFrameStartFlag = 0;
+    memset(&m_tParseInfos,0,sizeof(T_RtpParseInfos));
+    m_iVideoLostPacketFlag = 0;
+    m_iAudioLostPacketFlag = 0;
 }
 
 /*****************************************************************************
@@ -198,18 +201,63 @@ int RtpParse :: Parse(unsigned char *i_pbPacketBuf,int i_iPacketLen,T_RtpPacketP
         }
     }
     tParam.ePacketType=eRtpPacketType;
-    printf("tParam.ePacketType%d,type %d,iMark %d iPad %d,%x,%x \r\n",tParam.ePacketType,pbPacketBuf[0]&0x1F,iMark,iPad,pbPacketBuf[0],pbPacketBuf[1]);
+    
+    for(i=0;i<RTP_PACKET_TYPE_MAX;i++)
+    {
+        if(eRtpPacketType == m_tParseInfos.atParseInfos[i].ePacketType)
+        {
+            if(tParam.wSeq != m_tParseInfos.atParseInfos[i].wSeq+1)
+            {
+                printf("eRtpPacketType%d,tParam.wSeq %d!= m_tParseInfos.atParseInfos[i].wSeq%d+1 \r\n",eRtpPacketType,tParam.wSeq,m_tParseInfos.atParseInfos[i].wSeq);
+                if(eRtpPacketType == RTP_PACKET_TYPE_H264 || eRtpPacketType == RTP_PACKET_TYPE_H265)
+                {
+                    m_iVideoLostPacketFlag=1;
+                }
+                if(eRtpPacketType == RTP_PACKET_TYPE_G711A || eRtpPacketType == RTP_PACKET_TYPE_G711U)
+                {
+                    m_iAudioLostPacketFlag=1;
+                }
+            }
+            m_tParseInfos.atParseInfos[i].wSeq=tParam.wSeq;
+            break;
+        }
+    }
+    if(i>=RTP_PACKET_TYPE_MAX)
+    {
+        for(i=0;i<RTP_PACKET_TYPE_MAX;i++)
+        {
+            if(RTP_PACKET_TYPE_UNKNOW == m_tParseInfos.atParseInfos[i].ePacketType)
+            {
+                m_tParseInfos.atParseInfos[i].ePacketType=eRtpPacketType;
+                m_tParseInfos.atParseInfos[i].wSeq=tParam.wSeq;
+                break;
+            }
+        }
+    }
+    printf("tParam.wSeq %d,ePacketType%d,type %d,iMark %d iPad %d,%x,%x \r\n",tParam.wSeq,tParam.ePacketType,pbPacketBuf[0]&0x1F,iMark,iPad,pbPacketBuf[0],pbPacketBuf[1]);
     switch (tParam.ePacketType)
     {
         case RTP_PACKET_TYPE_G711U:
         case RTP_PACKET_TYPE_G711A:
         {
             iRet=G711Parse(iMark,pbPacketBuf,iPacketLen,o_pbParsedData,o_iDataLen,i_iDataMaxLen);
+            if(m_iAudioLostPacketFlag != 0)
+            {
+                *o_iDataLen=0;
+                printf("m_iAudioLostPacketFlag%d != 0 ,drop audio frame\r\n",m_iAudioLostPacketFlag);
+                m_iAudioLostPacketFlag=0;
+            }
             break;
         }
         case RTP_PACKET_TYPE_H264:
         {
             iRet=H264Parse(iMark,pbPacketBuf,iPacketLen,o_pbParsedData,o_iDataLen,i_iDataMaxLen);
+            if(m_iVideoLostPacketFlag != 0)
+            {
+                *o_iDataLen=0;
+                printf("m_iVideoLostPacketFlag%d != 0 ,drop video frame\r\n",m_iVideoLostPacketFlag);
+                m_iVideoLostPacketFlag=0;
+            }
             break;
         }
         default :

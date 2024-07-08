@@ -22,6 +22,16 @@
 #define RTP_AUDIO_FRAME_MAX_LEN 			(20*1024)
 #define RTP_VIDEO_FRAME_MAX_LEN 			(2*1024*1024)
 
+typedef struct RtpParseInfo
+{
+    unsigned short  wSeq;
+	E_RtpPacketType ePacketType;
+}T_RtpParseInfo;
+typedef struct RtpParseInfoInfos
+{
+	T_RtpParseInfo atParseInfos[RTP_PACKET_TYPE_MAX];
+}T_RtpParseInfos;
+
 /*****************************************************************************
 -Class			: RtpParse
 -Description	: 
@@ -53,6 +63,9 @@ private:
     int m_iVideoFrameCurLen;
     int m_iFrameFlag;
     int m_iFrameStartFlag;
+    T_RtpParseInfos m_tParseInfos;
+    int m_iVideoLostPacketFlag;
+    int m_iAudioLostPacketFlag;
 };
 
 
