@@ -87,11 +87,13 @@ private:
     int m_iFileExitProcFlag;
     int m_iTalkTestFlag;//0 否，1是
     
+    int m_iPullVideoFrameRate;
     unsigned int m_dwVideoPullTimeStamp;//ms
     unsigned int m_dwAudioPullTimeStamp;//ms
     int m_iFindedKeyFrame;//0 否，1是
     unsigned int dwLastAudioTimeStamp;//ms
     unsigned int dwLastVideoTimeStamp;//ms
+    unsigned int dwLastSendTimeStamp;//ms
     unsigned char * m_pbFileBuf;
     FILE  *m_pMediaFile;
 };

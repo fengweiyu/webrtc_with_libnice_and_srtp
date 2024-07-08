@@ -91,7 +91,8 @@ WebRtcSession :: WebRtcSession(char * i_strStunAddr,unsigned int i_dwStunPort,T_
     m_iTalkTestFlag = 0;
     
     m_iLogID = i_iID;
-
+    
+    m_iPullVideoFrameRate=0;
     m_dwVideoPullTimeStamp=0;
     m_dwAudioPullTimeStamp=0;
     m_iFindedKeyFrame=0;
@@ -437,9 +438,16 @@ int WebRtcSession::HandleRemoteSDP()
                 iRet = m_pWebRTC->HandleMsg((char *)ptNode->valuestring,1,&m_tWebRtcSdpMediaInfo);//重试,后续优化
                 ptNode = NULL;
             }
+            ptNode = cJSON_GetObjectItem(ptJson,"FrameRate");
+            if(NULL != ptNode)
+            {
+                m_iPullVideoFrameRate=ptNode->valueint;
+                ptNode = NULL;
+            }
             cJSON_Delete(ptJson);
         }
     }
+    WEBRTC_LOGD2(m_iLogID,"HandleRemoteSDP %d,m_iPullVideoFrameRate %d,%s",iRet,m_iPullVideoFrameRate,m_strReqBody.c_str());
     if(iRet < 0)
     {
         WEBRTC_LOGE2(m_iLogID,"HandleRemoteSDP m_strReqBody err %s",m_strReqBody.c_str());
@@ -875,6 +883,14 @@ int WebRtcSession::ParseRtpData(char * i_acDataBuf,int i_iDataLen)
     {
         return iRet;
     }
+    if(MEDIA_FRAME_TYPE_VIDEO_P_FRAME==m_tPushFrameInfo.eFrameType||MEDIA_FRAME_TYPE_VIDEO_B_FRAME==m_tPushFrameInfo.eFrameType)
+    {
+        if(m_dwVideoPullTimeStamp -dwLastSendTimeStamp<40)//30fps,33ms间隔，
+        {//间隔丢帧，降低帧率，防止转码转不过来
+            //return 0;//丢掉p帧，后面的p帧会花屏，无法解码，p帧向前依赖，依赖前一个p帧(或i帧)
+        }
+        dwLastSendTimeStamp=dwLastVideoTimeStamp;
+    }
     m_tPushFrameInfo.eStreamType = STREAM_TYPE_MUX_STREAM;
     iRet=m_cMediaHandle.GetFrame(&m_tPushFrameInfo);
     if(iRet < 0)
@@ -918,65 +934,80 @@ int WebRtcSession::HandleRtpTimestamp()
     int iRet = -1;
     unsigned int dwRtpTimeStamp=0;//ms
 
-#if 1
-    //按照固定帧率的方式计算时间戳
-    /*if(0 == m_iTalkAV && 0 == m_iFindedKeyFrame)
+    
+    if(0 != m_iTalkTestFlag && string::npos != m_pFileName->find("testTalk/") && 0 == m_iFindedKeyFrame)
     {//普通对讲不需要音视频同源
-        dwLastVideoTimeStamp=0;///(WEBRTC_H264_TIMESTAMP_FREQUENCY/1000);
-        m_dwVideoPullTimeStamp=0;//音视频同源
-        m_iFindedKeyFrame=1;
-    }*/
-    if(MEDIA_FRAME_TYPE_VIDEO_I_FRAME!=m_tPushFrameInfo.eFrameType)
-    {
-        if(0 == m_iFindedKeyFrame)
-        {
-            return iRet;
-        }
-    }
-    else
-    {
-        if(0 == m_iFindedKeyFrame)
+        if(0 != m_iPullVideoFrameRate)
         {
             dwLastVideoTimeStamp=0;///(WEBRTC_H264_TIMESTAMP_FREQUENCY/1000);
+            dwLastSendTimeStamp=dwLastVideoTimeStamp;
+            m_dwVideoPullTimeStamp=0;//音视频同源
+            m_iFindedKeyFrame=1;
+        }
+        else
+        {
+            dwLastVideoTimeStamp=dwRtpTimeStamp/(WEBRTC_H264_TIMESTAMP_FREQUENCY/1000);//dwRtpTimeStamp;
+            dwLastSendTimeStamp=dwLastVideoTimeStamp;
             m_dwVideoPullTimeStamp=0;//音视频同源
             m_iFindedKeyFrame=1;
         }
     }
-    switch(m_tPushFrameInfo.eFrameType)
+    
+    if(0 != m_iPullVideoFrameRate)
     {
-        case MEDIA_FRAME_TYPE_AUDIO_FRAME:
+        //按照固定帧率的方式计算时间戳
+        if(MEDIA_FRAME_TYPE_VIDEO_I_FRAME!=m_tPushFrameInfo.eFrameType)
         {
-            if(0 == dwLastAudioTimeStamp)
+            if(0 == m_iFindedKeyFrame)
             {
-                dwLastAudioTimeStamp=dwLastVideoTimeStamp;///(WEBRTC_G711A_TIMESTAMP_FREQUENCY/1000);
-                m_dwAudioPullTimeStamp=m_dwVideoPullTimeStamp;//音视频同源
+                return iRet;
             }
-            m_dwAudioPullTimeStamp=dwLastAudioTimeStamp;//(dwRtpTimeStamp/(WEBRTC_G711A_TIMESTAMP_FREQUENCY/1000))-dwLastAudioTimeStamp;//20;//
-            dwLastAudioTimeStamp+=20;///(WEBRTC_G711A_TIMESTAMP_FREQUENCY/1000);
-            m_tPushFrameInfo.tAudioEncodeParam.dwChannels=1;//必须赋值，否则mp4无法播放
-            m_tPushFrameInfo.dwSampleRate=WEBRTC_G711A_TIMESTAMP_FREQUENCY;//
-            WEBRTC_LOGD2(m_iLogID,"AUDIO->dwTimeStamp%d,dwLastAudioTimeStamp%d FrameType%d\r\n",m_dwAudioPullTimeStamp,dwLastAudioTimeStamp,m_tPushFrameInfo.eFrameType);
-            m_tPushFrameInfo.dwTimeStamp=m_dwAudioPullTimeStamp;
-            break;
         }
-        case MEDIA_FRAME_TYPE_VIDEO_I_FRAME: //sps
-        case MEDIA_FRAME_TYPE_VIDEO_P_FRAME://pps
+        else
         {
-            m_dwVideoPullTimeStamp=dwLastVideoTimeStamp;//(dwRtpTimeStamp/(WEBRTC_H264_TIMESTAMP_FREQUENCY/1000))-dwLastVideoTimeStamp;//33;//
-            dwLastVideoTimeStamp+=33;///(WEBRTC_H264_TIMESTAMP_FREQUENCY/1000);
-            m_tPushFrameInfo.dwSampleRate=WEBRTC_H264_TIMESTAMP_FREQUENCY;//
-            WEBRTC_LOGD2(m_iLogID,"VIDEO->dwTimeStamp%d,dwLastVideoTimeStamp%d FrameType%d\r\n",m_dwVideoPullTimeStamp,dwLastVideoTimeStamp,m_tPushFrameInfo.eFrameType);
-            m_tPushFrameInfo.dwTimeStamp=m_dwVideoPullTimeStamp;
-            break;
+            if(0 == m_iFindedKeyFrame)
+            {
+                dwLastVideoTimeStamp=0;///(WEBRTC_H264_TIMESTAMP_FREQUENCY/1000);
+                dwLastSendTimeStamp=dwLastVideoTimeStamp;
+                m_dwVideoPullTimeStamp=0;//音视频同源
+                m_iFindedKeyFrame=1;
+            }
         }
-        default:
+        switch(m_tPushFrameInfo.eFrameType)
         {
-            WEBRTC_LOGE2(m_iLogID,"m_tPushFrameInfo.eFrameType %d\r\n",m_tPushFrameInfo.eFrameType);
-            break;
+            case MEDIA_FRAME_TYPE_AUDIO_FRAME:
+            {
+                if(0 == dwLastAudioTimeStamp)
+                {
+                    dwLastAudioTimeStamp=dwLastVideoTimeStamp;///(WEBRTC_G711A_TIMESTAMP_FREQUENCY/1000);
+                    m_dwAudioPullTimeStamp=m_dwVideoPullTimeStamp;//音视频同源
+                }
+                m_dwAudioPullTimeStamp=dwLastAudioTimeStamp;//(dwRtpTimeStamp/(WEBRTC_G711A_TIMESTAMP_FREQUENCY/1000))-dwLastAudioTimeStamp;//20;//
+                dwLastAudioTimeStamp+=20;///(WEBRTC_G711A_TIMESTAMP_FREQUENCY/1000);
+                m_tPushFrameInfo.tAudioEncodeParam.dwChannels=1;//必须赋值，否则mp4无法播放
+                m_tPushFrameInfo.dwSampleRate=WEBRTC_G711A_TIMESTAMP_FREQUENCY;//
+                WEBRTC_LOGD2(m_iLogID,"AUDIO->dwTimeStamp%d,dwLastAudioTimeStamp%d FrameType%d\r\n",m_dwAudioPullTimeStamp,dwLastAudioTimeStamp,m_tPushFrameInfo.eFrameType);
+                m_tPushFrameInfo.dwTimeStamp=m_dwAudioPullTimeStamp;
+                break;
+            }
+            case MEDIA_FRAME_TYPE_VIDEO_I_FRAME: //sps
+            case MEDIA_FRAME_TYPE_VIDEO_P_FRAME://pps
+            {
+                m_dwVideoPullTimeStamp=dwLastVideoTimeStamp;//(dwRtpTimeStamp/(WEBRTC_H264_TIMESTAMP_FREQUENCY/1000))-dwLastVideoTimeStamp;//33;//
+                dwLastVideoTimeStamp+=(1000/m_iPullVideoFrameRate);///(WEBRTC_H264_TIMESTAMP_FREQUENCY/1000);
+                m_tPushFrameInfo.dwSampleRate=WEBRTC_H264_TIMESTAMP_FREQUENCY;//
+                WEBRTC_LOGD2(m_iLogID,"VIDEO->dwTimeStamp%d,dwLastVideoTimeStamp%d FrameType%d\r\n",m_dwVideoPullTimeStamp,dwLastVideoTimeStamp,m_tPushFrameInfo.eFrameType);
+                m_tPushFrameInfo.dwTimeStamp=m_dwVideoPullTimeStamp;
+                break;
+            }
+            default:
+            {
+                WEBRTC_LOGE2(m_iLogID,"m_tPushFrameInfo.eFrameType %d\r\n",m_tPushFrameInfo.eFrameType);
+                break;
+            }
         }
+        return 0;
     }
-    return 0;
-#endif
 
     //采用当前时间,由于包到达的时间不准，所以不合适
     dwRtpTimeStamp = m_tPushFrameInfo.dwTimeStamp;//GetTickCount();//
@@ -992,6 +1023,7 @@ int WebRtcSession::HandleRtpTimestamp()
         if(0 == m_iFindedKeyFrame)
         {
             dwLastVideoTimeStamp=dwRtpTimeStamp/(WEBRTC_H264_TIMESTAMP_FREQUENCY/1000);//dwRtpTimeStamp;
+            dwLastSendTimeStamp=dwLastVideoTimeStamp;
             m_dwVideoPullTimeStamp=0;//音视频同源
             m_iFindedKeyFrame=1;
         }
