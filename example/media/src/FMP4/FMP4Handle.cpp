@@ -46,6 +46,9 @@ FMP4Handle::FMP4Handle()
     m_pbFmp4Header = new unsigned char[FMP4_HEADER_BUF_MAX_LEN];
     m_iFmp4HeaderLen = 0;
     m_iFindedKeyFrame = 0;
+
+    m_ddwSegmentPTS=0;
+    m_ddwSegmentDuration=0;
 }
 
 
@@ -122,6 +125,24 @@ int FMP4Handle::GetMuxData(T_Fmp4AnnexbFrameInfo *i_ptFmp4FrameInfo,unsigned cha
             }
         }
         iDataLen+=m_FMP4.CreateSegment(&m_FMP4MediaList,++m_iFragSeq,o_pbBuf+iDataLen,i_dwMaxBufLen-iDataLen);
+        m_ddwSegmentPTS=0;
+        m_ddwSegmentDuration=0;
+        int64_t m_ddwSegmentMinPTS=0;
+        int64_t m_ddwSegmentMaxPTS=0;
+        for (list<T_Fmp4FrameInfo>::iterator iter = m_FMP4MediaList.begin(); iter != m_FMP4MediaList.end(); ++iter)
+        {
+            if((int64_t)iter->ddwTimeStamp<=m_ddwSegmentMinPTS)
+            {
+                m_ddwSegmentMinPTS=(int64_t)iter->ddwTimeStamp;
+            }
+            if((int64_t)iter->ddwTimeStamp>=m_ddwSegmentMaxPTS)
+            {
+                m_ddwSegmentMaxPTS=(int64_t)iter->ddwTimeStamp;
+            }
+        }
+        m_ddwSegmentPTS=m_ddwSegmentMinPTS;
+        if(m_ddwSegmentMaxPTS-m_ddwSegmentMinPTS>0)
+            m_ddwSegmentDuration=(m_ddwSegmentMaxPTS-m_ddwSegmentMinPTS);
         DelAllFrame();
         SaveFrame(i_ptFmp4FrameInfo);
     }
@@ -168,6 +189,31 @@ int FMP4Handle::GetMuxHeader(unsigned char * o_pbBuf,unsigned int i_dwMaxBufLen)
     return iDataLen;
 }
 
+
+/*****************************************************************************
+-Fuction        : FMP4Handle
+-Description    : demux muxer
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version        Author           Modification
+* -----------------------------------------------
+* 2023/09/21      V1.0.0         Yu Weifeng       Created
+******************************************************************************/
+int FMP4Handle::GetDurationAndPTS(int64_t *o_ddwSegmentDuration,int64_t *o_ddwSegmentPTS)
+{
+    int iRet = -1;
+    
+    if(NULL == o_ddwSegmentDuration ||NULL == o_ddwSegmentPTS)
+    {
+        FMP4_LOGE("GetDurationAndPTS err NULL\r\n");
+        return iRet;
+    }
+    *o_ddwSegmentDuration=m_ddwSegmentDuration;
+    *o_ddwSegmentPTS=m_ddwSegmentPTS;
+
+    return 0;
+}
 
 
 

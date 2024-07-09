@@ -92,10 +92,9 @@ public:
     FMP4Handle();
     virtual ~FMP4Handle();
 
-    
     int GetMuxData(T_Fmp4AnnexbFrameInfo *i_ptFmp4FrameInfo,unsigned char * o_pbBuf,unsigned int i_dwMaxBufLen,int *o_piHeaderOffset=NULL,int i_iForcePack=0);
     int GetMuxHeader(unsigned char * o_pbBuf,unsigned int i_dwMaxBufLen);
-
+    int GetDurationAndPTS(int64_t *o_ddwSegmentDuration,int64_t *o_ddwSegmentPTS);
 private:
     int SaveFrame(T_Fmp4AnnexbFrameInfo *i_ptFmp4FrameInfo);
     int DelAllFrame();
@@ -121,6 +120,10 @@ private:
     FMP4 m_FMP4; 
     list<T_Fmp4FrameInfo> m_FMP4MediaList;
     int m_iFindedKeyFrame;//0 ·ñ£¬1ÊÇ
+
+
+    int64_t m_ddwSegmentPTS;
+    int64_t m_ddwSegmentDuration;
 };
 
 

@@ -232,4 +232,18 @@ int FMP4HandleInterface::FrameToContainer(T_MediaFrameInfo *i_ptFrame,E_StreamTy
 }
 
 
+/*****************************************************************************
+-Fuction        : GetContainerDataHeader
+-Description    : 
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version        Author           Modification
+* -----------------------------------------------
+* 2023/09/21      V1.0.0         Yu Weifeng       Created
+******************************************************************************/
+int FMP4HandleInterface::GetContainerDataHeader(unsigned char * o_pbBuf,unsigned int i_dwMaxBufLen)
+{
+    return m_FMP4Handle.GetMuxHeader(o_pbBuf,i_dwMaxBufLen);
+}
 

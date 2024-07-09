@@ -868,7 +868,7 @@ int H265Handle::GetFrame(T_MediaFrameInfo *m_ptFrame)
         iRet=SetH265NaluData(bNaluType,bStartCodeLen,pcNaluStartPos,pcFrameData - pcNaluStartPos,m_ptFrame);//包括类型减4开始码
         if(iRet < 0)
         {
-            MH_LOGE("SetH265NaluData err %d %d\r\n", m_ptFrame->dwNaluCount,m_ptFrame->iFrameLen);
+            MH_LOGE("SetH265NaluData err bNaluType%d bStartCodeLen%d dwNaluCount%d iFrameLen%d\r\n", bNaluType,bStartCodeLen,m_ptFrame->dwNaluCount,m_ptFrame->iFrameLen);
             return iRet;
         }
     }

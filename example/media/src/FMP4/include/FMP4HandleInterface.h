@@ -43,7 +43,8 @@ public:
     
     virtual int GetFrame(T_MediaFrameInfo *m_ptFrame);//
     virtual int FrameToContainer(T_MediaFrameInfo *i_ptFrame,E_StreamType i_eStreamType,unsigned char * o_pbBuf, unsigned int i_dwMaxBufLen,int *o_piHeaderOffset=NULL);//
-    
+
+    int GetContainerDataHeader(unsigned char * o_pbBuf,unsigned int i_dwMaxBufLen);
     static char *m_strFormatName;
 private:
     FMP4Handle m_FMP4Handle;
