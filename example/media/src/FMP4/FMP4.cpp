@@ -323,7 +323,7 @@ public:
 	};
     int SetParams(unsigned char *i_pbExtraData,int i_iExtraDataLen) 
     {
-        if(NULL == i_pbExtraData || i_iExtraDataLen > sizeof(m_abExtraData))
+        if(NULL == i_pbExtraData || i_iExtraDataLen > (int)sizeof(m_abExtraData))
         {
             FMP4_LOGE("FMP4HvcCBox SetParams err %d,%d\r\n",i_iExtraDataLen,sizeof(m_abExtraData));
             return -1;
@@ -385,7 +385,7 @@ public:
     int SetParams(unsigned short i_wTrackID,E_FMP4_OBJECT_TYPE i_eEncType,unsigned char *i_pbExtraData,int i_iExtraDataLen) 
     {
         FMP4_LOGD("FMP4EsdsBox SetParams %d %d,i_iExtraDataLen %d\r\n",i_wTrackID,i_eEncType,i_iExtraDataLen);
-        if(NULL == i_pbExtraData || i_iExtraDataLen > sizeof(m_abExtraData))
+        if(NULL == i_pbExtraData || i_iExtraDataLen > (int)sizeof(m_abExtraData))
         {
             FMP4_LOGE("FMP4EsdsBox SetParams err %d,%d\r\n",i_iExtraDataLen,sizeof(m_abExtraData));
             return -1;
@@ -1634,7 +1634,7 @@ public:
         Write32BE((o_pbBuf+iLen),m_dwHandlerType);/* handler_type */
         iLen+=4;
 
-        for(i=0;i<sizeof(m_dwReserved)/sizeof(unsigned int);i++)
+        for(i=0;i<(int)(sizeof(m_dwReserved)/sizeof(unsigned int));i++)
         {
             Write32BE((o_pbBuf+iLen), m_dwReserved[i]); 
             iLen+=4;
@@ -1800,7 +1800,7 @@ public:
         memcpy(o_pbBuf+iLen,m_abR2,sizeof(m_abR2));/* reserved */
         iLen+=sizeof(m_abR2);
         
-        for(i=0;i<sizeof(m_adwMatrix)/sizeof(unsigned int);i++)
+        for(i=0;i<(int)(sizeof(m_adwMatrix)/sizeof(unsigned int));i++)
         {
             Write32BE((o_pbBuf+iLen), m_adwMatrix[i]); 
             iLen+=4;
@@ -2229,7 +2229,7 @@ public:
         dwFlags = FMP4_TRUN_FLAG_DATA_OFFSET_PRESENT;
         if (i_aptSampleInfo[0].eFrameType == FMP4_VIDEO_KEY_FRAME)
             dwFlags |= FMP4_TRUN_FLAG_FIRST_SAMPLE_FLAGS_PRESENT;
-        for (int i = 0; i < i_dwSampleCount; i++)
+        for (int i = 0; i < (int)i_dwSampleCount; i++)
         {
             if (i_aptSampleInfo[i].dwDataSize != i_dwDefaultSampleSize)
                 dwFlags |= FMP4_TRUN_FLAG_SAMPLE_SIZE_PRESENT;
@@ -2254,7 +2254,7 @@ public:
         {
             FMP4FullBaseBox::m_dwBoxSize += sizeof(m_dwFirstSampleFlags);
         }
-        for (int i = 0; i < m_dwSampleCount; i++)
+        for (int i = 0; i < (int)m_dwSampleCount; i++)
         {
             if (dwFlags & FMP4_TRUN_FLAG_SAMPLE_DURATION_PRESENT)
             {
@@ -2315,7 +2315,7 @@ public:
             Write32BE((o_pbBuf+iLen),m_dwFirstSampleFlags);//FMP4_TREX_FLAG_SAMPLE_DEPENDS_ON_I_PICTURE
             iLen+=4;
         }
-        for (i = 0; i < m_dwSampleCount; i++)
+        for (i = 0; i < (int)m_dwSampleCount; i++)
         {
             if (dwFlags & FMP4_TRUN_FLAG_SAMPLE_DURATION_PRESENT)
             {
@@ -2411,12 +2411,12 @@ public:
         memcpy(o_pbBuf+iLen,m_abR0,sizeof(m_abR0));/* reserved */
         iLen+=sizeof(m_abR0);
 
-        for(i=0;i<sizeof(m_adwMatrix)/sizeof(unsigned int);i++)
+        for(i=0;i<(int)(sizeof(m_adwMatrix)/sizeof(unsigned int));i++)
         {
             Write32BE((o_pbBuf+iLen), m_adwMatrix[i]); 
             iLen+=4;
         }
-        for(i=0;i<sizeof(m_adwPreDefined)/sizeof(unsigned int);i++)
+        for(i=0;i<(int)(sizeof(m_adwPreDefined)/sizeof(unsigned int));i++)
         {
             Write32BE((o_pbBuf+iLen), m_adwPreDefined[i]); 
             iLen+=4;
@@ -2569,7 +2569,7 @@ public:
 	};
 	~FMP4MvexBox() 
 	{
-        for(int i = 0;i<m_dwTrexCnt;i++)
+        for(int i = 0;i<(int)m_dwTrexCnt;i++)
         {
             if(NULL != m_pTrex[i])
             {
@@ -2588,7 +2588,7 @@ public:
             FMP4_LOGE("FMP4MvexBox SetParams err %d,%d\r\n",m_dwTrexCnt,i_dwTrackCount);
             return -1;
         }
-        for(i = 0;i<m_dwTrexCnt;i++)
+        for(i = 0;i<(int)m_dwTrexCnt;i++)
         {
             if(NULL != m_pTrex[i])
             {
@@ -2597,14 +2597,14 @@ public:
             }
         }
         m_dwTrexCnt = i_dwTrackCount;
-        for(i = 0;i<m_dwTrexCnt;i++)
+        for(i = 0;i<(int)m_dwTrexCnt;i++)
         {
             m_pTrex[i] = new FMP4TrexBox();
             m_pTrex[i]->SetParams(i_pdwTrackId[i]);
         }
 
         FMP4BaseBox::m_dwBoxSize += m_Mehd.m_dwBoxSize;//ffmpeg 无
-        for(i = 0;i<m_dwTrexCnt;i++)
+        for(i = 0;i<(int)m_dwTrexCnt;i++)
         {
             FMP4BaseBox::m_dwBoxSize += m_pTrex[i]->m_dwBoxSize;
         }
@@ -2628,7 +2628,7 @@ public:
         iLen += FMP4BaseBox::ToBits(o_pbBuf,i_dwMaxBufLen);
         
         iLen += m_Mehd.ToBits(o_pbBuf+iLen,i_dwMaxBufLen-iLen);////ffmpeg 无
-        for(i = 0;i<m_dwTrexCnt;i++)
+        for(i = 0;i<(int)m_dwTrexCnt;i++)
         {
             iLen += m_pTrex[i]->ToBits(o_pbBuf+iLen,i_dwMaxBufLen-iLen);
         }
@@ -2867,7 +2867,7 @@ public:
         //m_apCompatibleBrands[5] = FMP4_BRAND_MSDH;//ffmpeg 无，media 有
         
         FMP4BaseBox::m_dwBoxSize += strlen(m_strMajorBrand)+sizeof(m_dwMinorVersion);
-        for(i =0;i<sizeof(m_apCompatibleBrands)/sizeof(const char *);i++)
+        for(i =0;i<(int)(sizeof(m_apCompatibleBrands)/sizeof(const char *));i++)
         {
             FMP4BaseBox::m_dwBoxSize += strlen(m_apCompatibleBrands[i]);
         }
@@ -2887,7 +2887,7 @@ public:
         iLen+=strlen(m_strMajorBrand);
         Write32BE((o_pbBuf+iLen),m_dwMinorVersion);
         iLen+=4;
-        for(int i =0;i<sizeof(m_apCompatibleBrands)/sizeof(const char *);i++)
+        for(int i =0;i<(int)(sizeof(m_apCompatibleBrands)/sizeof(const char *));i++)
         {
             memcpy(o_pbBuf+iLen,m_apCompatibleBrands[i],strlen(m_apCompatibleBrands[i]));
             iLen+=strlen(m_apCompatibleBrands[i]);
@@ -2931,7 +2931,7 @@ public:
         unsigned int adwTrackId[FMP4_MAX_TRAK_NUM];
         memset(m_pTrak,0,sizeof(m_pTrak));
         m_dwTrakCnt = i_dwTrackCount;
-        for(int i = 0;i<m_dwTrakCnt;i++)
+        for(int i = 0;i<(int)m_dwTrakCnt;i++)
         {
             m_pTrak[i] = new FMP4TrakBox();
             m_pTrak[i]->SetParams(i_pdwTrakHandlerType[i],i+1,ptVideoFrameInfo,ptAudioFrameInfo);
@@ -2942,7 +2942,7 @@ public:
 	};
 	~FMP4MoovBox() 
 	{
-        for(int i = 0;i<m_dwTrakCnt;i++)
+        for(int i = 0;i<(int)m_dwTrakCnt;i++)
         {
             if(NULL != m_pTrak[i])
             {
@@ -2958,7 +2958,7 @@ public:
         int i ;
         
         FMP4BaseBox::m_dwBoxSize += m_MvhdBox.m_dwBoxSize;
-        for(i = 0;i<m_dwTrakCnt;i++)
+        for(i = 0;i<(int)m_dwTrakCnt;i++)
         {
             FMP4BaseBox::m_dwBoxSize += m_pTrak[i]->m_dwBoxSize;
         }
@@ -2981,7 +2981,7 @@ public:
         iLen += FMP4BaseBox::ToBits(o_pbBuf,i_dwMaxBufLen);
         
         iLen += m_MvhdBox.ToBits(o_pbBuf+iLen,i_dwMaxBufLen-iLen);
-        for(i = 0;i<m_dwTrakCnt;i++)
+        for(i = 0;i<(int)m_dwTrakCnt;i++)
         {
             iLen += m_pTrak[i]->ToBits(o_pbBuf+iLen,i_dwMaxBufLen-iLen);
         }
@@ -3020,12 +3020,12 @@ public:
         m_dwTrackCnt = i_dwTrackCnt;
         m_aptTrackInfo = i_aptTrackInfo;
         m_Mfhd.SetParams(i_dwSeqNum);
-        for(i = 0;i<m_dwTrackCnt;i++)
+        for(i = 0;i<(int)m_dwTrackCnt;i++)
         {
             m_aTraf[i].SetParams(&i_aptTrackInfo[i]);
         }
         FMP4BaseBox::m_dwBoxSize += m_Mfhd.m_dwBoxSize;
-        for(i = 0;i<m_dwTrackCnt;i++)
+        for(i = 0;i<(int)m_dwTrackCnt;i++)
         {
             FMP4BaseBox::m_dwBoxSize += m_aTraf[i].m_dwBoxSize;
         }
@@ -3033,7 +3033,7 @@ public:
 	int ModifyParams(unsigned int i_dwTrackCnt,T_FMP4TrackInfo * i_aptTrackInfo) 
 	{
 	    int iRet = -1;
-        for(int i = 0;i<i_dwTrackCnt;i++)
+        for(int i = 0;i<(int)i_dwTrackCnt;i++)
         {
             iRet = m_aTraf[i].ModifyParams(&i_aptTrackInfo[i]);
         }
@@ -3057,7 +3057,7 @@ public:
         iLen += FMP4BaseBox::ToBits(o_pbBuf,i_dwMaxBufLen);
         
         iLen += m_Mfhd.ToBits(o_pbBuf+iLen,i_dwMaxBufLen-iLen);
-        for(i = 0;i<m_dwTrackCnt;i++)
+        for(i = 0;i<(int)m_dwTrackCnt;i++)
         {
             iLen += m_aTraf[i].ToBits(o_pbBuf+iLen,i_dwMaxBufLen-iLen);
         }
@@ -3094,9 +3094,9 @@ public:
         int iLen = 0;
         int i,j ;
         
-        for(i = 0;i<m_dwTrackCnt;i++)
+        for(i = 0;i<(int)m_dwTrackCnt;i++)
         {
-            for(j = 0;j<m_aptTrackInfo[i].dwSampleCount;j++)
+            for(j = 0;j<(int)m_aptTrackInfo[i].dwSampleCount;j++)
             {
                 FMP4BaseBox::m_dwBoxSize += m_aptTrackInfo[i].aptSampleInfo[j].dwDataSize;
             }
@@ -3110,9 +3110,9 @@ public:
         
         iLen += FMP4BaseBox::ToBits(o_pbBuf,i_dwMaxBufLen);
         
-        for(i = 0;i<m_dwTrackCnt;i++)
+        for(i = 0;i<(int)m_dwTrackCnt;i++)
         {
-            for(j = 0;j<m_aptTrackInfo[i].dwSampleCount;j++)
+            for(j = 0;j<(int)m_aptTrackInfo[i].dwSampleCount;j++)
             {
                 memcpy(o_pbBuf + iLen, m_aptTrackInfo[i].aptSampleInfo[j].pbData, m_aptTrackInfo[i].aptSampleInfo[j].dwDataSize);
                 iLen += m_aptTrackInfo[i].aptSampleInfo[j].dwDataSize;
@@ -3477,7 +3477,7 @@ int FMP4::CreateSegment(list<T_Fmp4FrameInfo> * i_pFMP4Media,unsigned int i_dwSe
         }
     }
     
-    for(i=0;i<dwTrackCnt;i++)
+    for(i=0;i<(int)dwTrackCnt;i++)
     {
         if(0 == i)
         {

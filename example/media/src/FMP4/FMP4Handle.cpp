@@ -179,7 +179,7 @@ int FMP4Handle::GetMuxHeader(unsigned char * o_pbBuf,unsigned int i_dwMaxBufLen)
         FMP4_LOGW("GetMuxHeader m_iFmp4HeaderLen NULL\r\n");
         return 0;
     }
-    if(m_iFmp4HeaderLen > i_dwMaxBufLen)
+    if(m_iFmp4HeaderLen > (int)i_dwMaxBufLen)
     {
         FMP4_LOGW("GetMuxHeader i_dwMaxBufLen err%d,%d\r\n",m_iFmp4HeaderLen,i_dwMaxBufLen);
         return iRet;
@@ -453,7 +453,7 @@ int FMP4Handle::GenerateH264ExtraData(T_Fmp4AnnexbVideoEncParam *i_ptVideoEncPar
     unsigned char* pbVideoData = NULL;
     
     if(NULL == i_ptVideoEncParam || NULL == o_pbBuf ||i_ptVideoEncParam->iSizeOfSPS <=0 ||
-    i_dwMaxBufLen < (11+i_ptVideoEncParam->iSizeOfSPS+i_ptVideoEncParam->iSizeOfPPS))
+    (int)i_dwMaxBufLen < (11+i_ptVideoEncParam->iSizeOfSPS+i_ptVideoEncParam->iSizeOfPPS))
     {
         FMP4_LOGE("GenerateH264ExtraData NULL %d,%d \r\n", i_dwMaxBufLen,(11+i_ptVideoEncParam->iSizeOfSPS+i_ptVideoEncParam->iSizeOfPPS));
         return iDataLen;
@@ -508,7 +508,7 @@ int FMP4Handle::GenerateH265ExtraData(T_Fmp4AnnexbVideoEncParam *i_ptVideoEncPar
     T_Fmp4H265ExtraData tFmp4H265ExtraData;
     
     if(NULL == i_ptVideoEncParam || NULL == o_pbBuf ||i_ptVideoEncParam->iSizeOfSPS <=0 ||
-    i_dwMaxBufLen < (23+i_ptVideoEncParam->iSizeOfSPS+i_ptVideoEncParam->iSizeOfPPS+i_ptVideoEncParam->iSizeOfVPS))
+    (int)i_dwMaxBufLen < (23+i_ptVideoEncParam->iSizeOfSPS+i_ptVideoEncParam->iSizeOfPPS+i_ptVideoEncParam->iSizeOfVPS))
     {
         FMP4_LOGE("GenerateH264ExtraData NULL %d,%d \r\n", i_dwMaxBufLen,(23+i_ptVideoEncParam->iSizeOfSPS+i_ptVideoEncParam->iSizeOfPPS));
         return iVideoDataLen;
