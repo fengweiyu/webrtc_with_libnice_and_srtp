@@ -129,7 +129,12 @@ int FMP4Handle::GetMuxData(T_Fmp4AnnexbFrameInfo *i_ptFmp4FrameInfo,unsigned cha
         m_ddwSegmentDuration=0;
         int64_t m_ddwSegmentMinPTS=0;
         int64_t m_ddwSegmentMaxPTS=0;
-        for (list<T_Fmp4FrameInfo>::iterator iter = m_FMP4MediaList.begin(); iter != m_FMP4MediaList.end(); ++iter)
+        list<T_Fmp4FrameInfo>::iterator iter = m_FMP4MediaList.begin();//front
+        m_ddwSegmentMinPTS=(int64_t)iter->ddwTimeStamp;
+        m_ddwSegmentMaxPTS=(int64_t)i_ptFmp4FrameInfo->ddwTimeStamp;
+        /*iter = m_FMP4MediaList.back();
+        m_ddwSegmentMaxPTS=(int64_t)iter->ddwTimeStamp;
+        for (iter = m_FMP4MediaList.begin(); iter != m_FMP4MediaList.end(); ++iter)
         {
             if((int64_t)iter->ddwTimeStamp<=m_ddwSegmentMinPTS)
             {
@@ -139,7 +144,7 @@ int FMP4Handle::GetMuxData(T_Fmp4AnnexbFrameInfo *i_ptFmp4FrameInfo,unsigned cha
             {
                 m_ddwSegmentMaxPTS=(int64_t)iter->ddwTimeStamp;
             }
-        }
+        }*/
         m_ddwSegmentPTS=m_ddwSegmentMinPTS;
         if(m_ddwSegmentMaxPTS-m_ddwSegmentMinPTS>0)
             m_ddwSegmentDuration=(m_ddwSegmentMaxPTS-m_ddwSegmentMinPTS);
