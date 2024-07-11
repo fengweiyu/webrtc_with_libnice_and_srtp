@@ -725,9 +725,9 @@ unsigned char FlvParseHandle::ParseAudioDataTagHeader(unsigned char i_bAudioTagH
 	bEncType = (i_bAudioTagHeader & 0xF0) >> 4;
 	bSampleRateIndex = (i_bAudioTagHeader & 0x0C) >> 2;
 	bSampleBits = (i_bAudioTagHeader & 0x02) >> 1;
-	bChannels = i_bAudioTagHeader & 0x01;//声道模式0 = 单声道1 = 双声道（立体声）
+	bChannels = i_bAudioTagHeader & 0x01;//声道模式0 = 单声道,1 = 双声道（立体声）//aac 以AudioSpecCfg为准,这里aac都会置位1
 	
-    m_ptFrame->tAudioEncodeParam.dwChannels = bChannels+1;//通道=声道+1
+    m_ptFrame->tAudioEncodeParam.dwChannels = bChannels+1;//通道=声道+1 
     m_ptFrame->tAudioEncodeParam.dwBitsPerSample = bSampleBits == 1 ? 16 : 8;//0b01 win 会报错
     m_ptFrame->dwSampleRate= 44100;
     if(bSampleRateIndex < 4)
