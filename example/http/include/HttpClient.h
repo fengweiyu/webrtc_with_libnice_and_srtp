@@ -13,6 +13,40 @@
 #define HTTP_CLIENT_H
 
 #include "HttpCommon.h"
+#include <string>
+
+using std::string;
+
+
+
+/*****************************************************************************
+-Class			: HttpClient
+-Description	: 
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2019/09/21	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
+class HttpClient
+{
+public:
+	HttpClient();
+	~HttpClient();
+    int ParseResponse(char *i_pcResData,int i_iDataLen,T_HttpResPacket *o_ptHttpResPacket);
+    int CreateRequest(const char * i_strMethod, const char * i_strURL,const char * i_strVersion = HTTP_VERSION);
+	int SetReqHeaderValue(const char *i_strKey,const char *i_strValue);
+    int SetReqHeaderValue(const char *i_strKey,int i_iValue);
+	int FormatReqToStream(char *i_pcContentData,int i_iDataLen,char *o_acBuf,int i_iBufMaxLen);
+private:
+    string m_strReqHeader;
+    void *m_pHttp;
+};
+
+
+
+
+
+
+
 
 #if 0
 /*****************************************************************************

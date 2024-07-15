@@ -37,6 +37,7 @@ public:
 	Http();
 	~Http();
     int ParseReqHeader(string *i_strHttpHeader,T_HttpReqPacket *o_ptHttpReqPacket);
+    int ParseResHeader(string *i_strHttpHeader,T_HttpResPacket *o_ptHttpResPacket);
     int Regex(const char *i_strPattern,string *i_strBuf,smatch &o_Match);
 private:
 
