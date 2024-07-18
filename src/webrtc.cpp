@@ -1403,7 +1403,8 @@ int WebRtcAnswer::HandleMsg(char * i_strOfferMsg,int i_iNotJsonMsgFlag,T_WebRtcS
     }
     if(1 == i_iNotJsonMsgFlag)
     {
-        iRet=m_Libnice.SaveRemoteSDP(i_strOfferMsg);
+        HandleRemoteSDP((const char *)i_strOfferMsg,iVideoPos,iAudioPos,&strMsg);
+        iRet=m_Libnice.SaveRemoteSDP((char *)strMsg.c_str());
         if(NULL != strstr(i_strOfferMsg,"candidate:"))
         {
             iRet=0;//m_Libnice.SetRemoteCandidateAndSDP(NULL);//生成sdp后再设置，防止生成sdp耗时久，导致设置后等待久
@@ -2005,14 +2006,14 @@ int WebRtcAnswer::GetSdpVideoInfo(const char * i_strSDP,T_WebRtcSdpMediaInfo *o_
             iRtpMapPos = strSDP.find("a=rtpmap",iRtpMapPos);
             if(string::npos == iRtpMapPos)
             {
-                WEBRTC_LOGD("Regex iRtpMapPos find err %s,break\r\n",strRtpMapPatten);
+                WEBRTC_LOGD("Regex iRtpMapPos find %d err %s,break\r\n",i,strRtpMapPatten);
                 break;
             }
             memset(atMatch,0,sizeof(atMatch));
             strSubSDP.assign(strSDP.substr(iRtpMapPos,strSDP.size() - iRtpMapPos).c_str());
             if(REG_NOERROR != this->Regex(strRtpMapPatten,(char *)strSubSDP.c_str(),atMatch))
             {
-                WEBRTC_LOGD("Regex strRtpMapPatten %s,break\r\n",strRtpMapPatten);
+                WEBRTC_LOGD("Regex %d strRtpMapPatten %s,break\r\n",i,strRtpMapPatten);
                 break;
             }
             strFindRes.assign(strSubSDP,atMatch[1].rm_so,atMatch[1].rm_eo-atMatch[1].rm_so);
@@ -2116,6 +2117,128 @@ int WebRtcAnswer::GetSdpAudioInfo(const char * i_strSDP,T_WebRtcSdpMediaInfo *o_
         iRtpMapPos+=strlen("a=rtpmap");
     }
     return iRet;
+}
+
+/*****************************************************************************
+-Fuction        : HandleRemoteSDP
+-Description    : 处理不符合libnice处理的Candidate
+所有的candidate都要加上 ufrag zzR9才可以，libnice才能处理
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+int WebRtcAnswer::HandleRemoteSDP(const char * i_strSDP,int i_iVideoPos,int i_iAudioPos,string *o_strHandledSDP)
+{
+    int iRet = -1;
+	regmatch_t atMatch[MAX_MATCH_NUM];
+	const char *strCandidatePatten="a=candidate:([0-9]+) ([0-9]+) UDP ([0-9]+) ([0-9.]+) ([0-9]+) typ host";//a=candidate:1 1 UDP 2013266431 3.87.211.213 52024 typ host
+    const char *strDelCandidatePatten="a=candidate:([0-9]+) ([0-9]+) TCP ([0-9]+) ([0-9.]+) ([0-9]+) ([A-Za-z ]+)\r\n";
+	const char *strIceUfragPatten="a=ice-ufrag:([A-Za-z0-9+]+)";//a=candidate:1 1 UDP 2013266431 54.172.218.77 54877 typ host\r\n
+	string strFindRes;
+    string strSDP;
+	string strHeaderSDP;
+	string strVideoSDP;
+	string strAudioSDP;
+	string strIceUfrag;
+    int i = 0,iVideoPos= 0,iAudioPos= 0;
+    char strCandidateUfrag[512]={0,};
+	int iPos=0;
+	
+    if (i_strSDP == NULL || NULL==o_strHandledSDP) 
+    {
+		WEBRTC_LOGE("HandleRemoteSDP NULL\r\n");
+		return iRet;
+    }
+    strSDP.assign(i_strSDP);
+    memset(atMatch,0,sizeof(atMatch));
+    if(REG_NOERROR != this->Regex(strCandidatePatten,(char *)strSDP.c_str(),atMatch))
+    {
+		WEBRTC_LOGD("HandleRemoteSDP exit ,%s\r\n",strSDP.c_str());
+		return 0;//没找到不符合libnice处理的Candidate，则无需处理
+    }
+    WEBRTC_LOGD("HandleRemoteSDP ,%s\r\n",strSDP.c_str());
+    iVideoPos=i_iVideoPos;
+    iAudioPos=i_iAudioPos;
+    if((int)(iAudioPos-iVideoPos)>0)
+    {
+        strHeaderSDP.assign(strSDP.substr(0,iVideoPos).c_str());
+        strVideoSDP.assign(strSDP.substr(iVideoPos,iAudioPos-iVideoPos).c_str());
+        strAudioSDP.assign(strSDP.substr(iAudioPos,strSDP.size()-iAudioPos).c_str());
+    }
+    else
+    {
+        strHeaderSDP.assign(strSDP.substr(0,iAudioPos).c_str());
+        strAudioSDP.assign(strSDP.substr(iAudioPos,iVideoPos-iAudioPos).c_str());
+        strVideoSDP.assign(strSDP.substr(iVideoPos,strSDP.size()-iVideoPos).c_str());
+    }
+    
+    //WEBRTC_LOGD("HandleRemoteSDPstrVideoSDP ,%s\r\n",strVideoSDP.c_str());
+    memset(atMatch,0,sizeof(atMatch));
+    if(REG_NOERROR == this->Regex(strIceUfragPatten,(char *)strVideoSDP.c_str(),atMatch))
+    {
+        strFindRes.assign(strVideoSDP,atMatch[1].rm_so,atMatch[1].rm_eo-atMatch[1].rm_so);//0是整行
+        strIceUfrag.assign(strFindRes.c_str());
+		WEBRTC_LOGD("HandleRemoteSDP strVideoSDP strIceUfrag %s\r\n",strFindRes.c_str());
+    }
+    snprintf(strCandidateUfrag,sizeof(strCandidateUfrag)," ufrag %s",strIceUfrag.c_str());
+    memset(atMatch,0,sizeof(atMatch));
+    iPos=0;
+    while(REG_NOERROR == this->Regex(strCandidatePatten,(char *)strVideoSDP.substr(iPos).c_str(),atMatch))
+    {
+        strVideoSDP.insert(atMatch[0].rm_eo+iPos,(const char *)strCandidateUfrag);
+        iPos+=atMatch[0].rm_eo;
+    }
+    memset(atMatch,0,sizeof(atMatch));
+    iPos=0;
+    while(REG_NOERROR == this->Regex(strDelCandidatePatten,(char *)strVideoSDP.substr(iPos).c_str(),atMatch))
+    {
+        strVideoSDP.erase(atMatch[0].rm_so+iPos,atMatch[0].rm_eo-atMatch[0].rm_so);
+        iPos+=atMatch[0].rm_so;
+    }
+    //WEBRTC_LOGD("HandleRemoteSDP append strVideoSDP,%s\r\n",strVideoSDP.c_str());
+
+    //WEBRTC_LOGD("HandleRemoteSDP strAudioSDP,%s\r\n",strAudioSDP.c_str());
+    memset(atMatch,0,sizeof(atMatch));
+    if(REG_NOERROR == this->Regex(strIceUfragPatten,(char *)strAudioSDP.c_str(),atMatch))
+    {
+        strFindRes.assign(strAudioSDP,atMatch[1].rm_so,atMatch[1].rm_eo-atMatch[1].rm_so);//0是整行
+        strIceUfrag.assign(strFindRes.c_str());
+		WEBRTC_LOGD("HandleRemoteSDP strAudioSDP strIceUfrag %s\r\n",strFindRes.c_str());
+    }
+    snprintf(strCandidateUfrag,sizeof(strCandidateUfrag)," ufrag %s",strIceUfrag.c_str());
+    memset(atMatch,0,sizeof(atMatch));
+    iPos=0;
+    while(REG_NOERROR == this->Regex(strCandidatePatten,(char *)strAudioSDP.substr(iPos).c_str(),atMatch))
+    {
+        strAudioSDP.insert(atMatch[0].rm_eo+iPos,(const char *)strCandidateUfrag);
+        iPos+=atMatch[0].rm_eo;
+    }
+    memset(atMatch,0,sizeof(atMatch));
+    iPos=0;
+    while(REG_NOERROR == this->Regex(strDelCandidatePatten,(char *)strAudioSDP.substr(iPos).c_str(),atMatch))
+    {
+        strAudioSDP.erase(atMatch[0].rm_so+iPos,atMatch[0].rm_eo-atMatch[0].rm_so);
+        iPos+=atMatch[0].rm_so;
+    }
+    //WEBRTC_LOGD("HandleRemoteSDP append strAudioSDP,%s\r\n",strAudioSDP.c_str());
+
+    if((int)(iAudioPos-iVideoPos)>0)
+    {
+        o_strHandledSDP->assign(strHeaderSDP.c_str());
+        o_strHandledSDP->append(strVideoSDP.c_str());
+        o_strHandledSDP->append(strAudioSDP.c_str());
+    }
+    else
+    {
+        o_strHandledSDP->assign(strHeaderSDP.c_str());
+        o_strHandledSDP->append(strAudioSDP.c_str());
+        o_strHandledSDP->append(strVideoSDP.c_str());
+    }
+    WEBRTC_LOGD("o_strHandledSDP,%s\r\n",o_strHandledSDP->c_str());
+    return 0;
 }
 
 /*****************************************************************************

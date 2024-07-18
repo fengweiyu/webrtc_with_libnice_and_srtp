@@ -126,6 +126,8 @@ private:
     int GenerateAudioSDP(T_LocalCandidate *ptLocalCandidate,char *strLocalFingerprint,T_AudioInfo *ptAudioInfo,char *o_strSDP,int i_iSdpMaxLen);
     int GetSdpVideoInfo(const char * i_strSDP,T_WebRtcSdpMediaInfo *o_ptSdpMediaInfo);
     int GetSdpAudioInfo(const char * i_strSDP,T_WebRtcSdpMediaInfo *o_ptSdpMediaInfo);
+    int HandleRemoteSDP(const char * i_strSDP,int i_iVideoPos,int i_iAudioPos,string *o_strHandledSDP);
+    
     int Regex(const char *i_strPattern,char *i_strBuf,regmatch_t *o_ptMatch);
 
     
