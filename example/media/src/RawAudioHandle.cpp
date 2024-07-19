@@ -20,6 +20,7 @@ using std::endl;
 
 #define AUDIO_G711_SAMPLE_RATE 8000
 #define AUDIO_G711_A_FRAME_SAMPLE_POINT_NUM 160//320
+#define AUDIO_G711_A_FRAME_SAMPLE_POINT_BASE_NUM 80
 
 char * G711Handle::m_strAudioFormatName = (char *)AUDIO_ENC_FORMAT_G711_NAME;
 int G711Handle::m_iAudioFixLen = AUDIO_G711_A_FRAME_SAMPLE_POINT_NUM;//G711中1B就是一个样本数据
@@ -147,9 +148,15 @@ int G711Handle::GetFrame(T_MediaFrameInfo *m_ptFrame)
 {
     int iRet=FALSE;
 	
-	if(m_ptFrame == NULL ||m_ptFrame->iFrameBufLen < G711Handle::m_iAudioFixLen)
-	{
+	if(m_ptFrame == NULL ||(0!=m_ptFrame->iFrameBufLen% AUDIO_G711_A_FRAME_SAMPLE_POINT_BASE_NUM))
+	{//不是80的倍数则不对
         cout<<"G711Handle GetNextFrame err:"<<m_ptFrame->iFrameBufLen<<endl;
+        m_ptFrame->iFrameProcessedLen += m_ptFrame->iFrameBufLen;
+        return iRet;
+    }
+	if(m_ptFrame->iFrameBufLen<G711Handle::m_iAudioFixLen)
+	{
+        cout<<"G711Handle need more data"<<m_ptFrame->iFrameBufLen<<endl;
         return iRet;
     }
     m_ptFrame->pbFrameStartPos = m_ptFrame->pbFrameBuf;
@@ -164,7 +171,7 @@ int G711Handle::GetFrame(T_MediaFrameInfo *m_ptFrame)
             m_ptFrame->eEncType = MEDIA_ENCODE_TYPE_G711U;
         }
 	
-        m_ptFrame->iFrameProcessedLen = m_ptFrame->pbFrameStartPos - m_ptFrame->pbFrameBuf + m_ptFrame->iFrameLen;
+        m_ptFrame->iFrameProcessedLen += m_ptFrame->pbFrameStartPos - m_ptFrame->pbFrameBuf + m_ptFrame->iFrameLen;
         iRet = TRUE;//解析出一帧则退出
 	}
 	return iRet;
