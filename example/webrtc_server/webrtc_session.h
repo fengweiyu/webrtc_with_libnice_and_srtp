@@ -67,6 +67,7 @@ private:
 
     WebRtcInterface * m_pWebRTC;
     RtpInterface * m_pRtpInterface;
+    RtpInterface * m_pRtpParseInterface;
     thread *m_pWebRtcProc;
     MediaHandle m_cMediaHandle;
 

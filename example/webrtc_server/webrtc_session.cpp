@@ -3,6 +3,11 @@
 ------------------------------------------------------------------------------
 * File Module           :       WebRtcSession.c
 * Description           : 	    webrtc媒体通道建立完成时间优化到600-700ms
+亚马逊alexa支持pcma但是sdp中没有a=rtpmap:8 PCMA/8000 (只有个opus)，
+可以返回的sdp中直接携带rtpmap:8 PCMA/8000，让对方支持自己的能力
+对于sdp协商过程中耗时的媒体处理可以先缓存，后续再发送，实现不丢帧
+//if(NULL != ptListFrame)//修改时间戳缓存，再发送，实现不丢帧的快放(会跳秒)，从而保证实时性
+    //ptFrame->nTimeStamp=ptListFrame->nTimeStamp;//不用修改时间戳，浏览器webrtc会平滑处理(不会跳秒的放，也有实时性)
 * Created               :       2023.01.13.
 * Author                :       Yu Weifeng
 * Function List         : 	
@@ -19,6 +24,7 @@
 #include "Base64.h"
 #include "rtp_adapter.h"
 
+#define WEBRTC_RTP_PAYLOAD_G711A     8//a=rtpmap:8 PCMA/8000 webrtc RTP_PAYLOAD_G711A(rfc规范中定义的值)
 #define WEBRTC_VIDEO_ENCODE_FORMAT_NAME "H264"
 #define WEBRTC_H264_TIMESTAMP_FREQUENCY 90000
 #define WEBRTC_AUDIO_ENCODE_FORMAT_NAME "PCMA"
@@ -62,7 +68,7 @@ WebRtcSession :: WebRtcSession(char * i_strStunAddr,unsigned int i_dwStunPort,T_
     }
     m_pWebRtcProc = new thread(&WebRtcInterface::Proc, m_pWebRTC);
     m_pWebRtcProc->detach();//注意线程回收
-
+    m_pRtpParseInterface = new RtpInterface(NULL);
 
     int i=0,len=0;
     m_pbPacketsBuf = new unsigned char [SRTP_PACKET_MAX_NUM*SRTP_PACKET_MAX_SIZE];
@@ -114,6 +120,11 @@ WebRtcSession :: WebRtcSession(char * i_strStunAddr,unsigned int i_dwStunPort,T_
 ******************************************************************************/
 WebRtcSession :: ~WebRtcSession()
 {
+    if(NULL!= m_pRtpParseInterface)
+    {
+        delete m_pRtpParseInterface;
+        m_pRtpParseInterface = NULL;//
+    }
     if(NULL!= m_pRtpInterface)
     {
         delete m_pRtpInterface;
@@ -366,7 +377,7 @@ void WebRtcSession::TestProc()
         if(iRet<0)
         {
             unsigned int dwProfileLevelId = (m_tFileFrameInfo.tVideoEncodeParam.abSPS[1]<<16) | (m_tFileFrameInfo.tVideoEncodeParam.abSPS[2]<<8) | m_tFileFrameInfo.tVideoEncodeParam.abSPS[3];
-            WEBRTC_LOGE2(m_iLogID,"TestProc exit %d,%s,dwProfileLevelId %#x\r\n",iRet,m_pFileName->c_str(),dwProfileLevelId);
+            WEBRTC_LOGE2(m_iLogID,"TestProc exit eEncType%d eFrameType%d,%s,dwProfileLevelId %#x\r\n",m_tFileFrameInfo.eEncType,m_tFileFrameInfo.eFrameType,m_pFileName->c_str(),dwProfileLevelId);
             this->StopSession(-2!=iRet?400:(int)dwProfileLevelId);
             break;
         }
@@ -635,6 +646,7 @@ int WebRtcSession::SendLocalSDP(T_VideoEncodeParam * i_ptVideoEncodeParam)
     if(NULL!= m_pRtpInterface)
     {
         iRet = m_pRtpInterface->SetRtpTypeInfo((void *)&tRtpMediaInfo);
+        iRet |= m_pRtpParseInterface->SetRtpTypeInfo((void *)&tRtpMediaInfo);
     }
     if(iRet != 0)
     {
@@ -832,10 +844,21 @@ int WebRtcSession::GetSupportedAudioInfoFromSDP(const char * i_strAudioFormatNam
     if(i>=WEBRTC_SDP_MEDIA_INFO_MAX_NUM)
     {
         WEBRTC_LOGE2(m_iLogID,"GetSupportedAudioInfoFromSDP err %s,%d\r\n",i_strAudioFormatName,i_dwAudioTimestampFrequency);
-        for(i=0;i<WEBRTC_SDP_MEDIA_INFO_MAX_NUM;i++)
-        {
-            if(0 != strlen(m_tWebRtcSdpMediaInfo.tAudioInfos[i].strFormatName))
+        for(i=0;i<WEBRTC_SDP_MEDIA_INFO_MAX_NUM;i++)//如果找不到符合的音频格式，则使用默认的
+        {//亚马逊alexa 支持pcma但是sdp中没写，这样可以兼容
+            if(0 != strlen(m_tWebRtcSdpMediaInfo.tAudioInfos[i].strFormatName))//找一个不为空的格式，然后使用其有用的值
+            {//其他值使用默认的
+                if(0 == strcmp(i_strAudioFormatName,WEBRTC_AUDIO_ENCODE_FORMAT_NAME))
+                {//使用默认值，也要和传入的格式匹配
+                    memcpy(o_ptAudioInfo,&m_tWebRtcSdpMediaInfo.tAudioInfos[i],sizeof(T_AudioInfo));
+                    o_ptAudioInfo->dwTimestampFrequency=i_dwAudioTimestampFrequency;
+                    snprintf(o_ptAudioInfo->strFormatName,sizeof(o_ptAudioInfo->strFormatName),"%s",i_strAudioFormatName);
+                    o_ptAudioInfo->bRtpPayloadType=WEBRTC_RTP_PAYLOAD_G711A;
+                    iRet = 0;
+                }
+                //打印所有格式
                 WEBRTC_LOGE2(m_iLogID,"tAudioInfos %d,err %s,%d\r\n",i,m_tWebRtcSdpMediaInfo.tAudioInfos[i].strFormatName,m_tWebRtcSdpMediaInfo.tAudioInfos[i].dwTimestampFrequency);
+            }
         }
     }
     return iRet;
@@ -862,20 +885,16 @@ int WebRtcSession::ParseRtpData(char * i_acDataBuf,int i_iDataLen)
         WEBRTC_LOGE2(m_iLogID,"ParseRtpData NULL \r\n");
         return iRet;
     }
-    if(NULL == m_pRtpInterface)
+    if(NULL == m_pRtpParseInterface)
     {
         WEBRTC_LOGE2(m_iLogID,"ParseRtpData m_pRtpInterface NULL \r\n");
         return iRet;
     }
-    m_tPushFrameInfo.iFrameBufLen=0;
-    iRet =m_pRtpInterface->ParseRtpPacket((unsigned char *)i_acDataBuf,i_iDataLen,(void *)&m_tPushFrameInfo);
+    //m_tPushFrameInfo.iFrameBufLen=0;//注释掉则ParseRtpPacket会缓存重组出符合的帧长(pcma 80->160) //不注释则没有这个逻辑即不会重组
+    iRet =m_pRtpParseInterface->ParseRtpPacket((unsigned char *)i_acDataBuf,i_iDataLen,(void *)&m_tPushFrameInfo);
     if(iRet < 0)
     {
         WEBRTC_LOGD2(m_iLogID,"RecvData ParseRtpPacket err %d \r\n",i_iDataLen);
-        return iRet;
-    }
-    if(m_tPushFrameInfo.iFrameBufLen <= 0)
-    {
         return iRet;
     }
     iRet =HandleRtpTimestamp();
@@ -892,10 +911,12 @@ int WebRtcSession::ParseRtpData(char * i_acDataBuf,int i_iDataLen)
         dwLastSendTimeStamp=dwLastVideoTimeStamp;
     }
     m_tPushFrameInfo.eStreamType = STREAM_TYPE_MUX_STREAM;
-    iRet=m_cMediaHandle.GetFrame(&m_tPushFrameInfo);
+    iRet=m_pRtpParseInterface->GetFrame((void *)&m_tPushFrameInfo);//解析接收到数据,解析后缓存位置pbFrameStartPos iFrameLen
     if(iRet < 0)
     {
-        WEBRTC_LOGE2(m_iLogID,"m_cMediaHandle.GetFrame %d \r\n",m_tPushFrameInfo.iFrameBufLen);
+        if(0 != m_tPushFrameInfo.iFrameBufLen)//亚马逊alexa 80分包重组时，返回正确 
+            return 0;
+        WEBRTC_LOGE2(m_iLogID,"m_pRtpParseInterface.GetFrame iFrameBufLen%d iFrameLen%d err \r\n",m_tPushFrameInfo.iFrameBufLen,m_tPushFrameInfo.iFrameLen);
         return iRet;
     }
     //iWriteLen=m_cMediaHandle.FrameToContainer(&m_tPushFrameInfo, STREAM_TYPE_FMP4_STREAM,m_pbFileBuf,WEBRTC_FRAME_BUF_MAX_LEN, &iHeaderLen);
@@ -915,7 +936,7 @@ int WebRtcSession::ParseRtpData(char * i_acDataBuf,int i_iDataLen)
         }
     }
     
-	WEBRTC_LOGD2(m_iLogID,"RecvData %p,iFrameLen %d \r\n",m_tPushFrameInfo.pbFrameStartPos,m_tPushFrameInfo.iFrameBufLen);//iFrameLen指向裸流数据长度，可保存为文件
+	WEBRTC_LOGD2(m_iLogID,"RecvData %p,iFrameLen %d \r\n",m_tPushFrameInfo.pbFrameStartPos,m_tPushFrameInfo.iFrameLen);//iFrameLen指向裸流数据长度，可保存为文件
     return iRet;
 }
 
