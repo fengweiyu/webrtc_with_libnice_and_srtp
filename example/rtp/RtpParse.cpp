@@ -17,6 +17,7 @@
 
 #include "Definition.h"
 #include "RtpParse.h"
+#include "rtp_adapter.h"
 
 #ifndef TRUE
 #define TRUE 0
@@ -208,7 +209,7 @@ int RtpParse :: Parse(unsigned char *i_pbPacketBuf,int i_iPacketLen,T_RtpPacketP
         {
             if(tParam.wSeq != m_tParseInfos.atParseInfos[i].wSeq+1)
             {
-                printf("eRtpPacketType%d,tParam.wSeq %d!= m_tParseInfos.atParseInfos[i].wSeq%d+1 \r\n",eRtpPacketType,tParam.wSeq,m_tParseInfos.atParseInfos[i].wSeq);
+                RTP_LOGW("eRtpPacketType%d,tParam.wSeq %d!= m_tParseInfos.atParseInfos[i].wSeq%d+1 \r\n",eRtpPacketType,tParam.wSeq,m_tParseInfos.atParseInfos[i].wSeq);
                 if(eRtpPacketType == RTP_PACKET_TYPE_H264 || eRtpPacketType == RTP_PACKET_TYPE_H265)
                 {
                     m_iVideoLostPacketFlag=1;
@@ -241,7 +242,7 @@ int RtpParse :: Parse(unsigned char *i_pbPacketBuf,int i_iPacketLen,T_RtpPacketP
         case RTP_PACKET_TYPE_G711A:
         {
             iRet=G711Parse(iMark,pbPacketBuf,iPacketLen,o_pbParsedData,o_iDataLen,i_iDataMaxLen);
-            if(m_iAudioLostPacketFlag != 0)
+            if(*o_iDataLen>0 && m_iAudioLostPacketFlag != 0)
             {
                 *o_iDataLen=0;
                 printf("m_iAudioLostPacketFlag%d != 0 ,drop audio frame\r\n",m_iAudioLostPacketFlag);
@@ -252,7 +253,7 @@ int RtpParse :: Parse(unsigned char *i_pbPacketBuf,int i_iPacketLen,T_RtpPacketP
         case RTP_PACKET_TYPE_H264:
         {
             iRet=H264Parse(iMark,pbPacketBuf,iPacketLen,o_pbParsedData,o_iDataLen,i_iDataMaxLen);
-            if(m_iVideoLostPacketFlag != 0)
+            if(*o_iDataLen>0 && m_iVideoLostPacketFlag != 0)
             {
                 *o_iDataLen=0;
                 printf("m_iVideoLostPacketFlag%d != 0 ,drop video frame\r\n",m_iVideoLostPacketFlag);
