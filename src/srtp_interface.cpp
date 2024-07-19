@@ -111,9 +111,9 @@ int Srtp::Create(char *i_acKey,int i_iKeyLen,E_SrtpSsrcType i_eSrtpSsrcType)
 int Srtp::ProtectRtp(char * i_acRtpData,int * o_piProtectDataLen,int i_iRtpDataLen)
 {
     int iRet = -1;
-	if(i_acRtpData == NULL ||o_piProtectDataLen == NULL)
+	if(i_acRtpData == NULL ||o_piProtectDataLen == NULL ||m_tSrtp == NULL)
 	{
-		printf("ProtectRtp null\r\n");
+		printf("ProtectRtp null %p,%p,m_tSrtp %p\r\n",i_acRtpData,i_acRtpData,m_tSrtp);
 		return iRet;
 	}
 	*o_piProtectDataLen=i_iRtpDataLen;
@@ -134,9 +134,9 @@ int Srtp::ProtectRtp(char * i_acRtpData,int * o_piProtectDataLen,int i_iRtpDataL
 int Srtp::UnProtectRtp(char * m_acSrtpData,int * m_piDataLen)
 {
     int iRet = -1;
-	if(m_acSrtpData == NULL ||m_piDataLen == NULL)
+	if(m_acSrtpData == NULL ||m_piDataLen == NULL ||m_tSrtp == NULL)
 	{
-		printf("UnProtectRtp null\r\n");
+		printf("UnProtectRtp null %p,%p,m_tSrtp %p\r\n",m_acSrtpData,m_piDataLen,m_tSrtp);
 		return iRet;
 	}
 	iRet = srtp_unprotect(m_tSrtp, m_acSrtpData, m_piDataLen);
@@ -163,6 +163,26 @@ int Srtp::UnProtectRtcp(char * m_acSrtpData,int * m_piDataLen)
 	}
 	iRet = srtp_unprotect_rtcp(m_tSrtp, m_acSrtpData, m_piDataLen);
     return iRet;
+}
+
+
+/*****************************************************************************
+-Fuction        : SrtpShutdown
+-Description    : SrtpShutdown
+-Input          : 
+-Output         : 
+-Return         : -1 ·ñ,0ÊÇ
+* Modify Date     Version             Author           Modification
+* -----------------------------------------------
+* 2020/01/13      V1.0.0              Yu Weifeng       Created
+******************************************************************************/
+int Srtp::GetSrtpCreatedFlag()
+{
+	if(m_tSrtp == NULL)
+	{
+		return -1;
+	}
+	return 0;
 }
 
 

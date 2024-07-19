@@ -388,14 +388,22 @@ int WebRTC::HandleRecvSrtp(char * i_acSrtpBuf,int i_iSrtpBufLen,DtlsOnlyHandshak
         if(NULL == m_pVideoDecSrtp)
         {
             m_pVideoDecSrtp = new Srtp();
+        }
+        if(NULL != m_pVideoDecSrtp && 0 != m_pVideoDecSrtp->GetSrtpCreatedFlag())
+        {
             memset(&tPolicyInfo,0,sizeof(T_PolicyInfo));
             iRet = m_pVideoDtlsOnlyHandshake->GetRemotePolicyInfo(&tPolicyInfo);
             if(0 != iRet)
             {
-                WEBRTC_LOGE("m_pVideoDecSrtp.GetRemotePolicyInfo GetRemotePolicyInfo err \r\n",iRet);
+                WEBRTC_LOGE("m_pVideoDecSrtp.GetRemotePolicyInfo GetRemotePolicyInfo err %d\r\n",iRet);
                 return iRet;
             }
-            m_pVideoDecSrtp->Create(tPolicyInfo.key, sizeof(tPolicyInfo.key), SRTP_SSRC_UNPROTECT);
+            iRet =m_pVideoDecSrtp->Create(tPolicyInfo.key, sizeof(tPolicyInfo.key), SRTP_SSRC_UNPROTECT);
+            if(0 != iRet)
+            {
+                WEBRTC_LOGE("m_pVideoDecSrtp.Create err %d\r\n",iRet);
+                return -1;
+            }
         }
         pSrtp = m_pVideoDecSrtp;
     }
@@ -404,6 +412,9 @@ int WebRTC::HandleRecvSrtp(char * i_acSrtpBuf,int i_iSrtpBufLen,DtlsOnlyHandshak
         if(NULL == m_pAudioDecSrtp)
         {
             m_pAudioDecSrtp = new Srtp();
+        }
+        if(NULL != m_pAudioDecSrtp && 0 != m_pAudioDecSrtp->GetSrtpCreatedFlag())
+        {
             memset(&tPolicyInfo,0,sizeof(T_PolicyInfo));
             iRet =m_pAudioDtlsOnlyHandshake->GetRemotePolicyInfo(&tPolicyInfo);
             if(0 != iRet)
@@ -411,7 +422,12 @@ int WebRTC::HandleRecvSrtp(char * i_acSrtpBuf,int i_iSrtpBufLen,DtlsOnlyHandshak
                 WEBRTC_LOGE("m_pAudioDecSrtp.GetRemotePolicyInfo GetRemotePolicyInfo err \r\n",iRet);
                 return iRet;
             }
-            m_pAudioDecSrtp->Create(tPolicyInfo.key, sizeof(tPolicyInfo.key), SRTP_SSRC_UNPROTECT);
+            iRet =m_pAudioDecSrtp->Create(tPolicyInfo.key, sizeof(tPolicyInfo.key), SRTP_SSRC_UNPROTECT);
+            if(0 != iRet)
+            {
+                WEBRTC_LOGE("m_pAudioDecSrtp.Create err %d\r\n",iRet);
+                return -1;
+            }
         }
         pSrtp = m_pAudioDecSrtp;
     }

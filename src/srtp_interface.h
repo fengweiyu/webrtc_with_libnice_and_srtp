@@ -45,6 +45,7 @@ public:
     int ProtectRtp(char * i_acRtpData,int * o_piProtectDataLen,int i_iRtpDataLen);
     int UnProtectRtp(char * m_acSrtpData,int * m_piDataLen);
     int UnProtectRtcp(char * m_acSrtpData,int * m_piDataLen);
+    int GetSrtpCreatedFlag();
     int Shutdown();
 
 
