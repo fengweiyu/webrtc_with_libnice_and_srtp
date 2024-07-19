@@ -445,12 +445,22 @@ int Rtp :: SetRtpTypeInfo(T_RtpMediaInfo *i_ptRtpMediaInfo)
 ******************************************************************************/
 int Rtp :: GetFrame(T_MediaFrameInfo *m_ptFrame)
 {
+    int iRet = -1;
+
     if(NULL == m_ptFrame)
     {
-        RTP_LOGE("GetRtpPackets NULL\r\n");
+        RTP_LOGE("GetFrame NULL\r\n");
         return -1;
     }
-    return m_pMediaHandle->GetFrame(m_ptFrame);
+    m_ptFrame->iFrameProcessedLen=0;
+    iRet = m_pMediaHandle->GetFrame(m_ptFrame);
+    m_ptFrame->iFrameBufLen -= m_ptFrame->iFrameProcessedLen;
+    if(m_ptFrame->iFrameProcessedLen>0 && m_ptFrame->iFrameBufLen>0)//每次都是要处理完
+    {
+        RTP_LOGE("GetFrame err %d,%d\r\n",m_ptFrame->iFrameProcessedLen,m_ptFrame->iFrameBufLen);
+        return -1;
+    }
+    return iRet;
 }
 
 /*****************************************************************************
@@ -589,6 +599,9 @@ int Rtp::ParseRtpPacket(unsigned char *i_pbPacketBuf,int i_iPacketLen,T_MediaFra
 {
     int iRet = -1;
     T_RtpPacketParam tParam;
+    int iFrameBufLen=0;
+    
+    
     if(NULL == i_pbPacketBuf ||NULL == o_ptFrame)
     {
         RTP_LOGE("GetRtpPackets NULL%d\r\n",i_iPacketLen);
@@ -598,16 +611,17 @@ int Rtp::ParseRtpPacket(unsigned char *i_pbPacketBuf,int i_iPacketLen,T_MediaFra
     memset(&tParam,0,sizeof(T_RtpPacketParam));
     //o_ptFrame->pbFrameStartPos=o_ptFrame->pbFrameBuf;
     //o_ptFrame->iFrameLen=0;
-    iRet=m_RtpParse.Parse(i_pbPacketBuf,i_iPacketLen,&tParam,o_ptFrame->pbFrameBuf,&o_ptFrame->iFrameBufLen,o_ptFrame->iFrameBufMaxLen);
+    iRet=m_RtpParse.Parse(i_pbPacketBuf,i_iPacketLen,&tParam,o_ptFrame->pbFrameBuf+o_ptFrame->iFrameBufLen,&iFrameBufLen,o_ptFrame->iFrameBufMaxLen);
     if(iRet<0)
     {
         RTP_LOGE("m_RtpParse.Parse err%d\r\n",iRet);
         return iRet;
     }
-    if(o_ptFrame->iFrameBufLen<=0)
+    if(iFrameBufLen<=0)
     {
-        return iRet;
+        return -1;
     }
+    o_ptFrame->iFrameBufLen+=iFrameBufLen;//处理一帧 10 ms 80长度的帧合并成160的帧长(放外层处理也可以)
     switch (tParam.ePacketType)
     {
         case RTP_PACKET_TYPE_G711A:
