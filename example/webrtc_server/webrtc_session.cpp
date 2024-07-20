@@ -865,11 +865,11 @@ int WebRtcSession::GetSupportedAudioInfoFromSDP(const char * i_strAudioFormatNam
 }
 
 /*****************************************************************************
--Fuction        : PushRtpData
+-Fuction        : ParseRtpData
 -Description    : 
 -Input          : 
 -Output         : 
--Return         : 
+-Return         : <0 err,0 need more data,>0 success
 * Modify Date     Version        Author           Modification
 * -----------------------------------------------
 * 2023/09/21      V1.0.0         Yu Weifeng       Created
@@ -894,7 +894,20 @@ int WebRtcSession::ParseRtpData(char * i_acDataBuf,int i_iDataLen)
     iRet =m_pRtpParseInterface->ParseRtpPacket((unsigned char *)i_acDataBuf,i_iDataLen,(void *)&m_tPushFrameInfo);
     if(iRet < 0)
     {
-        WEBRTC_LOGD2(m_iLogID,"RecvData ParseRtpPacket err %d \r\n",i_iDataLen);
+        WEBRTC_LOGE2(m_iLogID,"m_pRtpParseInterface ParseRtpPacket err %d \r\n",i_iDataLen);
+        return iRet;
+    }
+    if(0 == iRet)
+    {
+        return iRet;//need more data
+    }
+    m_tPushFrameInfo.eStreamType = STREAM_TYPE_MUX_STREAM;//需要先GetFrame处理m_tPushFrameInfo iFrameBufLen
+    iRet=m_pRtpParseInterface->GetFrame((void *)&m_tPushFrameInfo);//这样iFrameBufLen 才能得到处理，同时也才能让下次可以正确接收数据
+    if(iRet < 0)//解析接收到数据,解析后缓存位置pbFrameStartPos iFrameLen
+    {
+        if(0 != m_tPushFrameInfo.iFrameBufLen)//亚马逊alexa 80分包重组时，返回正确 
+            return 0;//need more data
+        WEBRTC_LOGE2(m_iLogID,"m_pRtpParseInterface.GetFrame iFrameBufLen%d iFrameLen%d err \r\n",m_tPushFrameInfo.iFrameBufLen,m_tPushFrameInfo.iFrameLen);
         return iRet;
     }
     iRet =HandleRtpTimestamp();
@@ -910,15 +923,7 @@ int WebRtcSession::ParseRtpData(char * i_acDataBuf,int i_iDataLen)
         }
         dwLastSendTimeStamp=dwLastVideoTimeStamp;
     }
-    m_tPushFrameInfo.eStreamType = STREAM_TYPE_MUX_STREAM;
-    iRet=m_pRtpParseInterface->GetFrame((void *)&m_tPushFrameInfo);//解析接收到数据,解析后缓存位置pbFrameStartPos iFrameLen
-    if(iRet < 0)
-    {
-        if(0 != m_tPushFrameInfo.iFrameBufLen)//亚马逊alexa 80分包重组时，返回正确 
-            return 0;
-        WEBRTC_LOGE2(m_iLogID,"m_pRtpParseInterface.GetFrame iFrameBufLen%d iFrameLen%d err \r\n",m_tPushFrameInfo.iFrameBufLen,m_tPushFrameInfo.iFrameLen);
-        return iRet;
-    }
+    
     //iWriteLen=m_cMediaHandle.FrameToContainer(&m_tPushFrameInfo, STREAM_TYPE_FMP4_STREAM,m_pbFileBuf,WEBRTC_FRAME_BUF_MAX_LEN, &iHeaderLen);
     iWriteLen=m_cMediaHandle.FrameToContainer(&m_tPushFrameInfo, STREAM_TYPE_FLV_STREAM,m_pbFileBuf,WEBRTC_FRAME_BUF_MAX_LEN, &iHeaderLen);
     if(iWriteLen < 0)
@@ -937,7 +942,7 @@ int WebRtcSession::ParseRtpData(char * i_acDataBuf,int i_iDataLen)
     }
     
 	WEBRTC_LOGD2(m_iLogID,"RecvData %p,iFrameLen %d \r\n",m_tPushFrameInfo.pbFrameStartPos,m_tPushFrameInfo.iFrameLen);//iFrameLen指向裸流数据长度，可保存为文件
-    return iRet;
+    return m_tPushFrameInfo.iFrameLen;
 }
 
 /*****************************************************************************
