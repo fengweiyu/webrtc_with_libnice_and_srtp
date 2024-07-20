@@ -458,7 +458,7 @@ int WebRtcSession::HandleRemoteSDP()
             cJSON_Delete(ptJson);
         }
     }
-    WEBRTC_LOGD2(m_iLogID,"HandleRemoteSDP %d,m_iPullVideoFrameRate %d,%s",iRet,m_iPullVideoFrameRate,m_strReqBody.c_str());
+    WEBRTC_LOGD3(m_iLogID,"HandleRemoteSDP %d,m_iPullVideoFrameRate %d,%s",iRet,m_iPullVideoFrameRate,m_strReqBody.c_str());
     if(iRet < 0)
     {
         WEBRTC_LOGE2(m_iLogID,"HandleRemoteSDP m_strReqBody err %s",m_strReqBody.c_str());
