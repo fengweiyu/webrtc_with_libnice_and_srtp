@@ -436,7 +436,10 @@
 								}).catch(e => {
 								log( e);
 							});
-		                }
+		                }else {// 连接出现问题，处理断开连接的逻辑
+                            console.log('NegotiateSDP err,code:'+xhr.status+' msg:'+xhr.statusText);
+                            alert('NegotiateSDP err,code:'+xhr.status+' msg:'+xhr.statusText);
+                        }
 		            }
 		         }
 		xhr.open("POST",playUrl,true);
@@ -478,7 +481,10 @@
 								}).catch(e => {
 								log( e);
 							});
-		                }
+		                }else {// 连接出现问题，处理断开连接的逻辑
+                            console.log('TalkNegotiateSDP err,code:'+xhr.status+' msg:'+xhr.statusText);
+                            alert('TalkNegotiateSDP err,code:'+xhr.status+' msg:'+xhr.statusText);
+                        }
 		            }
 		         }
 		xhrTalk.open("POST",playUrl,true);
@@ -503,6 +509,7 @@
 				} else {
 					// 连接出现问题，处理断开连接的逻辑
 					console.log('PlayStatus err,code:'+xhr.status+' msg:'+xhr.statusText);
+                    alert('PlayStatus err,code:'+xhr.status+' msg:'+xhr.statusText);
 				}
 			}
    	 	};
@@ -521,6 +528,7 @@
 				} else {
 					// 连接出现问题，处理断开连接的逻辑sendTalkHeartbeat
 					console.log('TalkStatus err,code:'+xhr.status+' msg:'+xhr.statusText);
+                    alert('TalkStatus err,code:'+xhr.status+' msg:'+xhr.statusText);
 				}
 			}
    	 	};
@@ -547,6 +555,7 @@
 				} else {
 					// 连接出现问题，处理断开连接的逻辑sendTalkHeartbeat
 					console.log('GetPlayUrl failed');
+                    alert('GetPlayUrl err,code:'+xhr.status+' msg:'+xhr.statusText);
 				}
 			}
    	 	};
@@ -572,6 +581,7 @@
 				} else {
 					// 连接出现问题，处理断开连接的逻辑sendTalkHeartbeat
 					console.log('talkUrlInput failed');
+                    alert('GetTalkUrl err,code:'+xhr.status+' msg:'+xhr.statusText);
 				}
 			}
    	 	};
