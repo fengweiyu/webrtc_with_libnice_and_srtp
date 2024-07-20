@@ -15,6 +15,7 @@
 
 #ifdef MEDIA_SEVER_TYPE_WEBRTC
 #include "XLog.h"
+#define  WEBRTC_LOGD3(val,...)     logd2(WEBRTC,WEBRTC) << lkv(ClientPort, val) << lnformat(WEBRTC,10240,__VA_ARGS__) << lend;printf(__VA_ARGS__)
 #define  WEBRTC_LOGW2(val,...)     logi2(WEBRTC,WEBRTC) << lkv(ClientPort, val) << lformat(WEBRTC,__VA_ARGS__) << lend;printf(__VA_ARGS__)
 #define  WEBRTC_LOGE2(val,...)     loge2(WEBRTC,WEBRTC) << lkv(ClientPort, val) << lformat(WEBRTC,__VA_ARGS__) << lend;printf(__VA_ARGS__)
 #define  WEBRTC_LOGD2(val,...)     logd2(WEBRTC,WEBRTC) << lkv(ClientPort, val) << lformat(WEBRTC,__VA_ARGS__) << lend;printf(__VA_ARGS__)

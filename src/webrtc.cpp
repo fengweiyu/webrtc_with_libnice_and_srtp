@@ -2172,10 +2172,10 @@ int WebRtcAnswer::HandleRemoteSDP(const char * i_strSDP,int i_iVideoPos,int i_iA
     memset(atMatch,0,sizeof(atMatch));
     if(REG_NOERROR != this->Regex(strCandidatePatten,(char *)strSDP.c_str(),atMatch))
     {
-		WEBRTC_LOGD("HandleRemoteSDP exit ,%s\r\n",strSDP.c_str());
+		WEBRTC_LOGD3(iVideoPos,"HandleRemoteSDP exit ,%s\r\n",strSDP.c_str());
 		return 0;//没找到不符合libnice处理的Candidate，则无需处理
     }
-    WEBRTC_LOGD("HandleRemoteSDP ,%s\r\n",strSDP.c_str());
+    WEBRTC_LOGD3(iVideoPos,"HandleRemoteSDP ,%s\r\n",strSDP.c_str());
     iVideoPos=i_iVideoPos;
     iAudioPos=i_iAudioPos;
     if((int)(iAudioPos-iVideoPos)>0)
@@ -2253,7 +2253,7 @@ int WebRtcAnswer::HandleRemoteSDP(const char * i_strSDP,int i_iVideoPos,int i_iA
         o_strHandledSDP->append(strAudioSDP.c_str());
         o_strHandledSDP->append(strVideoSDP.c_str());
     }
-    WEBRTC_LOGD("o_strHandledSDP,%s\r\n",o_strHandledSDP->c_str());
+    WEBRTC_LOGD3(iAudioPos,"o_strHandledSDP,%s\r\n",o_strHandledSDP->c_str());
     return 0;
 }
 
