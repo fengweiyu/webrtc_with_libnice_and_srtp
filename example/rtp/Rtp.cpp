@@ -621,7 +621,7 @@ int Rtp::ParseRtpPacket(unsigned char *i_pbPacketBuf,int i_iPacketLen,T_MediaFra
     }
     if(iFrameBufLen<=0)
     {
-        return -1;
+        return 0;//0 need more data
     }
     o_ptFrame->iFrameBufLen+=iFrameBufLen;//处理一帧 10 ms 80长度的帧合并成160的帧长(放外层处理也可以)
     switch (tParam.ePacketType)
@@ -631,7 +631,7 @@ int Rtp::ParseRtpPacket(unsigned char *i_pbPacketBuf,int i_iPacketLen,T_MediaFra
             o_ptFrame->eEncType=MEDIA_ENCODE_TYPE_G711A;
             o_ptFrame->dwTimeStamp=tParam.dwTimestamp;///8;//*1000/8000先固定，后续优化为可变(外层处理)
             o_ptFrame->eFrameType=MEDIA_FRAME_TYPE_AUDIO_FRAME;
-            iRet = 0;
+            iRet = iFrameBufLen;
             break;
         }
         case RTP_PACKET_TYPE_G711U:
@@ -639,7 +639,7 @@ int Rtp::ParseRtpPacket(unsigned char *i_pbPacketBuf,int i_iPacketLen,T_MediaFra
             o_ptFrame->eEncType=MEDIA_ENCODE_TYPE_G711U;
             o_ptFrame->dwTimeStamp=tParam.dwTimestamp;///8;
             o_ptFrame->eFrameType=MEDIA_FRAME_TYPE_AUDIO_FRAME;
-            iRet = 0;
+            iRet = iFrameBufLen;
             break;
         }
         case RTP_PACKET_TYPE_H264:
@@ -667,11 +667,12 @@ int Rtp::ParseRtpPacket(unsigned char *i_pbPacketBuf,int i_iPacketLen,T_MediaFra
                     break;
                 }
             }
-            iRet = 0;
+            iRet = iFrameBufLen;
             break;
         }
         default :
         {
+            iRet = iFrameBufLen;
             RTP_LOGE("ParseRtpPacket.ePacketType err %d\r\n",tParam.ePacketType);
             break;
         }
