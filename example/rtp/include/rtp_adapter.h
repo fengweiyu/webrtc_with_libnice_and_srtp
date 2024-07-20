@@ -21,10 +21,11 @@
 #endif
 
 #ifdef MEDIA_SEVER_TYPE_WEBRTC //0
-#define  RTP_LOGW(...)     logi(MediaHandle) << lformat(MediaHandle,__VA_ARGS__) << lend 
-#define  RTP_LOGE(...)     loge(MediaHandle) << lformat(MediaHandle,__VA_ARGS__) << lend
-#define  RTP_LOGD(...)     logd(MediaHandle) << lformat(MediaHandle,__VA_ARGS__) << lend
-#define  RTP_LOGI(...)     logi(MediaHandle) << lformat(MediaHandle,__VA_ARGS__) << lend
+#include "XLog.h"
+#define  RTP_LOGW(...)     logw2(WEBRTC,MEDIA)<< lformat(RTP,__VA_ARGS__) << lend;printf(__VA_ARGS__)
+#define  RTP_LOGE(...)     loge2(WEBRTC,MEDIA)<< lformat(RTP,__VA_ARGS__) << lend;printf(__VA_ARGS__)
+#define  RTP_LOGD(...)     logd2(WEBRTC,MEDIA)<< lformat(RTP,__VA_ARGS__) << lend;printf(__VA_ARGS__)
+#define  RTP_LOGI(...)     logi2(WEBRTC,MEDIA) << lformat(RTP,__VA_ARGS__) << lend;printf(__VA_ARGS__)
 #else
 #define  RTP_LOGW(...)     printf(__VA_ARGS__)
 #define  RTP_LOGE(...)     printf(__VA_ARGS__)

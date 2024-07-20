@@ -457,7 +457,7 @@ int Rtp :: GetFrame(T_MediaFrameInfo *m_ptFrame)
     m_ptFrame->iFrameBufLen -= m_ptFrame->iFrameProcessedLen;
     if(m_ptFrame->iFrameProcessedLen>0 && m_ptFrame->iFrameBufLen>0)//每次都是要处理完
     {//出现此类情况要注意看日志，不靠返回值区分(情况)
-        RTP_LOGE("Rtp::GetFrame err %d,eEncType%d,eFrameType%d,dwNaluCount%d,iFrameLen%d,%d,%d\r\n",m_ptFrame->eStreamType,m_ptFrame->eEncType,
+        RTP_LOGW("Rtp::GetFrame warn %d,eEncType%d,eFrameType%d,dwNaluCount%d,iFrameLen%d,%d,%d\r\n",m_ptFrame->eStreamType,m_ptFrame->eEncType,
         m_ptFrame->eFrameType,m_ptFrame->dwNaluCount,m_ptFrame->iFrameLen,m_ptFrame->iFrameProcessedLen,m_ptFrame->iFrameBufLen);
         m_ptFrame->iFrameBufLen=0;//剩余的数据要丢掉，否则重组数据是使用ptFrame->pbFrameBuf+ptFrame->iFrameBufLen会保存这个垃圾数据继续处理从而导致(后续)的处理出错
         //return 0;//垃圾数据已经丢掉，可返回0
