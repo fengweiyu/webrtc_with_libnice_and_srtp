@@ -273,7 +273,7 @@
 							parameters.degradationPreference="maintain-framerate";
 							//parameters.encodings[0].maxTemporalLayer = 2;// 属性设置为2，您可以将I帧间隔设置为50
 							//parameters.encodings[0].maxKeyFrameDistance=60;
-							parameters.encodings[0].maxFramerate = 30; 
+							parameters.encodings[0].maxFramerate = frameRate;//30
 							// 设置最大比特率为500000 bps（即1000kbps）
 							parameters.encodings[0].maxBitrate = 200000;
 							// 应用更新的编码参数
@@ -397,7 +397,11 @@
 								}).catch(e => {
 								log( e);
 							});
-		                }
+		                }else {
+							// 连接出现问题，处理断开连接的逻辑sendTalkHeartbeat
+							console.log('TalkNegotiateSDP err,code:'+xhr.status+' msg:'+xhr.statusText);
+							alert('TalkNegotiateSDP err,code:'+xhr.status+' msg:'+xhr.statusText);
+						}
 		            }
 		         }
 		xhrTalk.open("POST",playUrl,true);
@@ -449,7 +453,8 @@
 					talkUrlInput.value = jsonstr.retMsg;
 				} else {
 					// 连接出现问题，处理断开连接的逻辑sendTalkHeartbeat
-					console.log('talkUrlInput failed');
+					console.log('GetTalkUrl err,code:'+xhr.status+' msg:'+xhr.statusText);
+					alert('GetTalkUrl err,code:'+xhr.status+' msg:'+xhr.statusText);
 				}
 			}
    	 	};
