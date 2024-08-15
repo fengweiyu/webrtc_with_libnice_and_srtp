@@ -29,6 +29,8 @@
     <ClCompile Include="..\..\..\..\src\MediaHandle.cpp" />
     <ClCompile Include="..\..\..\..\src\RawAudioHandle.cpp" />
     <ClCompile Include="..\..\..\..\src\RawVideoHandle.cpp" />
+    <ClCompile Include="..\..\..\..\src\TS\TsInterface.cpp" />
+    <ClCompile Include="..\..\..\..\src\TS\TsPack.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\src\FLV\FlvHandle.h" />
@@ -40,6 +42,8 @@
     <ClInclude Include="..\..\..\..\src\FMP4\include\FMP4HandleInterface.h" />
     <ClInclude Include="..\..\..\..\src\RawAudioHandle.h" />
     <ClInclude Include="..\..\..\..\src\RawVideoHandle.h" />
+    <ClInclude Include="..\..\..\..\src\TS\include\TsInterface.h" />
+    <ClInclude Include="..\..\..\..\src\TS\TsPack.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
@@ -95,14 +99,14 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>..\..\</OutDir>
+    <OutDir>$(ProjectDir)..\..\..\..\build\win\x86\lib</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>..\..\$(Platform)\</OutDir>
+    <OutDir>$(ProjectDir)..\..\..\..\build\win\x64\lib</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -115,7 +119,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>..\..\..\..\src\FLV;..\..\..\..\src\FLV\include;..\..\..\..\src\FMP4\include;..\..\..\..\src\FMP4;..\..\..\..\src\include;..\..\..\..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\..\src\include;..\..\..\..\src\;..\..\..\..\src\FMP4\include;..\..\..\..\src\FMP4;..\..\..\..\src\FLV\include;..\..\..\..\src\FLV;..\..\..\..\src\TS\include;..\..\..\..\src\TS;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -150,7 +154,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>..\..\..\..\src\include;..\..\..\..\src\;..\..\..\..\src\FMP4\include;..\..\..\..\src\FMP4;..\..\..\..\src\FLV\include;..\..\..\..\src\FLV;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\..\src\include;..\..\..\..\src\;..\..\..\..\src\FMP4\include;..\..\..\..\src\FMP4;..\..\..\..\src\FLV\include;..\..\..\..\src\FLV;..\..\..\..\src\TS\include;..\..\..\..\src\TS;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>

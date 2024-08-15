@@ -24,6 +24,12 @@
     <Filter Include="src\FMP4\include">
       <UniqueIdentifier>{7b70b59a-c40c-451e-9372-4e0c13c61a85}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\TS">
+      <UniqueIdentifier>{02811396-2f5d-4191-9b9d-2ba0ab483147}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\TS\include">
+      <UniqueIdentifier>{fea5836a-979b-4eea-9a33-e44e72031730}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\..\src\MediaHandle.cpp">
@@ -56,6 +62,12 @@
     <ClCompile Include="..\..\..\..\src\FLV\FlvParseHandle.cpp">
       <Filter>src\FLV</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\..\src\TS\TsInterface.cpp">
+      <Filter>src\TS</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\TS\TsPack.cpp">
+      <Filter>src\TS</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\src\RawAudioHandle.h">
@@ -84,6 +96,12 @@
     </ClInclude>
     <ClInclude Include="..\..\..\..\src\FLV\FlvParseHandle.h">
       <Filter>src\FLV</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\src\TS\TsPack.h">
+      <Filter>src\TS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\src\TS\include\TsInterface.h">
+      <Filter>src\TS\include</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
