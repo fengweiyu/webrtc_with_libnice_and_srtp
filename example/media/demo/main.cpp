@@ -37,7 +37,7 @@ int main(int argc, char* argv[])
     if(argc !=3)
     {
         PrintUsage(argv[0]);
-        return proc("H264AAC.flv","H264AAC.mp4");//proc("H264G711A.flv","H264G711A.mp4");H264AAC
+        return proc("H264AAC.flv","H264AAC.ts");//proc("H264G711A.flv","H264G711A.mp4");H264AAC
     }
     return proc(argv[1],argv[2]);
 }
@@ -59,7 +59,26 @@ static int proc(const char * i_strSrcFilePath,const char *i_strDstFilePath)
 	FILE  *pMediaFile=NULL;
 	int iRet = -1,iWriteLen=0;
 	int iHeaderLen=0;
-	
+    E_StreamType eStreamType=STREAM_TYPE_UNKNOW;
+
+    if(NULL != strstr(i_strDstFilePath,".ts"))
+    {
+        eStreamType=STREAM_TYPE_TS_STREAM;
+    }
+    else if(NULL != strstr(i_strDstFilePath,".mp4"))
+    {
+        eStreamType=STREAM_TYPE_FMP4_STREAM;
+    }
+    else if(NULL != strstr(i_strDstFilePath,".flv"))
+    {
+        eStreamType=STREAM_TYPE_ENHANCED_FLV_STREAM;
+    }
+    else
+    {
+        printf("i_strDstFilePath %s err\r\n",i_strDstFilePath);
+        return -1;
+    }
+
     cMediaHandle.Init((char *)i_strSrcFilePath);
     do
     {
@@ -95,7 +114,7 @@ static int proc(const char * i_strSrcFilePath,const char *i_strDstFilePath)
                 printf("m_tFileFrameInfo.iFrameLen <= 0 %s\r\n",i_strDstFilePath);
                 break;
             } 
-            iWriteLen = cMediaHandle.FrameToContainer(&m_tFileFrameInfo,STREAM_TYPE_FMP4_STREAM,pbFileBuf,MEDIA_FILE_BUF_MAX_LEN,&iHeaderLen);
+            iWriteLen = cMediaHandle.FrameToContainer(&m_tFileFrameInfo,eStreamType,pbFileBuf,MEDIA_FILE_BUF_MAX_LEN,&iHeaderLen);
             if(iWriteLen < 0)
             {
                 printf("FrameToContainer err iWriteLen %d\r\n",iWriteLen);
