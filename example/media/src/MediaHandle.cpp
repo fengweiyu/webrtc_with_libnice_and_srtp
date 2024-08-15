@@ -17,6 +17,7 @@
 #include "RawAudioHandle.h"
 #include "FlvHandleInterface.h"
 #include "FMP4HandleInterface.h"
+#include "TsInterface.h"
 
 using std::cout;//ะ่าช<iostream>
 using std::endl;
@@ -463,6 +464,14 @@ int MediaHandle::FrameToContainer(T_MediaFrameInfo *i_ptFrame,E_StreamType i_eSt
     
     switch(i_eStreamType)
     {
+        case STREAM_TYPE_TS_STREAM :
+        {
+            if(NULL == m_pMediaPackHandle)
+            {
+                m_pMediaPackHandle=new TsInterface();
+            }
+            break;
+        }
         case STREAM_TYPE_FMP4_STREAM :
         {
             if(NULL == m_pMediaPackHandle)
