@@ -378,7 +378,7 @@ int WebRTC::HandleRecvSrtp(char * i_acSrtpBuf,int i_iSrtpBufLen,DtlsOnlyHandshak
         bPayload = (unsigned char)((unsigned char)i_acSrtpBuf[1]&0x7f);
         if(!IsSrtcp(i_acSrtpBuf))
         {
-            WEBRTC_LOGD("pSrtp->IsRtcp   %#x,%d\r\n",bPayload,i_iSrtpBufLen);   
+            WEBRTC_LOGD("Is not Rtp and Rtcp %#x,%d\r\n",bPayload,i_iSrtpBufLen);   
             return iRet;
         }
     }
@@ -439,8 +439,17 @@ int WebRTC::HandleRecvSrtp(char * i_acSrtpBuf,int i_iSrtpBufLen,DtlsOnlyHandshak
     if(IsSrtcp(i_acSrtpBuf))
     {//srtcp
         //WEBRTC_LOGD("UnProtectRtcp->UnProtectRtcp %d,bPayload %d,Len %d,pt %d\r\n",iRet,bPayload,i_iSrtpBufLen,(unsigned char)i_acSrtpBuf[1]);
-        //iRet = pSrtp->UnProtectRtcp(i_acSrtpBuf,&i_iSrtpBufLen);//暂不解析rtcp，有问题易奔溃
+        iRet = pSrtp->UnProtectRtcp(i_acSrtpBuf,&i_iSrtpBufLen);//
+        if(0 != iRet)
+        {
+            WEBRTC_LOGE("pSrtp->UnProtectRtcp err %d\r\n",iRet);
+            return iRet;
+        }
         //WEBRTC_LOGD("pSrtp->UnProtectRtcp %d,bPayload %d,Len %d,pt %d\r\n",iRet,bPayload,i_iSrtpBufLen,(unsigned char)i_acSrtpBuf[1]);
+        if(NULL != m_tWebRtcCb.RecvRtcpData && NULL != m_pWebRtcCbObj)
+        {
+            return m_tWebRtcCb.RecvRtcpData(i_acSrtpBuf,i_iSrtpBufLen,m_pWebRtcCbObj);//
+        }
         return iRet;
     }
     iRet = pSrtp->UnProtectRtp(i_acSrtpBuf,&i_iSrtpBufLen);
@@ -492,8 +501,8 @@ int WebRTC::SendProtectedVideoRtp(char * i_acRtpBuf,int i_iRtpBufLen,int i_iRtpB
             WEBRTC_LOGE("m_Srtp.ProtectRtp GetLocalPolicyInfo err \r\n",iRet);
             return iRet;
         }
-        m_pVideoSrtp->Create(tPolicyInfo.key, sizeof(tPolicyInfo.key), SRTP_SSRC_PROTECT);
-        m_iVideoSrtpCreatedFlag = 1;
+        if(0 == m_pVideoSrtp->Create(tPolicyInfo.key, sizeof(tPolicyInfo.key), SRTP_SSRC_PROTECT))
+            m_iVideoSrtpCreatedFlag = 1;
     }
     iProtectRtpLen = i_iRtpBufLen;
     iRet=m_pVideoSrtp->ProtectRtp(i_acRtpBuf,&iProtectRtpLen,i_iRtpBufLen);
@@ -536,8 +545,8 @@ int WebRTC::SendProtectedAudioRtp(char * i_acRtpBuf,int i_iRtpBufLen,int i_iRtpB
     {
         memset(&tPolicyInfo,0,sizeof(T_PolicyInfo));
         m_pAudioDtlsOnlyHandshake->GetLocalPolicyInfo(&tPolicyInfo);
-        m_pAudioSrtp->Create(tPolicyInfo.key, sizeof(tPolicyInfo.key), SRTP_SSRC_PROTECT);
-        m_iAudioSrtpCreatedFlag = 1;
+        if(0 == m_pAudioSrtp->Create(tPolicyInfo.key, sizeof(tPolicyInfo.key), SRTP_SSRC_PROTECT))
+            m_iAudioSrtpCreatedFlag = 1;
     }
     iProtectRtpLen = i_iRtpBufLen;
     iRet=m_pAudioSrtp->ProtectRtp(i_acRtpBuf,&iProtectRtpLen,i_iRtpBufLen);
