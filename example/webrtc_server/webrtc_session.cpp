@@ -51,6 +51,7 @@ WebRtcSession :: WebRtcSession(char * i_strStunAddr,unsigned int i_dwStunPort,T_
 
     memset(&tWebRtcCb,0,sizeof(T_WebRtcCb));
     tWebRtcCb.RecvRtpData = WebRtcSession::RecvRtpData;
+    tWebRtcCb.RecvRtcpData = WebRtcSession::RecvRtcpData;
     tWebRtcCb.RecvStopMsg = WebRtcSession::RecvClientStopMsg;
     tWebRtcCb.IsRtp = WebRtcSession::IsRtpCb;
     tWebRtcCb.IsRtcp = NULL;
@@ -328,7 +329,8 @@ int WebRtcSession::HandleRequest(const char * strURL)
 
 /*****************************************************************************
 -Fuction        : TestProc
--Description    : 
+-Description    : 如果是实时预览(直播)，如果到达的帧的时间戳不够均匀不够线性,
+则可使用到达时间作为时间戳来保证实时性流畅性
 -Input          : 
 -Output         : 
 -Return         : len
@@ -752,8 +754,8 @@ int WebRtcSession::GetSupportedVideoInfoFromSDP(const char * i_strVideoFormatNam
             bRemoteConstraintFlag =(unsigned char)((m_tWebRtcSdpMediaInfo.tVideoInfos[i].dwProfileLevelId>>8)&0xff);//0x64 high ,0x4d main,0x42 base
             bRemoteLevel =(unsigned char)((m_tWebRtcSdpMediaInfo.tVideoInfos[i].dwProfileLevelId)&0xff);//
             //WEBRTC_LOGD2(m_iLogID,"i_dwProfileLevelId %#x,%#x,%#x,%#x,%#x,%#x,\r\n",bLocalProfile,bLocalConstraintFlag,bLocalLevel,bRemoteProfile,bRemoteConstraintFlag,bRemoteLevel);
-            if(bLocalProfile!=bRemoteProfile)
-            {
+            if(bLocalProfile!=bRemoteProfile && string::npos == m_strReqURL.find("comms_sdk_version=14"))
+            {//"comms_sdk_version=14" 谷歌音箱只有baseline，但可以播放mainprofile所以不过滤，
                 continue;
             }
             if(bLocalLevel>bRemoteLevel)
@@ -943,6 +945,74 @@ int WebRtcSession::ParseRtpData(char * i_acDataBuf,int i_iDataLen)
     
 	WEBRTC_LOGD2(m_iLogID,"RecvData %p,iFrameLen %d \r\n",m_tPushFrameInfo.pbFrameStartPos,m_tPushFrameInfo.iFrameLen);//iFrameLen指向裸流数据长度，可保存为文件
     return m_tPushFrameInfo.iFrameLen;
+}
+/*****************************************************************************
+-Fuction        : ParseRtcpData
+-Description    : 
+-Input          : 
+-Output         : 
+-Return         : <0 err,0 need more data,>0 success
+* Modify Date     Version        Author           Modification
+* -----------------------------------------------
+* 2023/09/21      V1.0.0         Yu Weifeng       Created
+******************************************************************************/
+int WebRtcSession::ParseRtcpData(unsigned char * i_abDataBuf,int i_iDataLen)
+{
+    int iRet = -1;
+
+    
+    if(NULL == i_abDataBuf ||i_iDataLen<2)
+    {
+        WEBRTC_LOGE2(m_iLogID,"ParseRtcpData NULL \r\n");
+        return iRet;
+    }
+
+    switch(i_abDataBuf[1])
+    {
+        case 200:
+        {
+            WEBRTC_LOGD2(m_iLogID,"recv Rtcp SR ,len %d\r\n",i_iDataLen);
+            break;
+        }
+        case 201:
+        {
+            WEBRTC_LOGD2(m_iLogID,"recv Rtcp RR ,len %d\r\n",i_iDataLen);
+            break;
+        }
+        case 202:
+        {
+            WEBRTC_LOGD2(m_iLogID,"recv Rtcp SDES ,len %d\r\n",i_iDataLen);
+            break;
+        }
+        case 203:
+        {
+            WEBRTC_LOGD2(m_iLogID,"recv Rtcp BYE ,len %d\r\n",i_iDataLen);
+            break;
+        }
+        case 204:
+        {
+            WEBRTC_LOGD2(m_iLogID,"recv Rtcp APP ,len %d\r\n",i_iDataLen);
+            break;
+        }
+        case 205:
+        {
+            WEBRTC_LOGD2(m_iLogID,"recv Rtcp RTPFB fmt%d,len%d\r\n",i_abDataBuf[0]&0x1f,i_iDataLen);
+            break;
+        }
+        case 206:
+        {
+            WEBRTC_LOGD2(m_iLogID,"recv Rtcp PSFB ,len %d\r\n",i_iDataLen);
+            break;
+        }
+        default:
+        {
+            WEBRTC_LOGD2(m_iLogID,"ParseRtcpData type %d,Len %d \r\n",i_abDataBuf[1],i_iDataLen);
+            break;
+        }
+    }
+
+    //m_iLastRecvRtcpTime = OS::GetSecondCount();//可做心跳机制，20s没收到rtcp则认为超时断开
+    return 0;
 }
 
 /*****************************************************************************
@@ -1184,7 +1254,7 @@ int WebRtcSession::IsRtp(char * i_acDataBuf,int i_iDataLen)
     return 0;
 }
 /*****************************************************************************
--Fuction        : PushRtpData
+-Fuction        : RecvRtpData
 -Description    : 
 -Input          : 
 -Output         : 
@@ -1205,6 +1275,29 @@ int WebRtcSession::RecvRtpData(char * i_acDataBuf,int i_iDataLen,void *i_pIoHand
     WebRtcSession *pWebRtcSession = (WebRtcSession *)i_pIoHandle;
     
     return pWebRtcSession->ParseRtpData(i_acDataBuf,i_iDataLen);
+}
+/*****************************************************************************
+-Fuction        : RecvRtcpData
+-Description    : 
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version        Author           Modification
+* -----------------------------------------------
+* 2023/09/21      V1.0.0         Yu Weifeng       Created
+******************************************************************************/
+int WebRtcSession::RecvRtcpData(char * i_acDataBuf,int i_iDataLen,void *i_pIoHandle)
+{
+    int iRet = -1;
+    
+    if(NULL == i_pIoHandle ||NULL == i_acDataBuf)
+    {
+        WEBRTC_LOGE("PushRtcpData NULL \r\n");
+    }
+	//WEBRTC_LOGD("RecvRtcpData %d \r\n",i_iDataLen);
+    WebRtcSession *pWebRtcSession = (WebRtcSession *)i_pIoHandle;
+    
+    return pWebRtcSession->ParseRtcpData(i_acDataBuf,i_iDataLen);
 }
 
 /*****************************************************************************

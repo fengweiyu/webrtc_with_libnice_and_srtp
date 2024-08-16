@@ -54,6 +54,8 @@ private:
     thread * m_pHttpSessionProc;
 	int m_iHttpSessionProcFlag;
 	int m_iExitProcFlag;
+
+    int m_iRecvGetStatusReq;//0 ·ñ£¬1ÊÇ
 };
 
 #endif

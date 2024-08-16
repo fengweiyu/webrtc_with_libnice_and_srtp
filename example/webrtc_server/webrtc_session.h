@@ -40,11 +40,13 @@ public:
 	virtual ~WebRtcSession();
     int SetReqData(const char *i_strReqURL,const char *i_strReqBody);
     int ParseRtpData(char * i_acDataBuf,int i_iDataLen);
+    int ParseRtcpData(char * i_acDataBuf,int i_iDataLen);
     int StopSession(int i_iError);
     
 	string * m_pFileName;
 private:
     static int RecvRtpData(char * i_acDataBuf,int i_iDataLen,void *i_pIoHandle);
+    static int RecvRtcpData(char * i_acDataBuf,int i_iDataLen,void *i_pIoHandle);
     static int RecvClientStopMsg(void *i_pIoHandle);
     static int IsRtpCb(char * i_acDataBuf,int i_iDataLen,void *i_pIoHandle);
     

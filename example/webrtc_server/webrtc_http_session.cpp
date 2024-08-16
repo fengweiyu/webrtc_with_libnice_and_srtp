@@ -34,6 +34,7 @@ WebRtcHttpSession :: WebRtcHttpSession(int i_iClientSocketFd,char * i_strStunAdd
 
     memcpy(&m_tWebRtcHttpSessionCb,&tWebRtcHttpSessionCb,sizeof(T_WebRtcHttpSessionCb));
     
+    m_iRecvGetStatusReq=0;
     m_iExitProcFlag = 1;
     m_iHttpSessionProcFlag = 0;
     m_pHttpSessionProc = new thread(&WebRtcHttpSession::Proc, this);
@@ -61,11 +62,25 @@ WebRtcHttpSession :: ~WebRtcHttpSession()
         delete m_pHttpSessionProc;
         m_pHttpSessionProc = NULL;
     }
-    if(NULL!= m_pWebRtcSession)
-    {
-        delete m_pWebRtcSession;
-        m_pWebRtcSession = NULL;
+    if(0 == m_iRecvGetStatusReq)//socket 断开时
+    {//没收到get请求来维持长链接，则这里不删除，由内部超时逻辑删除
+        if(NULL!= m_pWebRtcSession)
+        {
+            delete m_pWebRtcSession;//当前无法自己删除自己，所以这里还是删除
+            m_pWebRtcSession = NULL;
+            WEBRTC_LOGW("HttpSession OnDisConnect \r\n");
+        }
     }
+    else
+    {//收到get请求来维持长链接，则链接断了则意味着会话结束了，则这里要退出删除
+        if(NULL!= m_pWebRtcSession)
+        {
+            delete m_pWebRtcSession;
+            m_pWebRtcSession = NULL;
+            WEBRTC_LOGW("m_pWebRtcSession StopSession\r\n");
+        }
+    }
+    
     WEBRTC_LOGW("~WebRtcHttpSession exit\r\n");
 }
 
@@ -223,7 +238,7 @@ int WebRtcHttpSession :: HandleHttpReq(T_HttpReqPacket *i_ptHttpReqPacket,char *
     if(0 == strcmp(i_ptHttpReqPacket->strMethod,HTTP_METHOD_POST))
     {
         if(NULL != strstr(i_ptHttpReqPacket->strURL,".webrtc"))
-        {
+        {//谷歌音箱屏的webrtc会在url后面带参数，.webrtc?comms_sdk_version=14&hl=en-GB&cast_version=3.73.411796
             if(NULL != m_pWebRtcSession)
             {
                 WEBRTC_LOGE("unsupport repeat req HTTP_METHOD_POST %s\r\n",i_ptHttpReqPacket->strURL);
@@ -239,6 +254,7 @@ int WebRtcHttpSession :: HandleHttpReq(T_HttpReqPacket *i_ptHttpReqPacket,char *
         {
             WEBRTC_LOGW("HandleHttpReq recv get status msg\r\n");
             iRet = 0;
+            m_iRecvGetStatusReq=1;
         }
         return iRet;
     }
