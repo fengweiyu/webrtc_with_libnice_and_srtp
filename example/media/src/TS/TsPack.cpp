@@ -504,6 +504,8 @@ int TsPack::FrameToTS(T_MediaFrameInfo * i_ptFrameInfo,int i_iVideoStreamType,in
             return iRet;
         }
         iDataLen+=iRet;
+        o_pbBuf[iDataLen] = 0; //payload_unit_start_indicator：值为1，psi里表示负载起始字节会有1个调整字节point_field，表示PSI Section的起始包
+        iDataLen++; //point_field为0
         iRet=GeneratePAT(o_pbBuf+iDataLen,i_dwMaxBufLen-iDataLen);
         if(iRet <= 0)
         {
@@ -527,6 +529,9 @@ int TsPack::FrameToTS(T_MediaFrameInfo * i_ptFrameInfo,int i_iVideoStreamType,in
         }
         iDataLen+=iRet;
         iLenPMT=iRet;
+        o_pbBuf[iDataLen] = 0; //payload_unit_start_indicator：值为1，psi里表示负载起始字节会有1个调整字节point_field，表示PSI Section的起始包
+        iDataLen++; //point_field为0
+        iLenPMT++;
         iRet=GeneratePMT(o_pbBuf+iDataLen,i_dwMaxBufLen-iDataLen,i_iVideoStreamType,i_iAudioStreamType,i_iEnableAudio);
         if(iRet <= 0)
         {
@@ -620,7 +625,7 @@ int TsPack::FrameToTS(T_MediaFrameInfo * i_ptFrameInfo,int i_iVideoStreamType,in
             }
             iDataLen+=iRet;
             iLenTsPES=iRet;
-            iRet=GetTsAdaptationField(iLenPES,i_ptFrameInfo->dwTimeStamp,0, o_pbBuf+iDataLen,i_dwMaxBufLen-iDataLen);
+            iRet=GetTsAdaptationField(iLenPES-iLenProcessedPES,i_ptFrameInfo->dwTimeStamp,0, o_pbBuf+iDataLen,i_dwMaxBufLen-iDataLen);
             if(iRet <= 0)
             {
                 MH_LOGE("GetTsAdaptationField err\r\n");
@@ -775,7 +780,7 @@ int TsPack::GetTsAdaptationField(int i_iLenPES,unsigned int i_dwTimeStamp,unsign
 	tTsAdaptationField.DiscontinutyIndicator= 0;
 	tTsAdaptationField.RandomAccessIndicator= 0;
 	tTsAdaptationField.ElementaryStreamPriorityIndicator= 0;
-	tTsAdaptationField.FlagPCR= 1;                                          //只用到这个
+	tTsAdaptationField.FlagPCR= i_bFlagPCR;                                          //只用到这个
 	tTsAdaptationField.FlagOPCR= 0;
 	tTsAdaptationField.SplicingPointFlag= 0;
 	tTsAdaptationField.TransportPrivateDataFlag= 0;
