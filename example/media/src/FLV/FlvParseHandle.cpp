@@ -46,6 +46,8 @@ FlvParseHandle::FlvParseHandle()
 {
     m_pbFrameBuf = new unsigned char [FLV_FRAME_BUF_MAX_LEN];
     m_iFrameBufMaxLen = FLV_FRAME_BUF_MAX_LEN;
+
+    m_iParseStarted=0;
 }
 /*****************************************************************************
 -Fuction		: ~H264Handle
@@ -89,14 +91,15 @@ int FlvParseHandle::GetFrameData(int i_iDataOffset,T_MediaFrameInfo *m_ptFrame)
         return iRet;
     }
 	
-    if(m_ptFrame->iFrameProcessedLen <= 0 && 0==i_iDataOffset)
-    {
+    if(0 == m_iParseStarted)//if(m_ptFrame->iFrameProcessedLen <= 0 && 0==i_iDataOffset)//如果外部不对ptFrame->iFrameProcessedLen清零，则可用该判定条件
+    {//使用标记判断是否已经解析过flv头，兼容ptFrame->iFrameProcessedLen外部会清零的情况
         iProcessedLen=this->FlvReadHeader(m_ptFrame->pbFrameBuf+i_iDataOffset,m_ptFrame->iFrameBufLen-i_iDataOffset);
         if(iProcessedLen <= 0)
         {
             MH_LOGE("FlvReadHeader err %d\r\n",iProcessedLen);
             return iRet;
         }
+        m_iParseStarted=1;
         return iProcessedLen;//返回到外层以便i_iDataOffset值得到变更
     }
     memset(&tFlvTag,0,sizeof(T_FlvTag));
@@ -1096,7 +1099,7 @@ int FlvParseHandle::FlvReadTag(unsigned char* i_pbBuf,unsigned int i_dwLen,T_Flv
     memset(&tFlvTagHeader,0,sizeof(T_FlvTagHeader));
 	if (FLV_TAG_HEADER_LEN != ParseFlvTagHeader(i_pbBuf, i_dwLen, &tFlvTagHeader))
     {
-        MH_LOGE("FlvReadTagHeader err %d \r\n", i_dwLen);
+        MH_LOGE("FlvReadTagHeader err %d ,%#x,%#x,%#x\r\n", i_dwLen,i_pbBuf[0],i_pbBuf[1],i_pbBuf[2]);
         return -1;
     }
 

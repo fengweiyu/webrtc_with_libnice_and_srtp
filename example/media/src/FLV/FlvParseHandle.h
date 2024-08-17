@@ -64,6 +64,8 @@ private:
 private:
     unsigned char *m_pbFrameBuf;//缓冲区
     int m_iFrameBufMaxLen;//缓冲区总大小
+
+    int m_iParseStarted;//0 否，1是
 };
 
 
