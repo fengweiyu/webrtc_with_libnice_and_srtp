@@ -24,6 +24,7 @@
 #define  WEBRTC_LOGD(...)     logd2(WEBRTC,WEBRTC) << lformat(WEBRTC,__VA_ARGS__) << lend;printf(__VA_ARGS__)
 #define  WEBRTC_LOGI(...)     logi2(WEBRTC,WEBRTC) << lformat(WEBRTC,__VA_ARGS__) << lend;printf(__VA_ARGS__)
 #else
+#define  WEBRTC_LOGD3(val,fmt,...)      printf("<%d>:"fmt,val,##__VA_ARGS__)
 #define  WEBRTC_LOGW2(val,fmt,...)      printf("<%d>:"fmt,val,##__VA_ARGS__)
 #define  WEBRTC_LOGE2(val,fmt,...)      printf("<%d>:"fmt,val,##__VA_ARGS__)
 #define  WEBRTC_LOGD2(val,fmt,...)      printf("<%d>:"fmt,val,##__VA_ARGS__)
