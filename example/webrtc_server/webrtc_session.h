@@ -40,7 +40,7 @@ public:
 	virtual ~WebRtcSession();
     int SetReqData(const char *i_strReqURL,const char *i_strReqBody);
     int ParseRtpData(char * i_acDataBuf,int i_iDataLen);
-    int ParseRtcpData(char * i_acDataBuf,int i_iDataLen);
+    int ParseRtcpData(unsigned char * i_abDataBuf,int i_iDataLen);
     int StopSession(int i_iError);
     
 	string * m_pFileName;

@@ -329,7 +329,7 @@ int WebRtcSession::HandleRequest(const char * strURL)
 
 /*****************************************************************************
 -Fuction        : TestProc
--Description    : 如果是实时预览(直播)，如果到达的帧的时间戳不够均匀不够线性,
+-Description    : 如果是实时预览(直播)，如果到达的帧的时间戳不够均匀不够线性(这种情况使用帧时间戳大概率会跳秒),
 则可使用到达时间作为时间戳来保证实时性流畅性
 -Input          : 
 -Output         : 
@@ -1297,7 +1297,7 @@ int WebRtcSession::RecvRtcpData(char * i_acDataBuf,int i_iDataLen,void *i_pIoHan
 	//WEBRTC_LOGD("RecvRtcpData %d \r\n",i_iDataLen);
     WebRtcSession *pWebRtcSession = (WebRtcSession *)i_pIoHandle;
     
-    return pWebRtcSession->ParseRtcpData(i_acDataBuf,i_iDataLen);
+    return pWebRtcSession->ParseRtcpData((unsigned char *)i_acDataBuf,i_iDataLen);
 }
 
 /*****************************************************************************
