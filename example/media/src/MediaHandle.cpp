@@ -330,6 +330,7 @@ int MediaHandle::GetFrame(T_MediaFrameInfo *m_ptFrame)
 {
     int iRet=FALSE;
     int iReadLen = 0;
+
     
     if(NULL == m_ptFrame)
     {
@@ -339,6 +340,12 @@ int MediaHandle::GetFrame(T_MediaFrameInfo *m_ptFrame)
     
     if(NULL != m_pMediaFile)
     {
+        int iFileSeekFlag = 0;
+        if(0 == m_ptFrame->iFrameProcessedLen)//兼容iFrameProcessedLen每次会清零的情况,
+        {//(为了将接收的部分帧数据重组为完整的一帧,故每次iFrameProcessedLen会清零)
+            iFileSeekFlag=1;//iFrameProcessedLen就变成每次处理的长度，则要从当前位置开始偏移(SEEK_CUR)
+        }//iFrameProcessedLen一直+=没被清零过，则要从文件开头开始偏移(SEEK_SET)
+        long dwPosition = ftell(m_pMediaFile);
         iReadLen = fread(m_ptFrame->pbFrameBuf, 1, m_ptFrame->iFrameBufMaxLen, m_pMediaFile);
         if(iReadLen <= 0)
         {
@@ -349,7 +356,15 @@ int MediaHandle::GetFrame(T_MediaFrameInfo *m_ptFrame)
         iRet = m_pMediaHandle->GetFrame(m_ptFrame);
         if(TRUE == iRet)
         {
-            fseek(m_pMediaFile,m_ptFrame->iFrameProcessedLen,SEEK_SET);
+            if(0 != iFileSeekFlag)
+            {//iFrameProcessedLen就变成每次处理的长度，则要从当前位置开始偏移(SEEK_CUR)
+                dwPosition+=m_ptFrame->iFrameProcessedLen;
+            }
+            else
+            {//iFrameProcessedLen一直+=没被清零过，则要从文件开头开始偏移(SEEK_SET)
+                dwPosition=m_ptFrame->iFrameProcessedLen;
+            }
+            fseek(m_pMediaFile,dwPosition,SEEK_SET);
             //cout<<"fseek m_pMediaFile "<<m_ptFrame->iFrameProcessedLen<<m_pMediaFile<<endl;
         }
         else
