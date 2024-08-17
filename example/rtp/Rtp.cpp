@@ -434,8 +434,10 @@ int Rtp :: SetRtpTypeInfo(T_RtpMediaInfo *i_ptRtpMediaInfo)
 }
 
 /*****************************************************************************
--Fuction		: ~Rtp
--Description	: ~Rtp
+-Fuction		: GetFrame
+-Description	: GetFrame函数和ParseRtpPacket函数中修改ptFrame->iFrameBufLen和
+ptFrame->iFrameProcessedLen相关的逻辑则可关闭(打开)
+将接收的部分帧数据重组为完整的一帧的功能
 -Input			: 
 -Output 		: 
 -Return 		: 
@@ -452,9 +454,9 @@ int Rtp :: GetFrame(T_MediaFrameInfo *m_ptFrame)
         RTP_LOGE("GetFrame NULL\r\n");
         return -1;
     }
-    m_ptFrame->iFrameProcessedLen=0;
-    iRet = m_pMediaHandle->GetFrame(m_ptFrame);
-    m_ptFrame->iFrameBufLen -= m_ptFrame->iFrameProcessedLen;
+    m_ptFrame->iFrameProcessedLen=0;//配合ParseRtpPacket函数中的o_ptFrame->iFrameBufLen,
+    iRet = m_pMediaHandle->GetFrame(m_ptFrame);//可以实现每次接收帧数据的一部分,然后重组成一个完整符合要求的帧,如:
+    m_ptFrame->iFrameBufLen -= m_ptFrame->iFrameProcessedLen;//处理一帧 10 ms 80长度的帧合并成160的帧长
     if(m_ptFrame->iFrameProcessedLen>0 && m_ptFrame->iFrameBufLen>0)//每次都是要处理完
     {//出现此类情况要注意看日志，不靠返回值区分(情况)
         RTP_LOGW("Rtp::GetFrame warn %d,eEncType%d,eFrameType%d,dwNaluCount%d,iFrameLen%d,%d,%d\r\n",m_ptFrame->eStreamType,m_ptFrame->eEncType,
@@ -588,7 +590,7 @@ int Rtp :: GetRtpPackets(T_MediaFrameInfo *m_ptFrame,unsigned char **o_ppbPacket
     return iPacketNum;
 }
 /*****************************************************************************
--Fuction		: Rtp
+-Fuction		: ParseRtpPacket
 -Description	: //
 -Input			: 
 -Output 		: 
