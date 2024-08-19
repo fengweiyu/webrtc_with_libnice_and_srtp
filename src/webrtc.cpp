@@ -1959,6 +1959,8 @@ int WebRtcAnswer::GetSdpVideoInfo(const char * i_strSDP,T_WebRtcSdpMediaInfo *o_
     unsigned short wPortNumForSDP=9;
     char *endptr;
 	char strMediaID[8];//0/mid
+	const char *strH265FmtpPatten="a=fmtp:([0-9]+) level-id=([0-9]+);profile-id=([0-9]+);tier-flag=([0-9]+);tx-mode=SRST";//a=fmtp:116 level-id=93;profile-id=1;tier-flag=0;tx-mode=SRST
+
 
     if (i_strSDP == NULL || NULL==o_ptSdpMediaInfo) 
     {
@@ -1980,15 +1982,15 @@ int WebRtcAnswer::GetSdpVideoInfo(const char * i_strSDP,T_WebRtcSdpMediaInfo *o_
 		WEBRTC_LOGD("Video iMediaID %s,%s\r\n",strFindRes.c_str(),strMediaID);
     }
     
-    strRtpMapPatten=".*a=rtpmap:([0-9]+) ([A-Za-z0-9]+)/([0-9]+).*";//a=rtpmap:96 VP8/90000
+    strRtpMapPatten=".*a=rtpmap:([0-9]+) ([A-Za-z0-9]+)/([0-9]+).*";//a=rtpmap:96 VP8/90000 
     strFmtpPatten="a=fmtp:([0-9]+) level-asymmetry-allowed=([0-9]+);packetization-mode=([0-9]+);profile-level-id=([A-Za-z0-9]+).*";//a=fmtp:127 level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=4d001f
     for(i =0;i<WEBRTC_SDP_MEDIA_INFO_MAX_NUM;i++)
     {
         memset(atMatch,0,sizeof(atMatch));
         strSubSDP.assign(strSDP.substr(iFmtpPos,strSDP.size() - iFmtpPos).c_str());
 		//WEBRTC_LOGD("strSubSDP.c_str() %s,%d\r\n",strSubSDP.c_str(),iFmtpPos);
-        if(REG_NOERROR != this->Regex(strFmtpPatten,(char *)strSubSDP.c_str(),atMatch))
-        {
+        if(REG_NOERROR != this->Regex(strFmtpPatten,(char *)strSubSDP.c_str(),atMatch) && REG_NOERROR != this->Regex(strH265FmtpPatten,(char *)strSubSDP.c_str(),atMatch))
+        {//H265暂时这么处理，因为只用到了bRtpPayloadType，后续再优化
             if(0==i)
             {
                 WEBRTC_LOGD("Regex strFmtpPatten %s,%s,break\r\n",strFmtpPatten,strSubSDP.c_str());
