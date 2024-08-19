@@ -25,10 +25,12 @@
 #include "rtp_adapter.h"
 
 #define WEBRTC_RTP_PAYLOAD_G711A     8//a=rtpmap:8 PCMA/8000 webrtc RTP_PAYLOAD_G711A(rfc规范中定义的值)
-#define WEBRTC_VIDEO_ENCODE_FORMAT_NAME "H264"
+#define WEBRTC_H264_ENCODE_FORMAT_NAME "H264"
 #define WEBRTC_H264_TIMESTAMP_FREQUENCY 90000
 #define WEBRTC_AUDIO_ENCODE_FORMAT_NAME "PCMA"
 #define WEBRTC_G711A_TIMESTAMP_FREQUENCY 8000
+#define WEBRTC_H265_ENCODE_FORMAT_NAME "H265"
+#define WEBRTC_H265_TIMESTAMP_FREQUENCY 90000
 #define WEBRTC_FRAME_BUF_MAX_LEN	(2*1024*1024) 
 
 /*****************************************************************************
@@ -507,7 +509,7 @@ int WebRtcSession::HandleMediaFrame(T_MediaFrameInfo * i_ptFrameInfo)
 
     if(0 != m_iSendSdpSuccess && i_ptFrameInfo->tVideoEncodeParam.iSizeOfSPS > 0 && i_ptFrameInfo->tVideoEncodeParam.iSizeOfPPS > 0)
     {
-        iRet = this->SendLocalSDP(&i_ptFrameInfo->tVideoEncodeParam);//
+        iRet = this->SendLocalSDP(i_ptFrameInfo);//
         if(iRet < 0)
         {
             WEBRTC_LOGD2(m_iLogID,"HandleMediaFrame SendLocalSDP err [%d]\r\n", iRet);
@@ -599,7 +601,7 @@ int WebRtcSession::SendDatas(T_MediaFrameInfo * i_ptFrameInfo)
 * -----------------------------------------------
 * 2023/09/21      V1.0.0         Yu Weifeng       Created
 ******************************************************************************/
-int WebRtcSession::SendLocalSDP(T_VideoEncodeParam * i_ptVideoEncodeParam)
+int WebRtcSession::SendLocalSDP(T_MediaFrameInfo * i_ptFrameInfo)
 {
     T_WebRtcMediaInfo tMediaInfo;
     char strSPS[128];
@@ -607,6 +609,9 @@ int WebRtcSession::SendLocalSDP(T_VideoEncodeParam * i_ptVideoEncodeParam)
     char *strSDP=NULL;
     int iRet = -1;
     T_RtpMediaInfo tRtpMediaInfo;
+    const char * strVideoEncFormatName=NULL;
+    unsigned int dwVideoTimestampFrequency=WEBRTC_H264_TIMESTAMP_FREQUENCY;//
+    T_VideoEncodeParam *ptVideoEncodeParam=NULL;
 
     
     if(NULL == m_tWebRtcSessionCb.SendDataOut || NULL == m_tWebRtcSessionCb.pObj)
@@ -614,18 +619,43 @@ int WebRtcSession::SendLocalSDP(T_VideoEncodeParam * i_ptVideoEncodeParam)
         WEBRTC_LOGE2(m_iLogID,"SendLocalSDP SendDataOut NULL");
         return -1;
     }
+    if(NULL != i_ptFrameInfo)
+    {
+        ptVideoEncodeParam=&i_ptFrameInfo->tVideoEncodeParam;
+        switch(i_ptFrameInfo->eEncType)
+        {
+            case MEDIA_ENCODE_TYPE_H264:
+            {
+                strVideoEncFormatName=WEBRTC_H264_ENCODE_FORMAT_NAME;
+                dwVideoTimestampFrequency=WEBRTC_H264_TIMESTAMP_FREQUENCY;
+                break;
+            }
+            case MEDIA_ENCODE_TYPE_H265:
+            {
+                strVideoEncFormatName=WEBRTC_H265_ENCODE_FORMAT_NAME;
+                dwVideoTimestampFrequency=WEBRTC_H265_TIMESTAMP_FREQUENCY;
+                break;
+            }
+            default :
+            {
+                WEBRTC_LOGE2(m_iLogID,"SendLocalSDP i_ptFrameInfo->eEncType %d err",i_ptFrameInfo->eEncType);
+                break;
+            }
+
+        }
+    }
 
     memset(&tMediaInfo,0,sizeof(T_WebRtcMediaInfo));
-    if(NULL == i_ptVideoEncodeParam)
+    if(NULL == i_ptFrameInfo)
     {
-        iRet = GetSupportedVideoInfoFromSDP(WEBRTC_VIDEO_ENCODE_FORMAT_NAME,WEBRTC_H264_TIMESTAMP_FREQUENCY,1,0,&tMediaInfo.tVideoInfo);
+        iRet = GetSupportedVideoInfoFromSDP(WEBRTC_H264_ENCODE_FORMAT_NAME,WEBRTC_H264_TIMESTAMP_FREQUENCY,1,0,&tMediaInfo.tVideoInfo);
     }
     else
     {
-        unsigned int dwProfileLevelId = (i_ptVideoEncodeParam->abSPS[1]<<16) | (i_ptVideoEncodeParam->abSPS[2]<<8) | i_ptVideoEncodeParam->abSPS[3];
-        iRet = GetSupportedVideoInfoFromSDP(WEBRTC_VIDEO_ENCODE_FORMAT_NAME,WEBRTC_H264_TIMESTAMP_FREQUENCY,1,dwProfileLevelId,&tMediaInfo.tVideoInfo);
-        char * strSPS_Base64 = base64Encode((const char*)i_ptVideoEncodeParam->abSPS,i_ptVideoEncodeParam->iSizeOfSPS);
-        char * strPPS_Base64 = base64Encode((const char*)i_ptVideoEncodeParam->abPPS,i_ptVideoEncodeParam->iSizeOfPPS);
+        unsigned int dwProfileLevelId = (ptVideoEncodeParam->abSPS[1]<<16) | (ptVideoEncodeParam->abSPS[2]<<8) | ptVideoEncodeParam->abSPS[3];
+        iRet = GetSupportedVideoInfoFromSDP(strVideoEncFormatName,dwVideoTimestampFrequency,1,dwProfileLevelId,&tMediaInfo.tVideoInfo);
+        char * strSPS_Base64 = base64Encode((const char*)ptVideoEncodeParam->abSPS,ptVideoEncodeParam->iSizeOfSPS);
+        char * strPPS_Base64 = base64Encode((const char*)ptVideoEncodeParam->abPPS,ptVideoEncodeParam->iSizeOfPPS);
         snprintf(strSPS,sizeof(strSPS),"%s",strSPS_Base64);
         snprintf(strPPS,sizeof(strPPS),"%s",strPPS_Base64);
         delete[] strSPS_Base64;
@@ -637,7 +667,7 @@ int WebRtcSession::SendLocalSDP(T_VideoEncodeParam * i_ptVideoEncodeParam)
     iRet |= GetSupportedAudioInfoFromSDP(WEBRTC_AUDIO_ENCODE_FORMAT_NAME,WEBRTC_G711A_TIMESTAMP_FREQUENCY,&tMediaInfo.tAudioInfo);
     if(0!= iRet)
     {
-        WEBRTC_LOGE2(m_iLogID,"GetSupportedMediaInfoFromSDP err %s ,%s\r\n",WEBRTC_VIDEO_ENCODE_FORMAT_NAME,WEBRTC_AUDIO_ENCODE_FORMAT_NAME);
+        WEBRTC_LOGE2(m_iLogID,"GetSupportedMediaInfoFromSDP err %s ,%s\r\n",strVideoEncFormatName,WEBRTC_AUDIO_ENCODE_FORMAT_NAME);
         return -1;
     }
     iRet = -1;
@@ -748,8 +778,8 @@ int WebRtcSession::GetSupportedVideoInfoFromSDP(const char * i_strVideoFormatNam
     {
         if(0 == m_tWebRtcSdpMediaInfo.tVideoInfos[i].dwProfileLevelId)
             bNoProfileLevelIdCnt++;
-        if(0 != i_dwProfileLevelId)//对讲则无需判断
-        {
+        if(0 != strcmp(WEBRTC_H265_ENCODE_FORMAT_NAME,i_strVideoFormatName) && 0 != i_dwProfileLevelId)//对讲则无需判断
+        {//265不做判断，因为sdp中没有dwProfileLevelId
             bRemoteProfile =(unsigned char)((m_tWebRtcSdpMediaInfo.tVideoInfos[i].dwProfileLevelId>>16)&0xff);//0x64 high ,0x4d main,0x42 base
             bRemoteConstraintFlag =(unsigned char)((m_tWebRtcSdpMediaInfo.tVideoInfos[i].dwProfileLevelId>>8)&0xff);//0x64 high ,0x4d main,0x42 base
             bRemoteLevel =(unsigned char)((m_tWebRtcSdpMediaInfo.tVideoInfos[i].dwProfileLevelId)&0xff);//
@@ -773,8 +803,8 @@ int WebRtcSession::GetSupportedVideoInfoFromSDP(const char * i_strVideoFormatNam
         }
 
         if(0 == strcmp(i_strVideoFormatName,m_tWebRtcSdpMediaInfo.tVideoInfos[i].strFormatName) && i_dwVideoTimestampFrequency==m_tWebRtcSdpMediaInfo.tVideoInfos[i].dwTimestampFrequency &&
-        i_bPacketizationMode==m_tWebRtcSdpMediaInfo.tVideoInfos[i].bPacketizationMode)//bLevelAsymmetryAllowed都是1
-        {
+        (0 == strcmp(WEBRTC_H265_ENCODE_FORMAT_NAME,i_strVideoFormatName)||i_bPacketizationMode==m_tWebRtcSdpMediaInfo.tVideoInfos[i].bPacketizationMode))//bLevelAsymmetryAllowed都是1
+        {//265不做判断，因为sdp中没有bPacketizationMode
             iRet = 0;
             memcpy(o_ptVideoInfo,&m_tWebRtcSdpMediaInfo.tVideoInfos[i],sizeof(T_VideoInfo));//i_dwProfileLevelId不一样也可以
             if(i_dwProfileLevelId==m_tWebRtcSdpMediaInfo.tVideoInfos[i].dwProfileLevelId)

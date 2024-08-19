@@ -57,7 +57,7 @@ private:
     int HandleRemoteSDP();
     int HandleMediaFrame(T_MediaFrameInfo * i_ptFrameInfo) ;
     int SendDatas(T_MediaFrameInfo * i_ptFrameInfo);
-    int SendLocalSDP(T_VideoEncodeParam * i_ptVideoEncodeParam);
+    int SendLocalSDP(T_MediaFrameInfo * i_ptFrameInfo);
     int GetSupportedVideoInfoFromSDP(const char * i_strVideoFormatName,unsigned int i_dwVideoTimestampFrequency,unsigned char i_bPacketizationMode,unsigned int i_dwProfileLevelId,T_VideoInfo *o_ptVideoInfo);
     int GetSupportedAudioInfoFromSDP(const char * i_strAudioFormatName,unsigned int i_dwAudioTimestampFrequency,T_AudioInfo *o_ptAudioInfo);
     unsigned int GetTickCount();  // milliseconds
