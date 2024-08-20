@@ -673,7 +673,7 @@ int WebRtcSession::SendLocalSDP(T_MediaFrameInfo * i_ptFrameInfo)
     iRet = -1;
     tRtpMediaInfo.iAudioEnc = MEDIA_ENCODE_TYPE_G711A;
     tRtpMediaInfo.iAudioPayload = tMediaInfo.tAudioInfo.bRtpPayloadType;
-    tRtpMediaInfo.iVideoEnc= MEDIA_ENCODE_TYPE_H264;
+    tRtpMediaInfo.iVideoEnc= i_ptFrameInfo->eEncType;
     tRtpMediaInfo.iVideoPayload= tMediaInfo.tVideoInfo.bRtpPayloadType;
     if(NULL!= m_pRtpInterface)
     {
@@ -933,6 +933,7 @@ int WebRtcSession::ParseRtpData(char * i_acDataBuf,int i_iDataLen)
     {
         return iRet;//need more data
     }
+    //WEBRTC_LOGW2(m_iLogID,"m_pRtpParseInterface.GetFrame iFrameBufLen%d eEncType%d \r\n",m_tPushFrameInfo.iFrameBufLen,m_tPushFrameInfo.eEncType);
     m_tPushFrameInfo.eStreamType = STREAM_TYPE_MUX_STREAM;//需要先GetFrame处理m_tPushFrameInfo iFrameBufLen
     iRet=m_pRtpParseInterface->GetFrame((void *)&m_tPushFrameInfo);//这样iFrameBufLen 才能得到处理，同时也才能让下次可以正确接收数据
     if(iRet < 0)//解析接收到数据,解析后缓存位置pbFrameStartPos iFrameLen
@@ -957,7 +958,7 @@ int WebRtcSession::ParseRtpData(char * i_acDataBuf,int i_iDataLen)
     }
     
     //iWriteLen=m_cMediaHandle.FrameToContainer(&m_tPushFrameInfo, STREAM_TYPE_FMP4_STREAM,m_pbFileBuf,WEBRTC_FRAME_BUF_MAX_LEN, &iHeaderLen);
-    iWriteLen=m_cMediaHandle.FrameToContainer(&m_tPushFrameInfo, STREAM_TYPE_FLV_STREAM,m_pbFileBuf,WEBRTC_FRAME_BUF_MAX_LEN, &iHeaderLen);
+    iWriteLen=m_cMediaHandle.FrameToContainer(&m_tPushFrameInfo, STREAM_TYPE_ENHANCED_FLV_STREAM,m_pbFileBuf,WEBRTC_FRAME_BUF_MAX_LEN, &iHeaderLen);
     if(iWriteLen < 0)
     {
         WEBRTC_LOGE2(m_iLogID,"FrameToContainer err iWriteLen %d\r\n",iRet);
@@ -1086,6 +1087,7 @@ int WebRtcSession::HandleRtpTimestamp()
         {
             if(0 == m_iFindedKeyFrame)
             {
+                WEBRTC_LOGD2(m_iLogID,"no MEDIA_FRAME_TYPE_VIDEO_I_FRAME FrameType%d\r\n",m_tPushFrameInfo.eFrameType);
                 return iRet;
             }
         }
