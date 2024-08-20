@@ -235,7 +235,8 @@ int RtpParse :: Parse(unsigned char *i_pbPacketBuf,int i_iPacketLen,T_RtpPacketP
             }
         }
     }
-    printf("tParam.wSeq %d,ePacketType%d,type %d,iMark %d iPad %d,%x,%x \r\n",tParam.wSeq,tParam.ePacketType,pbPacketBuf[0]&0x1F,iMark,iPad,pbPacketBuf[0],pbPacketBuf[1]);
+    printf("tParam.wSeq %d,wPayloadType%d,ePacketType%d,type h264 %d /h265 %d,iMark %d iPad %d,%#x,%#x \r\n",tParam.wSeq,tParam.wPayloadType,tParam.ePacketType,
+    pbPacketBuf[0]&0x1F,((pbPacketBuf[0]) >> 1) & 0x3f,iMark,iPad,pbPacketBuf[0],pbPacketBuf[1]);
     switch (tParam.ePacketType)
     {
         case RTP_PACKET_TYPE_G711U:
@@ -257,6 +258,17 @@ int RtpParse :: Parse(unsigned char *i_pbPacketBuf,int i_iPacketLen,T_RtpPacketP
             {
                 *o_iDataLen=0;
                 printf("m_iVideoLostPacketFlag%d != 0 ,drop video frame\r\n",m_iVideoLostPacketFlag);
+                m_iVideoLostPacketFlag=0;
+            }
+            break;
+        }
+        case RTP_PACKET_TYPE_H265:
+        {
+            iRet=H265Parse(iMark,pbPacketBuf,iPacketLen,o_pbParsedData,o_iDataLen,i_iDataMaxLen);
+            if(*o_iDataLen>0 && m_iVideoLostPacketFlag != 0)
+            {
+                *o_iDataLen=0;
+                printf("H265Parse m_iVideoLostPacketFlag%d != 0 ,drop video frame\r\n",m_iVideoLostPacketFlag);
                 m_iVideoLostPacketFlag=0;
             }
             break;
@@ -363,10 +375,82 @@ int RtpParse ::H264Parse(int i_iMark,unsigned char *i_pbRtpBodyBuf,int i_iBufLen
 	}
     return iRet;
 }
+/*****************************************************************************
+-Fuction		: H265Parse
+-Description	: 
+-Input			: 
+-Output 		: 
+-Return 		: 
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
+int RtpParse ::H265Parse(int i_iMark,unsigned char *i_pbRtpBodyBuf,int i_iBufLen,unsigned char *o_pbParsedData,int *o_iDataLen,int i_iDataMaxLen)
+{
+    int iRet = FALSE;
+    unsigned char bPacketType=0;
+
+
+	if (!i_pbRtpBodyBuf || i_iDataMaxLen < i_iBufLen || !o_pbParsedData|| !o_iDataLen)
+    {
+        printf("H265Parse err %d< %d \r\n",i_iDataMaxLen,i_iBufLen);
+        return iRet;
+    }
+
+    bPacketType=((i_pbRtpBodyBuf[0]) >> 1) & 0x3f;
+	if (bPacketType > 50)
+    {
+        printf("bPacketType unsupport %d ,%d\r\n",bPacketType,i_iBufLen);
+        return iRet;// packet discard, Unsupported (HEVC) NAL type
+    }
+    //printf("H265Parse bPacketType %d \r\n",bPacketType);
+	switch(bPacketType)
+	{
+        case 48: // aggregated packet (AP) - with two or more NAL units
+        {
+            iRet=H265ParseAP(i_iMark,i_pbRtpBodyBuf,i_iBufLen,o_pbParsedData,o_iDataLen,i_iDataMaxLen);
+            break;
+        }
+        case 49: // fragmentation unit (FU)
+    	{
+            iRet=H265ParseFU(i_iMark,i_pbRtpBodyBuf,i_iBufLen,o_pbParsedData,o_iDataLen,i_iDataMaxLen);
+            break;
+    	}
+        case 32: // video parameter set (VPS)
+        case 33: // sequence parameter set (SPS)
+        case 34: // picture parameter set (PPS)
+        case 39: // supplemental enhancement information (SEI)
+        default: // 4.4.1. Single NAL Unit Packets (p24)
+        {
+            iRet=H265ParseSingleNalu(i_iMark,i_pbRtpBodyBuf,i_iBufLen,o_pbParsedData,o_iDataLen,i_iDataMaxLen);
+            break;
+        }
+	}
+    return iRet;
+}
 
 /*****************************************************************************
 -Fuction		: H264ParseSTAP_A
 -Description	: 
+// 5.7.1. Single-Time Aggregation Packet (STAP) (p23)
+ 0               1               2               3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                           RTP Header                          |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|STAP-B NAL HDR |            DON                |  NALU 1 Size  |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| NALU 1 Size   | NALU 1 HDR    |         NALU 1 Data           |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+                               +
+:                                                               :
++               +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|               | NALU 2 Size                   |   NALU 2 HDR  |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                            NALU 2 Data                        |
+:                                                               :
+|                               +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                               :    ...OPTIONAL RTP padding    |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 -Input			: 
 -Output 		: 
 -Return 		: 
@@ -426,6 +510,18 @@ int RtpParse ::H264ParseSTAP_A(int i_iMark,unsigned char *i_pbRtpBodyBuf,int i_i
 /*****************************************************************************
 -Fuction		: H264ParseFU_A
 -Description	: 
+// 5.8. Fragmentation Units (FUs) (p29)
+ 0               1               2               3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|  FU indicator |   FU header   |              DON              |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-|
+|                                                               |
+|                          FU payload                           |
+|                                                               |
+|                               +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                               :   ...OPTIONAL RTP padding     |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 -Input			: 
 -Output 		: 
 -Return 		: 
@@ -574,6 +670,300 @@ int RtpParse ::H264ParseSingleNalu(int i_iMark,unsigned char *i_pbRtpBodyBuf,int
             break;
         default:
             break;
+    }
+    memset(m_pVideoFrameBuf+m_iVideoFrameCurLen,0,3);
+    m_iVideoFrameCurLen += 3;
+    m_pVideoFrameBuf[m_iVideoFrameCurLen]=1;
+    m_iVideoFrameCurLen++;//add 00 00 00 01
+    memcpy(m_pVideoFrameBuf+m_iVideoFrameCurLen,i_pbRtpBodyBuf,i_iBufLen);
+    m_iVideoFrameCurLen+=i_iBufLen;
+
+    if(0 != iFrameFlag)
+    {
+        memcpy(o_pbParsedData,m_pVideoFrameBuf,m_iVideoFrameCurLen);
+        *o_iDataLen = m_iVideoFrameCurLen;
+        m_iVideoFrameCurLen=0;
+    }
+    return TRUE;
+}
+
+/*****************************************************************************
+-Fuction		: H265ParseAP
+-Description	: 在SDP中sprop-max-don-diff = 0时,DONL可以省略;当 0<sprop-max-don-diff<=32767时，DONL不能省略
+// 4.4.2. Aggregation Packets (APs) (p25)
+ 0               1               2               3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                          RTP Header                           |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|      PayloadHdr (Type=48)     |           NALU 1 DONL         |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|           NALU 1 Size         |            NALU 1 HDR         |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
+|                         NALU 1 Data . . .                     |
+|                                                               |
++     . . .     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|               |  NALU 2 DOND  |            NALU 2 Size        |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|          NALU 2 HDR           |                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+            NALU 2 Data        |
+|                                                               |
+|         . . .                 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                               :    ...OPTIONAL RTP padding    |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+-Input			: 
+-Output 		: 
+-Return 		: 
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
+int RtpParse ::H265ParseAP(int i_iMark,unsigned char *i_pbRtpBodyBuf,int i_iBufLen,unsigned char *o_pbParsedData,int *o_iDataLen,int i_iDataMaxLen)
+{
+    int iFrameFlag=0;
+    unsigned char bStapA=0;
+    int iNaluLen=0;
+    unsigned char *pbRtpPacket=NULL;
+    int iBufLen=0;
+    unsigned char bNaluType = 0;//取nalu类型
+
+
+	if (!i_pbRtpBodyBuf || i_iDataMaxLen < i_iBufLen || !o_pbParsedData|| !o_iDataLen)
+    {
+        printf("H265ParseAP err %d< %d \r\n",i_iDataMaxLen,i_iBufLen);//i_iMark 0
+        return FALSE;
+    }
+    pbRtpPacket=i_pbRtpBodyBuf+2;//AP头，占用2个字节 PayloadHdr
+    iBufLen=i_iBufLen-2;
+    while(iBufLen>2)
+    {
+        //pbRtpPacket+=2;// 实测没有DON
+        //iBufLen-=2;//所以注释
+        
+        iNaluLen = (pbRtpPacket[0] << 8) | pbRtpPacket[1];//NALU长度 (占用两个字节)
+        pbRtpPacket+=2;
+        iBufLen-=2;
+        bNaluType = (pbRtpPacket[0] & 0x7E)>>1;//取nalu类型
+        //printf("H265ParseAP bPacketType %d %#x,%d,%d\r\n",bNaluType,pbRtpPacket[0],iNaluLen,iBufLen);
+        if(bNaluType >= 0 && bNaluType <= 9)// p slice 片
+        {
+            iFrameFlag = 1;//i b p 的nalu才表示一帧的结束
+        }
+        else if(bNaluType >= 16 && bNaluType <= 21)// IRAP 等同于i帧
+        {
+            iFrameFlag = 1;//i b p 的nalu才表示一帧的结束
+        }
+        memset(m_pVideoFrameBuf+m_iVideoFrameCurLen,0,3);
+        m_iVideoFrameCurLen += 3;
+        m_pVideoFrameBuf[m_iVideoFrameCurLen]=1;
+        m_iVideoFrameCurLen++;//add 00 00 00 01
+        memcpy(m_pVideoFrameBuf+m_iVideoFrameCurLen,pbRtpPacket,iNaluLen);
+        m_iVideoFrameCurLen+=iNaluLen;
+        pbRtpPacket+=iNaluLen;
+        iBufLen-=iNaluLen;
+    }
+
+    if(0 != iFrameFlag)
+    {
+        memcpy(o_pbParsedData,m_pVideoFrameBuf,m_iVideoFrameCurLen);
+        *o_iDataLen = m_iVideoFrameCurLen;
+        m_iVideoFrameCurLen=0;
+    }
+    return TRUE;
+}
+
+/*****************************************************************************
+-Fuction		: H265ParseFU
+-Description	: 
+// 4.4.3. Fragmentation Units (p29)
+ 0               1               2               3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|     PayloadHdr (Type=49)      |    FU header  |  DONL (cond)  |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-|
+|  DONL (cond)  |                                               |
+|-+-+-+-+-+-+-+-+                                               |
+|                           FU payload                          |
+|                                                               |
+|                               +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                               :    ...OPTIONAL RTP padding    |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
++---------------+
+|0|1|2|3|4|5|6|7|
++-+-+-+-+-+-+-+-+
+|S|E|   FuType  |
++---------------+
+-Input			: 
+-Output 		: 
+-Return 		: 
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
+int RtpParse ::H265ParseFU(int i_iMark,unsigned char *i_pbRtpBodyBuf,int i_iBufLen,unsigned char *o_pbParsedData,int *o_iDataLen,int i_iDataMaxLen)
+{
+    int iFrameFlag=0;
+    unsigned char bRtpFuHeader=0;
+    unsigned char bNaluType=0;
+    
+	if (!i_pbRtpBodyBuf || i_iDataMaxLen < i_iBufLen || !o_pbParsedData|| !o_iDataLen || i_iBufLen<=3)
+    {
+        printf("H265ParseFU err %d< %d,i_iMark %d \r\n",i_iDataMaxLen,i_iBufLen,i_iMark);
+        return FALSE;
+    }
+    
+    if(0 == i_iMark)
+    {
+        bRtpFuHeader=i_pbRtpBodyBuf[2];
+        if(bRtpFuHeader&0x80)
+        {//分包开始
+            memset(m_pVideoFrameBuf+m_iVideoFrameCurLen,0,3);
+            m_iVideoFrameCurLen += 3;
+            m_pVideoFrameBuf[m_iVideoFrameCurLen]=1;
+            m_iVideoFrameCurLen++;//add 00 00 00 01
+            m_pVideoFrameBuf[m_iVideoFrameCurLen] = ((bRtpFuHeader & 0x3F) << 1) | (i_pbRtpBodyBuf[0] & 0x81); // replace NAL Unit Type Bits
+            bNaluType=(m_pVideoFrameBuf[m_iVideoFrameCurLen] & 0x7E)>>1;
+            //printf("H265ParseFU bPacketType %d ,%#x\r\n",bNaluType,m_pVideoFrameBuf[m_iVideoFrameCurLen]);
+            if(bNaluType >= 0 && bNaluType <= 9)// p slice 片
+            {
+                m_iFrameFlag = 1;//i b p 的nalu才表示一帧的结束
+            }
+            else if(bNaluType >= 16 && bNaluType <= 21)// IRAP 等同于i帧
+            {
+                m_iFrameFlag = 1;//i b p 的nalu才表示一帧的结束
+            }
+            m_iVideoFrameCurLen++;//add NAL unit type byte
+            m_pVideoFrameBuf[m_iVideoFrameCurLen] =i_pbRtpBodyBuf[1];
+            m_iVideoFrameCurLen++;//add NAL unit type byte
+
+            memcpy(m_pVideoFrameBuf+m_iVideoFrameCurLen,i_pbRtpBodyBuf+3,i_iBufLen-3);
+            m_iVideoFrameCurLen+=i_iBufLen-3;
+        }
+        else if(bRtpFuHeader&0x40)
+        {//分包结束
+            memcpy(m_pVideoFrameBuf+m_iVideoFrameCurLen,i_pbRtpBodyBuf+3,i_iBufLen-3);
+            m_iVideoFrameCurLen+=i_iBufLen-3;
+            if(0 != m_iFrameFlag)
+            {
+                memcpy(o_pbParsedData,m_pVideoFrameBuf,m_iVideoFrameCurLen);
+                *o_iDataLen = m_iVideoFrameCurLen;
+                m_iVideoFrameCurLen=0;
+                m_iFrameFlag=0;
+            }
+        }
+        else
+        {
+            memcpy(m_pVideoFrameBuf+m_iVideoFrameCurLen,i_pbRtpBodyBuf+3,i_iBufLen-3);
+            m_iVideoFrameCurLen+=i_iBufLen-3;
+        }
+    }
+    else
+    {//分包结束
+        memcpy(m_pVideoFrameBuf+m_iVideoFrameCurLen,i_pbRtpBodyBuf+3,i_iBufLen-3);
+        m_iVideoFrameCurLen+=i_iBufLen-3;
+        if(0 != m_iFrameFlag)
+        {
+            memcpy(o_pbParsedData,m_pVideoFrameBuf,m_iVideoFrameCurLen);
+            *o_iDataLen = m_iVideoFrameCurLen;
+            m_iVideoFrameCurLen=0;
+            m_iFrameFlag=0;
+        }
+    }
+
+    return TRUE;
+}
+
+/*****************************************************************************
+-Fuction		: H265ParseSingleNalu
+-Description	: 
+-Input			: 
+-Output 		: 
+-Return 		: 
+* Modify Date	  Version		 Author 		  Modification
+* -----------------------------------------------
+* 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
+******************************************************************************/
+int RtpParse ::H265ParseSingleNalu(int i_iMark,unsigned char *i_pbRtpBodyBuf,int i_iBufLen,unsigned char *o_pbParsedData,int *o_iDataLen,int i_iDataMaxLen)
+{
+    int iFrameFlag=0;
+
+    
+	if (!i_pbRtpBodyBuf || i_iDataMaxLen < i_iBufLen || !o_pbParsedData|| !o_iDataLen/*||!i_iMark*/)//webrtc客户端下发过来的会是0
+    {
+        printf("H265ParseSingleNalu err %d< %d,i_iMark %d \r\n",i_iDataMaxLen,i_iBufLen,i_iMark);//i_iMark 0
+        return FALSE;
+    }
+    unsigned char bNaluType = (i_pbRtpBodyBuf[0] & 0x7E)>>1;//取nalu类型
+    if(bNaluType >= 0 && bNaluType <= 9)// p slice 片
+    {
+        if(0 == m_iFrameStartFlag)
+        {
+            memset(m_pVideoFrameBuf+m_iVideoFrameCurLen,0,3);
+            m_iVideoFrameCurLen += 3;
+            m_pVideoFrameBuf[m_iVideoFrameCurLen]=1;
+            m_iVideoFrameCurLen++;//add 00 00 00 01
+            m_iFrameStartFlag=1;
+        }
+    }
+    else if(bNaluType >= 16 && bNaluType <= 21)// IRAP 等同于i帧
+    {
+        if(0 == m_iFrameStartFlag)
+        {
+            memset(m_pVideoFrameBuf+m_iVideoFrameCurLen,0,3);
+            m_iVideoFrameCurLen += 3;
+            m_pVideoFrameBuf[m_iVideoFrameCurLen]=1;
+            m_iVideoFrameCurLen++;//add 00 00 00 01
+            m_iFrameStartFlag=1;
+        }
+    }
+    else if(bNaluType == 32)//VPS
+    {
+        memset(m_pVideoFrameBuf+m_iVideoFrameCurLen,0,3);
+        m_iVideoFrameCurLen += 3;
+        m_pVideoFrameBuf[m_iVideoFrameCurLen]=1;
+        m_iVideoFrameCurLen++;//add 00 00 00 01
+    }
+    else if(bNaluType == 33)//SPS
+    {
+        memset(m_pVideoFrameBuf+m_iVideoFrameCurLen,0,3);
+        m_iVideoFrameCurLen += 3;
+        m_pVideoFrameBuf[m_iVideoFrameCurLen]=1;
+        m_iVideoFrameCurLen++;//add 00 00 00 01
+    }
+    else if(bNaluType == 34)//PPS
+    {
+        memset(m_pVideoFrameBuf+m_iVideoFrameCurLen,0,3);
+        m_iVideoFrameCurLen += 3;
+        m_pVideoFrameBuf[m_iVideoFrameCurLen]=1;
+        m_iVideoFrameCurLen++;//add 00 00 00 01
+    }
+    memcpy(m_pVideoFrameBuf+m_iVideoFrameCurLen,i_pbRtpBodyBuf,i_iBufLen);
+    m_iVideoFrameCurLen+=i_iBufLen;
+
+    if(0 != i_iMark)
+    {
+        memcpy(o_pbParsedData,m_pVideoFrameBuf,m_iVideoFrameCurLen);
+        *o_iDataLen = m_iVideoFrameCurLen;
+        m_iVideoFrameCurLen=0;
+        m_iFrameStartFlag=0;
+    }
+    return TRUE;
+    
+
+	if (!i_pbRtpBodyBuf || i_iDataMaxLen < i_iBufLen || !o_pbParsedData|| !o_iDataLen||!i_iMark)//webrtc客户端下发过来的会是0
+    {
+        printf("H265ParseSingleNalu err %d< %d,i_iMark %d \r\n",i_iDataMaxLen,i_iBufLen,i_iMark);//i_iMark 0
+        return FALSE;
+    }
+    if(bNaluType >= 0 && bNaluType <= 9)// p slice 片
+    {
+        iFrameFlag = 1;//i b p 的nalu才表示一帧的结束
+    }
+    else if(bNaluType >= 16 && bNaluType <= 21)// IRAP 等同于i帧
+    {
+        iFrameFlag = 1;//i b p 的nalu才表示一帧的结束
     }
     memset(m_pVideoFrameBuf+m_iVideoFrameCurLen,0,3);
     m_iVideoFrameCurLen += 3;

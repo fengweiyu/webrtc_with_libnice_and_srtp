@@ -436,8 +436,8 @@ int Rtp :: SetRtpTypeInfo(T_RtpMediaInfo *i_ptRtpMediaInfo)
 /*****************************************************************************
 -Fuction		: GetFrame
 -Description	: GetFrame函数和ParseRtpPacket函数中修改ptFrame->iFrameBufLen和
-ptFrame->iFrameProcessedLen相关的逻辑则可关闭(打开)
-将接收的部分帧数据重组为完整的一帧的功能
+ptFrame->iFrameProcessedLen相关的逻辑则可关闭(打开,兼容alexa音频长度发送过来只有80长度的问题)
+将接收的部分帧数据重组为完整的一帧的功能(多帧-->一帧)
 -Input			: 
 -Output 		: 
 -Return 		: 
@@ -453,6 +453,10 @@ int Rtp :: GetFrame(T_MediaFrameInfo *m_ptFrame)
     {
         RTP_LOGE("GetFrame NULL\r\n");
         return -1;
+    }
+    if(STREAM_TYPE_MUX_STREAM != m_ptFrame->eStreamType)
+    {//目前外部只有STREAM_TYPE_MUX_STREAM会重组报文,这样可以关闭其他流也走下面的逻辑
+        //return m_pMediaHandle->GetFrame(m_ptFrame);//但是依赖外部，不太好
     }
     m_ptFrame->iFrameProcessedLen=0;//配合ParseRtpPacket函数中的o_ptFrame->iFrameBufLen,
     iRet = m_pMediaHandle->GetFrame(m_ptFrame);//可以实现每次接收帧数据的一部分,然后重组成一个完整符合要求的帧,如:
@@ -591,7 +595,9 @@ int Rtp :: GetRtpPackets(T_MediaFrameInfo *m_ptFrame,unsigned char **o_ppbPacket
 }
 /*****************************************************************************
 -Fuction		: ParseRtpPacket
--Description	: //
+-Description	: GetFrame函数和ParseRtpPacket函数中修改ptFrame->iFrameBufLen和
+ptFrame->iFrameProcessedLen相关的逻辑则可关闭(打开,兼容alexa音频长度发送过来只有80长度的问题)
+将接收的部分帧数据重组为完整的一帧的功能(多帧-->一帧)
 -Input			: 
 -Output 		: 
 -Return 		: <0 err,0 need more data,>0 success
@@ -604,7 +610,9 @@ int Rtp::ParseRtpPacket(unsigned char *i_pbPacketBuf,int i_iPacketLen,T_MediaFra
     int iRet = -1;
     T_RtpPacketParam tParam;
     int iFrameBufLen=0;
-    
+    unsigned char bNaluType=0;
+    E_MediaFrameType eLastFrameType=MEDIA_FRAME_TYPE_UNKNOW;
+    int iFrameReaminLen=0;
     
     if(NULL == i_pbPacketBuf ||NULL == o_ptFrame)
     {
@@ -615,6 +623,11 @@ int Rtp::ParseRtpPacket(unsigned char *i_pbPacketBuf,int i_iPacketLen,T_MediaFra
     memset(&tParam,0,sizeof(T_RtpPacketParam));
     //o_ptFrame->pbFrameStartPos=o_ptFrame->pbFrameBuf;
     //o_ptFrame->iFrameLen=0;
+    if(o_ptFrame->iFrameBufLen>0)
+    {//如果有多帧需要合并为(符合要求的)一帧,
+        eLastFrameType=o_ptFrame->eFrameType;//要判断前后帧是同一类型的帧
+        iFrameReaminLen=o_ptFrame->iFrameBufLen;//至于rtp可能乱序的问题，则由rtp解析层内部去处理,以保证返回的帧是完整的一帧且连续的
+    }
     iRet=m_RtpParse.Parse(i_pbPacketBuf,i_iPacketLen,&tParam,o_ptFrame->pbFrameBuf+o_ptFrame->iFrameBufLen,&iFrameBufLen,o_ptFrame->iFrameBufMaxLen);
     if(iRet<0)
     {
@@ -672,14 +685,59 @@ int Rtp::ParseRtpPacket(unsigned char *i_pbPacketBuf,int i_iPacketLen,T_MediaFra
             iRet = iFrameBufLen;
             break;
         }
+        case RTP_PACKET_TYPE_H265:
+        {
+            o_ptFrame->eEncType=MEDIA_ENCODE_TYPE_H265;
+            o_ptFrame->dwTimeStamp=tParam.dwTimestamp;///90;//*1000/90000 外层处理
+            bNaluType=(o_ptFrame->pbFrameBuf[4] & 0x7E)>>1;
+            if(bNaluType >= 0 && bNaluType <= 9)// p slice 片
+            {
+                o_ptFrame->eFrameType=MEDIA_FRAME_TYPE_VIDEO_P_FRAME;
+            }
+            else if(bNaluType >= 16 && bNaluType <= 21)// IRAP 等同于i帧
+            {
+                o_ptFrame->eFrameType=MEDIA_FRAME_TYPE_VIDEO_I_FRAME;
+            }
+            else if(bNaluType == 32)//VPS
+            {
+                o_ptFrame->eFrameType=MEDIA_FRAME_TYPE_VIDEO_I_FRAME;
+            }
+            else if(bNaluType == 33)//SPS
+            {
+                o_ptFrame->eFrameType=MEDIA_FRAME_TYPE_VIDEO_I_FRAME;
+            }
+            else if(bNaluType == 34)//PPS
+            {
+                o_ptFrame->eFrameType=MEDIA_FRAME_TYPE_VIDEO_I_FRAME;
+            }
+            else
+            {
+                RTP_LOGE("o_ptFrame->pbFrameBuf[4] %x\r\n",o_ptFrame->pbFrameBuf[4]);
+                o_ptFrame->eFrameType=MEDIA_FRAME_TYPE_UNKNOW;
+            }
+            //RTP_LOGD("RTP_PACKET_TYPE_H265 %d iFrameBufLen %d,%#x\r\n",bNaluType,iFrameBufLen,o_ptFrame->pbFrameBuf[4]);
+            iRet = iFrameBufLen;
+            break;
+        }
         default :
         {
             iRet = iFrameBufLen;
-            RTP_LOGE("ParseRtpPacket.ePacketType err %d\r\n",tParam.ePacketType);
+            RTP_LOGE("ParseRtpPacket.ePacketType err %d,%d\r\n",tParam.ePacketType,iFrameBufLen);
             break;
         }
     }
-    
+    if(iFrameReaminLen>0)
+    {
+        if((MEDIA_FRAME_TYPE_AUDIO_FRAME==eLastFrameType && eLastFrameType!=o_ptFrame->eFrameType)
+        ||((MEDIA_FRAME_TYPE_VIDEO_I_FRAME==eLastFrameType||MEDIA_FRAME_TYPE_VIDEO_P_FRAME==eLastFrameType||MEDIA_FRAME_TYPE_VIDEO_B_FRAME==eLastFrameType)&&
+        (MEDIA_FRAME_TYPE_VIDEO_I_FRAME!=o_ptFrame->eFrameType&&MEDIA_FRAME_TYPE_VIDEO_P_FRAME!=o_ptFrame->eFrameType&&MEDIA_FRAME_TYPE_VIDEO_B_FRAME!=o_ptFrame->eFrameType))
+        ||(MEDIA_FRAME_TYPE_UNKNOW!=eLastFrameType))
+        {
+            RTP_LOGW("eLastFrameType!=o_ptFrame->eFrameType warn %d,%d,iFrameReaminLen%d\r\n",eLastFrameType,o_ptFrame->eFrameType,iFrameReaminLen);
+            o_ptFrame->iFrameBufLen-=iFrameReaminLen;//丢掉前面需要重组的帧
+            memmove(o_ptFrame->pbFrameBuf,o_ptFrame->pbFrameBuf+iFrameReaminLen,o_ptFrame->iFrameBufLen);
+        }
+    }
     return iRet;
 }
 
