@@ -352,7 +352,7 @@ int MediaHandle::GetFrame(T_MediaFrameInfo *m_ptFrame)
             MH_LOGE("fread err %d iReadLen%d\r\n",m_ptFrame->iFrameBufMaxLen,iReadLen);
             return iRet;
         }
-        m_ptFrame->iFrameBufLen = iReadLen;
+        m_ptFrame->iFrameBufLen = iReadLen;//(文件流iFrameBufLen每次都会直接赋值,
         iRet = m_pMediaHandle->GetFrame(m_ptFrame);
         if(TRUE == iRet)
         {
@@ -365,7 +365,8 @@ int MediaHandle::GetFrame(T_MediaFrameInfo *m_ptFrame)
                 dwPosition=m_ptFrame->iFrameProcessedLen;
             }
             fseek(m_pMediaFile,dwPosition,SEEK_SET);
-            //cout<<"fseek m_pMediaFile "<<m_ptFrame->iFrameProcessedLen<<m_pMediaFile<<endl;
+            m_ptFrame->iFrameBufLen = m_ptFrame->iFrameProcessedLen;//兼容外部使用iFrameBufLen iFrameProcessedLen判断处理是否正常的情况
+            //(文件流iFrameBufLen每次都会直接赋值,所以可以这么兼容)
         }
         else
         {
