@@ -1116,7 +1116,8 @@ int WebRtcSession::HandleRtpTimestamp()
                 dwLastAudioTimeStamp+=20;///(WEBRTC_G711A_TIMESTAMP_FREQUENCY/1000);
                 m_tPushFrameInfo.tAudioEncodeParam.dwChannels=1;//必须赋值，否则mp4无法播放
                 m_tPushFrameInfo.dwSampleRate=WEBRTC_G711A_TIMESTAMP_FREQUENCY;//
-                WEBRTC_LOGD2(m_iLogID,"AUDIO->dwTimeStamp%d,dwLastAudioTimeStamp%d FrameType%d\r\n",m_dwAudioPullTimeStamp,dwLastAudioTimeStamp,m_tPushFrameInfo.eFrameType);
+                WEBRTC_LOGD2(m_iLogID,"AUDIO->dwTimeStamp%d,dwLastAudioTimeStamp%d FrameType%d\r\n",
+                m_dwAudioPullTimeStamp,dwLastAudioTimeStamp,m_tPushFrameInfo.eFrameType,m_tPushFrameInfo);
                 m_tPushFrameInfo.dwTimeStamp=m_dwAudioPullTimeStamp;
                 break;
             }
@@ -1126,7 +1127,8 @@ int WebRtcSession::HandleRtpTimestamp()
                 m_dwVideoPullTimeStamp=dwLastVideoTimeStamp;//(dwRtpTimeStamp/(WEBRTC_H264_TIMESTAMP_FREQUENCY/1000))-dwLastVideoTimeStamp;//33;//
                 dwLastVideoTimeStamp+=(1000/m_iPullVideoFrameRate);///(WEBRTC_H264_TIMESTAMP_FREQUENCY/1000);
                 m_tPushFrameInfo.dwSampleRate=WEBRTC_H264_TIMESTAMP_FREQUENCY;//
-                WEBRTC_LOGD2(m_iLogID,"VIDEO->dwTimeStamp%d,dwLastVideoTimeStamp%d FrameType%d\r\n",m_dwVideoPullTimeStamp,dwLastVideoTimeStamp,m_tPushFrameInfo.eFrameType);
+                WEBRTC_LOGD2(m_iLogID,"VIDEO->dwTimeStamp%d,dwLastVideoTimeStamp%d FrameType%d,dwWidth%d dwHeight%d\r\n",
+                m_dwVideoPullTimeStamp,dwLastVideoTimeStamp,m_tPushFrameInfo.eFrameType,m_tPushFrameInfo.dwWidth,m_tPushFrameInfo.dwHeight);
                 m_tPushFrameInfo.dwTimeStamp=m_dwVideoPullTimeStamp;
                 break;
             }
@@ -1171,7 +1173,8 @@ int WebRtcSession::HandleRtpTimestamp()
             dwLastAudioTimeStamp=dwRtpTimeStamp/(WEBRTC_G711A_TIMESTAMP_FREQUENCY/1000);//dwRtpTimeStamp;
             m_tPushFrameInfo.tAudioEncodeParam.dwChannels=1;//必须赋值，否则mp4无法播放
             m_tPushFrameInfo.dwSampleRate=WEBRTC_G711A_TIMESTAMP_FREQUENCY;//
-            WEBRTC_LOGD2(m_iLogID,"AUDIO->dwTimeStamp%d,dwLastAudioTimeStamp%d FrameType%d\r\n",m_dwAudioPullTimeStamp,dwLastAudioTimeStamp,m_tPushFrameInfo.eFrameType);
+            WEBRTC_LOGD2(m_iLogID,"AUDIO->dwTimeStamp%d,dwLastAudioTimeStamp%d FrameType%d\r\n",
+            m_dwAudioPullTimeStamp,dwLastAudioTimeStamp,m_tPushFrameInfo.eFrameType);
             m_tPushFrameInfo.dwTimeStamp=m_dwAudioPullTimeStamp;
             break;
         }
@@ -1181,7 +1184,8 @@ int WebRtcSession::HandleRtpTimestamp()
             m_dwVideoPullTimeStamp+=(dwRtpTimeStamp/(WEBRTC_H264_TIMESTAMP_FREQUENCY/1000))-dwLastVideoTimeStamp;//33;//dwRtpTimeStamp-dwLastVideoTimeStamp;//
             dwLastVideoTimeStamp=dwRtpTimeStamp/(WEBRTC_H264_TIMESTAMP_FREQUENCY/1000);//dwRtpTimeStamp;
             m_tPushFrameInfo.dwSampleRate=WEBRTC_H264_TIMESTAMP_FREQUENCY;//
-            WEBRTC_LOGD2(m_iLogID,"VIDEO->dwTimeStamp%d,dwLastVideoTimeStamp%d FrameType%d\r\n",m_dwVideoPullTimeStamp,dwLastVideoTimeStamp,m_tPushFrameInfo.eFrameType);
+            WEBRTC_LOGD2(m_iLogID,"VIDEO->dwTimeStamp%d,dwLastVideoTimeStamp%d FrameType%d,dwWidth%d dwHeight%d\r\n",
+            m_dwVideoPullTimeStamp,dwLastVideoTimeStamp,m_tPushFrameInfo.eFrameType,m_tPushFrameInfo.dwWidth,m_tPushFrameInfo.dwHeight);
             m_tPushFrameInfo.dwTimeStamp=m_dwVideoPullTimeStamp;
             break;
         }
