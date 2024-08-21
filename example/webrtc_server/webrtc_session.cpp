@@ -592,7 +592,7 @@ int WebRtcSession::SendDatas(T_MediaFrameInfo * i_ptFrameInfo)
 }
 
 /*****************************************************************************
--Fuction        : WebRtcSession
+-Fuction        : SendLocalSDP
 -Description    : 
 -Input          : 
 -Output         : 
@@ -612,7 +612,8 @@ int WebRtcSession::SendLocalSDP(T_MediaFrameInfo * i_ptFrameInfo)
     const char * strVideoEncFormatName=NULL;
     unsigned int dwVideoTimestampFrequency=WEBRTC_H264_TIMESTAMP_FREQUENCY;//
     T_VideoEncodeParam *ptVideoEncodeParam=NULL;
-
+    int iVideoEnc=MEDIA_ENCODE_TYPE_H264;//普通语音对讲默认取值这个
+    
     
     if(NULL == m_tWebRtcSessionCb.SendDataOut || NULL == m_tWebRtcSessionCb.pObj)
     {
@@ -621,6 +622,7 @@ int WebRtcSession::SendLocalSDP(T_MediaFrameInfo * i_ptFrameInfo)
     }
     if(NULL != i_ptFrameInfo)
     {
+        iVideoEnc=i_ptFrameInfo->eEncType;
         ptVideoEncodeParam=&i_ptFrameInfo->tVideoEncodeParam;
         switch(i_ptFrameInfo->eEncType)
         {
@@ -673,7 +675,7 @@ int WebRtcSession::SendLocalSDP(T_MediaFrameInfo * i_ptFrameInfo)
     iRet = -1;
     tRtpMediaInfo.iAudioEnc = MEDIA_ENCODE_TYPE_G711A;
     tRtpMediaInfo.iAudioPayload = tMediaInfo.tAudioInfo.bRtpPayloadType;
-    tRtpMediaInfo.iVideoEnc= i_ptFrameInfo->eEncType;
+    tRtpMediaInfo.iVideoEnc= iVideoEnc;
     tRtpMediaInfo.iVideoPayload= tMediaInfo.tVideoInfo.bRtpPayloadType;
     if(NULL!= m_pRtpInterface)
     {
