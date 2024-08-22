@@ -26,10 +26,10 @@
 <body>
 
 <div id="container">
-    <video id="remoteVideo" playsinline controls autoplay muted style="width: 80%;"></video>
+    <video id="remoteVideo" playsinline controls autoplay muted style="width: 80%;height: auto;"></video>
 	<p/>
 	<video id="recVideo" playsinline controls autoplay muted style="width: 80%;display: none;"></video>
-	<video id="localVideo" playsinline controls autoplay muted style="width: 80%;"></video>
+	<video id="localVideo" playsinline controls autoplay muted style="width: 80%;height: auto;"></video>
 	<!-- <textarea name="" id="getPlayUrlInput" cols="75" rows="6" style="display: none;"></textarea> -->
 	<textarea name="" id="getTalkUrlInput" cols="75" rows="6" style="display: none;"></textarea>
 	<div class="box">
@@ -170,6 +170,14 @@
 	var frameRate = 12;
 	var frameWidth = 240;
 	var frameHeight = 320;
+	const userAgent = navigator.userAgent;  
+	console.log('User Agent:', userAgent); 
+	var indexMobile = userAgent.indexOf("Mobile");
+	if(-1!=indexMobile)
+	{
+		frameWidth = 320;//手机端宽高和实际出流的相反
+		frameHeight = 240;
+	}
 	var pcTalk = new RTCPeerConnection({
 				encodings: [
 					{maxBitrate:2000*1000,maxFramerate:frameRate,scaleResolutionDownBy:1.0} // 第一个编码配置，设置最大比特率和不进行分辨率缩放
@@ -201,7 +209,7 @@
 		};
 		{//音视频对讲
 			navigator.mediaDevices.getUserMedia({ video: {
-				width: frameWidth,//frameHeight//宽高和实际出流的相反
+				width: frameWidth,//frameHeight//手机端宽高和实际出流的相反
 				height: frameHeight,//frameWidth
 				//frameRate: 30,
 				frameRate: { ideal: frameRate, max: frameRate },//就算设置25，webrtc rtp时间戳间隔还是按照30的帧率
@@ -210,7 +218,6 @@
 				video: {mandatory: {maxKeyFrameInterval: 60}}
     			}, audio: true 
 			}).then(function(stream) {
-				let videoTrackS = stream.getVideoTracks()[0];
 				// 开始采集视频
 				let mediaRecorder = new MediaRecorder(stream, options);
 				// 监听MediaRecorder的数据可用事件，将录制的数据存储到recordedChunks数组
@@ -238,7 +245,6 @@
 				recVideo.srcObject = stream;*/
 				//mediaRecorder.start(40);//40ms间隔调用ondataavailable
 
-				console.log('getUserMedia audio video');
 				localVideo.addEventListener('playing', function() {
 					console.log('localVideo.addEventListener');//这种重采样的方式还是无法设置帧率以及rtp时间戳，和前面直接采样的结果一样，
 					//var streamV = localVideo.captureStream(25); // 这种方式设置，rtp的时间戳还是不均匀，特别是前面几帧都是秒级的，后面有33ms但也有一百多ms的
@@ -247,21 +253,31 @@
 					//SetTalkLocalOffer();
         		});
 								
-				localVideo.srcObject = stream;
 				// 获取视频轨道
 				const settingsVideoTrack = stream.getVideoTracks()[0];
 				// 获取并输出当前帧率
+				const settings = settingsVideoTrack.getSettings();
+				console.log('Current frameRate: '+settings.frameRate,'frameRate: '+frameRate,'Width:', settings.width, 'Height:', settings.height,'frameWidth:', frameWidth, 'frameHeight:', frameHeight);
+				if(frameRate!=settings.frameRate||frameWidth!=settings.width||frameHeight!=settings.height)
+				{
+					settings.frameRate=frameRate;
+					settings.width=frameWidth;
+					settings.height=frameHeight;
+					//settingsVideoTrack.applyConstraints(settings);//无效
+					//const settingV = settingsVideoTrack.getSettings();
+					//console.log('settings frameRate: '+settingV.frameRate,'frameRate: '+frameRate,'Width:', settingV.width, 'Height:', settingV.height,'frameWidth:', frameWidth, 'frameHeight:', frameHeight);
+				}
 				const capabilities = settingsVideoTrack.getCapabilities();
 				if (capabilities.frameRate) {
-					const frameRate = capabilities.frameRate.max; // 设置帧率为最大支持的值
-					console.log('max frame rate: ' + frameRate);
+					const frameRatef = capabilities.frameRate.max; // 设置帧率为最大支持的值
+					console.log('max frame rate: ' + frameRatef);
 				};
-				const settings = settingsVideoTrack.getSettings();
-				console.log('Current frame rate: ' + settings.frameRate);
 				// 设置新的帧率
-				const newSettings = Object.assign({}, settings, { frameRate: 25 });//就算设置25，webrtc rtp时间戳间隔还是按照30的帧率
+				//const newSettings = Object.assign({}, settings, { frameRate: 25 });//就算设置25，webrtc rtp时间戳间隔还是按照30的帧率
 				//settingsVideoTrack.applyConstraints({ advanced: [newSettings] })
 
+				console.log('getUserMedia audio video');
+				localVideo.srcObject = stream;
 				pcTalk.addTransceiver(stream.getAudioTracks()[0], { direction: 'sendrecv' });//
     			pcTalk.addTransceiver(stream.getVideoTracks()[0], { direction: 'sendrecv' });//音视频对讲
 				let senders = pcTalk.getSenders();
