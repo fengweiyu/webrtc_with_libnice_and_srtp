@@ -847,9 +847,9 @@ int RtpParse ::H265ParseFU(int i_iMark,unsigned char *i_pbRtpBodyBuf,int i_iBufL
             m_iVideoFrameCurLen+=i_iBufLen-3;
             if(0 != m_iFrameFlag)
             {
-                memcpy(o_pbParsedData,m_pVideoFrameBuf,m_iVideoFrameCurLen);
-                *o_iDataLen = m_iVideoFrameCurLen;
-                m_iVideoFrameCurLen=0;
+                //memcpy(o_pbParsedData,m_pVideoFrameBuf,m_iVideoFrameCurLen);
+                //*o_iDataLen = m_iVideoFrameCurLen;//i_iMark=1才结束，应对帧切片的情况，帧切片结束Mark=1
+                //m_iVideoFrameCurLen=0;//从而让返回的帧数据包含一帧中的多个切片nalu
                 m_iFrameFlag=0;
             }
         }
