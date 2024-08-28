@@ -84,7 +84,8 @@
 	hangupButton.addEventListener('click', hangup);
 	//playUrlInput.value = 'https://gwm-000-cn-0448.bcloud365.net:9113/test/202404h264g711a.flv.webrtc'//https访问index则必须这里请求的也是https,使用nginx代理，为了防止复用一个socket链接，则端口号也不同
     //playUrlInput.value = 'http://139.9.149.150:9112/test/202404h264g711a.flv.webrtc'//
-    playUrlInput.value = 'https://139.9.149.150:9113/test/H264G711A.flv.webrtc'//依赖nginx代理
+    playUrlInput.value = 'http://localhost:9112/test/H264G711A.flv.webrtc'
+    //playUrlInput.value = 'https://139.9.149.150:9113/test/H264G711A.flv.webrtc'//依赖nginx代理
 	//talkUrlInput.value = 'https://gwm-000-cn-0448.bcloud365.net:9113/testTalk/202404h264g711a.flv.webrtc'//'https://139.9.149.150:9030/testTalk/202404h264g711a.flv.webrtc'
 	talkUrlInput.value = 'https://139.9.149.150:9113/testTalk/H264G711A.flv.webrtc'//依赖nginx代理
     //playUrlInput.value = 'https://gwm-000-cn-0448.bcloud365.net:9018/live/44b35a3d597ffd1c/Mnx8Y2U3ZTg2YmYxOGZmZTE3YmQ0NDRkZWUxMTcyN2FjZTd8fDQ0YjM1YTNkNTk3ZmZkMWN8fGU5N2NlZmQ3ZDJjYTU4ZWQ3MDY2YTM3M2Y52YTQ1MjlmYzllOTIzZmYwOTM1NmJjZmM3YTdjNmI5YTk5YTU3MGR8fHdlYnJ0Y3x8MTcxMjcyODcxMTc2Nnx8MTc5OTkwMTU4MDM5M3x8R1dN.5c1d2c2839fdd47ba7c8f328eb5708a7.webrtc';//http://139.9.149.150:9018/test/202404h264g711a.flv.webrtc
