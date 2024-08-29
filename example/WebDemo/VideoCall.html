@@ -173,11 +173,17 @@
 	const userAgent = navigator.userAgent;  
 	console.log('User Agent:', userAgent); 
 	var indexMobile = userAgent.indexOf("Mobile");
-	if(-1!=indexMobile)
-	{
-		frameWidth = 320;//手机端宽高和实际出流的相反
+    if (window.orientation === 0 || window.orientation === 180) 
+    {  
+        console.log("竖屏");  
+		frameWidth = 320;//手机端竖屏宽高和实际出流的相反
 		frameHeight = 240;
-	}
+    } 
+    else if (window.orientation === 90 || window.orientation === -90) 
+    {  
+        console.log("横屏");  
+    } 
+
 	var pcTalk = new RTCPeerConnection({
 				encodings: [
 					{maxBitrate:2000*1000,maxFramerate:frameRate,scaleResolutionDownBy:1.0} // 第一个编码配置，设置最大比特率和不进行分辨率缩放
