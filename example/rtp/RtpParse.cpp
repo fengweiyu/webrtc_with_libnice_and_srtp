@@ -764,8 +764,8 @@ int RtpParse ::H265ParseAP(int i_iMark,unsigned char *i_pbRtpBodyBuf,int i_iBufL
         iBufLen-=iNaluLen;
     }
 
-    if(0 != iFrameFlag)
-    {
+    if(0 != iFrameFlag && 0 != i_iMark)//i_iMark=1才结束，应对帧切片的情况，帧切片结束Mark=1
+    {//从而让返回的帧数据包含一帧中的多个切片nalu
         memcpy(o_pbParsedData,m_pVideoFrameBuf,m_iVideoFrameCurLen);
         *o_iDataLen = m_iVideoFrameCurLen;
         m_iVideoFrameCurLen=0;
