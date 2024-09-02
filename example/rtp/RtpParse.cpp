@@ -898,24 +898,24 @@ int RtpParse ::H265ParseSingleNalu(int i_iMark,unsigned char *i_pbRtpBodyBuf,int
     unsigned char bNaluType = (i_pbRtpBodyBuf[0] & 0x7E)>>1;//取nalu类型
     if(bNaluType >= 0 && bNaluType <= 9)// p slice 片
     {
-        if(0 == m_iFrameStartFlag)
-        {
+        //if(0 == m_iFrameStartFlag)
+        {//一帧切片成多个nalu单元(前面的片i_iMark都是0)，切片的每个nalu也要加开始码
             memset(m_pVideoFrameBuf+m_iVideoFrameCurLen,0,3);
             m_iVideoFrameCurLen += 3;
             m_pVideoFrameBuf[m_iVideoFrameCurLen]=1;
             m_iVideoFrameCurLen++;//add 00 00 00 01
-            m_iFrameStartFlag=1;
+            //m_iFrameStartFlag=1;
         }
     }
     else if(bNaluType >= 16 && bNaluType <= 21)// IRAP 等同于i帧
     {
-        if(0 == m_iFrameStartFlag)
-        {
+        //if(0 == m_iFrameStartFlag)
+        {//一帧切片成多个nalu单元(前面的片i_iMark都是0)，切片的每个nalu也要加开始码
             memset(m_pVideoFrameBuf+m_iVideoFrameCurLen,0,3);
             m_iVideoFrameCurLen += 3;
             m_pVideoFrameBuf[m_iVideoFrameCurLen]=1;
             m_iVideoFrameCurLen++;//add 00 00 00 01
-            m_iFrameStartFlag=1;
+            //m_iFrameStartFlag=1;
         }
     }
     else if(bNaluType == 32)//VPS
