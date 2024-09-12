@@ -193,7 +193,7 @@ typedef struct PesHeader
     unsigned char   MarkerBit : 2;                 		//必须是：'10'
     unsigned char   ScramblingControl : 2;		//pes包有效载荷的加扰方式
     unsigned char   Priority : 1;				//有效负载的优先级
-    unsigned char   DataAlignmentIndicator : 1;   	//如果设置为1表明PES包的头后面紧跟着视频或音频syncword开始的代码。
+    unsigned char   DataAlignmentIndicator : 1;   	//如果设置为1表明PES包的头后面紧跟着视频或音频syncword开始的代码(视频语法单元或音频同步字 00 00 00 01)。
     unsigned char   Copyright : 1;                  		// 1:靠版权保护，0：不靠
     unsigned char   OriginalOrCopy : 1;          		// 1;有效负载是原始的，0：有效负载时拷贝的
     unsigned char   PtsDtsFlags : 2;              		//'10'：PTS字段存在，‘11’：PTD和DTS都存在，‘00’：都没有，‘01’：禁用。
@@ -1181,13 +1181,13 @@ int TsPack::GetPesHeader(T_MediaFrameInfo * i_ptFrameInfo,int i_iFrameLen,unsign
 	tPesHeader.wPesPacketLen= 0;//(length + 8);    		//一帧数据的长度 不包含 PES包头 ,这个8 是 自适应的长度,填0 可以自动查找
 	if (i_iFrameLen > 0xFFFF)                                    //如果一帧数据的大小超出界限
 	{
-        MH_LOGD("i_iFrameLen %d > 0xFFFF\r\n",i_iFrameLen);
-		tPesHeader.wPesPacketLen = 0x00;
+        MH_LOGD("i_iFrameLen %d > 0xFFFF\r\n",i_iFrameLen);//解析时则根据nalu开始码进行查找组包得到完整的帧
+		tPesHeader.wPesPacketLen = 0x00;//不含开始码的nalu数据就是nalu的一个分包
 	}
 	tPesHeader.MarkerBit= 0x02;
 	tPesHeader.ScramblingControl= 0x00;                      	//人选字段 存在，不加扰
 	tPesHeader.Priority= 0x00;
-	tPesHeader.DataAlignmentIndicator= 0x00;
+	tPesHeader.DataAlignmentIndicator= 0x01;//PES包的头后面紧跟着视频或音频的同步字 00 00 00 01
 	tPesHeader.Copyright= 0x00;
 	tPesHeader.OriginalOrCopy = 0x00;
 	if (i_ptFrameInfo->eFrameType == MEDIA_FRAME_TYPE_AUDIO_FRAME)
