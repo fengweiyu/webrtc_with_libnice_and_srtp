@@ -73,6 +73,14 @@ static int proc(const char * i_strSrcFilePath,const char *i_strDstFilePath)
     {
         eStreamType=STREAM_TYPE_ENHANCED_FLV_STREAM;
     }
+    else if(NULL != strstr(i_strDstFilePath,".h264")||NULL != strstr(i_strDstFilePath,".h265"))
+    {
+        eStreamType=STREAM_TYPE_VIDEO_STREAM;
+    }
+    else if(NULL != strstr(i_strDstFilePath,".aac"))
+    {
+        eStreamType=STREAM_TYPE_AUDIO_STREAM;
+    }
     else
     {
         printf("i_strDstFilePath %s err\r\n",i_strDstFilePath);
