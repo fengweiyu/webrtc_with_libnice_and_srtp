@@ -951,7 +951,9 @@ unsigned char FlvPackHandle::CreateAudioDataTagHeader(T_MediaFrameInfo * i_ptAud
     }
     else
     {
-        bChannels = 1;
+        bChannels = 1;//sound type,for aac always 1
+        bSendBit = 1;//sound size,for aac always 1
+        bSampleRate = 3;;//sound rate,for aac always 3
     }
     
     bAudioTagHeader = bEncType << 4;

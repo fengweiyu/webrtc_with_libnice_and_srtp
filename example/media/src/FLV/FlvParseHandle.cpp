@@ -203,7 +203,7 @@ int FlvParseHandle::GetAudioData(unsigned char *i_pbAudioTag,int i_iTagLen,T_Med
     ParseAudioDataTagHeader(i_pbAudioTag[iProcessedLen],m_ptFrame);
     if(MEDIA_ENCODE_TYPE_UNKNOW == m_ptFrame->eEncType ||MEDIA_ENCODE_TYPE_OPUS == m_ptFrame->eEncType)
     {
-        MH_LOGE("RTMP_UNKNOW_ENC_TYPE %d\r\n", m_ptFrame->eEncType);//OPUS暂不支持,后续再做
+        MH_LOGE("MEDIA_ENCODE_TYPE_UNKNOW %d\r\n", m_ptFrame->eEncType);//OPUS暂不支持,后续再做
         return -1;
     }
     iProcessedLen++;
@@ -237,7 +237,11 @@ int FlvParseHandle::GetAudioData(unsigned char *i_pbAudioTag,int i_iTagLen,T_Med
                 dwSamplingFrequency = s_adwSamplingFreq[bSamplingFreqIndex];
             if(bChannelConf < 8)
                 bChannel = s_abChannels[bChannelConf];
-
+            if(m_ptFrame->dwSampleRate != dwSamplingFrequency ||m_ptFrame->tAudioEncodeParam.dwChannels != bChannel)
+            {
+                MH_LOGW("WARNING!!! GetAudioData dwSampleRate%d != dwSamplingFrequency%d ||dwChannels%d != bChannel%d\r\n", 
+                m_ptFrame->dwSampleRate,dwSamplingFrequency,m_ptFrame->tAudioEncodeParam.dwChannels,bChannel);
+            }
             m_ptFrame->dwSampleRate = dwSamplingFrequency;
             m_ptFrame->tAudioEncodeParam.dwChannels = bChannel;
         }
@@ -729,12 +733,12 @@ unsigned char FlvParseHandle::ParseAudioDataTagHeader(unsigned char i_bAudioTagH
 	bSampleRateIndex = (i_bAudioTagHeader & 0x0C) >> 2;
 	bSampleBits = (i_bAudioTagHeader & 0x02) >> 1;
 	bChannels = i_bAudioTagHeader & 0x01;//声道模式0 = 单声道,1 = 双声道（立体声）//aac 以AudioSpecCfg为准,这里aac都会置位1
-	
-    m_ptFrame->tAudioEncodeParam.dwChannels = bChannels+1;//通道=声道+1 
-    m_ptFrame->tAudioEncodeParam.dwBitsPerSample = bSampleBits == 1 ? 16 : 8;//0b01 win 会报错
-    m_ptFrame->dwSampleRate= 44100;
+
+    unsigned int dwChannels = bChannels+1;//通道=声道+1 
+    unsigned int dwBitsPerSample = bSampleBits == 1 ? 16 : 8;//0b01 win 会报错
+    unsigned int dwSampleRate = 44100;//dwSamplesPerSecond
     if(bSampleRateIndex < 4)
-        m_ptFrame->dwSampleRate = s_adwSampleRateTable[bSampleRateIndex];
+        dwSampleRate = s_adwSampleRateTable[bSampleRateIndex];
     switch(bEncType)
     {
         case 2:
@@ -774,10 +778,28 @@ unsigned char FlvParseHandle::ParseAudioDataTagHeader(unsigned char i_bAudioTagH
         }
         case 10:
         default:
-        {
-            m_ptFrame->eEncType = MEDIA_ENCODE_TYPE_AAC;
-            break;
-        }
+        {//音频编码是aac时，则编码信息，比如采样率，通道数应该以aac序列头中为准
+            m_ptFrame->eEncType = MEDIA_ENCODE_TYPE_AAC;//这里只解析编码类型则可，
+            break;//但是目前的代码就需要保存aac序列头中的编码信息，然后解析每帧的时候用这个信息赋值
+        }//目前aac序列头的编码信息和tag头里的信息是一致的，可不改
+    }
+    if(MEDIA_ENCODE_TYPE_AAC == m_ptFrame->eEncType)
+    {//外部有保存，则以外部为准，外部保存的是aac序列头的
+        m_ptFrame->tAudioEncodeParam.dwChannels = m_ptFrame->tAudioEncodeParam.dwChannels!=0?m_ptFrame->tAudioEncodeParam.dwChannels : dwChannels;
+        m_ptFrame->tAudioEncodeParam.dwBitsPerSample = m_ptFrame->tAudioEncodeParam.dwBitsPerSample!=0?m_ptFrame->tAudioEncodeParam.dwBitsPerSample : dwBitsPerSample;
+        m_ptFrame->dwSampleRate= (m_ptFrame->dwSampleRate==0||m_ptFrame->dwSampleRate==90000)?dwSampleRate : m_ptFrame->dwSampleRate;
+    }
+    else if(MEDIA_ENCODE_TYPE_G711A == m_ptFrame->eEncType || MEDIA_ENCODE_TYPE_G711U == m_ptFrame->eEncType)
+    {
+        m_ptFrame->tAudioEncodeParam.dwChannels = dwChannels;
+        m_ptFrame->tAudioEncodeParam.dwBitsPerSample = dwBitsPerSample;
+        m_ptFrame->dwSampleRate= 8000;//g711采样率编码规定为8000
+    }
+    else
+    {
+        m_ptFrame->tAudioEncodeParam.dwChannels = dwChannels;
+        m_ptFrame->tAudioEncodeParam.dwBitsPerSample = dwBitsPerSample;
+        m_ptFrame->dwSampleRate= dwSampleRate;
     }
     return 0;
 }
