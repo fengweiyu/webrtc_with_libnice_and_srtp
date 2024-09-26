@@ -34,7 +34,7 @@ int main(int argc, char* argv[])
 {
     int iRet = -1;
     
-    int dwServerPort=9112;
+    int dwServerPort=9212;
     char strStunIp[20];//"77.72.169.210"
     int dwStunPort=3478;
     
@@ -69,6 +69,6 @@ static void PrintUsage(char *i_strProcName)
 {
     printf("Usage: %s ServerPort StunIP StunPort\r\n",i_strProcName);
     //printf("eg: %s 9112 77.72.169.210 3478\r\n",i_strProcName);
-    printf("run default args: %s 9112 77.72.169.210 3478\r\n",i_strProcName);
+    printf("run default args: %s 9212 77.72.169.210 3478\r\n",i_strProcName);
 }
 
