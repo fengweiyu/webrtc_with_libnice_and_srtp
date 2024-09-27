@@ -41,14 +41,14 @@
 	<div class="box">
 		<button id="startTalkButton">startTalk</button>
 		<button id="stopTalkButton">stopTalk</button>
-		<br><br><br>
+		<br><br><a href="https://yuweifeng.top:9257/webrtc">WebRTC服务接收数据</a><br>
     </div>
 
 </div>
-<script src="https://cdn.jsdelivr.net/npm/vconsole@latest/dist/vconsole.min.js"></script>
+<!-- <script src="https://cdn.jsdelivr.net/npm/vconsole@latest/dist/vconsole.min.js"></script> vConsole不使用，防止有些浏览器加载失败-->
 <script  type="text/javascript">
 	'use strict';
-	var vConsole = new window.VConsole();//获取麦克风权限必须使用https访问本文件，https访问index则必须这里请求的也是https，不然可以使用src="http
+	//var vConsole = new window.VConsole();//获取麦克风权限必须使用https访问本文件，https访问index则必须这里请求的也是https，不然可以使用src="http
 	const startTalkButton = document.getElementById('startTalkButton');
 	const stopTalkButton = document.getElementById('stopTalkButton');
 	const talkUrlInput = document.getElementById('talkUrlInput')
@@ -64,7 +64,7 @@
 	GetTalkUrlButton.addEventListener('click', GetTalkUrl);
 	//talkUrlInput.value = 'https://gwm-000-cn-0448.bcloud365.net:9113/testTalk/202404h264g711a.flv.webrtc'//'https://139.9.149.150:9030/testTalk/202404h264g711a.flv.webrtc'
 	//talkUrlInput.value = 'https://139.9.149.150:9113/testVideoCall/H264G711A.flv.webrtc'//依赖nginx代理
-    talkUrlInput.value = 'http://localhost:9112/testVideoCall/H264G711A.flv.webrtc'
+    talkUrlInput.value = 'https://yuweifeng.top:9213/testVideoCall/H264G711A.flv.webrtc'
     //playUrlInput.value = 'https://gwm-000-cn-0448.bcloud365.net:9018/live/44b35a3d597ffd1c/Mnx8Y2U3ZTg2YmYxOGZmZTE3YmQ0NDRkZWUxMTcyN2FjZTd8fDQ0YjM1YTNkNTk3ZmZkMWN8fGU5N2NlZmQ3ZDJjYTU4ZWQ3MDY2YTM3M2Y52YTQ1MjlmYzllOTIzZmYwOTM1NmJjZmM3YTdjNmI5YTk5YTU3MGR8fHdlYnJ0Y3x8MTcxMjcyODcxMTc2Nnx8MTc5OTkwMTU4MDM5M3x8R1dN.5c1d2c2839fdd47ba7c8f328eb5708a7.webrtc';//http://139.9.149.150:9018/test/202404h264g711a.flv.webrtc
 	//talkUrlInput.value = 'https://gwm-000-cn-0448.bcloud365.net:8889/talk/44b35a3d597ffd1c/Mnx8Y2U3ZTg2YmYxOGZmZTE3YmQ0NDRkZWUxMTcyN2FjZTd8fDQ0YjM1YTNkNTk3ZmZkMWN8fGQ5MjMxZGM0MjVkMWNkYTdkZjU5NzljNGJk7MTIwMjhhYjcyZTkwOTEyYzNkNjA2ZGQyOGM4ZWZjNWY5MGQxMTJ8fHJ0bXB8fDE3MTI3MzAxMDU5NzN8fDE3OTk5MDE1ODAzOTN8fEdXTQ%3D%3D.2560e5067a6f46f81a382cd95ca5f7a1.webrtc';//https://139.9.149.150:9030/test_videoCall/202404h264g711a.flv.webrtc
 	getTalkUrlInput.value = 'https://gwm-000-cn-0448.bcloud365.net:8188/videoCall?acode=g711a&mediaType=webrtc&acode_player=g711a&appKey=ce7e86bf18ffe17bd444dee11727ace7&channel=0&encryptType=TOKEN&expireTime=1798795841559&fps_player=12&height_player=320&samplebit_player=16&sr_player=16000&token=YzAzYjExOGVmYXxhYzQwMzliOGMwZTViZmQ1fGV5SndJam9pWWxWNGVrWTROa1JyY235oeGFqWk1VaUlzSW5VaU9pSmhaRzFwYmlKOXwxNzIyMDA1MTg3MDcxfGd3cHx8bWQ1.5daace25b9d54fe27c0a18b9096c2a47&userToken=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJycyIsImFwcEtleSI6ImNlN2U4NmJmMThmZmUxN2JkNDQ0ZGVlMTE3MjdhY2U3IiwiZXhwIjoxNzIxMjY4ODAyLCJ0eXBlIjoiY29tIiwiYWNjb3VudCI6ImFmM2NjZGYzNWI5MzQzNzBhMGExZjgwYjVlOGIwOTFlIn0.1YxVc6kvnaxdT8xqMkEDQRkjXOdK9r1iLkRfeF1AOGM.1&uuid=xmeye&vcode_player=H265&width_player=240'
@@ -425,8 +425,8 @@
 							});
 		                }else {
 							// 连接出现问题，处理断开连接的逻辑sendTalkHeartbeat
-							console.log('TalkNegotiateSDP err,code:'+xhr.status+' msg:'+xhr.statusText);
-							alert('TalkNegotiateSDP err,code:'+xhr.status+' msg:'+xhr.statusText);
+							console.log('TalkNegotiateSDP err,code:'+xhrTalk.status+' msg:'+xhrTalk.statusText);
+							alert('TalkNegotiateSDP err,code:'+xhrTalk.status+' msg:'+xhrTalk.statusText);
 						}
 		            }
 		         }

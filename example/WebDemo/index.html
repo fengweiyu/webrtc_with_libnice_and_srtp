@@ -54,10 +54,10 @@
     </div>
 
 </div>
-<script src="https://cdn.jsdelivr.net/npm/vconsole@latest/dist/vconsole.min.js"></script>
+<!-- <script src="https://cdn.jsdelivr.net/npm/vconsole@latest/dist/vconsole.min.js"></script> vConsole不使用，防止有些浏览器加载失败-->
 <script  type="text/javascript">
 	'use strict';
-	var vConsole = new window.VConsole();//获取麦克风权限必须使用https访问本文件，https访问index则必须这里请求的也是https，不然可以使用src="http
+	//var vConsole = new window.VConsole();//获取麦克风权限必须使用https访问本文件，https访问index则必须这里请求的也是https，不然可以使用src="http
 	const callButton = document.getElementById('callButton');
 	const startTalkButton = document.getElementById('startTalkButton');
 	const stopTalkButton = document.getElementById('stopTalkButton');
@@ -84,10 +84,10 @@
 	hangupButton.addEventListener('click', hangup);
 	//playUrlInput.value = 'https://gwm-000-cn-0448.bcloud365.net:9113/test/202404h264g711a.flv.webrtc'//https访问index则必须这里请求的也是https,使用nginx代理，为了防止复用一个socket链接，则端口号也不同
     //playUrlInput.value = 'http://139.9.149.150:9112/test/202404h264g711a.flv.webrtc'//
-    playUrlInput.value = 'http://localhost:9112/test/H264G711A.flv.webrtc'
+    playUrlInput.value = 'https://yuweifeng.top:9213/test/H264G711A.flv.webrtc'
     //playUrlInput.value = 'https://139.9.149.150:9113/test/H264G711A.flv.webrtc'//依赖nginx代理
 	//talkUrlInput.value = 'https://gwm-000-cn-0448.bcloud365.net:9113/testTalk/202404h264g711a.flv.webrtc'//'https://139.9.149.150:9030/testTalk/202404h264g711a.flv.webrtc'
-	talkUrlInput.value = 'https://139.9.149.150:9113/testTalk/H264G711A.flv.webrtc'//依赖nginx代理
+	talkUrlInput.value = 'https://yuweifeng.top:9213/testTalk/H264G711A.flv.webrtc'//依赖nginx代理
     //playUrlInput.value = 'https://gwm-000-cn-0448.bcloud365.net:9018/live/44b35a3d597ffd1c/Mnx8Y2U3ZTg2YmYxOGZmZTE3YmQ0NDRkZWUxMTcyN2FjZTd8fDQ0YjM1YTNkNTk3ZmZkMWN8fGU5N2NlZmQ3ZDJjYTU4ZWQ3MDY2YTM3M2Y52YTQ1MjlmYzllOTIzZmYwOTM1NmJjZmM3YTdjNmI5YTk5YTU3MGR8fHdlYnJ0Y3x8MTcxMjcyODcxMTc2Nnx8MTc5OTkwMTU4MDM5M3x8R1dN.5c1d2c2839fdd47ba7c8f328eb5708a7.webrtc';//http://139.9.149.150:9018/test/202404h264g711a.flv.webrtc
 	//talkUrlInput.value = 'https://gwm-000-cn-0448.bcloud365.net:8889/talk/44b35a3d597ffd1c/Mnx8Y2U3ZTg2YmYxOGZmZTE3YmQ0NDRkZWUxMTcyN2FjZTd8fDQ0YjM1YTNkNTk3ZmZkMWN8fGQ5MjMxZGM0MjVkMWNkYTdkZjU5NzljNGJk7MTIwMjhhYjcyZTkwOTEyYzNkNjA2ZGQyOGM4ZWZjNWY5MGQxMTJ8fHJ0bXB8fDE3MTI3MzAxMDU5NzN8fDE3OTk5MDE1ODAzOTN8fEdXTQ%3D%3D.2560e5067a6f46f81a382cd95ca5f7a1.webrtc';//https://139.9.149.150:9030/test_videoCall/202404h264g711a.flv.webrtc
 	getPlayUrlInput.value = 'https://gwm-000-cn-0448.bcloud365.net:8188/media?appKey=ce7e86bf18ffe17bd444dee11727ace7&channel=0&expireTime=1799901580393&mediaType=webrtc&stream=1&token=YWNiZTQxOWI0Nnw0NGIzNWEzZDU5N2ZmZDFjfGV5SndJam9pUkd4VGFuUTJNR3dpTENKMU9lqb2lZV1J0YVc0aWZRPT18MTY5OTkwMTU3OTAxOXxnd3B8MTIyLjkuMTM0LjI3fG1kNQ%3D%3D.3dd1fee793cf334b6b029320e4012116&type=ts&userToken=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJycyIsImFwcEtleSI6ImNlN2U4NmJmMThmZmUxN2JkNDQ0ZGVlMTE3MjdhY2U3IiwiZXhwIjoxNzAyMTg4MTEyLCJ0eXBlIjoiY29tIiwiYWNjb3VudCI6IjJlZjEwNDc3NzM0NjQzYTJiYTg4ZjkwN2MwYzIyMjhkIn0.xfUcPJk8W3No6GPr_eZkwpWUWy2N0myKdf52J-1AXzY.1'
