@@ -96,6 +96,7 @@ public:
     int GetMuxHeader(unsigned char * o_pbBuf,unsigned int i_dwMaxBufLen);
     int GetDurationAndPTS(int64_t *o_ddwSegmentDuration,int64_t *o_ddwSegmentPTS);
 private:
+    int ForceGetMuxData(T_Fmp4AnnexbFrameInfo *i_ptFmp4FrameInfo,unsigned char * o_pbBuf,unsigned int i_dwMaxBufLen,int *o_piHeaderOffset=NULL,int i_iForcePack=0);
     int SaveFrame(T_Fmp4AnnexbFrameInfo *i_ptFmp4FrameInfo);
     int DelAllFrame();
     

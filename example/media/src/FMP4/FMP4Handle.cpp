@@ -99,6 +99,12 @@ int FMP4Handle::GetMuxData(T_Fmp4AnnexbFrameInfo *i_ptFmp4FrameInfo,unsigned cha
 {
     int iRet = -1;
     int iDataLen = 0;
+
+    if(NULL == i_ptFmp4FrameInfo || 0 != i_iForcePack)
+    {
+        FMP4_LOGE("ForceGetMuxData \r\n");
+        return ForceGetMuxData(i_ptFmp4FrameInfo,o_pbBuf,i_dwMaxBufLen,o_piHeaderOffset,i_iForcePack);
+    }
     
     if(NULL == i_ptFmp4FrameInfo ||NULL == i_ptFmp4FrameInfo->pbFrameStartPos ||NULL == o_pbBuf)
     {
@@ -158,6 +164,55 @@ int FMP4Handle::GetMuxData(T_Fmp4AnnexbFrameInfo *i_ptFmp4FrameInfo,unsigned cha
     return iDataLen;
 }
 
+
+
+/*****************************************************************************
+-Fuction        : FMP4Handle
+-Description    : 
+i_iForcePack=0，默认收到i帧打包，=1强制打包
+o_piHeaderOffset=NULL，默认头部信息(ftyp ,moov)不打包到缓冲区，否则打包进去并输出长度
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version        Author           Modification
+* -----------------------------------------------
+* 2023/09/21      V1.0.0         Yu Weifeng       Created
+******************************************************************************/
+int FMP4Handle::ForceGetMuxData(T_Fmp4AnnexbFrameInfo *i_ptFmp4FrameInfo,unsigned char * o_pbBuf,unsigned int i_dwMaxBufLen,int *o_piHeaderOffset,int i_iForcePack)
+{
+    int iRet = -1;
+    int iDataLen = 0;
+    
+    if(m_iFindedKeyFrame!=0 && m_FMP4MediaList.size()>1)
+    {
+        if(0==m_iHeaderCreatedFlag)
+        {
+            m_iFmp4HeaderLen=m_FMP4.CreateHeader(&m_FMP4MediaList,m_pbFmp4Header,FMP4_HEADER_BUF_MAX_LEN);
+            m_iHeaderCreatedFlag=1;
+            if(NULL != o_piHeaderOffset)
+            {
+                memcpy(o_pbBuf,m_pbFmp4Header,m_iFmp4HeaderLen);
+                iDataLen = m_iFmp4HeaderLen;
+                *o_piHeaderOffset = iDataLen;
+            }
+        }
+        iDataLen+=m_FMP4.CreateSegment(&m_FMP4MediaList,++m_iFragSeq,o_pbBuf+iDataLen,i_dwMaxBufLen-iDataLen);
+        m_ddwSegmentPTS=0;
+        m_ddwSegmentDuration=0;
+        int64_t m_ddwSegmentMinPTS=0;
+        int64_t m_ddwSegmentMaxPTS=0;
+        list<T_Fmp4FrameInfo>::iterator iter = m_FMP4MediaList.begin();//front
+        m_ddwSegmentMinPTS=(int64_t)iter->ddwTimeStamp;
+        list<Fmp4FrameInfo>::reverse_iterator iterr= m_FMP4MediaList.rbegin();
+        m_ddwSegmentMaxPTS=(int64_t)iterr->ddwTimeStamp;
+
+        m_ddwSegmentPTS=m_ddwSegmentMinPTS;
+        if(m_ddwSegmentMaxPTS-m_ddwSegmentMinPTS>0)
+            m_ddwSegmentDuration=(m_ddwSegmentMaxPTS-m_ddwSegmentMinPTS);
+        DelAllFrame();
+    }
+    return iDataLen;
+}
 
 /*****************************************************************************
 -Fuction        : FMP4Handle
@@ -258,12 +313,31 @@ int FMP4Handle::SaveFrame(T_Fmp4AnnexbFrameInfo *i_ptFmp4FrameInfo)
     tFmp4FrameInfo.ddwSampleRate=i_ptFmp4FrameInfo->ddwSampleRate;
     
     tFmp4FrameInfo.pbFrameStartPos = m_pbMediaData+m_iCurMediaDataLen;
+    
+    pbVideoData = tFmp4FrameInfo.pbFrameStartPos;
+    /*if(FMP4_ENC_H264 == tFmp4FrameInfo.eEncType)//aud
+    {
+        Write32BE(pbVideoData,2);//这个长度指不带00 00 00 01的数据长度,
+        pbVideoData+=4;//也就是全裸数据的长度
+        pbVideoData[0]=0x09;
+        pbVideoData[1]=0xF0;
+        pbVideoData+=2;
+    }
+    else if(FMP4_ENC_H265 == tFmp4FrameInfo.eEncType)
+    {
+        Write32BE(pbVideoData,3);//这个长度指不带00 00 00 01的数据长度,
+        pbVideoData+=4;//也就是全裸数据的长度
+        pbVideoData[0]=0x46;
+        pbVideoData[1]=0x01;
+        pbVideoData[2]=0x50;
+        pbVideoData+=3;
+    }*/
     switch(tFmp4FrameInfo.eEncType)
     {
         case FMP4_ENC_H264 :
         case FMP4_ENC_H265 :
         {
-            pbVideoData = tFmp4FrameInfo.pbFrameStartPos;
+            //pbVideoData = tFmp4FrameInfo.pbFrameStartPos;
             for(i=0;i<(int)i_ptFmp4FrameInfo->dwNaluCount;i++)
             {
                 pbNaluBuf=i_ptFmp4FrameInfo->atNaluInfo[i].pbData;
