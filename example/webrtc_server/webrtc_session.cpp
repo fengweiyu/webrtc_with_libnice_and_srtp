@@ -24,6 +24,7 @@
 #include "Base64.h"
 #include "rtp_adapter.h"
 
+#define WEBRTC_RECV_FILE_SAVE_PATH "/work/share/webrtc/"
 #define WEBRTC_RTP_PAYLOAD_G711A     8//a=rtpmap:8 PCMA/8000 webrtc RTP_PAYLOAD_G711A(rfc规范中定义的值)
 #define WEBRTC_H264_ENCODE_FORMAT_NAME "H264"
 #define WEBRTC_H264_TIMESTAMP_FREQUENCY 90000
@@ -108,6 +109,7 @@ WebRtcSession :: WebRtcSession(char * i_strStunAddr,unsigned int i_dwStunPort,T_
     dwLastAudioTimeStamp=0;
     dwLastVideoTimeStamp=0;
     m_pMediaFile=NULL;
+    m_pMediaFileMP4=NULL;
     m_pbFileBuf= new unsigned char [WEBRTC_FRAME_BUF_MAX_LEN];
 }
 
@@ -198,6 +200,11 @@ WebRtcSession :: ~WebRtcSession()
         fclose(m_pMediaFile);
         m_pMediaFile = NULL;//
     }
+    if(NULL!= m_pMediaFileMP4)
+    {
+        fclose(m_pMediaFileMP4);
+        m_pMediaFileMP4 = NULL;//
+    }
     WEBRTC_LOGW("~WebRtcSession end  %d\r\n",m_iFileProcFlag);
 }
 
@@ -274,11 +281,15 @@ int WebRtcSession::TestURL(const char * url)
             delete m_pFileName;
         auto dwWebRtcTalkAvPos = strURL.find(".webrtc");
         m_pFileName = new string(strURL.substr(dwTestAvTalkPos+strlen("testVideoCall/"),dwWebRtcTalkAvPos-(dwTestAvTalkPos+strlen("testVideoCall/"))).c_str());
-        string strFileFd(m_pFileName->c_str());
-        //strFileFd.append(".mp4");
-        strFileFd.append("_recv.flv");
-        m_pMediaFile=fopen(strFileFd.c_str(),"wb");
-        WEBRTC_LOGW2(m_iLogID,"testVideoCall m_pFileName %s\r\n",m_pFileName->c_str());
+        string strFileFd(WEBRTC_RECV_FILE_SAVE_PATH);
+        strFileFd.append(m_pFileName->c_str());
+        string strFilePathName(strFileFd.c_str());
+        strFilePathName.append("_recv.flv");
+        m_pMediaFile=fopen(strFilePathName.c_str(),"wb");
+        string strFilePathNameMP4(strFileFd.c_str());
+        strFilePathNameMP4.append(".mp4");
+        m_pMediaFileMP4=fopen(strFilePathNameMP4.c_str(),"wb");
+        WEBRTC_LOGW2(m_iLogID,"testVideoCall m_pFileName %s,%s\r\n",strFilePathName.c_str(),strFilePathNameMP4.c_str());
         return 0;
     }
     
@@ -959,7 +970,6 @@ int WebRtcSession::ParseRtpData(char * i_acDataBuf,int i_iDataLen)
         dwLastSendTimeStamp=dwLastVideoTimeStamp;
     }
     
-    //iWriteLen=m_cMediaHandle.FrameToContainer(&m_tPushFrameInfo, STREAM_TYPE_FMP4_STREAM,m_pbFileBuf,WEBRTC_FRAME_BUF_MAX_LEN, &iHeaderLen);
     iWriteLen=m_cMediaHandle.FrameToContainer(&m_tPushFrameInfo, STREAM_TYPE_ENHANCED_FLV_STREAM,m_pbFileBuf,WEBRTC_FRAME_BUF_MAX_LEN, &iHeaderLen);
     if(iWriteLen < 0)
     {
@@ -975,7 +985,22 @@ int WebRtcSession::ParseRtpData(char * i_acDataBuf,int i_iDataLen)
             return iRet;
         }
     }
-    
+    iWriteLen=m_cMediaMP4Handle.FrameToContainer(&m_tPushFrameInfo, STREAM_TYPE_FMP4_STREAM,m_pbFileBuf,WEBRTC_FRAME_BUF_MAX_LEN, &iHeaderLen);
+    if(iWriteLen < 0)
+    {
+        WEBRTC_LOGE2(m_iLogID,"FrameToContainerFMP4 err iWriteLen %d\r\n",iRet);
+        return iRet;
+    }
+    if(iWriteLen > 0)
+    {
+        iRet = fwrite(m_pbFileBuf, 1,iWriteLen, m_pMediaFileMP4);
+        if(iRet != iWriteLen)
+        {
+            WEBRTC_LOGD2(m_iLogID,"fwriteFMP4 err %d iWriteLen%d\r\n",iRet,iWriteLen);
+            return iRet;
+        }
+    }
+
 	WEBRTC_LOGD2(m_iLogID,"RecvData %p,iFrameLen %d \r\n",m_tPushFrameInfo.pbFrameStartPos,m_tPushFrameInfo.iFrameLen);//iFrameLen指向裸流数据长度，可保存为文件
     return m_tPushFrameInfo.iFrameLen;
 }
@@ -1213,6 +1238,16 @@ int WebRtcSession::StopSession(int i_iError)
     int iRet = -1;
     
     WEBRTC_LOGW2(m_iLogID,"WebRtcSession StopSession %d,%s \r\n",i_iError,m_strReqURL.c_str());
+    if(NULL!= m_pMediaFileMP4)
+    {
+        int iWriteLen,iHeaderLen;
+        iWriteLen=m_cMediaMP4Handle.FrameToContainer(NULL, STREAM_TYPE_FMP4_STREAM,m_pbFileBuf,WEBRTC_FRAME_BUF_MAX_LEN, &iHeaderLen);
+        if(iWriteLen > 0)
+        {
+            iRet = fwrite(m_pbFileBuf, 1,iWriteLen, m_pMediaFileMP4);
+        }
+    }
+    
     if(NULL != m_pWebRtcProc)
     {
         WEBRTC_LOGW2(m_iLogID,"WebRtcSession m_pWebRtcProc %d\r\n",i_iError);

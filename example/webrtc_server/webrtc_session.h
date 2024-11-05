@@ -99,6 +99,8 @@ private:
     unsigned int dwLastSendTimeStamp;//ms
     unsigned char * m_pbFileBuf;
     FILE  *m_pMediaFile;
+    FILE  *m_pMediaFileMP4;
+    MediaHandle m_cMediaMP4Handle;
 };
 
 #endif
