@@ -871,10 +871,15 @@ public:
                 iLen += m_EsdsBox.ToBits(o_pbBuf+iLen,i_dwMaxBufLen-iLen);
                 break;
             }
-            case FMP4_ENC_OPUS:
+            //case FMP4_OBJECT_TYPE_OPUS:
             {
                 //iLen += m_DopsBox.ToBits(o_pbBuf+iLen,i_dwMaxBufLen-iLen);
                 //break;
+            }
+            case FMP4_OBJECT_TYPE_G711A:
+            case FMP4_OBJECT_TYPE_G711U:
+            {
+                break;
             }
             default:
             {
@@ -3477,9 +3482,14 @@ int FMP4::CreateSegment(list<T_Fmp4FrameInfo> * i_pFMP4Media,unsigned int i_dwSe
         }
     }
     
+    if(dwAudioSampleCount==0 && dwTrackCnt>1)
+    {
+        FMP4_LOGE("warn,seg no audio %d\r\n",dwTrackCnt);
+        dwTrackCnt--;
+    }
     for(i=0;i<(int)dwTrackCnt;i++)
     {
-        if(0 == i)
+        if(0 == i && dwVideoSampleCount>1)
         {
             atTrackInfo[i].aptSampleInfo=aptVideoSampleInfo;
             atTrackInfo[i].dwSampleCount=dwVideoSampleCount-1;//去掉当前帧，外层会保存，下次再打包
@@ -3490,7 +3500,7 @@ int FMP4::CreateSegment(list<T_Fmp4FrameInfo> * i_pFMP4Media,unsigned int i_dwSe
             }
             atTrackInfo[i].dwStartDts=m_dwSegmentBaseDecTime;
         }
-        else if(1 == i)
+        else if(1 == i && dwAudioSampleCount>0)
         {
             atTrackInfo[i].aptSampleInfo= aptAudioSampleInfo;
             atTrackInfo[i].dwSampleCount= dwAudioSampleCount;
