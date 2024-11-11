@@ -1751,6 +1751,10 @@ int WebRtcAnswer::GenerateVideoSDP(T_LocalCandidate *ptLocalCandidate,char *strL
     char strCandidate[128];
 	int iRet=0;
     const char *strVideoStreamType="video";
+    const char *strH264FMT="level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=%06X;sprop-parameter-sets=%s,%s";
+    const char *strH265FMT="%s";//a=fmtp:112 level-id=93;profile-id=1;tier-flag=0;tx-mode=SRST
+    char strFmtp[256];
+    
 
     if(NULL == ptVideoInfo->strSPS_Base64 || NULL == ptVideoInfo->strPPS_Base64)
     {//兼容只收不发媒体流的情况
@@ -1796,7 +1800,7 @@ int WebRtcAnswer::GenerateVideoSDP(T_LocalCandidate *ptLocalCandidate,char *strL
             "a=rtcp-fb:%d nack\r\n"
             "a=rtcp-fb:%d nack pli\r\n"
             //"a=rtcp-fb:%d ccm fir\r\n"
-            "a=fmtp:%d level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=%06X;sprop-parameter-sets=%s,%s\r\n"
+            "a=fmtp:%d %s\r\n"
             "a=msid:ywf-mslabel ywf-label-%s\r\n"
             "a=ssrc:%d msid:ywf-mslabel ywf-label-%s\r\n"//与rtp中的SSRC 一致
             "a=setup:passive\r\n");//a=setup:actpass 浏览器会报错,active表示客户端,passive表示服务端actpass既是客户端又是服务端,由对方决定
@@ -1835,6 +1839,14 @@ int WebRtcAnswer::GenerateVideoSDP(T_LocalCandidate *ptLocalCandidate,char *strL
             strSdpFmt.append(strCandidate);
         }
     }*/
+    if(0 != strstr(ptVideoInfo->strFormatName,"H265"))
+    {//如下参数实测无效
+        snprintf(strFmtp,sizeof(strFmtp),strH265FMT,"max-num-slices=1;max-ref-frames=0");//禁止帧切片，禁止b帧
+    }
+    else
+    {
+        snprintf(strFmtp,sizeof(strFmtp),strH264FMT,ptVideoInfo->dwProfileLevelId,ptVideoInfo->strSPS_Base64,ptVideoInfo->strPPS_Base64);
+    }
     if(NULL == ptVideoInfo->strSPS_Base64 || NULL == ptVideoInfo->strPPS_Base64)
     {
         iRet=snprintf(o_strSDP+iRet,i_iSdpMaxLen-iRet,strSdpFmt.c_str(),
@@ -1859,7 +1871,7 @@ int WebRtcAnswer::GenerateVideoSDP(T_LocalCandidate *ptLocalCandidate,char *strL
             strLocalFingerprint,
             ptVideoInfo->bRtpPayloadType,ptVideoInfo->strFormatName,ptVideoInfo->dwTimestampFrequency,
             ptVideoInfo->bRtpPayloadType,ptVideoInfo->bRtpPayloadType,//ptVideoInfo->bRtpPayloadType,
-            ptVideoInfo->bRtpPayloadType,ptVideoInfo->dwProfileLevelId,ptVideoInfo->strSPS_Base64,ptVideoInfo->strPPS_Base64,
+            ptVideoInfo->bRtpPayloadType,strFmtp,
             ptVideoInfo->strMediaID,ptVideoInfo->dwSSRC,ptVideoInfo->strMediaID);
             /*tCreateTime.tv_sec, strStreamType,tCreateTime.tv_sec, tCreateTime.tv_sec, tCreateTime.tv_sec,
             "application",i_ptVideoInfo->wPortNumForSDP,102,//"m=application 9 DTLS/SCTP". Reason: Expects at least 4 fields
