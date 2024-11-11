@@ -24,7 +24,7 @@
 #include "Base64.h"
 #include "rtp_adapter.h"
 
-#define WEBRTC_RECV_FILE_SAVE_PATH "/work/share/webrtc/"
+#define WEBRTC_RECV_FILE_SAVE_PATH "./"//"/work/share/webrtc/"
 #define WEBRTC_RTP_PAYLOAD_G711A     8//a=rtpmap:8 PCMA/8000 webrtc RTP_PAYLOAD_G711A(rfc规范中定义的值)
 #define WEBRTC_H264_ENCODE_FORMAT_NAME "H264"
 #define WEBRTC_H264_TIMESTAMP_FREQUENCY 90000
