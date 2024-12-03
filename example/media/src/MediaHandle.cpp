@@ -437,6 +437,14 @@ int MediaHandle::GetFrame(T_MediaFrameInfo *m_ptFrame)
         }
         return iRet;
     } 
+    if(STREAM_TYPE_FLV_STREAM == m_ptFrame->eStreamType)
+    {
+        if(NULL == m_pMediaHandle)
+        {
+            m_pMediaHandle=new FlvHandleInterface();
+        }
+    }
+
 
     if(NULL != m_pMediaHandle)
     {
