@@ -14,13 +14,14 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <string>
 #include <stdint.h>
+#include <string>
+#include <list>
 #include "MediaHandle.h"
 #include "FlvHandle.h"
 
 using std::string;
-
+using std::list;
 
 
 
@@ -39,7 +40,10 @@ public:
     int GetMuxData(T_MediaFrameInfo * i_ptFrameInfo,unsigned char * o_pbBuf,unsigned int i_dwMaxBufLen);
     
 private:   
-    int CreateHeader(unsigned char* o_pbBuf,unsigned int i_dwMaxLen);
+    int SaveFrame(T_MediaFrameInfo *i_ptFrameInfo);
+    int GetMediaFrame(T_MediaFrameInfo *o_ptFrameInfo);
+        
+    int CreateHeader(unsigned char* o_pbBuf,unsigned int i_dwMaxLen,unsigned char i_bVideo,unsigned char i_bAudio);
     int CreateTag(T_MediaFrameInfo * i_ptFrameInfo,unsigned char* o_pbBuf,unsigned int i_dwMaxLen);
 
     int CreateFlvHeader(T_FlvHeader * i_ptFlvHeader,unsigned char* o_pbBuf,unsigned int i_dwMaxLen);
@@ -64,6 +68,11 @@ private:
 
     int m_iHeaderCreatedFlag;//flv头已打包过的标志，0 否，1是
     int m_iFindedKeyFrame;//0 否，1是
+
+    unsigned char *m_pbMediaData;
+    int m_iCurMediaDataLen;
+    list<T_MediaFrameInfo> m_MediaFrameList;
+    int m_iMediaFramePrasedFlag;//码流解析完毕标志，0 否，1是
 };
 
 

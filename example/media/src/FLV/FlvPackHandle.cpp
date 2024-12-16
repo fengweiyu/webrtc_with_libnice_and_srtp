@@ -64,6 +64,11 @@ FlvPackHandle::FlvPackHandle(int i_iEnhancedFlvFlag)
     m_iHeaderCreatedFlag = 0;
     m_iFindedKeyFrame = 0;
     m_iEnhancedFlvFlag=i_iEnhancedFlvFlag;
+
+    m_iMediaFramePrasedFlag = 0;
+    m_pbMediaData = new unsigned char[FLV_FRAME_BUF_MAX_LEN];
+    m_iCurMediaDataLen = 0;
+    m_MediaFrameList.clear();
 }
 /*****************************************************************************
 -Fuction		: ~FlvPackHandle
@@ -82,6 +87,17 @@ FlvPackHandle::~FlvPackHandle()
         delete[] m_pbFrameBuf;
     }
     m_iFrameBufMaxLen = 0;
+    if(m_MediaFrameList.size()>0)
+    {
+        m_MediaFrameList.clear();
+        m_iCurMediaDataLen = 0;
+    }
+    if(NULL != m_pbMediaData)
+    {
+        delete[] m_pbMediaData;
+        m_pbMediaData = NULL;
+        m_iCurMediaDataLen = 0;
+    }
 }
 
 
@@ -99,7 +115,12 @@ int FlvPackHandle::GetMuxData(T_MediaFrameInfo * i_ptFrameInfo,unsigned char * o
 {
     int iRet = -1;
     int iDataLen = 0;
-    
+    unsigned char bVideo = 0;
+    unsigned char bAudio = 0;
+    T_MediaFrameInfo * ptFrameInfo=NULL;
+    T_MediaFrameInfo tMediaFrameInfo;
+
+
     if(NULL == i_ptFrameInfo ||NULL == o_pbBuf)
     {
         MH_LOGE("GetMuxData err NULL\r\n");
@@ -114,25 +135,164 @@ int FlvPackHandle::GetMuxData(T_MediaFrameInfo * i_ptFrameInfo,unsigned char * o
     {
         m_iFindedKeyFrame=1;
     }
-    if(0==m_iHeaderCreatedFlag /*&& i_ptFrameInfo->eFrameType==MEDIA_FRAME_TYPE_VIDEO_I_FRAME*/)
+    
+    if(0==m_iMediaFramePrasedFlag)//缓存帧用于解析是否有音视频流
     {
-        iRet=this->CreateHeader(o_pbBuf+iDataLen,i_dwMaxBufLen-iDataLen);
+        iRet = SaveFrame(i_ptFrameInfo);
+        if(iRet<0)
+        {
+            MH_LOGE("SaveFrame err \r\n");
+            return iRet;
+        }
+        if(!m_MediaFrameList.empty())
+        {
+            for (list<T_MediaFrameInfo>::iterator iter = m_MediaFrameList.begin(); iter != m_MediaFrameList.end(); ++iter)
+            {
+                if(MEDIA_FRAME_TYPE_AUDIO_FRAME == iter->eFrameType)
+                {
+                    bAudio=1;
+                }
+                if(MEDIA_FRAME_TYPE_VIDEO_I_FRAME == iter->eFrameType||
+                MEDIA_FRAME_TYPE_VIDEO_P_FRAME == iter->eFrameType ||MEDIA_FRAME_TYPE_VIDEO_P_FRAME == iter->eFrameType)
+                {
+                    bVideo=1;
+                }
+            }
+        }
+        if(0 == bAudio || 0 == bVideo)
+        {
+            if(m_MediaFrameList.size()<12)
+            {//12个帧还没音频或视频帧，则确认无音频或视频帧
+                return 0;
+            }
+        }
+        m_iMediaFramePrasedFlag=1;
+    }
+    if(!m_MediaFrameList.empty())
+    {//不为空，当前帧数据已经存进去了
+        memset(&tMediaFrameInfo,0,sizeof(T_MediaFrameInfo));
+        ptFrameInfo=GetMediaFrame(&tMediaFrameInfo) == 0?&tMediaFrameInfo : NULL;
+    }
+    else
+    {
+        ptFrameInfo=i_ptFrameInfo;
+    }
+    while(ptFrameInfo != NULL)
+    {
+        //数据打包
+        if(0==m_iHeaderCreatedFlag)
+        {
+            iRet=this->CreateHeader(o_pbBuf+iDataLen,i_dwMaxBufLen-iDataLen,bVideo,bAudio);
+            if(iRet <= 0)
+            {
+                MH_LOGE("CreateHeader err %d \r\n",iRet);
+                break;
+            }
+            iDataLen+=iRet;
+            m_iHeaderCreatedFlag=1;
+        }
+        iRet=this->CreateTag(ptFrameInfo,o_pbBuf+iDataLen,i_dwMaxBufLen-iDataLen);
         if(iRet <= 0)
         {
-            MH_LOGE("CreateHeader err %d \r\n",iRet);
-            return -1;
+            MH_LOGE("CreateTag err %d \r\n",iRet);
+            break;
         }
         iDataLen+=iRet;
-        m_iHeaderCreatedFlag=1;
+        ptFrameInfo=NULL;
+        //获取缓存帧中的数据
+        if(!m_MediaFrameList.empty())
+        {
+            memset(&tMediaFrameInfo,0,sizeof(T_MediaFrameInfo));
+            ptFrameInfo=GetMediaFrame(&tMediaFrameInfo) == 0?&tMediaFrameInfo : NULL;
+        }
+    };
+    if(!m_MediaFrameList.empty())
+    {//确保数据清空，防止不为空时，前面不会缓存当前帧导致的丢帧
+        m_MediaFrameList.clear();
+        m_iCurMediaDataLen = 0;
     }
-    iRet=this->CreateTag(i_ptFrameInfo,o_pbBuf+iDataLen,i_dwMaxBufLen-iDataLen);
-    if(iRet <= 0)
+    
+    if(iDataLen == 0)
     {
-        MH_LOGE("CreateTag err %d \r\n",iRet);
-        return -1;
+        iDataLen=-1;
     }
-    iDataLen+=iRet;
     return iDataLen;
+}
+
+
+
+
+
+/*****************************************************************************
+-Fuction        : SaveFrame
+-Description    : demux muxer
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version        Author           Modification
+* -----------------------------------------------
+* 2023/09/21      V1.0.0         Yu Weifeng       Created
+******************************************************************************/
+int FlvPackHandle::SaveFrame(T_MediaFrameInfo *i_ptFrameInfo)
+{
+    int iRet = -1;
+    int i = 0;
+    T_MediaFrameInfo tMediaFrameInfo;
+    
+    if(NULL == i_ptFrameInfo ||NULL == i_ptFrameInfo->pbFrameStartPos ||i_ptFrameInfo->iFrameLen <= 0)
+    {
+        MH_LOGE("SaveFrame err NULL\r\n");
+        return iRet;
+    }
+    if(i_ptFrameInfo->iFrameLen + m_iCurMediaDataLen > FLV_FRAME_BUF_MAX_LEN)
+    {
+        MH_LOGE("SaveFrame err %d,%d\r\n",i_ptFrameInfo->iFrameLen,m_iCurMediaDataLen);
+        return iRet;
+    }
+    memset(&tMediaFrameInfo,0,sizeof(T_MediaFrameInfo));
+    memcpy(&tMediaFrameInfo,i_ptFrameInfo,sizeof(T_MediaFrameInfo));
+    
+    tMediaFrameInfo.pbFrameStartPos = m_pbMediaData+m_iCurMediaDataLen;
+    memcpy(tMediaFrameInfo.pbFrameStartPos,i_ptFrameInfo->pbFrameStartPos,i_ptFrameInfo->iFrameLen);
+    m_iCurMediaDataLen+=i_ptFrameInfo->iFrameLen;
+
+    for(i=0;i<MAX_NALU_CNT_ONE_FRAME;i++)
+    {
+        if(NULL != i_ptFrameInfo->atNaluInfo[i].pbData)
+        {//内存拷贝后，相对位置指针也要随之变动
+            tMediaFrameInfo.atNaluInfo[i].pbData = tMediaFrameInfo.pbFrameStartPos+(i_ptFrameInfo->atNaluInfo[i].pbData-i_ptFrameInfo->pbFrameStartPos);
+        }
+    }
+
+    m_MediaFrameList.push_back(tMediaFrameInfo);
+    return 0;
+}
+
+
+
+/*****************************************************************************
+-Fuction        : GetMediaFrame
+-Description    : demux muxer
+-Input          : 
+-Output         : 
+-Return         : 
+* Modify Date     Version        Author           Modification
+* -----------------------------------------------
+* 2023/09/21      V1.0.0         Yu Weifeng       Created
+******************************************************************************/
+int FlvPackHandle::GetMediaFrame(T_MediaFrameInfo *o_ptFrameInfo)
+{
+    int iRet = -1;
+    
+    if(!m_MediaFrameList.empty())
+    {
+        T_MediaFrameInfo & it = m_MediaFrameList.front();
+        memcpy(o_ptFrameInfo,&it,sizeof(T_MediaFrameInfo));
+        m_MediaFrameList.pop_front();
+        m_iCurMediaDataLen -= o_ptFrameInfo->iFrameLen;
+        iRet = 0;
+    }
+    return iRet;
 }
 
 /*****************************************************************************
@@ -145,7 +305,7 @@ int FlvPackHandle::GetMuxData(T_MediaFrameInfo * i_ptFrameInfo,unsigned char * o
 * -----------------------------------------------
 * 2023/11/21      V1.0.0         Yu Weifeng       Created
 ******************************************************************************/
-int FlvPackHandle::CreateHeader(unsigned char* o_pbBuf,unsigned int i_dwMaxLen)
+int FlvPackHandle::CreateHeader(unsigned char* o_pbBuf,unsigned int i_dwMaxLen,unsigned char i_bVideo,unsigned char i_bAudio)
 {
     int iRet = -1;
     int iLen = 0;
@@ -160,8 +320,8 @@ int FlvPackHandle::CreateHeader(unsigned char* o_pbBuf,unsigned int i_dwMaxLen)
 	memset(&tFlvHeader,0,sizeof(T_FlvHeader));
 	memcpy(tFlvHeader.FLV,"FLV",sizeof(tFlvHeader.FLV));
 	tFlvHeader.bVersion = 1;
-	tFlvHeader.bAudio = 1;
-	tFlvHeader.bVideo = 1;
+	tFlvHeader.bAudio = i_bAudio;
+	tFlvHeader.bVideo = i_bVideo;
 	tFlvHeader.dwOffset= FLV_HEADER_LEN;
 	iLen=CreateFlvHeader(&tFlvHeader,o_pbBuf,i_dwMaxLen);
 	memcpy(o_pbBuf+iLen,&dwPreviousTagSize0,sizeof(dwPreviousTagSize0));
