@@ -578,7 +578,7 @@ int Rtp :: GetRtpPackets(T_MediaFrameInfo *m_ptFrame,unsigned char **o_ppbPacket
         {
             iPacketNum+=m_VideoRtpPacket.Packet(&tRtpPacketParam,m_ptFrame->atNaluInfo[i].pbData,m_ptFrame->atNaluInfo[i].dwDataLen,&o_ppbPacketBuf[iPacketNum],&o_aiEveryPacketLen[iPacketNum],iRtpPacketType);
             m_pVideoRtpSession->SetRtpPacketParam(&tRtpPacketParam);
-            if(iPacketNum<=0 || iPacketNum>i_iPacketBufMaxNum)
+            if(iPacketNum<=0 || iPacketNum>=i_iPacketBufMaxNum)
             {
                 RTP_LOGE("m_VideoRtpPacket->Packet err %d %d\r\n",iPacketNum,i_iPacketBufMaxNum);
                 iPacketNum = -1;
