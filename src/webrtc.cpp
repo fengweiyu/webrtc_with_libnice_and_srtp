@@ -1405,9 +1405,9 @@ int WebRtcAnswer::HandleMsg(char * i_strOfferMsg,int i_iNotJsonMsgFlag,T_WebRtcS
             }
         }
     }
-    if(string::npos == iVideoPos && string::npos == iAudioPos)
-    {
-        WEBRTC_LOGE("string::npos == iVideoPos && string::npos == iAudioPos err \r\n");
+    if(string::npos == iVideoPos || string::npos == iAudioPos)//当前不支持单一音视频能力，否则后面substr会奔溃，
+    {//并且代码结构需要调整，这种情况又很少，后续开发
+        WEBRTC_LOGE("string::npos == iVideoPos%d || string::npos == iAudioPos%d err \r\n",iVideoPos,iAudioPos);
         return iRet;
     }
     m_iAvDiff=(int)(iAudioPos-iVideoPos);
