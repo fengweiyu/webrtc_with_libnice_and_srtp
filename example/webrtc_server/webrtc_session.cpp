@@ -451,8 +451,10 @@ void WebRtcSession::TestProc()
 int WebRtcSession::HandleRemoteSDP()
 {
     int iRet = -1;
+
     if(m_strReqBody.length() > 0)
     {
+        WEBRTC_LOGD3(m_iLogID,"HandleRemoteSDP %d,m_iPullVideoFrameRate %d,%s",iRet,m_iPullVideoFrameRate,m_strReqBody.c_str());
         cJSON * ptJson = NULL;
         cJSON * ptNode = NULL;
         ptJson = cJSON_Parse(m_strReqBody.c_str());
@@ -473,7 +475,6 @@ int WebRtcSession::HandleRemoteSDP()
             cJSON_Delete(ptJson);
         }
     }
-    WEBRTC_LOGD3(m_iLogID,"HandleRemoteSDP %d,m_iPullVideoFrameRate %d,%s",iRet,m_iPullVideoFrameRate,m_strReqBody.c_str());
     if(iRet < 0)
     {
         WEBRTC_LOGE2(m_iLogID,"HandleRemoteSDP m_strReqBody err %s",m_strReqBody.c_str());
