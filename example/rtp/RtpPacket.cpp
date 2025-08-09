@@ -219,12 +219,12 @@ int RtpPacket :: DeInit(unsigned char **m_ppPackets,int i_iMaxPacketNum)
 * -----------------------------------------------
 * 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-int RtpPacket :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbFrameBuf,int i_iFrameLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iRtpPacketType)
+int RtpPacket :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbFrameBuf,int i_iFrameLen,unsigned char **o_ppPackets,int i_iPacketsMaxNum,int *o_aiEveryPacketLen,int i_iRtpPacketType)
 {
     int iRet=FALSE;
-	if (!i_pbFrameBuf || i_iFrameLen <= 0 || !o_ppPackets || !o_aiEveryPacketLen)
+	if (!i_pbFrameBuf || i_iFrameLen <= 0  || i_iPacketsMaxNum <= 0 || !o_ppPackets || !o_aiEveryPacketLen)
     {
-        printf("RtpPacket Packet err NULL i_ptParam %p,%p,%p,%p,%d \r\n",i_ptParam,i_pbFrameBuf,o_ppPackets,o_aiEveryPacketLen,i_iFrameLen);
+        printf("RtpPacket Packet err NULL i_ptParam %p,%p,%p,%p,%d ,%d\r\n",i_ptParam,i_pbFrameBuf,o_ppPackets,o_aiEveryPacketLen,i_iFrameLen,i_iPacketsMaxNum);
         return iRet;
     }
     
@@ -311,7 +311,7 @@ int RtpPacket :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbFrameBuf,
     }
     else
     {
-        iRet=m_pRtpPacket->Packet(i_ptParam,i_pbFrameBuf,i_iFrameLen,o_ppPackets,o_aiEveryPacketLen);
+        iRet=m_pRtpPacket->Packet(i_ptParam,i_pbFrameBuf,i_iFrameLen,o_ppPackets,i_iPacketsMaxNum,o_aiEveryPacketLen);
     }
     return iRet;
 }
@@ -361,12 +361,12 @@ RtpPacketH264 :: ~RtpPacketH264()
 * -----------------------------------------------
 * 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-int RtpPacketH264 :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,int i_iNaluLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iRtpPacketType)
+int RtpPacketH264 :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,int i_iNaluLen,unsigned char **o_ppPackets,int i_iPacketsMaxNum,int *o_aiEveryPacketLen,int i_iRtpPacketType)
 {
     int iRet=FALSE;
     unsigned char *pbNaluBuf=i_pbNaluBuf;
     int iNaluLen=i_iNaluLen;
-	if (!i_pbNaluBuf || i_iNaluLen <= 0 || !o_ppPackets || !o_aiEveryPacketLen)
+	if (!i_pbNaluBuf || i_iNaluLen <= 0 || i_iPacketsMaxNum <= 0|| !o_ppPackets || !o_aiEveryPacketLen)
     {
         cout<<"RtpPacketH264 Packet err NULL"<<endl;
     }
@@ -392,7 +392,7 @@ int RtpPacketH264 :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluB
             }
             if(NULL != m_pRtpPacketNALU)
             {
-                iRet=m_pRtpPacketNALU->Packet(i_ptParam,pbNaluBuf,iNaluLen,o_ppPackets,o_aiEveryPacketLen);
+                iRet=m_pRtpPacketNALU->Packet(i_ptParam,pbNaluBuf,iNaluLen,o_ppPackets,i_iPacketsMaxNum,o_aiEveryPacketLen);
             }
         }
         else
@@ -403,7 +403,7 @@ int RtpPacketH264 :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluB
             }
             if(NULL != m_pRtpPacketFU_A)
             {
-                iRet=m_pRtpPacketFU_A->Packet(i_ptParam,pbNaluBuf,iNaluLen,o_ppPackets,o_aiEveryPacketLen);
+                iRet=m_pRtpPacketFU_A->Packet(i_ptParam,pbNaluBuf,iNaluLen,o_ppPackets,i_iPacketsMaxNum,o_aiEveryPacketLen);
             }
         }
     }
@@ -452,14 +452,14 @@ H264NALU :: ~H264NALU()
 * -----------------------------------------------
 * 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-int H264NALU :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,int i_iNaluLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iRtpPacketType)
+int H264NALU :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,int i_iNaluLen,unsigned char **o_ppPackets,int i_iPacketsMaxNum,int *o_aiEveryPacketLen,int i_iRtpPacketType)
 {
     int iRet=FALSE;
     int iPackNum=0;
     int iMark = 0;
     int iPaddingLen = 0;
     
-	if (!i_pbNaluBuf || i_iNaluLen <= 0 || !o_ppPackets || !o_aiEveryPacketLen)
+	if (!i_pbNaluBuf || i_iNaluLen <= 0 || i_iPacketsMaxNum <= 0|| !o_ppPackets || !o_aiEveryPacketLen)
     {
         cout<<"H264NALU Packet err NULL"<<endl;
     }
@@ -537,7 +537,7 @@ H264FU_A :: ~H264FU_A()
 * -----------------------------------------------
 * 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-int H264FU_A :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,int i_iNaluLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iRtpPacketType)
+int H264FU_A :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,int i_iNaluLen,unsigned char **o_ppPackets,int i_iPacketsMaxNum,int *o_aiEveryPacketLen,int i_iRtpPacketType)
 {
     int iRet=FALSE;
     int iPackNum=0;
@@ -545,7 +545,7 @@ int H264FU_A :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,in
     int iNaluLen=i_iNaluLen;
     int iPaddingLen=0;
     
-	if (!i_pbNaluBuf || i_iNaluLen <= 0 || !o_ppPackets || !o_aiEveryPacketLen)
+	if (!i_pbNaluBuf || i_iNaluLen <= 0|| i_iPacketsMaxNum <= 0 || !o_ppPackets || !o_aiEveryPacketLen)
     {
         cout<<"H264FU_A Packet err NULL"<<endl;
         return iRet;
@@ -553,7 +553,7 @@ int H264FU_A :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,in
 
     unsigned char bNaluHeader=i_pbNaluBuf[0];
     int iMark = 0;
-    while (iNaluLen> 0 && iPackNum < RTP_MAX_PACKET_NUM) 
+    while (iNaluLen> 0 && iPackNum < i_iPacketsMaxNum) 
     {
         iMark = 0;
         if (iPackNum == 0) 
@@ -665,12 +665,12 @@ RtpPacketH265 :: ~RtpPacketH265()
 * -----------------------------------------------
 * 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-int RtpPacketH265 :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,int i_iNaluLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iRtpPacketType)
+int RtpPacketH265 :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,int i_iNaluLen,unsigned char **o_ppPackets,int i_iPacketsMaxNum,int *o_aiEveryPacketLen,int i_iRtpPacketType)
 {
     int iRet=FALSE;
     unsigned char *pbNaluBuf=i_pbNaluBuf;
     int iNaluLen=i_iNaluLen;
-	if (!i_pbNaluBuf || i_iNaluLen <= 0 || !o_ppPackets || !o_aiEveryPacketLen)
+	if (!i_pbNaluBuf || i_iNaluLen <= 0|| i_iPacketsMaxNum <= 0 || !o_ppPackets || !o_aiEveryPacketLen)
     {
         cout<<"RtpPacketH265 Packet err NULL"<<endl;
     }
@@ -691,7 +691,7 @@ int RtpPacketH265 :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluB
             }
             if(NULL != m_pRtpPacketNALU)
             {
-                iRet=m_pRtpPacketNALU->Packet(i_ptParam,pbNaluBuf,iNaluLen,o_ppPackets,o_aiEveryPacketLen);
+                iRet=m_pRtpPacketNALU->Packet(i_ptParam,pbNaluBuf,iNaluLen,o_ppPackets,i_iPacketsMaxNum,o_aiEveryPacketLen);
             }
         }
         else
@@ -702,7 +702,7 @@ int RtpPacketH265 :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluB
             }
             if(NULL != m_pRtpPacketFU_A)
             {
-                iRet=m_pRtpPacketFU_A->Packet(i_ptParam,pbNaluBuf,iNaluLen,o_ppPackets,o_aiEveryPacketLen);
+                iRet=m_pRtpPacketFU_A->Packet(i_ptParam,pbNaluBuf,iNaluLen,o_ppPackets,i_iPacketsMaxNum,o_aiEveryPacketLen);
             }
         }
     }
@@ -749,7 +749,7 @@ H265NALU :: ~H265NALU()
 * -----------------------------------------------
 * 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-int H265NALU :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,int i_iNaluLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iRtpPacketType)
+int H265NALU :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,int i_iNaluLen,unsigned char **o_ppPackets,int i_iPacketsMaxNum,int *o_aiEveryPacketLen,int i_iRtpPacketType)
 {
     int iRet=FALSE;
     int iPackNum=0;
@@ -757,7 +757,7 @@ int H265NALU :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,in
     int iPaddingLen = 0;
     unsigned char bNaluType = 0;
     
-    if (!i_pbNaluBuf || i_iNaluLen <= 0 || !o_ppPackets || !o_aiEveryPacketLen)
+    if (!i_pbNaluBuf || i_iNaluLen <= 0|| i_iPacketsMaxNum <= 0 || !o_ppPackets || !o_aiEveryPacketLen)
     {
         cout<<"H265NALU Packet err NULL"<<endl;
     }
@@ -837,7 +837,7 @@ H265FU_A :: ~H265FU_A()
 * -----------------------------------------------
 * 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-int H265FU_A :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,int i_iNaluLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iRtpPacketType)
+int H265FU_A :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,int i_iNaluLen,unsigned char **o_ppPackets,int i_iPacketsMaxNum,int *o_aiEveryPacketLen,int i_iRtpPacketType)
 {
     int iRet=FALSE;
     int iPackNum=0;
@@ -845,7 +845,7 @@ int H265FU_A :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,in
     int iNaluLen=i_iNaluLen;
     int iPaddingLen=0;
     
-    if (!i_pbNaluBuf || i_iNaluLen <= 0 || !o_ppPackets || !o_aiEveryPacketLen)
+    if (!i_pbNaluBuf || i_iNaluLen <= 0|| i_iPacketsMaxNum <= 0 || !o_ppPackets || !o_aiEveryPacketLen)
     {
         cout<<"H265FU_A Packet err NULL"<<endl;
         return iRet;
@@ -854,7 +854,7 @@ int H265FU_A :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbNaluBuf,in
     unsigned char bNaluHeader1=i_pbNaluBuf[0];
     unsigned char bNaluHeader2=i_pbNaluBuf[1];
     int iMark = 0;
-    while (iNaluLen> 0 && iPackNum < RTP_MAX_PACKET_NUM) 
+    while (iNaluLen> 0 && iPackNum < i_iPacketsMaxNum) 
     {
         iMark = 0;
         if (iPackNum == 0) 
@@ -968,7 +968,7 @@ RtpPacketG711 :: ~RtpPacketG711()
 * -----------------------------------------------
 * 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-int RtpPacketG711 :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbFrameBuf,int i_iFrameLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iRtpPacketType)
+int RtpPacketG711 :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbFrameBuf,int i_iFrameLen,unsigned char **o_ppPackets,int i_iPacketsMaxNum,int *o_aiEveryPacketLen,int i_iRtpPacketType)
 {
     int iRet=FALSE;
     unsigned char *pbFrameBuf=i_pbFrameBuf;
@@ -977,13 +977,13 @@ int RtpPacketG711 :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbFrame
     int iMark = 0;
     int iPaddingLen = 0;
     
-	if (!i_pbFrameBuf || i_iFrameLen <= 0 || !o_ppPackets || !o_aiEveryPacketLen)
+	if (!i_pbFrameBuf || i_iFrameLen <= 0 || i_iPacketsMaxNum <= 0|| !o_ppPackets || !o_aiEveryPacketLen)
     {
         cout<<"RtpPacketG711 Packet err NULL"<<endl;
     }
     else
     {
-        while (iFrameLen> 0 && iPackNum < RTP_MAX_PACKET_NUM) 
+        while (iFrameLen> 0 && iPackNum < i_iPacketsMaxNum) 
         {
             if ((unsigned int)iFrameLen <= RTP_MAX_PACKET_SIZE - RTP_HEADER_LEN) 
             {
@@ -1062,7 +1062,7 @@ RtpPacketG726 :: ~RtpPacketG726()
 * -----------------------------------------------
 * 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-int RtpPacketG726 :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbFrameBuf,int i_iFrameLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iRtpPacketType)
+int RtpPacketG726 :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbFrameBuf,int i_iFrameLen,unsigned char **o_ppPackets,int i_iPacketsMaxNum,int *o_aiEveryPacketLen,int i_iRtpPacketType)
 {
     int iRet=FALSE;
     unsigned char *pbFrameBuf=i_pbFrameBuf;
@@ -1071,13 +1071,13 @@ int RtpPacketG726 :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbFrame
     int iMark = 0;
     int iPaddingLen = 0;
     
-    if (!i_pbFrameBuf || i_iFrameLen <= 0 || !o_ppPackets || !o_aiEveryPacketLen)
+    if (!i_pbFrameBuf || i_iFrameLen <= 0|| i_iPacketsMaxNum <= 0 || !o_ppPackets || !o_aiEveryPacketLen)
     {
         cout<<"RtpPacketG726 Packet err NULL"<<endl;
     }
     else
     {
-        while (iFrameLen> 0 && iPackNum < RTP_MAX_PACKET_NUM) 
+        while (iFrameLen> 0 && iPackNum < i_iPacketsMaxNum) 
         {
             if ((unsigned int)iFrameLen <= RTP_MAX_PACKET_SIZE - RTP_HEADER_LEN) 
             {
@@ -1156,7 +1156,7 @@ RtpPacketAAC :: ~RtpPacketAAC()
 * -----------------------------------------------
 * 2017/10/10	  V1.0.0		 Yu Weifeng 	  Created
 ******************************************************************************/
-int RtpPacketAAC :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbFrameBuf,int i_iFrameLen,unsigned char **o_ppPackets,int *o_aiEveryPacketLen,int i_iRtpPacketType)
+int RtpPacketAAC :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbFrameBuf,int i_iFrameLen,unsigned char **o_ppPackets,int i_iPacketsMaxNum,int *o_aiEveryPacketLen,int i_iRtpPacketType)
 {
     int iRet=FALSE;
     unsigned char *pbFrameBuf=i_pbFrameBuf;
@@ -1165,7 +1165,7 @@ int RtpPacketAAC :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbFrameB
     int iMark = 0;
     int iPaddingLen = 0;
     
-    if (!i_pbFrameBuf || i_iFrameLen <= 0 || !o_ppPackets || !o_aiEveryPacketLen)
+    if (!i_pbFrameBuf || i_iFrameLen <= 0  || i_iPacketsMaxNum <= 0|| !o_ppPackets || !o_aiEveryPacketLen)
     {
         cout<<"RtpPacketAAC Packet err NULL"<<endl;
         return iRet;
@@ -1173,7 +1173,7 @@ int RtpPacketAAC :: Packet(T_RtpPacketParam *i_ptParam,unsigned char *i_pbFrameB
     
     pbFrameBuf += 7;//aac 要偏移7字节头才是数据
     iFrameLen-=7;
-    while (iFrameLen> 0 && iPackNum < RTP_MAX_PACKET_NUM) 
+    while (iFrameLen> 0 && iPackNum < i_iPacketsMaxNum) 
     {
         if ((unsigned int)iFrameLen <= RTP_MAX_PACKET_SIZE - RTP_HEADER_LEN-4) 
         {
